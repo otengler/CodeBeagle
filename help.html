@@ -1,0 +1,383 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+<title>Documentation for CodeBeagle</title>
+</head>
+<body>
+<b>Introduction to CodeBeagle</b>
+<p>
+CodeBeagle allows you to quickly find all occurances of a search term inside source code files. To do so it creates a full text index of 
+the desired source files. Because it is tolerant to whitespace its search syntax works great for searching source code. The search 
+results are displayed in a source viewer with customizable syntax highlighting.
+It runs without installation and leaves you in full control when to update the index. 
+Advanced features are the support of multiple indexes and custom search scripts which allow to automate sequences of searches.
+CodeBeagle is written in Python and based on SqLite and Qt. 
+</p>
+<br/>
+
+<b>Configuration</b>
+<p>
+The configuration is stored in "config.txt". This file is exptected to be in the same directory as the executables itself. 
+The most important things to configure are the directories to index, the extensions of the files to collect and the
+path where the index is stored. Here is an example how to define an index:
+</p>
+<pre>
+Index1 {
+    indexdb=D:\mysource.dat
+    extensions=h,cpp,c
+    directories=D:\source1,E:\source2
+}
+Index2 {
+   ...
+}
+</pre>
+<p>
+This indexes all files in "D:\source1" and "E:\source2" with the extensions "h","cpp" and "c" and stores the result in 
+"D:\mysource.dat". The section name which specifies the index must start with "index" (case doesn't matter). 
+As illustrated by the section "Index2" you are not restricted to only one index definition. When several indexes
+are defined you can select the index to search in the upper right corner.
+The config syntax allows to import other config files. The default config file uses this to import 
+"UserConfig.txt" at the very end. I recommend to put all your configuration settings
+into this file. This works because a second definition of the same key,value pair overrides
+the first. The reason behind this is to keep your settings when you upgrade to a new version which ships a 
+new "config.txt". 
+</p>
+<p>Here is a full table of all supported settings in "config.txt":</p>
+<table border="1" summary="Configuration options">
+  <tr>
+    <th>Setting</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>showCloseConfirmation</td>
+    <td>If set to none zero the user must confirm a message box when closing the application</td>
+  </tr>
+  <tr>
+    <td>updateIndexLog</td>
+    <td>If set UpdateIndex.exe writes a log file. The setting must contain the full path to the log file</td>
+  </tr>
+  <tr>
+    <td>profileUpdate</td>
+    <td>If set to none zero UpdateIndex.exe is run in the profiler and the resulting profiling data is printed to stdout. 
+    This really slows down the update and is a debugging option</td>
+  </tr>
+  <tr>
+    <td>IndexXYZ {</td>
+    <td>All groups starting with <strong>Index</strong> contain an index definition as described above</td>
+  </tr>
+</table>
+<p>"config.txt" imports "config\SourceViewer.txt" which contains settings about the source viewer:</p>
+<table border="1" summary="Source viewer configuration">
+  <tr>
+    <th>Setting</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>fontFamily</td>
+    <td>Set your desired font family here. E.g. "Courier"</td>
+  </tr>
+  <tr>
+    <td>fontSize</td>
+    <td>Configures the font size</td>
+  </tr>
+  <tr>
+    <td>tabWidth</td>
+    <td>Configures the tab width</td>
+  </tr>
+  <tr>
+    <td>HighlighterXYZ {</td>
+    <td>All groups starting with <strong>Highlighter</strong> contain a syntax highlighting definition. This is explained in a later section.</td>
+  </tr>
+</table>
+<p>
+Some remarks about the syntax of the configuration:<br/>
+The basic syntax is "key = value". A string followed by '{' starts a group. Groups may contain any
+number of key value pairs and other groups. The content of another config file may be imported as
+a group using the "import {file} as {group}" syntax. The syntax "import {file} imports the content
+of a config file in the current group.
+</p>
+<br/>
+
+<b>Updating the index</b>
+<p>
+All indexes specified in the configuration are created or updated when calling "UpdateIndex.exe". Escpecially when being called
+for the first this can be time consuming. Building a fresh index for 30000 files takes about 80 minutes on my machine at work.
+The good thing is that an update for an already existing index is much faster as only modified and new files are processed.
+I recommend to create a scheduled task which runs "UpdateIndex.exe" e.g. once a day.
+</p>
+<br/>
+
+<b>Search syntax</b>
+<pre>foo bar</pre>
+<p>
+Matches <strong>foo</strong> followed by any number of whitespace followed by <strong>bar</strong> but not <strong>foobar</strong>.
+</p>
+<p>The asterix is allowed as the wildcard character to search for keywords that are only partially known:</p>
+<pre>foo*</pre>
+<p>
+Matches any keywords starting with <strong>foo</strong>. This should be quite efficient as the keywords are internally sorted alphabetically and SqLite should easily determine those
+starting with a particular string.
+</p>
+<pre>*bar</pre>
+<p>Matches any keyword ending with <strong>bar</strong>. This is less efficient as it requires to scan over all keywords.</p>
+<pre>int*ate</pre>
+<p>The asterix is certainly also allowed in the middle of keywords. The example above would match <strong>intermediate</strong>.</p>
+<p>To search for a literal asterix sign it must be seperated by a blank:</p>
+<pre>a* * b</pre>
+<p>This matches all keywords starting with <strong>a</strong> followed by a literal asterix and then by <strong>b</strong>.</p>
+<pre>a&lt;=b</pre>
+<p>
+Matches <strong>a</strong> followed by any number of whitespace followed by <strong>&lt;=</strong> and finally followed by <strong>b</strong>.
+By typing a blank between <strong>&lt;</strong> and <strong>=</strong> the search phrase would also match if there are any number of whitespace characters 
+in between.
+</p>
+<p>
+<br/>
+Technical background:<br/>
+The indexing associates the processed documents with their containing keywords. A keyword is an arbitrary 
+length string of alpha numerical characters, the underscore and the hash sign. The first step of searching is to split the search phrase into a sequence 
+of keyword and none-keyword parts.
+An example:
+</p>
+<pre>a != b</pre>
+<p>
+This yields the sequence <strong>a</strong>,<strong>!=</strong>,<strong>b</strong>. <strong>a</strong> and 
+<strong>b</strong> are keywords. The search can then compute all documents which contain these two
+keywords. This set of results will then be stripped down to the final result by reading the files and scanning for the full search phrase 
+using a regular expression. Any number of whitespace is allowed between all parts of the sequence. In the example above there is no 
+whitespace allowed between <strong>!</strong> and <strong>=</strong>. This would be the case if the search phrase was 
+<strong>a ! = b</strong>.
+</p>
+<br/>
+
+<b>Filtering the results</b>
+<p>The UI offers three filters to drill down the results:</p>
+<table border="1" summary="Filter options">
+  <tr>
+    <td>Filter by file/path</td>
+    <td>The file path of the results must contain this filter text as a substring to yield a match. If you want to pass more than one filter 
+    seperate them with a comma</td>
+  </tr>
+  <tr>
+    <td>Filter by extension</td>
+    <td>Specified a list of extensions which are allowed in the result. The seperator is the comma. The following syntax is allowed and all 
+    means the same:<strong>cpp,*.cpp,.cpp</strong></td>
+  </tr>
+  <tr>
+    <td>Case sensitive</td>
+    <td>If checked the case of the search phrase must match</td>
+  </tr>
+</table>
+<p><br/></p>
+
+<b>Keyboard shortcuts</b>
+<p>
+<table border="1" summary="Keyboard shortcuts">
+  <tr>
+    <td>F7</td>
+    <td>Jumps to previous match in current document</td>
+  </tr>
+  <tr>
+    <td>F8</td>
+    <td>Jumps to next match in current document</td>
+  </tr>
+  <tr>
+    <td>CTRL+F</td>
+    <td>Opens a UI which allows to search for text in the current document</td>
+  </tr>
+  <tr>
+    <td>F3</td>
+    <td>Shows next occurance of text in current document</td>
+  </tr>
+  <tr>
+    <td>F4</td>
+    <td>Shows previous occurance of text in current document</td>
+  </tr>
+  <tr>
+    <td>F5</td>
+    <td>Reloads the current document</td>
+  </tr>
+  <tr>
+    <td>CTRL+T</td>
+    <td>Opens a new search tab</td>
+  </tr>
+ <tr>
+    <td>ALT+n</td>
+    <td>Jumps to the n-th tab. Where n is a number of one to six</td>
+  </tr>
+   <tr>
+    <td>CTRL+Text selection</td>
+    <td>Searches for the selection in a new tab. As a double click on a word selects it this is quite handy to quickly navigate through the source</td>
+  </tr>
+  <tr>
+    <td>CTRL+Shift+Text selection</td>
+    <td>Searches for the selection in the current tab</td>
+  </tr>
+</table>
+</p>
+<p><br/></p>
+
+<b>Custom search scripts</b>
+<p>
+These scripts written in Python allow to automate search tasks. At startup of the application all files with the extension ".script" 
+are collected from the sub folder <strong>scripts</strong>.
+To execute a custom search script type your search phrase and then select the "wizard hat" icon right of "Find" button and select the 
+desired script. The script is then called with the search phrase and all filters settings and is expected to return a set of results.
+Here is a basic example to illustrate this:
+</p>
+<pre>
+results.extend (performSearch(query, folders, extensions, caseSensitive))
+</pre>
+<p>The result of this script is identical to what the regular "Find" button does. As you can see the script uses predefined variables and the function 
+<strong>performSearch</strong>. Here is a list of all input variables:</p>
+<table border="1" summary="Input variables">
+  <tr>
+    <td>query</td>
+    <td>The search phrase as string</td>
+  </tr>
+  <tr>
+    <td>folders</td>
+    <td>The folder filter as string</td>
+  </tr>
+  <tr>
+    <td>extensions</td>
+    <td>The extension filter as string</td>
+  </tr>
+  <tr>
+    <td>caseSensitive</td>
+    <td>Boolean if case sensitive is checked</td>
+  </tr>
+</table>
+<p>After the script has finished its work the following variables are inspected to be able display the result:</p>
+<table border="1" summary="Output variables">
+  <tr>
+    <td>results</td>
+    <td>A list of file names with the matches. Each list entry must be the full path to the matching file</td>
+  </tr>
+  <tr>
+    <td>highlight</td>
+    <td>A regular expression object from the module <strong>re</strong> which is used to highlight the 
+    matches in each of the matching files. This is necessary because only the search script knows what the criterias 
+    are which resulted in the returned matches. If you do not set this variable the default is to highlight the initial 
+    <strong>query </strong> string</td>
+  </tr>
+  <tr>
+    <td>label</td>
+    <td>Allows to set the label of the search tab. If you do not set this variable the default is "Custom script"</td>
+  </tr>
+</table>
+<p><br/></p>
+
+<b>Customizing syntax highlighting</b>
+<p>
+The default syntax highlighting works fine for C++ and languages with similar keywords (C#,Java,...). It is configured
+in "config\SourceViewer.txt" like this:
+</p>
+<pre>
+Highlighter_Default {
+    config = C++.txt
+    extensions = *
+}
+
+Highlighter_CPP {
+    config = C++.txt
+    extensions = c*,h*,inl
+}
+</pre>
+<p>
+Each group starting with <strong>Highlighter</strong> defines a syntax highlighting definition. Each definition contains two entries:
+</p>
+<table border="1" summary="Highlighting configuration">
+  <tr>
+    <td>config</td>
+    <td>A file containing the syntax highlighting rules. The file must reside in the "config" directory.</td>
+  </tr>
+    <tr>
+    <td>extensions</td>
+    <td>A list of extensions, possible with wildcards (* and ? allowed)</td>
+  </tr>
+</table>
+<p>
+The sequence of the <strong>Highlighter</strong> groups is not important. The corresponding highlighting definition for a file is looked up
+by the file's extension. If the extension rules of more than one highlighting definition match the one which fits best is used. That means the
+one which contains the most none wildcard characters. This allows to define a default rule using an asterix as shown above.
+</p>
+<p>
+The actual syntax highlighting rule files are Python scripts. The environment for these scripts is constructed in a way to make it easy to 
+access font weights and colors. It might also help to know that everything from "PyQt4.QtCore" and "PyQt4.QtGui" is imported. 
+Highlighting rules are added using three functions. The functions expect the pair <strong>fontWeight</strong> and  <strong>foreground</strong>
+which is internally used to construct a <strong>QTextCharFormat</strong>:
+</p>
+<table border="1" summary="Adding highlighting rules">
+  <tr>
+    <td>addKeywords (keywordList,  fontWeight,  foreground)</td>
+    <td>Adds highlighting to keywords. <strong>keywordList</strong> is a comma seperated string with all keywords.
+  </tr>
+  <tr>
+    <td>addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)</td>
+    <td>Adds a rule for comments. <strong>singleLine</strong> is a string with a regular expression which matches
+    the single line comment. <strong>multiLineStart</strong> and <strong>multiLineEnd</strong> are regular expressions
+    which must match the start and end of a multiline comment. E.g. for C++ the expression should match
+    <code>/*</code> resp. <code>*/</code></td>
+  </tr>
+  <tr>
+    <td>addRule (expr,  fontWeight,  foreground)</td>
+    <td>Adds an arbitrary rule which highlights the result of the regular expression in <strong>expr</strong></td>
+  </tr>
+</table>
+<p>Predefined colors which can be used as <strong>foreground</strong> color:</p>
+<ul>
+  <li>white</li>
+  <li>black</li>
+  <li>red</li>
+  <li>darkRed</li>
+  <li>green</li>
+  <li>darkGreen</li>
+  <li>blue</li>
+  <li>darkBlue</li>
+  <li>cyan</li>
+  <li>darkCyan</li>
+  <li>magenta</li>
+  <li>darkMagenta</li>
+  <li>yellow</li>
+  <li>darkYellow</li>
+  <li>gray</li>
+  <li>darkGray</li>
+  <li>lightGray</li>
+</ul>
+<p>Predefined font weights used as <strong>fontWeight</strong> (ordered from light to bold):</p>
+<ul>
+  <li>Light</li>
+  <li>Normal</li>
+  <li>DemiBold</li>
+  <li>Bold</li>
+  <li>Black</li>
+</ul>
+<br/>
+
+<b>License</b>
+<p>
+CodeBeagle Copyright (C) 2011 Oliver Tengler
+</p>
+<p>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+</p>
+<p>
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+</p>
+<p>
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.
+</p>
+<br/>
+
+</body>
+</html>

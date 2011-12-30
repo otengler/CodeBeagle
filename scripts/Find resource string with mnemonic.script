@@ -1,0 +1,33 @@
+# Description: Searches for a string containing a mnemonic.  E.g. "P&lugins" is found by searching for "Plugins".
+#
+# Input:
+#   query         The search phrase
+#   folders        The folder filter
+#   extensions     The extension filter
+#   caseSensitive  Boolean if case sensitive is checked
+# Output:
+#   results        A list of file names with the matches
+#   highlight      A regular expression which can be used to search for a match in the files
+#   label          The label of the search tab
+# Functions:
+#   performSearch  Call to perform a search in the index
+
+reFlags = 0
+if not caseSensitive:
+	reFlags = re.IGNORECASE
+
+regex = ""
+# Search all variations of the query containing a '&'
+for i in range(len(query)):
+	if regex:
+		regex += "|"
+	regex = regex + query[:i] + "\\s*&\\s*" + query[i:]
+	token = query[:i]+"&"+query[i:]
+	results.extend (performSearch(token, folders, extensions, caseSensitive))
+	
+# Compile the regex to highlight the matches
+highlight = re.compile(regex, reFlags)
+# Set a text for the tab label
+label = "Mnemonic string '" + query + "'"
+
+	

@@ -1,0 +1,41 @@
+#
+# General settings
+#
+
+# Comment in to show a close confirmation message box
+# showCloseConfirmation = 1
+
+# Comment in to print profiling information to stdout when updating the index
+# profileUpdate=1
+
+# Contains some information about the update process
+# updateIndexLog = D:\update.log
+
+#
+# Source viewer settings
+#
+
+import config\SourceViewer.txt as SourceViewer
+
+#
+# Sample index config below. Please override in UserConfig.txt.
+#
+
+#Index1 {
+#    indexdb=D:\qt473.dat
+#    extensions=h,cpp
+#    directories=D:\qt47
+# }
+
+# You may specifiy as many index db as you want. The UI allows to choose in which one to search
+#Index2 {
+#    indexdb=D:\alpha.dat
+#    extensions=h,c
+#    directories=D:\test\linux-3.0.1\arch\alpha
+#}
+
+# Place your index definitions inside UserConfig.txt to preserve your settings when updating to 
+# new version.
+import UserConfig.txt
+
+

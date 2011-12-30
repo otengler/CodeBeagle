@@ -1,0 +1,19 @@
+fontFamily=Consolas
+fontSize=10
+tabWidth=4
+
+Highlighter_Default {
+    config = C++.txt
+    extensions = *
+}
+
+Highlighter_CPP {
+    config = C++.txt
+    extensions = c*,h*,inl
+}
+
+Highlighter_Python {
+    config = Python.txt
+    extensions = py*
+}
+

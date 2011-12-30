@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="default">
+    <file>resources/CodeBeagle.png</file>
+  </qresource>
+</RCC>
