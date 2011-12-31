@@ -28,6 +28,7 @@ xcopy config.txt %BUILDDIR%
 xcopy help.html %BUILDDIR%
 xcopy gpl.txt %BUILDDIR%
 xcopy lgpl.txt %BUILDDIR%
+xcopy readme.txt %BUILDDIR%
 xcopy scripts\* %BUILDDIR%\scripts\
 xcopy config\* %BUILDDIR%\config\
 move build\exe.win32-3.2 build\CodeBeagle

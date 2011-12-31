@@ -14,8 +14,8 @@ UpdateIndex=Executable(
 
 setup(  
     name = "CodeBeagle",
-    version = "1.0.0.24",
-    description = "A database based full text search for source code",
+    version = "1.0.24.0",
+    description = "CodeBeagle - A tool to search source code based on a full text index",
     executables = [CodeBeagle,  UpdateIndex]
 )
 
