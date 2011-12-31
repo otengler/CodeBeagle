@@ -8,8 +8,8 @@
 <body>
 <b>Introduction to CodeBeagle</b>
 <p>
-CodeBeagle allows you to quickly find all occurances of a search term inside source code files. To do so it creates a full text index of 
-the desired source files. Because it is tolerant to whitespace its search syntax works great for searching source code. The search 
+CodeBeagle allows you to quickly find all occurrences of a search term inside source code files. To do so it creates a full text index of 
+the desired source files. Because it is tolerant to white-space its search syntax works great for searching source code. The search 
 results are displayed in a source viewer with customizable syntax highlighting.
 It runs without installation and leaves you in full control when to update the index. 
 Advanced features are the support of multiple indexes and custom search scripts which allow to automate sequences of searches.
@@ -19,7 +19,7 @@ CodeBeagle is written in Python and based on SqLite and Qt.
 
 <b>Configuration</b>
 <p>
-The configuration is stored in "config.txt". This file is exptected to be in the same directory as the executables itself. 
+The configuration is stored in "config.txt". This file is expected to be in the same directory as the executables itself. 
 The most important things to configure are the directories to index, the extensions of the files to collect and the
 path where the index is stored. Here is an example how to define an index:
 </p>
@@ -102,7 +102,7 @@ of a config file in the current group.
 
 <b>Updating the index</b>
 <p>
-All indexes specified in the configuration are created or updated when calling "UpdateIndex.exe". Escpecially when being called
+All indexes specified in the configuration are created or updated when calling "UpdateIndex.exe". Especially when being called
 for the first this can be time consuming. Building a fresh index for 30000 files takes about 80 minutes on my machine at work.
 The good thing is that an update for an already existing index is much faster as only modified and new files are processed.
 "UpdateIndex.exe" has no fancy UI. It just shows a console window during the update of the index. I recommend to create a scheduled 
@@ -113,9 +113,9 @@ task which runs "UpdateIndex.exe" e.g. once a day.
 <b>Search syntax</b>
 <pre>foo bar</pre>
 <p>
-Matches <strong>foo</strong> followed by any number of whitespace followed by <strong>bar</strong> but not <strong>foobar</strong>.
+Matches <strong>foo</strong> followed by any number of white-space followed by <strong>bar</strong> but not <strong>foobar</strong>.
 </p>
-<p>The asterix is allowed as the wildcard character to search for keywords that are only partially known:</p>
+<p>The asterisk is allowed as the wildcard character to search for keywords that are only partially known:</p>
 <pre>foo*</pre>
 <p>
 Matches any keywords starting with <strong>foo</strong>. This should be quite efficient as the keywords are internally sorted alphabetically and SqLite should easily determine those
@@ -124,14 +124,14 @@ starting with a particular string.
 <pre>*bar</pre>
 <p>Matches any keyword ending with <strong>bar</strong>. This is less efficient as it requires to scan over all keywords.</p>
 <pre>int*ate</pre>
-<p>The asterix is certainly also allowed in the middle of keywords. The example above would match <strong>intermediate</strong>.</p>
-<p>To search for a literal asterix sign it must be seperated by a blank:</p>
+<p>The asterisk is certainly also allowed in the middle of keywords. The example above would match <strong>intermediate</strong>.</p>
+<p>To search for a literal asterisk sign it must be separated by a blank:</p>
 <pre>a* * b</pre>
-<p>This matches all keywords starting with <strong>a</strong> followed by a literal asterix and then by <strong>b</strong>.</p>
+<p>This matches all keywords starting with <strong>a</strong> followed by a literal asterisk and then by <strong>b</strong>.</p>
 <pre>a&lt;=b</pre>
 <p>
-Matches <strong>a</strong> followed by any number of whitespace followed by <strong>&lt;=</strong> and finally followed by <strong>b</strong>.
-By typing a blank between <strong>&lt;</strong> and <strong>=</strong> the search phrase would also match if there are any number of whitespace characters 
+Matches <strong>a</strong> followed by any number of white-space followed by <strong>&lt;=</strong> and finally followed by <strong>b</strong>.
+By typing a blank between <strong>&lt;</strong> and <strong>=</strong> the search phrase would also match if there are any number of white-space characters 
 in between.
 </p>
 <p>
@@ -147,8 +147,8 @@ An example:
 This yields the sequence <strong>a</strong>,<strong>!=</strong>,<strong>b</strong>. <strong>a</strong> and 
 <strong>b</strong> are keywords. The search can then compute all documents which contain these two
 keywords. This set of results will then be stripped down to the final result by reading the files and scanning for the full search phrase 
-using a regular expression. Any number of whitespace is allowed between all parts of the sequence. In the example above there is no 
-whitespace allowed between <strong>!</strong> and <strong>=</strong>. This would be the case if the search phrase was 
+using a regular expression. Any number of white-space is allowed between all parts of the sequence. In the example above there is no 
+white-space allowed between <strong>!</strong> and <strong>=</strong>. This would be the case if the search phrase was 
 <strong>a ! = b</strong>.
 </p>
 <br/>
@@ -158,12 +158,12 @@ whitespace allowed between <strong>!</strong> and <strong>=</strong>. This would
 <table border="1" summary="Filter options">
   <tr>
     <td>Filter by file/path</td>
-    <td>The file path of the results must contain this filter text as a substring to yield a match. If you want to pass more than one filter 
-    seperate them with a comma</td>
+    <td>The file path of the results must contain this filter text as a sub-string to yield a match. If you want to pass more than one filter 
+    separate them with a comma</td>
   </tr>
   <tr>
     <td>Filter by extension</td>
-    <td>Specified a list of extensions which are allowed in the result. The seperator is the comma. The following syntax is allowed and all 
+    <td>Specified a list of extensions which are allowed in the result. The separator is the comma. The following syntax is allowed and all 
     means the same:<strong>cpp,*.cpp,.cpp</strong></td>
   </tr>
   <tr>
@@ -190,11 +190,11 @@ whitespace allowed between <strong>!</strong> and <strong>=</strong>. This would
   </tr>
   <tr>
     <td>F3</td>
-    <td>Shows next occurance of text in current document</td>
+    <td>Shows next occurrence of text in current document</td>
   </tr>
   <tr>
     <td>F4</td>
-    <td>Shows previous occurance of text in current document</td>
+    <td>Shows previous occurrence of text in current document</td>
   </tr>
   <tr>
     <td>F5</td>
@@ -222,7 +222,7 @@ whitespace allowed between <strong>!</strong> and <strong>=</strong>. This would
 
 <b>Custom search scripts</b>
 <p>
-These scripts written in Python allow to automate search tasks. At startup of the application all files with the extension ".script" 
+These scripts written in Python allow to automate search tasks. At start-up of the application all files with the extension ".script" 
 are collected from the sub folder <strong>scripts</strong>.
 To execute a custom search script type your search phrase and then select the "wizard hat" icon right of "Find" button and select the 
 desired script. The script is then called with the search phrase and all filters settings and is expected to return a set of results.
@@ -303,7 +303,7 @@ Each group starting with <strong>Highlighter</strong> defines a syntax highlight
 <p>
 The sequence of the <strong>Highlighter</strong> groups is not important. The corresponding highlighting definition for a file is looked up
 by the file's extension. If the extension rules of more than one highlighting definition match the one which fits best is used. That means the
-one which contains the most none wildcard characters. This allows to define a default rule using an asterix as shown above.
+one which contains the most none wildcard characters. This allows to define a default rule using an asterisk as shown above.
 </p>
 <p>
 The actual syntax highlighting rule files are Python scripts. The environment for these scripts is constructed in a way to make it easy to 
@@ -320,7 +320,7 @@ which is internally used to construct a <strong>QTextCharFormat</strong>:
     <td>addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)</td>
     <td>Adds a rule for comments. <strong>singleLine</strong> is a string with a regular expression which matches
     the single line comment. <strong>multiLineStart</strong> and <strong>multiLineEnd</strong> are regular expressions
-    which must match the start and end of a multiline comment. E.g. for C++ the expression should match
+    which must match the start and end of a multi-line comment. E.g. for C++ the expression should match
     <code>/*</code> resp. <code>*/</code></td>
   </tr>
   <tr>
