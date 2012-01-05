@@ -27,7 +27,7 @@ import config\SourceViewer.txt as SourceViewer
 #    directories=D:\qt47
 # }
 
-# You may specifiy as many index db as you want. The UI allows to choose in which one to search
+# You may specifiy as many indexes as you want. The UI allows to choose in which one to search
 #Index2 {
 #    indexdb=D:\alpha.dat
 #    extensions=h,c
@@ -37,5 +37,6 @@ import config\SourceViewer.txt as SourceViewer
 # Place your index definitions inside UserConfig.txt to preserve your settings when updating to 
 # new version.
 import UserConfig.txt
+
 
 

@@ -44,6 +44,14 @@ def removeReadOnly (path):
             if not fileAtt & stat.S_IWRITE:  
                 # File is read-only, so make it writeable  
                 os.chmod(fullpath, stat.S_IWRITE)
+      
+# Change modified timestamp of a file one year back in time
+def modifyTimestamp (name):
+    st = os.stat(name)
+    atime = st[stat.ST_ATIME] #access time
+    mtime = st[stat.ST_MTIME] #modification time
+    new_mtime = mtime - (365*24*3600) # one year in the past
+    os.utime(name,(atime,new_mtime))
         
 def getModulePath ():
     import __main__
@@ -115,6 +123,11 @@ class TestFullTextIndex(unittest.TestCase):
         
         delDir("data")
         shutil.copytree ("data2", "data")
+        # Make sure these three files have a modified timestamp:
+        modifyTimestamp ("data\\utf16\\utf16.txt")
+        modifyTimestamp ("data\\test1.c")
+        modifyTimestamp ("data\\test2.c")
+        
         updateStats = UpdateStatistics()
         fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  updateStats)
         self.assertEqual(updateStats.nNew,  2)

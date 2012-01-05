@@ -17,17 +17,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
+import types
 
 class Config:
     def __init__ (self, name="", dataMap=None,  configLines=None):
-        self.name = name
         self.data = dataMap
         if not self.data:
             self.data = {}
-        if self.name:
-            self.__load()
+        if name:
+            self.loadFile(name)
         elif configLines:
-            self.__parseConfig(configLines)
+            self.parseLines(configLines)
     
     def __getattr__ (self,  attr):
         attr = attr.lower()
@@ -48,44 +48,65 @@ class Config:
         return self.data.__iter__()
     
     def __repr__ (self):
+        return self.__dumpRec (self, 0)
+        
+    def __dumpRec (self,  config,  level):
         s = ""
-        for k,v in self.data.items():
+        for k,v in config.data.items():
             if s:
                 s += "\n"
-            s += "%s -> %s" % (k,v)
+            s = s + " " *2*level + k
+            if type(v) is Config:
+                s = s + " {\n"
+                s = s + self.__dumpRec (v,  level+1)
+                s = s + "\n" + " " *2*level + "}"
+            else:
+                s = s + " = " + v
         return s
-
-    def __load (self):
-        with open(self.name) as file:
-            self.__parseConfig ((line for line in file.readlines()))
+        
+    def loadFile (self, name):
+        with open(name) as file:
+            self.parseLines ((line for line in file.readlines()))
             
-    def __parseConfig(self, lines):
+    def parseLines(self, lines):
+        if not type(lines) is types.GeneratorType:
+            raise TypeError("lines must be a generator type")
         for line in lines:
             line = line.strip()
             try:
                 if not line or line.startswith("#"): # ignore empty lines and comments
                     pass
                 elif line.startswith("import"):
-                    self.handleImport(line)
+                    self.__handleImport(line)
                 elif line.find("=") != -1:
                     key, value = line.split("=")
                     self.data[key.lower().strip()] = value.strip()
                 elif line.startswith("}"):
                     return
                 elif line.endswith("{"):
-                    group = line.split("{")[0].strip()
-                    self.data[group.lower()] = Config(configLines=lines)
+                    groupname = line.split("{")[0].strip().lower()
+                    if groupname in self.data:
+                        group = self.data[groupname]
+                        group.parseLines (lines)
+                    else:
+                        self.data[groupname] = Config(configLines=lines)
             except:
                 print ("Do not understand line: " + line)
                 raise
 
-    def handleImport (self, line):
-        # syntax: import file as token
-        # This import the file into the property 'token'.
+    def __handleImport (self, line):
+        # syntax: import file as groupname
+        # This imports the file into the group 'groupname'. If the group already exists it is merged
         importTokens = re.match("import\\W+([\\w\\\\/\\.]+)\\W+as\\W+(\\w+)", line)
         if importTokens:
+            groupname = importTokens.group(2).lower()
+            filename = importTokens.group(1)
             try:
-                self.data[importTokens.group(2).lower()] = Config(importTokens.group(1))
+                if groupname in self.data:
+                    group = self.data[groupname]
+                    group.loadFile (filename)
+                else:
+                    self.data[groupname] = Config(filename)
             except IOError:
                 pass
         else:
@@ -99,3 +120,8 @@ class Config:
             except IOError:
                 pass
 
+
+    
+    
+    
+    
