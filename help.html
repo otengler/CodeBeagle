@@ -38,11 +38,6 @@ This indexes all files in "D:\source1" and "E:\source2" with the extensions "h",
 "D:\mysource.dat". The section name which specifies the index must start with "index" (case doesn't matter). 
 As illustrated by the section "Index2" you are not restricted to only one index definition. When several indexes
 are defined you can select the index to search in the upper right corner.
-The config syntax allows to import other config files. The default config file uses this to import 
-"UserConfig.txt" at the very end. I recommend to put all your configuration settings
-into this file. This works because a second definition of the same key,value pair overrides
-the first. The reason behind this is to keep your settings when you upgrade to a new version which ships a 
-new "config.txt". 
 </p>
 <p>Here is a full table of all supported settings in "config.txt":</p>
 <table border="1" summary="Configuration options">
@@ -68,6 +63,7 @@ new "config.txt".
     <td>All groups starting with <strong>Index</strong> contain an index definition as described above</td>
   </tr>
 </table>
+<p>The config syntax allows to import other config files.<p>
 <p>"config.txt" imports "config\SourceViewer.txt" which contains settings about the source viewer:</p>
 <table border="1" summary="Source viewer configuration">
   <tr>
@@ -88,9 +84,25 @@ new "config.txt".
   </tr>
   <tr>
     <td>HighlighterXYZ {</td>
-    <td>All groups starting with <strong>Highlighter</strong> contain a syntax highlighting definition. This is explained in a later section.</td>
+    <td>All groups starting with <strong>Highlighter</strong> contain a syntax highlighting definition. This is explained in the section "Customizing syntax highlighting"</a></td>
   </tr>
 </table>
+<p>
+The default config file also imports "UserConfig.txt" at the very end. I recommend to put all your configuration changes
+into this file. The reason behind this is to keep your settings when you upgrade to a new version which ships a 
+new "config.txt". This works because a second definition of the same key,value pair overrides
+the first.  Here is an example of a "UserConfig.txt" which defines one index and overrides the tab width:
+</p>
+<pre>
+Index1 {
+    indexdb=D:\mysource.dat
+    extensions=h,cpp,c
+    directories=D:\source1,E:\source2
+}
+SourceViewer {
+	tabWidth = 2
+}
+</pre>
 <p>
 Some remarks about the syntax of the configuration:<br/>
 The basic syntax is "key = value". A string followed by '{' starts a group. Groups may contain any
@@ -271,7 +283,7 @@ results.extend (performSearch(query, folders, extensions, caseSensitive))
 </table>
 <p><br/></p>
 
-<b>Customizing syntax highlighting</b>
+<b><a name="customsyntaxhighlighting">Customizing syntax highlighting</a></b>
 <p>
 The default syntax highlighting works fine for C++ and languages with similar keywords (C#,Java,...). It is configured
 in "config\SourceViewer.txt" like this:
