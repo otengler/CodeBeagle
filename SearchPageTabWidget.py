@@ -20,6 +20,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from  LeaveLastTabWidget import LeaveLastTabWidget
 from SearchPage import SearchPage
+from SettingsDialog import SettingsDialog
   
 class SearchPageTabWidget (LeaveLastTabWidget):
     def __init__(self, parent=None):
@@ -64,6 +65,17 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     @pyqtSlot()
     def activateTab6(self):
         self.setCurrentIndex(5)
+    
+    # Register a button in the corner widget to open the settings dialog. This function is called by the base class.
+    def addWidgetsToCornerWidget (self,  hbox):
+        super (SearchPageTabWidget,  self).addWidgetsToCornerWidget(hbox)
+        self.addButtonToCornerWidget (hbox,  self.trUtf8("Settings"),  "Settings.png",  self.openSettings)
+        
+    # This is called by the base class when a new tab is added. We use this to connect the request for a new search
+    # to open up in a new tab.
+    def openSettings(self):
+        dlg = SettingsDialog(self)
+        dlg.exec()
      
     # This is called by the base class when a new tab is added. We use this to connect the request for a new search
     # to open up in a new tab.

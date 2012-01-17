@@ -16,6 +16,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+import sys
 import Config
 import FullTextIndex
 import time
@@ -43,6 +45,10 @@ def updateIndexes(indexes):
         statistics = FullTextIndex.UpdateStatistics()
         taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  statistics)
         logging.info (statistics)
+
+# Switch to application directory to be able to load the configuration even if we are 
+# executed from a different working directory.
+os.chdir(os.path.dirname(sys.argv[0]))
 
 conf = Config.Config("config.txt")
 setupLogging (conf)

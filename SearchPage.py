@@ -241,7 +241,7 @@ class SearchPage (QWidget):
         
     @pyqtSlot(QModelIndex)
     def fileSelected (self,  index):
-        name = self.ui.listView.model().data(index, Qt.UserRole)
+        name = index.data(Qt.UserRole)
         self.showFile (name)
         
     def showFile (self, name,  format="source"):
@@ -278,7 +278,7 @@ class SearchPage (QWidget):
         with self.perfReport.newAction("Init database"):
             i = self.ui.comboDB.currentIndex()
             modelIndex = self.ui.comboDB.model().index(i, 0)
-            indexdb = self.ui.comboDB.model().data(modelIndex, Qt.UserRole)
+            indexdb = modelIndex.data(Qt.UserRole)
             fti = FullTextIndex.FullTextIndex(indexdb)
         return fti.search (searchData,  self.perfReport)
         
@@ -293,7 +293,7 @@ class SearchPage (QWidget):
         
     @pyqtSlot(QModelIndex)
     def openFileWithSystem(self, index):
-        name = self.ui.listView.model().data(index, Qt.UserRole)
+        name = index.data(Qt.UserRole)
         url = QUrl.fromLocalFile (name)
         QDesktopServices.openUrl (url)
         
@@ -378,7 +378,7 @@ class SearchPage (QWidget):
         index = self.ui.listView.currentIndex ()
         if not index.isValid():
             return None
-        return self.ui.listView.model().data(index, Qt.UserRole)
+        return index.data(Qt.UserRole)
 
 
     

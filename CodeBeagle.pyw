@@ -24,7 +24,7 @@ from  Ui_MainWindow import Ui_MainWindow
 from AppConfig import appConfig
 
 AppCompany = "OTE"
-AppName = "FullTextIndex"
+AppName = "CodeBeagle"
 
 def main(): 
     styles = QStyleFactory.keys()
@@ -32,10 +32,10 @@ def main():
         QApplication.setStyle("windowsvista")
     elif "windowsxp" in styles:
         QApplication.setStyle("windowsxp")
-            
+    
     app = QApplication(sys.argv) 
     # Switch to application directory to be able to load the configuration and search scripts even if we are 
-    # executed from  a different working directory.
+    # executed from a different working directory.
     QDir.setCurrent(os.path.dirname(sys.argv[0]))
     
     w = MainWindow() 

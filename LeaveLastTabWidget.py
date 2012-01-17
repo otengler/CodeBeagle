@@ -32,14 +32,27 @@ class LeaveLastTabWidget (QTabWidget):
         self.removeTab(0)
         
     def setupUi (self):
-        self.button = QPushButton(self.trUtf8("New tab"), self)
-        icon = QIcon()
-        icon.addPixmap(QPixmap(":/default/resources/NewTab.png"), QIcon.Normal, QIcon.Off)
-        self.button.setIcon(icon)
-        self.setCornerWidget(self.button)
+        widget = QWidget (self)
+        vbox = QHBoxLayout(widget)
+        vbox.setContentsMargins(0, 0, 0, 0)
+        self.addWidgetsToCornerWidget (vbox)
+        self.setCornerWidget(widget)
+    
         QObject.connect(self, SIGNAL("tabCloseRequested(int)"),  self.removeTabButNotLast)
         QObject.connect(self, SIGNAL("currentChanged(int)"),  self.focusSetter)
-        QObject.connect(self.button, SIGNAL("clicked()"),  self.addNewTab)
+        
+    # Derived classes can implement this to add additional buttons to the corner widget
+    def addWidgetsToCornerWidget (self,  hbox):
+        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.trUtf8("New tab"),  "NewTab.png",  self.addNewTab)
+        
+    def addButtonToCornerWidget (self,  hbox,  name,  iconFile,  handler):
+        button = QPushButton(self.trUtf8(name), self)
+        icon = QIcon()
+        icon.addPixmap(QPixmap(":/default/resources/" + iconFile), QIcon.Normal, QIcon.Off)
+        button.setIcon(icon)
+        hbox.addWidget (button)
+        QObject.connect(button, SIGNAL("clicked()"),  handler)
+        return button
         
     @pyqtSlot(int)
     def removeTabButNotLast (self, index):
@@ -50,7 +63,7 @@ class LeaveLastTabWidget (QTabWidget):
         widget.close()
         
     def setNewTabButtonText (self, strText):
-        self.button.setText(strText)
+        self.buttonNewTab.setText(strText)
     
     def setPrototypeForNewTab (self, objType,  strTabName):
         self.objType = objType
