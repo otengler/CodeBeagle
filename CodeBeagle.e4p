@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2011-12-30, 16:02:17 -->
-<!-- Copyright (C) 2011 ,  -->
+<!-- Saved: 2012-01-17, 22:49:31 -->
+<!-- Copyright (C) 2012 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
   <Hash>edbc19d33221c49f85611098167e8c1b450b4cbd</Hash>
@@ -44,6 +44,13 @@
     <Source>Ui_ProgressBar.py</Source>
     <Source>Ui_SearchPage.py</Source>
     <Source>GenerateTS.bat</Source>
+    <Source>LeaveLastTabWidget_rc.py</Source>
+    <Source>SearchPage_rc.py</Source>
+    <Source>MainWindow_rc.py</Source>
+    <Source>SettingsDialog.py</Source>
+    <Source>SettingsItem.py</Source>
+    <Source>Ui_SettingsDialog.py</Source>
+    <Source>Ui_SettingsItem.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>
@@ -51,6 +58,8 @@
     <Form>LeaveLastTabWidget.ui</Form>
     <Form>ProgressBar.ui</Form>
     <Form>SearchPage.ui</Form>
+    <Form>SettingsDialog.ui</Form>
+    <Form>SettingsItem.ui</Form>
   </Forms>
   <Translations>
     <Translation>CodeBeagle.ts</Translation>
