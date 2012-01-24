@@ -21,23 +21,27 @@ from PyQt4.QtGui import *
 from Ui_SettingsItem import Ui_SettingsItem
 
 class SettingsItem (QWidget):
-    def __init__ (self, parent):
+    def __init__ (self, parent,  shadeBackground=False):
         super (SettingsItem, self).__init__(parent)
         self.ui = Ui_SettingsItem()
         self.ui.setupUi(self)
-        self.gradient = QLinearGradient()
-        self.gradient.setStart(0, 0)
-        self.gradient.setColorAt(0, QColor("#eef"))
-        self.gradient.setColorAt(1, QColor("#ccf"))
+        if shadeBackground:
+            self.gradient = QLinearGradient()
+            self.gradient.setStart(0, 0)
+            self.gradient.setColorAt(0, QColor("#eef"))
+            self.gradient.setColorAt(1, QColor("#ccf"))
+        else:
+            self.gradient = None
    
     def focusInEvent (self, event):
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
         
     def paintEvent(self, event):
-        rect = event.rect()
-        self.gradient.setFinalStop (rect.width(), 0)
-        painter = QPainter(self)
-        painter.fillRect(rect, QBrush(self.gradient))
+        if self.gradient:
+            rect = event.rect()
+            self.gradient.setFinalStop (rect.width(), 0)
+            painter = QPainter(self)
+            painter.fillRect(rect, QBrush(self.gradient))
         super(SettingsItem, self).paintEvent(event)
         
     def setName(self, name):

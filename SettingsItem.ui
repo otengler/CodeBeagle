@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>545</width>
-    <height>195</height>
+    <width>478</width>
+    <height>262</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -74,6 +74,9 @@
      <property name="text">
       <string>Generate index</string>
      </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
    <item row="4" column="0">
@@ -112,5 +115,54 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>checkBoxGenerateIndex</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>editIndexLocation</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>220</x>
+     <y>143</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>270</x>
+     <y>181</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxGenerateIndex</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>buttonUpdateNow</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>220</x>
+     <y>143</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>57</x>
+     <y>223</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxGenerateIndex</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>buttonBrowseIndexLocation</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>220</x>
+     <y>143</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>451</x>
+     <y>181</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

@@ -21,6 +21,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from Ui_SettingsDialog import Ui_SettingsDialog
 from SettingsItem import SettingsItem
+from IndexConfiguration import IndexConfiguration
 
 class SettingsEditorDelegate (QStyledItemDelegate):
     def __init__(self,  parent=None):
@@ -36,7 +37,7 @@ class SettingsEditorDelegate (QStyledItemDelegate):
         self.editorHeight = 0
         
     def createEditor (self,  parent,  option,  index):
-        item = SettingsItem (parent)
+        item = SettingsItem (parent,  True)
         self.editRow = index.row()
         self.editorHeight = item.minimumSizeHint().height()
         self.sizeHintChanged.emit (index)
@@ -67,10 +68,23 @@ class SettingsDialog (QDialog):
         super (SettingsDialog, self).__init__(parent)
         self.ui = Ui_SettingsDialog()
         self.ui.setupUi(self)
+        self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
-        model = QStringListModel (["My search location", "Welt"])
-        self.ui.listView.setModel(model)
-        self.ui.listView.setItemDelegate (SettingsEditorDelegate())
+        self.model = QStringListModel (["My search location", "Welt"])
+        self.ui.listViewLocations.setModel(self.model)
+        self.ui.listViewLocations.setItemDelegate (SettingsEditorDelegate())
+        
+    @pyqtSlot()
+    def addLocation (self):
+        rows = self.model.rowCount()
+        if self.model.insertRow(rows):
+            addedIndex = self.model.index(rows, 0)
+            conf = IndexConfiguration()
+            self.model.setData(addedIndex, self.trUtf8("New location"), Qt.DisplayRole)
+        
+    @pyqtSlot()
+    def removeLocation (self):
+        pass
         
 def main():    
     app = QApplication(sys.argv) 

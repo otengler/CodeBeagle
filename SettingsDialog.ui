@@ -6,36 +6,37 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>588</width>
-    <height>406</height>
+    <width>747</width>
+    <height>552</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Settings</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <item>
-    <widget class="QListView" name="listView">
-     <property name="editTriggers">
-      <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>true</bool>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="labelAdditionalSearchLocations">
+     <property name="text">
+      <string>Search locations:</string>
      </property>
     </widget>
    </item>
-   <item>
+   <item row="0" column="1" rowspan="2">
     <widget class="QFrame" name="frameButtons">
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
      <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="labelSpacer">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QPushButton" name="buttonAdd">
         <property name="text">
@@ -80,8 +81,90 @@
      </layout>
     </widget>
    </item>
+   <item row="1" column="0">
+    <widget class="QListView" name="listViewLocations">
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonAdd</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>addLocation()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>678</x>
+     <y>47</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonRemove</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>removeLocation()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>678</x>
+     <y>82</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonOK</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>678</x>
+     <y>491</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>678</x>
+     <y>526</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>addLocation()</slot>
+  <slot>removeLocation()</slot>
+ </slots>
 </ui>

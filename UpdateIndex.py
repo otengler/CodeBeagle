@@ -41,10 +41,11 @@ def setupLogging (conf):
     
 def updateIndexes(indexes):
     for config in indexes:
-        fti=FullTextIndex.FullTextIndex(config.indexdb)
-        statistics = FullTextIndex.UpdateStatistics()
-        taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  statistics)
-        logging.info (statistics)
+        if config.updateIndex:
+            fti=FullTextIndex.FullTextIndex(config.indexdb)
+            statistics = FullTextIndex.UpdateStatistics()
+            taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  statistics)
+            logging.info (statistics)
 
 # Switch to application directory to be able to load the configuration even if we are 
 # executed from a different working directory.

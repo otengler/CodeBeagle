@@ -81,7 +81,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     # to open up in a new tab.
     def newTabAdded(self,  searchPage):
         QObject.connect(searchPage, SIGNAL("newSearchRequested(QString,int)"),  self.searchInNewTab)
-        QObject.connect(searchPage,  SIGNAL("searchStarted(QWidget, QString)"),  self.changeTabName)
+        QObject.connect(searchPage,  SIGNAL("searchFinished(QWidget, QString)"),  self.changeTabName)
         
     @pyqtSlot('QString', int)
     def searchInNewTab (self,  text, dbIndex):

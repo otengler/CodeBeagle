@@ -19,20 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
 class IndexConfiguration:
-    def __init__(self,  indexGroup):
-        self.indexdb =indexGroup.indexdb
-        self.extensions = [self.__makeExt(ext) for ext in indexGroup.extensions.split(",")]
-        self.directories = self.indexDirectories(indexGroup)
+    def __init__(self,  indexName=None,  extensions=None,  directories=None,  indexdb=None,  updateIndex=True):
+        self.indexName = indexName
+        self.updateIndex = updateIndex
+        self.indexdb = indexdb
+        self.extensions = [self.__makeExt(ext) for ext in extensions.split(",")]
+        self.directories = [d.strip() for d in directories.split(",")]
         
-    def indexDirectories(self, indexGroup):
-        try:
-            directories = indexGroup.directories
-        except KeyError:
-            directories = indexGroup.directory
-        return [d.strip() for d in directories.split(",")]
-        
-    # Return a friendly name. Currently this returns just the file name of the db without extension
-    def name(self):
+    # Return a display name. Either it is explicitely defined or the file part of the index database is used
+    def displayName(self):
+        if self.indexName:
+            return self.indexName
         filename = os.path.split(self.indexdb)[1]
         return os.path.splitext(filename)[0]
         
@@ -45,10 +42,21 @@ class IndexConfiguration:
 # Returns a list of Index objects from the config
 def readConfig (conf):
     indexes = []
-    for c in conf:
-        if c.startswith("index"):
-            indexes.append(c)
+    for group in conf:
+        if group.startswith("index"):
+            indexes.append(group)
     indexes.sort()
-    return [IndexConfiguration(conf[c]) for c in indexes]
+    
+    result = []
+    for group in indexes:
+        indexConf= conf[group]
+        indexdb = indexConf.indexdb
+        extensions = indexConf.extensions
+        try:
+            directories = indexConf.directories
+        except KeyError:
+            directories = indexConf.directory
+        result.append(IndexConfiguration(indexdb=indexdb, extensions=extensions, directories=directories))
+    return result
     
 
