@@ -16,6 +16,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 import codecs
 
 def fopen (name, mode='r'):
@@ -35,3 +36,18 @@ def fopen (name, mode='r'):
     except:
         f.close()
         raise
+
+# Return a path where the application may store data. For Windows this is where APPDATA points to.
+# For Linux HOME should work.
+def getAppDataPath (appName):
+    if "APPDATA" in os.environ:
+        location = "$APPDATA"
+    elif "HOME" in os.environ:
+        location = "$HOME"
+        appName = "." + appName # By convention config data is stored with a leading dot
+    else:
+        raise RuntimeError("Path to app data not found. Neither APPDATA nor HOME is defined")
+    location = os.path.join(location, appName)
+    location += os.path.sep
+    return os.path.expandvars(location)
+            

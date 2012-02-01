@@ -21,6 +21,9 @@ from PyQt4.QtGui import *
 from  LeaveLastTabWidget import LeaveLastTabWidget
 from SearchPage import SearchPage
 from SettingsDialog import SettingsDialog
+import IndexConfiguration
+import AppConfig
+from Config import Config
   
 class SearchPageTabWidget (LeaveLastTabWidget):
     def __init__(self, parent=None):
@@ -71,11 +74,43 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         super (SearchPageTabWidget,  self).addWidgetsToCornerWidget(hbox)
         self.addButtonToCornerWidget (hbox,  self.trUtf8("Settings"),  "Settings.png",  self.openSettings)
         
-    # This is called by the base class when a new tab is added. We use this to connect the request for a new search
-    # to open up in a new tab.
+    # The settings allow to configure search locations (and index them).
     def openSettings(self):
-        dlg = SettingsDialog(self)
-        dlg.exec()
+        config = AppConfig.userConfig()
+        if not config:
+            QMessageBox.critical(self,
+                        self.trUtf8("Failed to load user config"),
+                        self.trUtf8("The user config file could not be loaded from the user profile"),
+                        QMessageBox.StandardButtons(QMessageBox.Ok))
+        else:
+            indexes = IndexConfiguration.readConfig(config)
+            dlg = SettingsDialog(self, indexes)
+            if dlg.exec():
+                # Perform some sanity checks:
+                # - No duplicate index DB
+                locations = dlg.locations()
+                config = Config()
+                for location in locations:
+                    locConf = Config()
+                    locConf.setValue("indexName", location.indexName)
+                    locConf.setValue("extensions", location.extensionsAsString())
+                    locConf.setValue("directories", location.directoriesAsString())
+                    locConf.setValue("generateIndex", location.generateIndex)
+                    locConf.setValue("indexdb", location.indexdb)
+                    config.setValue("index_" + location.indexName.replace(" ", "_"), locConf)
+                    
+                try:
+                    #AppConfig.saveUserConfig(config)
+                    AppConfig.saveUserConfig (config)
+                except:
+                    raise
+                    QMessageBox.critical(self,
+                        self.trUtf8("Failed to save user config"),
+                        self.trUtf8("The user config file could not be saved to the user profile"),
+                        QMessageBox.StandardButtons(QMessageBox.Ok))
+                else:    
+                    # Refresh config
+                    pass
      
     # This is called by the base class when a new tab is added. We use this to connect the request for a new search
     # to open up in a new tab.

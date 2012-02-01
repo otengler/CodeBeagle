@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import types
+from FileTools import fopen
 
 class Config:
     def __init__ (self, name="", dataMap=None,  configLines=None):
@@ -42,7 +43,7 @@ class Config:
         return default
 
     def __getitem__(self,a):
-        return self.data[a]
+        return self.data[a.lower()]
         
     def __iter__(self):
         return self.data.__iter__()
@@ -64,8 +65,14 @@ class Config:
                 s = s + " = " + v
         return s
         
+    def setValue(self, key, value):
+        if type(value) is Config:
+            self.data[key.lower()] = value
+        else:
+            self.data[key.lower()] = str(value)
+            
     def loadFile (self, name):
-        with open(name) as file:
+        with fopen(name) as file:
             self.parseLines ((line for line in file.readlines()))
             
     def parseLines(self, lines):
@@ -121,7 +128,6 @@ class Config:
                 pass
 
 
-    
     
     
     

@@ -21,18 +21,9 @@ import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from  Ui_MainWindow import Ui_MainWindow
-from AppConfig import appConfig
-
-AppCompany = "OTE"
-AppName = "CodeBeagle"
+import AppConfig
 
 def main(): 
-    styles = QStyleFactory.keys()
-    if "windowsvista" in styles:
-        QApplication.setStyle("windowsvista")
-    elif "windowsxp" in styles:
-        QApplication.setStyle("windowsxp")
-    
     app = QApplication(sys.argv) 
     # Switch to application directory to be able to load the configuration and search scripts even if we are 
     # executed from a different working directory.
@@ -50,7 +41,7 @@ class MainWindow (QMainWindow):
         self.__restoreGeometryAndState()
         
     def closeEvent(self,  event):
-        if int(appConfig().value("showCloseConfirmation", 0)):
+        if int(AppConfig.appConfig().value("showCloseConfirmation", 0)):
             res = QMessageBox.question(self,
                                                          self.trUtf8("Really close?"),
                                                          self.trUtf8("Do you really want to close the application?"),
@@ -66,14 +57,14 @@ class MainWindow (QMainWindow):
         super (MainWindow, self).closeEvent(event)
         
     def __restoreGeometryAndState(self):
-        settings = QSettings(AppCompany, AppName);
+        settings = QSettings(AppConfig.appCompany, AppConfig.appName);
         if settings.value("geometry"):
             self.restoreGeometry(settings.value("geometry"))
         if settings.value("windowState"):
             self.restoreState (settings.value("windowState"))
         
     def __saveGeometryAndState (self):
-        settings = QSettings(AppCompany, AppName)
+        settings = QSettings(AppConfig.appCompany, AppConfig.appName)
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
 

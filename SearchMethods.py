@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2011 Oliver Tengler
+Copyright (C) 2012 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by

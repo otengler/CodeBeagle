@@ -24,12 +24,28 @@ from SettingsItem import SettingsItem
 from IndexConfiguration import IndexConfiguration
 
 class SettingsEditorDelegate (QStyledItemDelegate):
+    itemHeight = 40
+    
     def __init__(self,  parent=None):
         super (QStyledItemDelegate,  self).__init__(parent)
         # These two variables contain the row number and the height of the row which is being edited
         self.editRow = -1
         self.editorHeight = 0
         self.closeEditor.connect(self.resetEditRow)
+        if parent:
+            self.boldFont = QFont (parent.font())
+        else:
+            self.boldFont = QFont (QApplication.font())
+        self.boldFont.setBold (True)
+        
+        self.gradient = QLinearGradient()
+        self.gradient.setColorAt(0.0, QColor("#fff"))
+        self.gradient.setColorAt(0.5, QColor("#eee"))
+        self.gradient.setColorAt(1.0, QColor("#fff"))
+        
+        self.selectedGradient = QLinearGradient()
+        self.selectedGradient.setColorAt(0.0, QColor("#eef"))
+        self.selectedGradient.setColorAt(1.0, QColor("#ccf"))
         
     @pyqtSlot('QWidget')
     def resetEditRow(self, editor):
@@ -38,57 +54,140 @@ class SettingsEditorDelegate (QStyledItemDelegate):
         
     def createEditor (self,  parent,  option,  index):
         item = SettingsItem (parent,  True)
+        item.commitChanges.connect(self.commitChanges)
         self.editRow = index.row()
         self.editorHeight = item.minimumSizeHint().height()
         self.sizeHintChanged.emit (index)
         return item
+        
+    @pyqtSlot('QWidget')
+    def commitChanges(self, editor):
+        self.commitData.emit(editor)
     
     def setEditorData (self,  editor,  index):
-        name = index.data(Qt.DisplayRole)
-        editor.setName (name)
+        location = index.data(Qt.UserRole+1)
+        editor.setName (location.displayName())
+        editor.setDirectories(location.directoriesAsString())
+        editor.setExtensions(location.extensionsAsString())
+        if location.indexdb:
+            editor.setIndexDB(location.indexdb)
+        editor.enableIndexGeneration(location.generateIndex)
+        updateIndex = False
+        if hasattr(location,"updateIndex"):
+            updateIndex = location.updateIndex
+        editor.enableIndexUpdate(updateIndex)
         
     def setModelData (self, editor,  model,  index):
-        model.setData (index,  editor.name(),  Qt.DisplayRole)
+        name = editor.name()
+        model.setData (index,  name,  Qt.DisplayRole)
+        location = IndexConfiguration (name,  editor.extensions(), editor.directories(), editor.indexDB(), editor.indexGenerationEnabled())
+        location.updateIndex = editor.indexUpdateEnabled()
+        model.setData (index,  location,  Qt.UserRole+1)
         
     def updateEditorGeometry(self,  editor,  option,  index):
-        editor.setGeometry(option.rect.x(), option.rect.y(),  option.rect.width(),  self.editorHeight)
+        editor.setGeometry(option.rect.x(), option.rect.y()+self.itemHeight,  option.rect.width(),  self.editorHeight)
         
     def paint (self,  painter, option, index):
-        if self.editRow != index.row():
-            super(SettingsEditorDelegate, self).paint(painter, option, index)
+        rect = QRect(option.rect)
+        rect.setHeight(self.itemHeight)
+        
+        selected = self.editRow == index.row()
+        if selected:
+            grad = self.selectedGradient
+            grad.setStart(rect.left(), 0)
+            grad.setFinalStop (rect.right(), 0)
+        else:
+            grad = self.gradient
+            grad.setStart(0, rect.top())
+            grad.setFinalStop (0, rect.bottom())
+        painter.fillRect(rect, QBrush(grad))
+        
+        third = (rect.width()-12) / 3
+        
+        rect1 = QRect(rect)
+        rect1.translate(12, 0)
+        rect1.setWidth(third)
+        rect2 = QRect(rect1)
+        rect2.translate(third, 0)
+        rect2.setWidth(third*2)
+        
+        painter.save()
+        
+        location = index.data(Qt.UserRole+1)
+        
+        if len(location.directories)>0:
+            dirs = self.trUtf8("Directories: ") + ",".join(location.directories)
+            if len(location.extensions)>0:
+                dirs += " ("
+                dirs += self.trUtf8("Extensions: ") + ",".join(location.extensions)
+                dirs += ")"
+            painter.drawText (rect2, Qt.AlignVCenter+Qt.TextWordWrap, dirs)
+            
+        painter.setFont(self.boldFont)
+        painter.drawText (rect1, Qt.AlignVCenter+Qt.TextWordWrap, location.displayName())
+        
+        painter.restore()
         
     def sizeHint (self,  option,  index):
         if index.row() == self.editRow:
-            return QSize (option.rect.width(),  self.editorHeight)
+            return QSize (option.rect.width(),  self.editorHeight+self.itemHeight)
         else:
-            return super(SettingsEditorDelegate, self).sizeHint(option, index)+QSize(0, 20)
+            baseHint = super(SettingsEditorDelegate, self).sizeHint(option, index)
+            return QSize(baseHint.width(), self.itemHeight)
 
 class SettingsDialog (QDialog):
-    def __init__ (self, parent=None):
+    def __init__ (self, parent,  searchLocations):
         super (SettingsDialog, self).__init__(parent)
         self.ui = Ui_SettingsDialog()
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
-        self.model = QStringListModel (["My search location", "Welt"])
+        self.model = QStandardItemModel()
         self.ui.listViewLocations.setModel(self.model)
-        self.ui.listViewLocations.setItemDelegate (SettingsEditorDelegate())
+        self.ui.listViewLocations.setItemDelegate (SettingsEditorDelegate(self.ui.listViewLocations))
         
-    @pyqtSlot()
-    def addLocation (self):
+        for location in searchLocations:
+            self.__addLocation(location)
+            
+        index = self.model.index(0, 0)
+        if index.isValid():
+            self.ui.listViewLocations.setCurrentIndex(index)
+            self.ui.listViewLocations.edit(index)
+        
+    def locations(self):
+        locs = []
+        for row in range(self.model.rowCount()):
+            index = self.model.index(row, 0)
+            locs.append(index.data(Qt.UserRole+1))
+        
+        return locs
+        
+    def __addLocation (self,  location):
         rows = self.model.rowCount()
         if self.model.insertRow(rows):
-            addedIndex = self.model.index(rows, 0)
-            conf = IndexConfiguration()
-            self.model.setData(addedIndex, self.trUtf8("New location"), Qt.DisplayRole)
+            item = QStandardItem(location.displayName())
+            item.setData(location)
+            self.model.setItem(rows, item)
+            return self.model.index(rows, 0)
+            
+    @pyqtSlot()
+    def addLocation (self):
+        location = IndexConfiguration(self.trUtf8("New location"))
+        location.updateIndex = True # As this is a new location, mark this index for update
+        index = self.__addLocation(location)
+        if index.isValid():
+            self.ui.listViewLocations.setCurrentIndex(index)
         
     @pyqtSlot()
     def removeLocation (self):
-        pass
+        index = self.ui.listViewLocations.currentIndex ()
+        if index.isValid():
+            self.model.removeRow(index.row())
         
 def main():    
     app = QApplication(sys.argv) 
-    w = SettingsDialog() 
+    locations = [IndexConfiguration("Qt Source",  "h,cpp", "D:\\qt", "D:\\index.dat"), IndexConfiguration("Linux")]
+    w = SettingsDialog(None,locations) 
     w.show() 
     sys.exit(app.exec_()) 
 

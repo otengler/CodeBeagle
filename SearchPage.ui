@@ -238,7 +238,7 @@ p, li { white-space: pre-wrap; }
       <item>
        <widget class="QLabel" name="labelDB">
         <property name="text">
-         <string>Data&amp;base:</string>
+         <string>&amp;Location:</string>
         </property>
         <property name="buddy">
          <cstring>comboDB</cstring>
@@ -471,8 +471,8 @@ p, li { white-space: pre-wrap; }
    <slot>performanceInfo()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>691</x>
-     <y>80</y>
+     <x>838</x>
+     <y>91</y>
     </hint>
     <hint type="destinationlabel">
      <x>496</x>
@@ -487,8 +487,8 @@ p, li { white-space: pre-wrap; }
    <slot>exportMatches()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>651</x>
-     <y>80</y>
+     <x>798</x>
+     <y>91</y>
     </hint>
     <hint type="destinationlabel">
      <x>496</x>
@@ -503,8 +503,8 @@ p, li { white-space: pre-wrap; }
    <slot>execCustomScripts()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>898</x>
-     <y>21</y>
+     <x>995</x>
+     <y>32</y>
     </hint>
     <hint type="destinationlabel">
      <x>554</x>

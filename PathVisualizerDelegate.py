@@ -30,7 +30,7 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         if parent:
             self.pathBoldFont = QFont (parent.font())
         else:
-            self.pathBoldFont = QFont (QApplication.font)
+            self.pathBoldFont = QFont (QApplication.font())
         self.pathBoldFont.setBold (True)
         self.pathBoldFontMetrics = QFontMetrics(self.pathBoldFont)
         

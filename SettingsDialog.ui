@@ -27,6 +27,9 @@
       <property name="topMargin">
        <number>0</number>
       </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
       <property name="bottomMargin">
        <number>0</number>
       </property>
@@ -87,10 +90,7 @@
       <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
      <property name="editTriggers">
-      <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>true</bool>
+      <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::SelectedClicked</set>
      </property>
     </widget>
    </item>

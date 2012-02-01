@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2012-01-17, 22:49:31 -->
+<!-- Saved: 2012-01-27, 23:12:11 -->
 <!-- Copyright (C) 2012 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -51,6 +51,8 @@
     <Source>SettingsItem.py</Source>
     <Source>Ui_SettingsDialog.py</Source>
     <Source>Ui_SettingsItem.py</Source>
+    <Source>SearchMethods.py</Source>
+    <Source>AsynchronousTask.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>

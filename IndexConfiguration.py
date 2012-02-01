@@ -19,12 +19,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
 class IndexConfiguration:
-    def __init__(self,  indexName=None,  extensions=None,  directories=None,  indexdb=None,  updateIndex=True):
+    def __init__(self,  indexName=None,  extensions="",  directories="",  indexdb=None,  generateIndex=True):
         self.indexName = indexName
-        self.updateIndex = updateIndex
+        self.generateIndex = generateIndex
         self.indexdb = indexdb
-        self.extensions = [self.__makeExt(ext) for ext in extensions.split(",")]
-        self.directories = [d.strip() for d in directories.split(",")]
+        # These list comprehensions split a string into a list making sure that an empty string returns an empty list
+        self.extensions = [e for e in (self.__makeExt(e) for e in extensions.split(",")) if len(e)>0]
+        self.directories = [d for d in (d.strip() for d in directories.split(",")) if len(d)>0]
+        
+    def extensionsAsString(self):
+        return ",".join(self.extensions)
+        
+    def directoriesAsString(self):
+        return ",".join(self.directories)
         
     # Return a display name. Either it is explicitely defined or the file part of the index database is used
     def displayName(self):
@@ -35,9 +42,17 @@ class IndexConfiguration:
         
     def __makeExt (self, ext):
         ext = ext.strip()
-        if not ext.startswith("."):
+        if ext and not ext.startswith("."):
             ext = "." + ext
         return ext
+        
+    def __str__(self):
+        s    = "Name       : " + self.indexName + "\n"
+        s += "Indexed    : " + str(self.generateIndex) + "\n"
+        s += "IndexDB    : " + self.indexdb + "\n"
+        s += "Directories: " + str(self.directories) + "\n"
+        s += "Extensions : " + str(self.extensions) + "\n"
+        return s
         
 # Returns a list of Index objects from the config
 def readConfig (conf):
@@ -50,13 +65,15 @@ def readConfig (conf):
     result = []
     for group in indexes:
         indexConf= conf[group]
+        indexName = indexConf.value("indexName", None)
+        generateIndex = (indexConf.value("generateIndex", "True") == "True")
         indexdb = indexConf.indexdb
         extensions = indexConf.extensions
         try:
             directories = indexConf.directories
         except KeyError:
             directories = indexConf.directory
-        result.append(IndexConfiguration(indexdb=indexdb, extensions=extensions, directories=directories))
+        result.append(IndexConfiguration(indexName, extensions, directories,  indexdb,  generateIndex))
     return result
     
 

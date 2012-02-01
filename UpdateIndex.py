@@ -41,7 +41,7 @@ def setupLogging (conf):
     
 def updateIndexes(indexes):
     for config in indexes:
-        if config.updateIndex:
+        if config.generateIndex:
             fti=FullTextIndex.FullTextIndex(config.indexdb)
             statistics = FullTextIndex.UpdateStatistics()
             taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  statistics)
