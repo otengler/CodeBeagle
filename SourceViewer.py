@@ -22,12 +22,13 @@ from Ui_SourceViewer import Ui_SourceViewer
 from FileTools import fopen
 from AppConfig import appConfig
 import HighlighterConfiguration  
-from Config import Config
 import os
 
 class SourceViewer (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
+    noPreviousMatch = pyqtSignal()
+    noNextMatch = pyqtSignal()
     
     def __init__ (self, parent):
         super (SourceViewer, self).__init__(parent)
@@ -51,11 +52,12 @@ class SourceViewer (QWidget):
         
     def __processConfig (self):
         self.sourceFont = QFont()
-        config = appConfig().value("SourceViewer", Config())
-        self.sourceFont.setFamily(config.value("FontFamily", "Consolas"))
+        config = appConfig().SourceViewer
+        self.sourceFont.setFamily(config.FontFamily)
         self.sourceFont.setStyleHint (QFont.Monospace)
-        self.sourceFont.setPointSize(int(config.value("FontSize",10)))
-        self.ui.textEdit.setTabStopWidth(int(config.value("TabWidth", 2))*10)
+        self.sourceFont.setPointSize(config.FontSize)
+        self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
+        self.bMatchOverFiles = appConfig().matchOverFiles
         
     def __reset (self):
         self.matches = [] # touples with position and length
@@ -108,15 +110,21 @@ class SourceViewer (QWidget):
     def nextMatch (self):
         if self.curMatch < len(self.matches)-1:
             self.curMatch += 1
-        self.__scrollToMatch (self.curMatch,)
-        self.__setInfoLabel ()
+            self.__scrollToMatch (self.curMatch,)
+            self.__setInfoLabel ()
+        else:
+            if self.bMatchOverFiles:
+                self.noNextMatch.emit()
         
     @pyqtSlot()
     def previousMatch (self):
         if self.curMatch > 0:
             self.curMatch -= 1
-        self.__scrollToMatch (self.curMatch,)
-        self.__setInfoLabel ()
+            self.__scrollToMatch (self.curMatch,)
+            self.__setInfoLabel ()
+        else:
+            if self.bMatchOverFiles:
+                self.noPreviousMatch.emit()
             
     @pyqtSlot()
     def nextSearch(self):
@@ -295,7 +303,7 @@ class Highlighter(QSyntaxHighlighter):
     def __init__(self, parent=None):
         super(Highlighter, self).__init__(parent)
         
-        self.highlighterConfig = HighlighterConfiguration.highlighter(appConfig().value("SourceViewer", Config()))
+        self.highlighterConfig = HighlighterConfiguration.highlighter(appConfig().SourceViewer)
         
         # A dict mapping a file extension to a HighlightingRules object
         self.highlightingRulesCache = {}

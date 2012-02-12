@@ -3,7 +3,7 @@
 #
 
 # Comment in to show a close confirmation message box
-# showCloseConfirmation = 1
+# showCloseConfirmation = True
 
 # Comment in to print profiling information to stdout when updating the index
 # profileUpdate=1

@@ -16,6 +16,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import sys
 import os
 import codecs
 
@@ -50,4 +51,15 @@ def getAppDataPath (appName):
     location = os.path.join(location, appName)
     location += os.path.sep
     return os.path.expandvars(location)
-            
+    
+# Switch to application directory. This helps to locate files by a relative path.
+def switchToAppDir ():
+    try:
+        dirName = os.path.dirname(sys.argv[0])
+        if dirName:
+            os.chdir(dirName)
+    except Exception as  e:
+        print ("Failed to switch to application directory: " + str(e))
+        
+        
+

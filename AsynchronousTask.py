@@ -28,7 +28,10 @@ class AsynchronousTask (QThread):
         self.result = None
         
     def run(self):
-        self.result = self.function (*self.args)
+        try:
+            self.result = self.function (*self.args)
+        except Exception as e:
+            self.result = e
 
 def execute (parent,  func,  *args):
     progress = None
@@ -43,6 +46,9 @@ def execute (parent,  func,  *args):
         progress.exec()
         searchTask.wait()
         
+        # If the thread raised an exception re-raise it in the main thread
+        if isinstance(searchTask.result,Exception):
+            raise searchTask.result
         return searchTask.result
     finally:
         if progress:

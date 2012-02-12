@@ -77,7 +77,7 @@ class TestFullTextIndex(unittest.TestCase):
         delDir("data")
         shutil.copytree ("data1", "data")
         updateStats = UpdateStatistics()
-        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"], updateStats)
+        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"], [], updateStats)
         self.assertEqual(updateStats.nNew,  6)
         self.assertEqual(updateStats.nUpdated,  0)
         self.assertEqual(updateStats.nUnchanged,  0)
@@ -129,7 +129,7 @@ class TestFullTextIndex(unittest.TestCase):
         modifyTimestamp ("data\\test2.c")
         
         updateStats = UpdateStatistics()
-        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  updateStats)
+        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  [], updateStats)
         self.assertEqual(updateStats.nNew,  2)
         self.assertEqual(updateStats.nUpdated,  3)
         self.assertEqual(updateStats.nUnchanged,  2)
@@ -192,7 +192,7 @@ class TestFullTextIndex(unittest.TestCase):
             
         # Update index again to check that no updated file will be found
         updateStats = UpdateStatistics()
-        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  updateStats)
+        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  [],  updateStats)
         self.assertEqual(updateStats.nNew,  0)
         self.assertEqual(updateStats.nUpdated,  0)
         self.assertEqual(updateStats.nUnchanged,  7)

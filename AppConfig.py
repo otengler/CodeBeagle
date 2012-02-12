@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from Config import Config
+import Config
 import FileTools
 
 appName = "CodeBeagle"
@@ -25,24 +25,31 @@ appCompany = "OTE"
 configName = "config.txt"
 _config = None
 
+class AppConfigReader:
+    def __init__(self,  config):
+        self.config = config
+
 # Read the global config.txt followed by a per user config.txt.
 def appConfig():
     global _config
     if not _config:
-        _config = Config(configName)
+        _config = Config.Config(configName,  typeInfoFunc=configTypeInfo)
         __loadUserConfig (_config)
     return _config
 
+# The next call to "appConfig" will read a fresh config
 def refreshConfig():
     global _config
     _config = None
-    return appConfig()
     
 # Returns just the user config
 def userConfig():
-    config = Config()
+    config = Config.Config(typeInfoFunc=configTypeInfo)
     return __loadUserConfig(config)
     
+def getUserDataPath():
+    return FileTools.getAppDataPath(appName)
+
 def saveUserConfig (config):
     appDataPath = FileTools.getAppDataPath(appName)
     name = os.path.join(appDataPath, configName)
@@ -66,6 +73,26 @@ def __loadUserConfig (config):
         if e.args[0] == 2: # Ignore a file not found error
             return config
         raise e
+        
+def sourceViewerConfig():
+    sourceviewer = Config.Config()
+    sourceviewer.setType ("FontFamily",  Config.typeDefaultString("Consolas"))
+    sourceviewer.setType ("FontSize",  Config.typeDefaultInt(10))
+    sourceviewer.setType ("TabWidth",  Config.typeDefaultInt(4)) 
+    return sourceviewer
+        
+def typeSourceViewerDefaults ():
+    return (Config.identity, sourceViewerConfig, Config.identity) 
       
-    
+# Configurates the default values and types
+def configTypeInfo (config):
+    config.setType("showCloseConfirmation",  Config.typeDefaultBool(False)) 
+    config.setType("matchOverFiles",  Config.typeDefaultBool(False)) 
+    config.setType("SourceViewer",  typeSourceViewerDefaults())
+
+
+
+ 
+ 
+ 
  

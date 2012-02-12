@@ -402,7 +402,7 @@ p, li { white-space: pre-wrap; }
  <connections>
   <connection>
    <sender>listView</sender>
-   <signal>clicked(QModelIndex)</signal>
+   <signal>activated(QModelIndex)</signal>
    <receiver>SearchPage</receiver>
    <slot>fileSelected(QModelIndex)</slot>
    <hints>
@@ -508,6 +508,22 @@ p, li { white-space: pre-wrap; }
     </hint>
     <hint type="destinationlabel">
      <x>554</x>
+     <y>321</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>listView</sender>
+   <signal>clicked(QModelIndex)</signal>
+   <receiver>SearchPage</receiver>
+   <slot>fileSelected(QModelIndex)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>430</x>
+     <y>361</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>584</x>
      <y>321</y>
     </hint>
    </hints>

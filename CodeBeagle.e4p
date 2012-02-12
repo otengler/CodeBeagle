@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2012-01-27, 23:12:11 -->
+<!-- Saved: 2012-02-12, 23:20:43 -->
 <!-- Copyright (C) 2012 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -53,6 +53,9 @@
     <Source>Ui_SettingsItem.py</Source>
     <Source>SearchMethods.py</Source>
     <Source>AsynchronousTask.py</Source>
+    <Source>changes.txt</Source>
+    <Source>CheckableItemsDialog.py</Source>
+    <Source>Ui_CheckableItemsDialog.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>
@@ -62,6 +65,7 @@
     <Form>SearchPage.ui</Form>
     <Form>SettingsDialog.ui</Form>
     <Form>SettingsItem.ui</Form>
+    <Form>CheckableItemsDialog.ui</Form>
   </Forms>
   <Translations>
     <Translation>CodeBeagle.ts</Translation>

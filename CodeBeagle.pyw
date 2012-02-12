@@ -16,23 +16,24 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
 import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from  Ui_MainWindow import Ui_MainWindow
 import AppConfig
+import FileTools
 
 def main(): 
     app = QApplication(sys.argv) 
+    
     # Switch to application directory to be able to load the configuration and search scripts even if we are 
     # executed from a different working directory.
-    QDir.setCurrent(os.path.dirname(sys.argv[0]))
+    FileTools.switchToAppDir()
     
     w = MainWindow() 
     w.show() 
     sys.exit(app.exec_()) 
-        
+    
 class MainWindow (QMainWindow):
     def __init__ (self):
         super(MainWindow, self).__init__()
@@ -41,7 +42,7 @@ class MainWindow (QMainWindow):
         self.__restoreGeometryAndState()
         
     def closeEvent(self,  event):
-        if int(AppConfig.appConfig().value("showCloseConfirmation", 0)):
+        if  AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
                                                          self.trUtf8("Really close?"),
                                                          self.trUtf8("Do you really want to close the application?"),

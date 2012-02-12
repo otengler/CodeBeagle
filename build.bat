@@ -9,6 +9,9 @@ set PYRCC4=%PYDIR%\Lib\site-packages\PyQt4\pyrcc4.exe
 %PYTHON% %PYUIC% -o Ui_ProgressBar.py -x ProgressBar.ui 
 %PYTHON% %PYUIC% -o Ui_SearchPage.py -x SearchPage.ui 
 %PYTHON% %PYUIC% -o Ui_SourceViewer.py -x SourceViewer.ui 
+%PYTHON% %PYUIC% -o Ui_SettingsItem.py -x SettingsItem.ui 
+%PYTHON% %PYUIC% -o Ui_SettingsDialog.py -x SettingsDialog.ui 
+%PYTHON% %PYUIC% -o Ui_CheckableItemsDialog.py -x CheckableItemsDialog.ui 
 
 copy /Y resources\Crystal\*.* resources\
 

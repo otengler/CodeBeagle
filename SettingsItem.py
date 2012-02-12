@@ -21,11 +21,12 @@ import uuid
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from Ui_SettingsItem import Ui_SettingsItem
+import AppConfig
 
-class SettingsItem (QWidget):
-    commitChanges = pyqtSignal('QWidget')
+class SettingsItem (QWidget):   
+    dataChanged = pyqtSignal()
     
-    def __init__ (self, parent,  shadeBackground=False):
+    def __init__ (self, parent):
         super (SettingsItem, self).__init__(parent)
         self.ui = Ui_SettingsItem()
         self.ui.setupUi(self)
@@ -34,33 +35,15 @@ class SettingsItem (QWidget):
         self.ui.editName.textEdited.connect(self.nameEdited)
         self.ui.editIndexDB.textEdited.connect(self.indexDBEdited)
         
-        if shadeBackground:
-            self.gradient = QLinearGradient()
-            self.gradient.setStart(0, 0)
-            self.gradient.setColorAt(0, QColor("#eef"))
-            self.gradient.setColorAt(1, QColor("#ccf"))
-        else:
-            self.gradient = None
+        self.ui.editName.textChanged.connect(self.dataChanged)
+        self.ui.editDirectories.textChanged.connect(self.dataChanged)
+        self.ui.editExtensions.textChanged.connect(self.dataChanged)
             
         # Part of a UUID to make the generated DB file unique
         self.uniqueStr = str(uuid.uuid1()).split("-")[0]
    
     def focusInEvent (self, event):
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
-        
-    # This is a bit of a hack: Everytime the mouse leaves the widget commitChanges it emitted to save
-    # the data back into the model. This solves the problem that the data was not saved if you edited
-    # just one location and closed the dialog
-    def leaveEvent(self, event):
-        self.commitChanges.emit(self)
-        
-    def paintEvent(self, event):
-        if self.gradient:
-            rect = event.rect()
-            self.gradient.setFinalStop (rect.width(), 0)
-            painter = QPainter(self)
-            painter.fillRect(rect, QBrush(self.gradient))
-        super(SettingsItem, self).paintEvent(event)
     
     # Suggest a name for the index db
     @pyqtSlot('QString')
@@ -71,12 +54,12 @@ class SettingsItem (QWidget):
     def __updateDBName(self, text):
         location = ""
         if "APPDATA" in os.environ:
-            location = "$APPDATA"
+            location = os.path.expandvars("$APPDATA")
         elif "HOME" in os.environ:
-            location = "$HOME"
+            location = os.path.expandvars("$HOME")
         if location:
             location += os.path.sep
-            location += "CodeBeagle"
+            location += AppConfig.appName
             location += os.path.sep
             location += text.replace(" ", "_")
             location += "."
@@ -95,7 +78,7 @@ class SettingsItem (QWidget):
     def browseForDirectory(self):
         directory = QFileDialog.getExistingDirectory (
             self,          
-            self.trUtf8("Choose directory to index"),
+            self.trUtf8("Choose directory to search or index"),
             "",
             QFileDialog.Options(QFileDialog.ShowDirsOnly))
         
@@ -131,6 +114,11 @@ class SettingsItem (QWidget):
     def directories (self):
         return self.ui.editDirectories.text()
         
+    def setDirExcludes(self, dirExcludes):
+        self.ui.editExcludeDirectories.setText (dirExcludes)
+    def dirExcludes (self):
+        return self.ui.editExcludeDirectories.text()
+        
     def setExtensions(self, extensions):
         self.ui.editExtensions.setText (extensions)
     def extensions (self):
@@ -150,14 +138,13 @@ class SettingsItem (QWidget):
             self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
     def indexGenerationEnabled (self):
         return self.ui.checkBoxGenerateIndex.checkState() == Qt.Checked
-    
-    def enableIndexUpdate (self, bEnable):
-        if bEnable:
-            self.ui.checkUpdateIndex.setCheckState(Qt.Checked)
-        else:
-            self.ui.checkUpdateIndex.setCheckState(Qt.Unchecked)
-    def indexUpdateEnabled (self):
-        return self.ui.checkUpdateIndex.checkState() == Qt.Checked    
 
-        
-        
+    def reset(self):
+        self.ui.editName.setText("")
+        self.ui.editExcludeDirectories.setText("")
+        self.ui.editExtensions.setText("")
+        self.ui.editDirectories.setText("")
+        self.ui.editIndexDB.setText("")
+        self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
+
+

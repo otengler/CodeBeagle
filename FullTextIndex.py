@@ -29,10 +29,20 @@ from FileTools import fopen
 reTokenize = re.compile("[\\w#]+")
 reQueryToken = re.compile("[\\w#*]+")
 
-def genFind (filepat, strRootDir):
+def genFind (filepat, strRootDir,  dirExcludes=[]):
+    dirExcludes = [dir.lower() for dir in dirExcludes]
     for path, dirlist, filelist in os.walk (strRootDir):
+        if dirExcludes:
+            pathLower = path.lower()
+            found=False
+            for exclude in dirExcludes:
+                if pathLower.find(exclude) != -1:
+                    found=True
+                    break
+            if found:
+                continue
         for name in (name for name in filelist if os.path.splitext(name)[1] in filepat):
-            yield os.path.join(path,name)  
+            yield os.path.join(path,name) 
      
 def genTokens (file):
         for token in reTokenize.findall(file.read()):
@@ -434,7 +444,7 @@ class FullTextIndex:
             keys.append([r[0] for r in result])
         return keys
                     
-    def updateIndex (self, directories,  extensions,  statistics=None):
+    def updateIndex (self, directories,  extensions,  dirExcludes=[],  statistics=None):
         c = self.conn.cursor ()
         q = self.conn.cursor ()
         
@@ -448,7 +458,7 @@ class FullTextIndex:
             for strRootDir in directories:
                 logging.info ("-"*80)
                 logging.info ("Updating index in " + strRootDir)
-                for strFullPath in genFind(extensions, strRootDir):
+                for strFullPath in genFind(extensions, strRootDir,  dirExcludes):
                     mTime = os.stat(strFullPath)[8]
                  
                     c.execute ("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime,strFullPath))

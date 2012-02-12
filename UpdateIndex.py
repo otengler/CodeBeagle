@@ -16,14 +16,13 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
-import sys
 import Config
 import FullTextIndex
 import time
 import logging
 import cProfile
 import IndexConfiguration
+import FileTools
 
 def taketime (name,  func, *args):
     t1 = time.clock()
@@ -36,7 +35,7 @@ def setupLogging (conf):
     try:
         log = conf.updateIndexLog
         logging.basicConfig(filename=log,  format='%(asctime)s %(message)s',  level=logging.INFO)
-    except KeyError:
+    except AttributeError:
         logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
     
 def updateIndexes(indexes):
@@ -44,12 +43,12 @@ def updateIndexes(indexes):
         if config.generateIndex:
             fti=FullTextIndex.FullTextIndex(config.indexdb)
             statistics = FullTextIndex.UpdateStatistics()
-            taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  statistics)
+            taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  config.dirExcludes, statistics)
             logging.info (statistics)
 
 # Switch to application directory to be able to load the configuration even if we are 
 # executed from a different working directory.
-os.chdir(os.path.dirname(sys.argv[0]))
+FileTools.switchToAppDir()
 
 conf = Config.Config("config.txt")
 setupLogging (conf)

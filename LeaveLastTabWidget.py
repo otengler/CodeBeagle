@@ -33,9 +33,9 @@ class LeaveLastTabWidget (QTabWidget):
         
     def setupUi (self):
         widget = QWidget (self)
-        vbox = QHBoxLayout(widget)
-        vbox.setContentsMargins(0, 0, 0, 0)
-        self.addWidgetsToCornerWidget (vbox)
+        hbox = QHBoxLayout(widget)
+        hbox.setContentsMargins(0, 0, 0, 0)
+        self.addWidgetsToCornerWidget (hbox)
         self.setCornerWidget(widget)
     
         QObject.connect(self, SIGNAL("tabCloseRequested(int)"),  self.removeTabButNotLast)
@@ -46,10 +46,11 @@ class LeaveLastTabWidget (QTabWidget):
         self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.trUtf8("New tab"),  "NewTab.png",  self.addNewTab)
         
     def addButtonToCornerWidget (self,  hbox,  name,  iconFile,  handler):
-        button = QPushButton(self.trUtf8(name), self)
+        button = QPushButton(name, self)
         icon = QIcon()
         icon.addPixmap(QPixmap(":/default/resources/" + iconFile), QIcon.Normal, QIcon.Off)
         button.setIcon(icon)
+        button.setFlat(True)
         hbox.addWidget (button)
         QObject.connect(button, SIGNAL("clicked()"),  handler)
         return button

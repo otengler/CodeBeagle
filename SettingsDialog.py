@@ -16,11 +16,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from Ui_SettingsDialog import Ui_SettingsDialog
-from SettingsItem import SettingsItem
 from IndexConfiguration import IndexConfiguration
 
 class SettingsEditorDelegate (QStyledItemDelegate):
@@ -28,80 +26,17 @@ class SettingsEditorDelegate (QStyledItemDelegate):
     
     def __init__(self,  parent=None):
         super (QStyledItemDelegate,  self).__init__(parent)
-        # These two variables contain the row number and the height of the row which is being edited
-        self.editRow = -1
-        self.editorHeight = 0
-        self.closeEditor.connect(self.resetEditRow)
         if parent:
             self.boldFont = QFont (parent.font())
         else:
             self.boldFont = QFont (QApplication.font())
         self.boldFont.setBold (True)
-        
-        self.gradient = QLinearGradient()
-        self.gradient.setColorAt(0.0, QColor("#fff"))
-        self.gradient.setColorAt(0.5, QColor("#eee"))
-        self.gradient.setColorAt(1.0, QColor("#fff"))
-        
-        self.selectedGradient = QLinearGradient()
-        self.selectedGradient.setColorAt(0.0, QColor("#eef"))
-        self.selectedGradient.setColorAt(1.0, QColor("#ccf"))
-        
-    @pyqtSlot('QWidget')
-    def resetEditRow(self, editor):
-        self.editRow = -1
-        self.editorHeight = 0
-        
-    def createEditor (self,  parent,  option,  index):
-        item = SettingsItem (parent,  True)
-        item.commitChanges.connect(self.commitChanges)
-        self.editRow = index.row()
-        self.editorHeight = item.minimumSizeHint().height()
-        self.sizeHintChanged.emit (index)
-        return item
-        
-    @pyqtSlot('QWidget')
-    def commitChanges(self, editor):
-        self.commitData.emit(editor)
-    
-    def setEditorData (self,  editor,  index):
-        location = index.data(Qt.UserRole+1)
-        editor.setName (location.displayName())
-        editor.setDirectories(location.directoriesAsString())
-        editor.setExtensions(location.extensionsAsString())
-        if location.indexdb:
-            editor.setIndexDB(location.indexdb)
-        editor.enableIndexGeneration(location.generateIndex)
-        updateIndex = False
-        if hasattr(location,"updateIndex"):
-            updateIndex = location.updateIndex
-        editor.enableIndexUpdate(updateIndex)
-        
-    def setModelData (self, editor,  model,  index):
-        name = editor.name()
-        model.setData (index,  name,  Qt.DisplayRole)
-        location = IndexConfiguration (name,  editor.extensions(), editor.directories(), editor.indexDB(), editor.indexGenerationEnabled())
-        location.updateIndex = editor.indexUpdateEnabled()
-        model.setData (index,  location,  Qt.UserRole+1)
-        
-    def updateEditorGeometry(self,  editor,  option,  index):
-        editor.setGeometry(option.rect.x(), option.rect.y()+self.itemHeight,  option.rect.width(),  self.editorHeight)
-        
+
     def paint (self,  painter, option, index):
+        QApplication.style().drawPrimitive(QStyle.PE_PanelItemViewItem, option, painter,  self.parent())
+        
         rect = QRect(option.rect)
         rect.setHeight(self.itemHeight)
-        
-        selected = self.editRow == index.row()
-        if selected:
-            grad = self.selectedGradient
-            grad.setStart(rect.left(), 0)
-            grad.setFinalStop (rect.right(), 0)
-        else:
-            grad = self.gradient
-            grad.setStart(0, rect.top())
-            grad.setFinalStop (0, rect.bottom())
-        painter.fillRect(rect, QBrush(grad))
-        
         third = (rect.width()-12) / 3
         
         rect1 = QRect(rect)
@@ -129,14 +64,17 @@ class SettingsEditorDelegate (QStyledItemDelegate):
         painter.restore()
         
     def sizeHint (self,  option,  index):
-        if index.row() == self.editRow:
-            return QSize (option.rect.width(),  self.editorHeight+self.itemHeight)
-        else:
-            baseHint = super(SettingsEditorDelegate, self).sizeHint(option, index)
-            return QSize(baseHint.width(), self.itemHeight)
+        baseHint = super(SettingsEditorDelegate, self).sizeHint(option, index)
+        return QSize(baseHint.width(), self.itemHeight)
+
+def setCheckBox (check, value):
+    if value:
+        check.setCheckState(Qt.Checked)
+    else:
+        check.setCheckState(Qt.Unchecked)
 
 class SettingsDialog (QDialog):
-    def __init__ (self, parent,  searchLocations):
+    def __init__ (self, parent,  searchLocations,  config):
         super (SettingsDialog, self).__init__(parent)
         self.ui = Ui_SettingsDialog()
         self.ui.setupUi(self)
@@ -146,21 +84,59 @@ class SettingsDialog (QDialog):
         self.ui.listViewLocations.setModel(self.model)
         self.ui.listViewLocations.setItemDelegate (SettingsEditorDelegate(self.ui.listViewLocations))
         
+        self.ui.listViewLocations.selectionModel().currentChanged.connect(self.selectionChanged)
+        self.ui.settingsItem.dataChanged.connect(self.updateDisplayRole)
+        
+        self.ui.editTabWidth.setText(str(config.SourceViewer.TabWidth))
+        setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
+        setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
+        
         for location in searchLocations:
             self.__addLocation(location)
             
         index = self.model.index(0, 0)
         if index.isValid():
             self.ui.listViewLocations.setCurrentIndex(index)
-            self.ui.listViewLocations.edit(index)
+            
+        self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
         
     def locations(self):
         locs = []
         for row in range(self.model.rowCount()):
             index = self.model.index(row, 0)
             locs.append(index.data(Qt.UserRole+1))
-        
         return locs
+        
+    @pyqtSlot()
+    def updateDisplayRole(self):
+        index = self.ui.listViewLocations.currentIndex ()
+        if index.isValid():
+            self.saveDataForItem (index)
+        
+    @pyqtSlot('QModelIndex', 'QModelIndex')
+    def selectionChanged(self, current,  previous):
+        self.saveDataForItem (previous)
+        self.loadDataFromItem(current)
+        
+    def saveDataForItem (self,  index):
+        if not index.isValid():
+            return
+        editor = self.ui.settingsItem
+        location = IndexConfiguration (editor.name(),  editor.extensions(), editor.directories(), editor.dirExcludes(),  editor.indexDB(), editor.indexGenerationEnabled())
+        self.model.setData (index,  location,  Qt.UserRole+1)
+
+    def loadDataFromItem (self,  index):
+        editor = self.ui.settingsItem
+        if not index.isValid():
+            return editor.reset()
+        location = index.data(Qt.UserRole+1)
+        editor.setName (location.displayName())
+        editor.setDirectories(location.directoriesAsString())
+        editor.setExtensions(location.extensionsAsString())
+        editor.setDirExcludes(location.dirExcludesAsString())
+        if location.indexdb:
+            editor.setIndexDB(location.indexdb)
+        editor.enableIndexGeneration(location.generateIndex)
         
     def __addLocation (self,  location):
         rows = self.model.rowCount()
@@ -173,7 +149,6 @@ class SettingsDialog (QDialog):
     @pyqtSlot()
     def addLocation (self):
         location = IndexConfiguration(self.trUtf8("New location"))
-        location.updateIndex = True # As this is a new location, mark this index for update
         index = self.__addLocation(location)
         if index.isValid():
             self.ui.listViewLocations.setCurrentIndex(index)
@@ -183,11 +158,20 @@ class SettingsDialog (QDialog):
         index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
             self.model.removeRow(index.row())
+            
+    @pyqtSlot()
+    def okClicked(self):
+        index = self.ui.listViewLocations.currentIndex()
+        if index.isValid():
+            self.saveDataForItem (index)
+        self.accept()
         
 def main():    
+    import sys
+    from Config import Config
     app = QApplication(sys.argv) 
     locations = [IndexConfiguration("Qt Source",  "h,cpp", "D:\\qt", "D:\\index.dat"), IndexConfiguration("Linux")]
-    w = SettingsDialog(None,locations) 
+    w = SettingsDialog(None,locations, Config()) 
     w.show() 
     sys.exit(app.exec_()) 
 

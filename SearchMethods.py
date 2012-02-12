@@ -21,6 +21,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import AsynchronousTask
 import FullTextIndex
+from FileTools import fopen
 
 class ResultSet:
     def __init__(self, matches=[], searchData=None, perfReport=None, label=None):
@@ -47,21 +48,36 @@ class ScriptSearchData:
             else:
                 return
 
-# This executes the regular search
+# This executes an indexed or a direct search. This depends  on the IndexConfiguration setting "gneerateIndex".
 def search (parent,  params,  indexConf):
     strSearch, strFolderFilter,  strExtensionFilter, bCaseSensitive = params
     if not len(strSearch):
         return ResultSet()
     searchData = FullTextIndex.SearchQuery (strSearch,  strFolderFilter,  strExtensionFilter,  bCaseSensitive)
-    result = AsynchronousTask.execute (parent,  searchAsync,  searchData, indexConf)
+    if indexConf.generateIndex:
+        result = AsynchronousTask.execute (parent,  indexedSearchAsync,  searchData, indexConf)
+    else:
+        result = AsynchronousTask.execute (parent,  directSearchAsync,  searchData,  indexConf)
+        
     result.label = strSearch
     return result
     
-def searchAsync(searchData, indexConf):
+def indexedSearchAsync(searchData, indexConf):
     perfReport = FullTextIndex.PerformanceReport()
     with perfReport.newAction("Init database"):
         fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
     return ResultSet (fti.search (searchData,  perfReport),  searchData,  perfReport)
+    
+def directSearchAsync(searchData,  indexConf):
+    matches = []
+    for dir in indexConf.directories:
+        for file in FullTextIndex.genFind(indexConf.extensions,  dir,  indexConf.dirExcludes):
+            with fopen(file) as input:
+                for match in searchData.matches(input.read()):
+                    matches.append(file)
+                    break
+    matches = removeDupsAndSort(matches)
+    return ResultSet(matches, searchData)
     
 # Executes a custom search script from disk. The script receives a locals dictionary with all neccessary
 # search parameters and returns its result in the variable "result". The variable "highlight" must be set

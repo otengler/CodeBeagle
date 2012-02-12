@@ -28,6 +28,8 @@ Index1 {
     indexdb=D:\mysource.dat
     extensions=h,cpp,c
     directories=D:\source1,E:\source2
+    # optional directory excludes
+    dirExcludes=\dir1,\dir2 
 }
 Index2 {
    ...
@@ -35,9 +37,11 @@ Index2 {
 </pre>
 <p>
 This indexes all files in "D:\source1" and "E:\source2" with the extensions "h","cpp" and "c" and stores the result in 
-"D:\mysource.dat". The section name which specifies the index must start with "index" (case doesn't matter). 
-As illustrated by the section "Index2" you are not restricted to only one index definition. When several indexes
-are defined you can select the index to search in the upper right corner.
+"D:\mysource.dat". The section name which specifies the index must start with "index" (case doesn't matter).  Optionally
+you can specify a list of comma seperated strings in the property "dirExcludes". All directories containing one of these strings
+will be excluded. The path they are compared with is not terminated with a path seperator. As illustrated by the 
+section "Index2" you are not restricted to only one index definition. When several indexes are defined you can select 
+the index to search in the upper right corner.
 </p>
 <p>Here is a full table of all supported settings in "config.txt":</p>
 <table border="1" summary="Configuration options">
@@ -216,7 +220,11 @@ white-space allowed between <strong>!</strong> and <strong>=</strong>. This woul
     <td>CTRL+T</td>
     <td>Opens a new search tab</td>
   </tr>
- <tr>
+  <tr>
+    <td>CTRL+S</td>
+    <td>Opens the settings dialog</td>
+  </tr>
+  <tr>
     <td>ALT+n</td>
     <td>Jumps to the n-th tab. Where n is a number of one to six</td>
   </tr>
