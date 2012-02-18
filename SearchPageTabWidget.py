@@ -21,10 +21,9 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from  LeaveLastTabWidget import LeaveLastTabWidget
 from SearchPage import SearchPage
-from SettingsDialog import SettingsDialog
-import IndexConfiguration
-import AppConfig
 from Config import Config
+import AppConfig
+import IndexConfiguration
   
 def setConfigBoolFromCheck (config,  check,  value):
     state = check.checkState() == Qt.Checked
@@ -33,6 +32,8 @@ def setConfigBoolFromCheck (config,  check,  value):
     elif Qt.Unchecked == state:
        setattr(config, value, False) 
   
+# This widget attempts to look like a flat QPushButton. It shows a spinning gear icon to indicate
+# work in progress. 
 class AnimatedUpdateWidget(QWidget):
     def __init__(self, text, parent):
         super(AnimatedUpdateWidget, self).__init__(parent)
@@ -48,7 +49,7 @@ class AnimatedUpdateWidget(QWidget):
         layout.addWidget(labelText)
   
 class SearchPageTabWidget (LeaveLastTabWidget):
-    configChanged = pyqtSignal()
+    configChanged = pyqtSignal(list)
     
     def __init__(self, parent=None):
         super(SearchPageTabWidget, self).__init__(parent)
@@ -107,31 +108,43 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def addWidgetsToCornerWidget (self,  hbox):
         super (SearchPageTabWidget,  self).addWidgetsToCornerWidget(hbox)
         self.buttonSettings = self.addButtonToCornerWidget (hbox,  self.trUtf8("Settings"),  "Settings.png",  self.openSettings)
-        self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.trUtf8("Update index"),  "Update.gif",  self.updateIndex)
-        self.labelUpdate = self.addAnimatedUpdateLabel (hbox,  self.trUtf8("Update running..."))
+        self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.trUtf8("Update index"),  "Update.png",  self.updateIndex)
+        self.labelUpdate = None
         
     # The settings allow to configure search locations (and index them).
     @pyqtSlot()
     def openSettings(self):
         config = AppConfig.userConfig()
         if not config:
-            QMessageBox.critical(self,
-                        self.trUtf8("Failed to load user config"),
-                        self.trUtf8("The user config file could not be loaded from the user profile"),
-                        QMessageBox.StandardButtons(QMessageBox.Ok))
+            self.userConfigFailedToLoadMessage()
         else:
             indexes = IndexConfiguration.readConfig(config)
+            from SettingsDialog import SettingsDialog
             settingsDlg = SettingsDialog(self, indexes,  config)
             if settingsDlg.exec():
-                locations = settingsDlg.locations()
-                self.saveUserConfig (settingsDlg,  locations)
+                self.saveUserConfig (settingsDlg)
                
     @pyqtSlot()
     def updateIndex(self):
-        self.buttonUpdate.hide()
-        self.labelUpdate.show()
-        self.buttonSettings.setEnabled(False)
-        self.labelUpdate.movie.start()
+        config = AppConfig.userConfig()
+        if not config:
+            self.userConfigFailedToLoadMessage()
+        else:
+            indexes = IndexConfiguration.readConfig(config)
+            configNames = [config.indexName for config in indexes if config.generateIndex]
+            #if len(configNames) > 1:
+            from CheckableItemsDialog import CheckableItemsDialog
+            updateDialog = CheckableItemsDialog(self.trUtf8("Choose indexes to update"),  True, self)
+            for name in configNames:
+                updateDialog.addItem(name)
+            updateDialog.checkAll(True)
+            if updateDialog.exec():
+                if not self.labelUpdate:
+                    self.labelUpdate = self.addAnimatedUpdateLabel (self.cornerWidgetLayout(),  self.trUtf8("Update running..."))
+                self.buttonUpdate.hide()
+                self.labelUpdate.show()
+                self.buttonSettings.setEnabled(False)
+                self.labelUpdate.movie.start()
                
     # Check which indexes should be updated and trigger an asynchronous update 
     # This works by putting an file with the name of the index config group into %APPDATA%\CodeBeagle\IndexUpdate.
@@ -144,7 +157,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             if location.generateIndex and hasattr(location, "updateIndex") and location.updateIndex:
                 open(os.path.join(indexTriggerPath, groupNameFromLocation(location)), "w").close()
     
-    def saveUserConfig (self,  settingsDlg,  locations):
+    def saveUserConfig (self,  settingsDlg):
+        locations = settingsDlg.locations()
         config = Config (typeInfoFunc=AppConfig.configTypeInfo)
         for location in locations:
             locConf = Config(typeInfoFunc=IndexConfiguration.indexTypeInfo)
@@ -170,7 +184,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         else:    
             # Refresh config
             AppConfig.refreshConfig()
-            self.configChanged.emit()
+            indexConfig = IndexConfiguration.readConfig(AppConfig.appConfig())
+            self.configChanged.emit(indexConfig)
      
     # This is called by the base class when a new tab is added. We use this to connect the request for a new search
     # to open up in a new tab.
@@ -178,11 +193,13 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         searchPage.newSearchRequested.connect (self.searchInNewTab)
         searchPage.searchFinished.connect (self.changeTabName)
         self.configChanged.connect (searchPage.reloadConfig)
+        # Initially reload the config to pass the current search locations to the search page 
+        searchPage.reloadConfig(IndexConfiguration.readConfig(AppConfig.appConfig()))
         
-    @pyqtSlot('QString', int)
-    def searchInNewTab (self,  text, dbIndex):
+    @pyqtSlot('QString', 'QString')
+    def searchInNewTab (self,  text, searchLocationName):
         searchPage = self.addNewTab ()
-        searchPage.setCurrentDatabase(dbIndex)
+        searchPage.setCurrentSearchLocation(searchLocationName)
         searchPage.searchForText(text)
         
     @pyqtSlot('QWidget', 'QString')
@@ -193,6 +210,12 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 self.setTabText(index, text)
             else:
                 self.setTabText(index, self.trUtf8("Search"))
+                
+    def userConfigFailedToLoadMessage(self):
+        QMessageBox.critical(self, 
+                        self.trUtf8("Failed to load user config"),
+                        self.trUtf8("The user config file could not be loaded from the user profile"),
+                        QMessageBox.StandardButtons(QMessageBox.Ok))
     
 def groupNameFromLocation(location):
     return "index_" + location.indexName.replace(" ", "_")

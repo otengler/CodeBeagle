@@ -97,10 +97,9 @@ class SettingsItem (QWidget):
                 
         if len(indexDB[0]): # indexDB is a touple: file,filter
             self.setIndexDB(indexDB[0]) 
-            
-    @pyqtSlot()
-    def updateIndex(self):
-        self.enableIndexUpdate(not self.updateIndex)
+       
+    def nameSelectAll (self):
+        self.ui.editName.selectAll()
        
     def setName(self, name):
         self.ui.editName.setText (name)
@@ -139,12 +138,24 @@ class SettingsItem (QWidget):
     def indexGenerationEnabled (self):
         return self.ui.checkBoxGenerateIndex.checkState() == Qt.Checked
 
-    def reset(self):
+    def resetAndDisable(self):
         self.ui.editName.setText("")
         self.ui.editExcludeDirectories.setText("")
         self.ui.editExtensions.setText("")
         self.ui.editDirectories.setText("")
         self.ui.editIndexDB.setText("")
         self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
-
+        self.__enable(False)
+        
+    def enable(self):
+        self.__enable(True)
+        
+    def __enable(self, bEnable):
+        self.ui.editExtensions.setEnabled(bEnable)
+        self.ui.editName.setEnabled(bEnable)
+        self.ui.editExcludeDirectories.setEnabled(bEnable)
+        self.ui.editDirectories.setEnabled(bEnable)
+        self.ui.editIndexDB.setEnabled(bEnable)
+        self.ui.checkBoxGenerateIndex.setEnabled(bEnable)
+        self.ui.buttonDirectory.setEnabled(bEnable)
 

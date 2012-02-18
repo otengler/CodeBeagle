@@ -22,8 +22,6 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from Ui_SearchPage import Ui_SearchPage 
 import PathVisualizerDelegate
-from AppConfig import appConfig
-import IndexConfiguration
 import SearchMethods
 
 # Returns the first difference in two iterables
@@ -83,8 +81,8 @@ class StringListModel(QAbstractListModel):
 
 class SearchPage (QWidget):
     # Triggered when a new search tab is requested which should be opened using a given search string
-    # First parameter is the search string, the second the index of the database
-    newSearchRequested = pyqtSignal('QString', int)
+    # First parameter is the search string, the second the display name of the search configuration (IndexConfiguration)
+    newSearchRequested = pyqtSignal('QString', 'QString')
     # Triggered when a search is started
     searchFinished = pyqtSignal('QWidget', 'QString')
     
@@ -102,31 +100,43 @@ class SearchPage (QWidget):
         self.ui.sourceViewer.noPreviousMatch.connect(self.previousMatch)
         self.ui.sourceViewer.noNextMatch.connect(self.nextMatch)
         self.perfReport = None
-        self.updateDatabaseList()
+        self.indexConfig = []
+        self.currentConfigName = "" # Display name of current config
         # Hide the custom scripts button if there are no custom scripts on disk
         if len(getCustomScriptsFromDisk())==0:
             self.ui.buttonCustomScripts.hide()
           
-    @pyqtSlot()
-    def reloadConfig (self):
-        i = self.ui.comboDB.currentIndex()
-        self.updateDatabaseList()
-        self.ui.comboDB.setCurrentIndex(i)
+    @pyqtSlot(list)
+    def reloadConfig (self,searchLocationList):
+        self.__updateSearchLocationList (searchLocationList)
+        self.setCurrentSearchLocation (self.currentConfigName)
+        self.ui.sourceViewer.reloadConfig()
         
-    def updateDatabaseList(self):
-        self.indexConfig = IndexConfiguration.readConfig(appConfig())
+    def __updateSearchLocationList(self,  searchLocationList):
+        self.searchLocationList = searchLocationList
         self.ui.comboDB.clear()
-        if len(self.indexConfig) <=1:
+        if len(self.searchLocationList) <=1:
             self.ui.comboDB.hide()
             self.ui.labelDB.hide()
         else:
             self.ui.comboDB.show()
             self.ui.labelDB.show()
-        for config in self.indexConfig:
-            self.ui.comboDB.insertItem(1000, config.displayName(), config)
+        for config in self.searchLocationList:
+            self.ui.comboDB.addItem(config.displayName(), config) 
             
-    def setCurrentDatabase(self,  index):
-        self.ui.comboDB.setCurrentIndex (index)
+    def setCurrentSearchLocation(self, searchLocationName):
+        for i, config in enumerate (self.searchLocationList):
+            if searchLocationName == config.displayName():
+                self.ui.comboDB.setCurrentIndex(i)
+                self.currentConfigName = searchLocationName
+                return
+        # Nothing found, select first one 
+        if len(self.searchLocationList) > 0:
+            self.ui.comboDB.setCurrentIndex (0)
+            self.currentConfigName = self.searchLocationList[0].displayName()
+        else:
+            self.ui.comboDB.setCurrentIndex(-1)
+            self.currentConfigName = ""
         
     def focusInEvent (self, event):
         self.ui.comboSearch.setFocus(Qt.ActiveWindowFocusReason)
@@ -164,7 +174,7 @@ class SearchPage (QWidget):
                 self.searchForText(text)
             else:
                 # Search in a new tab
-                self.newSearchRequested.emit(text,  self.ui.comboDB.currentIndex())
+                self.newSearchRequested.emit(text,  self.ui.comboDB.currentText())
         
     def getSearchParameterFromUI (self):
         strSearch = self.ui.comboSearch.currentText().strip()
@@ -172,6 +182,16 @@ class SearchPage (QWidget):
         strExtensionFilter = self.ui.comboExtensionFilter.currentText().strip()
         bCaseSensitive = self.ui.checkCaseSensitive.checkState() == Qt.Checked
         return (strSearch, strFolderFilter,  strExtensionFilter,  bCaseSensitive)
+        
+    # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
+    def prepareSearch (self):
+        self.updateSearchResult(SearchMethods.ResultSet()) # clear current results
+        
+        self.currentConfigName = self.ui.comboDB.currentText()
+        i = self.ui.comboDB.currentIndex()
+        indexConf = self.ui.comboDB.model().index(i, 0).data(Qt.UserRole)
+        params = self.getSearchParameterFromUI()
+        return (params,  indexConf)
         
     @pyqtSlot()
     def execCustomScripts (self):
@@ -191,11 +211,9 @@ class SearchPage (QWidget):
         except ValueError:
             return
         
-        params = self.getSearchParameterFromUI()
-        self.updateSearchResult(SearchMethods.ResultSet())
-        
-        i = self.ui.comboDB.currentIndex()
-        indexConf = self.ui.comboDB.model().index(i, 0).data(Qt.UserRole)
+        params, indexConf = self.prepareSearch ()
+        if not indexConf:
+            return
         
         try:
             result = SearchMethods.customSearch (self, script,  params, indexConf)
@@ -210,11 +228,9 @@ class SearchPage (QWidget):
         
     @pyqtSlot()
     def performSearch (self):
-        params = self.getSearchParameterFromUI()
-        self.updateSearchResult(SearchMethods.ResultSet())
-        
-        i = self.ui.comboDB.currentIndex()
-        indexConf = self.ui.comboDB.model().index(i, 0).data(Qt.UserRole)
+        params, indexConf = self.prepareSearch ()
+        if not indexConf:
+            return
         
         try:
             result = SearchMethods.search (self, params, indexConf)

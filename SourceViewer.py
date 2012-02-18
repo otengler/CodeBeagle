@@ -42,6 +42,7 @@ class SourceViewer (QWidget):
         self.ui.textEdit.setPalette(palette)
         
         self.ui.frameSearch.hide()
+        self.sourceFont = None
         self.__processConfig()
         self.highlighter = Highlighter(self.ui.textEdit.document())
         self.__reset()
@@ -50,14 +51,24 @@ class SourceViewer (QWidget):
         self.actionReloadFile = QAction(self, shortcut=Qt.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
         
+    def reloadConfig (self):
+        self.__processConfig()
+        
     def __processConfig (self):
-        self.sourceFont = QFont()
         config = appConfig().SourceViewer
-        self.sourceFont.setFamily(config.FontFamily)
-        self.sourceFont.setStyleHint (QFont.Monospace)
-        self.sourceFont.setPointSize(config.FontSize)
-        self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
         self.bMatchOverFiles = appConfig().matchOverFiles
+        
+        if not self.sourceFont:
+            self.sourceFont = QFont()
+            self.sourceFont.setStyleHint (QFont.Monospace)
+        
+        # Apply font and tab changes (if any)
+        if self.sourceFont.family().lower() != config.FontFamily.lower() or self.sourceFont.pointSize() != config.FontSize:
+            self.sourceFont.setFamily(config.FontFamily)
+            self.sourceFont.setPointSize(config.FontSize)
+        
+        if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
+            self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
         
     def __reset (self):
         self.matches = [] # touples with position and length
@@ -162,12 +173,10 @@ class SourceViewer (QWidget):
                 self.highlighter.setDynamicHighlight(text)
         
     @pyqtSlot()
-    def toggleSearchFrame(self):
-        if self.ui.frameSearch.isVisible():
-            self.ui.frameSearch.hide()
-        else:
-            self.ui.frameSearch.show()
-            self.ui.editSearch.setFocus(Qt.MouseFocusReason)
+    def showSearchFrame(self):
+        self.ui.frameSearch.show()
+        self.ui.editSearch.setFocus(Qt.MouseFocusReason)
+        self.ui.editSearch.selectAll()
         
     def __resetTextCursor (self):
         cursor = self.ui.textEdit.textCursor()

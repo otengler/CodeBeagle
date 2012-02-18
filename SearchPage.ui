@@ -247,8 +247,14 @@ p, li { white-space: pre-wrap; }
       </item>
       <item>
        <widget class="QComboBox" name="comboDB">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="insertPolicy">
-         <enum>QComboBox::NoInsert</enum>
+         <enum>QComboBox::InsertAtBottom</enum>
         </property>
        </widget>
       </item>

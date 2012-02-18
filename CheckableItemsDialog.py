@@ -21,7 +21,7 @@ from PyQt4.QtGui import *
 from Ui_CheckableItemsDialog import Ui_CheckableItemsDialog
 
 class CheckableItemsDialog (QDialog):
-    def __init__ (self, title,  parent):
+    def __init__ (self, title, bCheckAllState, parent):
         super (CheckableItemsDialog, self).__init__(parent)
         self.ui = Ui_CheckableItemsDialog()
         self.ui.setupUi(self)
@@ -30,11 +30,18 @@ class CheckableItemsDialog (QDialog):
         
         self.model = QStandardItemModel()
         self.ui.listViewItems.setModel(self.model)
+        if bCheckAllState:
+            self.ui.checkToggleAll.setCheckState(Qt.Checked)
+        else:
+            self.ui.checkToggleAll.setCheckState(Qt.Unchecked)
         
-    def addItem (self, name):
+    def addItem (self, name,  bCheck=True):
         item = QStandardItem(name)
         item.setFlags(Qt.ItemIsUserCheckable | item.flags())
-        item.setData(Qt.Unchecked, Qt.CheckStateRole)
+        if bCheck:
+            item.setData(Qt.Checked, Qt.CheckStateRole)
+        else:
+            item.setData(Qt.Unchecked, Qt.CheckStateRole)
         self.model.appendRow(item)
         
     def checkedItems(self):
@@ -58,7 +65,7 @@ class CheckableItemsDialog (QDialog):
 def main():    
     import sys
     app = QApplication(sys.argv)  
-    w = CheckableItemsDialog("Choose indexes to update",  None) 
+    w = CheckableItemsDialog("Choose indexes to update",  True, None) 
     w.addItem("Amber")
     w.addItem("Silver")
     w.addItem("Gold")

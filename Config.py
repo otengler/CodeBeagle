@@ -105,6 +105,8 @@ class Config:
             return self.__typeParse(attr)(self.__data[attr])
         result = self.__typeNotFound(attr)()
         if result != None:
+            if isinstance(result, Config):
+                self.__data[attr] = result
             return result
         raise AttributeError(attr + " does not exist in the configuration")
 

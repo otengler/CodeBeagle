@@ -97,6 +97,8 @@ class SettingsDialog (QDialog):
         index = self.model.index(0, 0)
         if index.isValid():
             self.ui.listViewLocations.setCurrentIndex(index)
+        else:
+            self.ui.settingsItem.resetAndDisable()
             
         self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
         
@@ -122,13 +124,14 @@ class SettingsDialog (QDialog):
         if not index.isValid():
             return
         editor = self.ui.settingsItem
+        editor.enable()
         location = IndexConfiguration (editor.name(),  editor.extensions(), editor.directories(), editor.dirExcludes(),  editor.indexDB(), editor.indexGenerationEnabled())
         self.model.setData (index,  location,  Qt.UserRole+1)
 
     def loadDataFromItem (self,  index):
         editor = self.ui.settingsItem
         if not index.isValid():
-            return editor.reset()
+            return editor.resetAndDisable()
         location = index.data(Qt.UserRole+1)
         editor.setName (location.displayName())
         editor.setDirectories(location.directoriesAsString())
@@ -152,6 +155,8 @@ class SettingsDialog (QDialog):
         index = self.__addLocation(location)
         if index.isValid():
             self.ui.listViewLocations.setCurrentIndex(index)
+        self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
+        self.ui.settingsItem.nameSelectAll()
         
     @pyqtSlot()
     def removeLocation (self):
@@ -171,7 +176,12 @@ def main():
     from Config import Config
     app = QApplication(sys.argv) 
     locations = [IndexConfiguration("Qt Source",  "h,cpp", "D:\\qt", "D:\\index.dat"), IndexConfiguration("Linux")]
-    w = SettingsDialog(None,locations, Config()) 
+    conf = Config()
+    conf.sourceViewer = Config()
+    conf.sourceViewer.tabwidth = 4
+    conf.matchOverFiles=True
+    conf.showCloseConfirmation=True
+    w = SettingsDialog(None,locations, conf) 
     w.show() 
     sys.exit(app.exec_()) 
 

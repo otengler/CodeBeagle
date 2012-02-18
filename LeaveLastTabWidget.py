@@ -33,13 +33,16 @@ class LeaveLastTabWidget (QTabWidget):
         
     def setupUi (self):
         widget = QWidget (self)
-        hbox = QHBoxLayout(widget)
-        hbox.setContentsMargins(0, 0, 0, 0)
-        self.addWidgetsToCornerWidget (hbox)
+        self.hbox = QHBoxLayout(widget)
+        self.hbox.setContentsMargins(0, 0, 0, 0)
+        self.addWidgetsToCornerWidget (self.hbox)
         self.setCornerWidget(widget)
     
         QObject.connect(self, SIGNAL("tabCloseRequested(int)"),  self.removeTabButNotLast)
         QObject.connect(self, SIGNAL("currentChanged(int)"),  self.focusSetter)
+        
+    def cornerWidgetLayout (self):
+        return self.hbox
         
     # Derived classes can implement this to add additional buttons to the corner widget
     def addWidgetsToCornerWidget (self,  hbox):
