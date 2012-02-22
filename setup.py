@@ -1,4 +1,5 @@
 from cx_Freeze import setup, Executable
+import AppConfig
 	
 CodeBeagle=Executable(
     script = "CodeBeagle.pyw", 
@@ -13,8 +14,8 @@ UpdateIndex=Executable(
 )
 
 setup(  
-    name = "CodeBeagle",
-    version = "1.0.24.0",
+    name = AppConfig.appName, 
+    version = AppConfig.appVersion,
     description = "CodeBeagle - A tool to search source code based on a full text index",
     executables = [CodeBeagle,  UpdateIndex]
 )

@@ -236,17 +236,17 @@ p, li { white-space: pre-wrap; }
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="labelDB">
+       <widget class="QLabel" name="labelLocation">
         <property name="text">
          <string>&amp;Location:</string>
         </property>
         <property name="buddy">
-         <cstring>comboDB</cstring>
+         <cstring>comboLocation</cstring>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="comboDB">
+       <widget class="QComboBox" name="comboLocation">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -534,6 +534,22 @@ p, li { white-space: pre-wrap; }
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>comboLocation</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>SearchPage</receiver>
+   <slot>currentLocationChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1111</x>
+     <y>24</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>584</x>
+     <y>321</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>fileSelected(QModelIndex)</slot>
@@ -543,5 +559,6 @@ p, li { white-space: pre-wrap; }
   <slot>performanceInfo()</slot>
   <slot>exportMatches()</slot>
   <slot>execCustomScripts()</slot>
+  <slot>currentLocationChanged()</slot>
  </slots>
 </ui>

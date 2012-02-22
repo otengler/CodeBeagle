@@ -16,13 +16,30 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import Config
-import FullTextIndex
+import os
+import argparse
 import time
 import logging
 import cProfile
-import IndexConfiguration
 import FileTools
+import IndexConfiguration
+import AppConfig
+import FullTextIndex
+
+license = """
+CodeBeagle Copyright (C) 2011 Oliver Tengler;
+This program comes with ABSOLUTELY NO WARRANTY; 
+This is free software, and you are welcome to redistribute it under certain conditions; 
+"""
+
+updateIndexDescription ="""Utility to update indexes for CodeBeagle. By default those indexes defined in config.txt are updated"""
+helpJobMode = """This mode is used by CodeBeagle to update indexes in the background. It reads job files from the given directory"""
+helpConfig="""Full path to config file. This parameter allows to specify additional config files beside the default config.txt"""
+
+parser = argparse.ArgumentParser(description=updateIndexDescription,  epilog=license)
+parser.add_argument("-v", "--version", action='version', version="UpdateIndex " + AppConfig.appVersion)
+parser.add_argument("--jobmode",  metavar='DIR', type=str, help=helpJobMode)
+parser.add_argument("-c", "--config",  action="append",  default=[AppConfig.configName],  type=str,  help=helpConfig)
 
 def taketime (name,  func, *args):
     t1 = time.clock()
@@ -38,32 +55,104 @@ def setupLogging (conf):
     except AttributeError:
         logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
     
+def updateIndex (config):
+    fti=FullTextIndex.FullTextIndex(config.indexdb)
+    statistics = FullTextIndex.UpdateStatistics()
+    taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  config.dirExcludes, statistics)
+    logging.info (statistics)
+    
 def updateIndexes(indexes):
     for config in indexes:
         if config.generateIndex:
-            fti=FullTextIndex.FullTextIndex(config.indexdb)
-            statistics = FullTextIndex.UpdateStatistics()
-            taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  config.dirExcludes, statistics)
-            logging.info (statistics)
+            updateIndex (config)
+
+def loadConfigFiles (args):
+    configFiles = args.config
+    if not configFiles:
+        configFiles = [AppConfig.configName]
+    conf = AppConfig.configFromFile (configFiles[0])
+    configFiles = configFiles[1:]
+    for name in configFiles:
+        print ("Load config " + name)
+        conf.loadFile(name)
+    return conf
+
+def handleUpdateJobs (indexes,  jobDir):
+    configByName = {}
+    for conf in indexes:
+        configByName[conf.displayName().lower()] = conf
+        
+    while True:
+        jobData = nextJob(jobDir)
+        if not jobData:
+            break
+        index, jobFile = jobData
+        logging.info ("Handle job '" + index + "'")
+        try:
+            conf = configByName[index.lower()]
+            updateIndex (conf)
+        except KeyError:
+            logging.warning("No index for this job found")
+        finally:
+            os.unlink(jobFile)
+    
+def nextJob (jobDir):
+    files = os.listdir(jobDir)
+    if not files:
+        return None
+    for file in files:
+        if not file.endswith(".running"):
+            jobFile = os.path.join(jobDir, files[0])
+            jobFileRunning = jobFile + ".running"
+            os.rename(jobFile,  jobFileRunning)
+            return (file,  jobFileRunning)
+    return None
+
+# Parse command line
+args = parser.parse_args()
+print(args.config)
 
 # Switch to application directory to be able to load the configuration even if we are 
 # executed from a different working directory.
 FileTools.switchToAppDir()
 
-conf = Config.Config("config.txt")
-setupLogging (conf)
-
+conf = loadConfigFiles (args)
 indexes = IndexConfiguration.readConfig(conf)
 
-license = """
-CodeBeagle Copyright (C) 2011 Oliver Tengler
-This program comes with ABSOLUTELY NO WARRANTY; 
-This is free software, and you are welcome to redistribute it under certain conditions; 
-"""
-print (license)
-
-if conf.value("profileUpdate", 0) != 0:
-    cProfile.run("updateIndexes(indexes)")
+if args.jobmode:
+    runGuardDir = os.path.join(FileTools.getTempPath (), "UpdateIndex_running")
+    while True:
+        with FileTools.lockDir(runGuardDir):
+            setupLogging (conf)
+            logging.info ("UpdateIndex watches directory '" + args.jobmode + "'")
+            handleUpdateJobs (indexes,  args.jobmode)
+        if not nextJob (args.jobmode):
+            logging.info ("No more jobs found")
+            break
 else:
-    updateIndexes(indexes)
+    setupLogging (conf)
+    if conf.profileUpdate:
+        cProfile.run("updateIndexes(indexes)")
+    else:
+        updateIndexes(indexes)
+
+# Synchronization in slave mode between UI and UpdateIndex:
+#
+# UI: 
+# Write job file
+# Launch UpdateIndex process
+#
+# UpdateIndex:
+# Write run guard (1)
+#    If it already exists bailout
+# For each job file:
+#    read job
+#    update index
+#    delete job file
+# Delete run guard
+# New jobs available?
+#    If yes jump to (1)
+#
+# This should guarantee that every job is processed by UpdateIndex without the UI caring much if there is already an UpdateIndex running and
+# in which state it currently is.
 

@@ -29,6 +29,7 @@ class CheckableItemsDialog (QDialog):
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         
         self.model = QStandardItemModel()
+        
         self.ui.listViewItems.setModel(self.model)
         if bCheckAllState:
             self.ui.checkToggleAll.setCheckState(Qt.Checked)
@@ -49,7 +50,7 @@ class CheckableItemsDialog (QDialog):
         for i in range(self.model.rowCount()):
             index = self.model.index(i, 0)
             if index.data (Qt.CheckStateRole) == Qt.Checked:
-                items.append (index.data())
+                items.append ((i, index.data()))
         return items
         
     @pyqtSlot(bool)
@@ -77,4 +78,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    main()
+

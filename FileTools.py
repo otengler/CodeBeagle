@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import os
 import codecs
+import time
 
 def fopen (name, mode='r'):
     f = open(name, mode, -1, "latin_1")
@@ -52,6 +53,9 @@ def getAppDataPath (appName):
     location += os.path.sep
     return os.path.expandvars(location)
     
+def getTempPath ():
+    return os.path.expandvars("$TEMP")
+    
 # Switch to application directory. This helps to locate files by a relative path.
 def switchToAppDir ():
     try:
@@ -61,5 +65,28 @@ def switchToAppDir ():
     except Exception as  e:
         print ("Failed to switch to application directory: " + str(e))
         
+# Creates a directory during a context manager scope.
+# with lockDir("C:\\dir"):
+#     pass
+class lockDir:
+    def __init__(self,  name, retries=5, delay=200):
+        self.name = name
+        self.retries = retries
+        self.delay = delay
+        
+    def __enter__(self):
+        for i in range(self.retries):
+            try:
+                os.mkdir (self.name)
+            except:
+                time.sleep(self.delay/1000.0)
+            else:
+                return self
+        raise RuntimeError("Failed to create lock directory")
+       
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.rmdir (self.name)
+        return False
+
         
 

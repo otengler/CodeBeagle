@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from  LeaveLastTabWidget import LeaveLastTabWidget
@@ -78,6 +79,10 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.addAction(self.actionTab5)
         self.actionTab6 = QAction(self, shortcut=Qt.ALT + Qt.Key_6, triggered= self.activateTab6)
         self.addAction(self.actionTab6)
+        
+        self.indexUpdateTimer = None
+        self.searchLocations = []
+        self.indexTriggerPath = os.path.join (AppConfig.userDataPath (),  "TriggerUpdate")
      
     @pyqtSlot()
     def activateTab1(self):
@@ -98,7 +103,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def activateTab6(self):
         self.setCurrentIndex(5)
     
-    def addAnimatedUpdateLabel (self,  hbox,  text):
+    def __addAnimatedUpdateLabel (self,  hbox,  text):
         widget = AnimatedUpdateWidget (text, self)
         widget.hide()
         hbox.addWidget(widget)
@@ -122,42 +127,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             from SettingsDialog import SettingsDialog
             settingsDlg = SettingsDialog(self, indexes,  config)
             if settingsDlg.exec():
-                self.saveUserConfig (settingsDlg)
-               
-    @pyqtSlot()
-    def updateIndex(self):
-        config = AppConfig.userConfig()
-        if not config:
-            self.userConfigFailedToLoadMessage()
-        else:
-            indexes = IndexConfiguration.readConfig(config)
-            configNames = [config.indexName for config in indexes if config.generateIndex]
-            #if len(configNames) > 1:
-            from CheckableItemsDialog import CheckableItemsDialog
-            updateDialog = CheckableItemsDialog(self.trUtf8("Choose indexes to update"),  True, self)
-            for name in configNames:
-                updateDialog.addItem(name)
-            updateDialog.checkAll(True)
-            if updateDialog.exec():
-                if not self.labelUpdate:
-                    self.labelUpdate = self.addAnimatedUpdateLabel (self.cornerWidgetLayout(),  self.trUtf8("Update running..."))
-                self.buttonUpdate.hide()
-                self.labelUpdate.show()
-                self.buttonSettings.setEnabled(False)
-                self.labelUpdate.movie.start()
-               
-    # Check which indexes should be updated and trigger an asynchronous update 
-    # This works by putting an file with the name of the index config group into %APPDATA%\CodeBeagle\IndexUpdate.
-    # It is picked up by UpdateIndex.py which has a special mode for this task.
-    def triggerIndexUpdate (self,  locations):
-        indexTriggerPath = os.path.join (AppConfig.getUserDataPath (),  "TriggerUpdate")
-        if not os.path.isdir(indexTriggerPath):
-            os.mkdir(indexTriggerPath)
-        for location in locations:
-            if location.generateIndex and hasattr(location, "updateIndex") and location.updateIndex:
-                open(os.path.join(indexTriggerPath, groupNameFromLocation(location)), "w").close()
-    
-    def saveUserConfig (self,  settingsDlg):
+                self.__saveUserConfig (settingsDlg)
+                
+    def __saveUserConfig (self,  settingsDlg):
         locations = settingsDlg.locations()
         config = Config (typeInfoFunc=AppConfig.configTypeInfo)
         for location in locations:
@@ -168,7 +140,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             locConf.dirExcludes = location.dirExcludesAsString()
             locConf.generateIndex = location.generateIndex
             locConf.indexdb = location.indexdb
-            setattr(config,  groupNameFromLocation(location),  locConf)
+            setattr(config,  "Index_" + location.indexName.replace(" ",  "_"),  locConf)
         tabWidth = settingsDlg.ui.editTabWidth.text()
         if tabWidth:
             config.sourceViewer.TabWidth = tabWidth
@@ -177,16 +149,75 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         try:
             AppConfig.saveUserConfig (config)
         except:
-            QMessageBox.critical(self,
-                self.trUtf8("Failed to save user config"),
-                self.trUtf8("The user config file could not be saved to the user profile"),
-                QMessageBox.StandardButtons(QMessageBox.Ok))
+            self.failedToSaveUserConfigMessage()
         else:    
             # Refresh config
             AppConfig.refreshConfig()
             indexConfig = IndexConfiguration.readConfig(AppConfig.appConfig())
             self.configChanged.emit(indexConfig)
+               
+    @pyqtSlot()
+    def updateIndex(self):
+        config = AppConfig.userConfig()
+        if not config:
+            self.userConfigFailedToLoadMessage()
+        else:
+            self.searchLocations = IndexConfiguration.readConfig(config)
+            displayNames = [config.displayName() for config in self.searchLocations if config.generateIndex]
+            from CheckableItemsDialog import CheckableItemsDialog
+            updateDialog = CheckableItemsDialog(self.trUtf8("Choose indexes to update"),  True, self)
+            for name in displayNames:
+                updateDialog.addItem(name)
+            updateDialog.checkAll(True)
+            if updateDialog.exec():
+                # The items returned are touples: (index,value)
+                updateDisplayNames = [name for i, name in updateDialog.checkedItems()]
+                try:
+                    self.__triggerIndexUpdate (updateDisplayNames)
+                except:
+                    self.failedToUpdateIndexesMessage()
+                else:
+                    self.__showIndexUpdateInProgress(True)
+               
+    # Check which indexes should be updated and trigger an asynchronous update 
+    # This works by putting an file with the name of the index config group into %APPDATA%\CodeBeagle\IndexUpdate.
+    # It is picked up by UpdateIndex.py which has a special mode for this task.
+    def __triggerIndexUpdate (self,  updateDisplayNames):
+        if not os.path.isdir(self.indexTriggerPath):
+            os.mkdir(self.indexTriggerPath)
+        for name in updateDisplayNames:
+            open(os.path.join(self.indexTriggerPath, name), "w").close()
+    
+        # Now start UpdateIndex.py as a subprocess. If we are running as "CodeBeagle.exe" then start "UpdateIndex.exe" instead
+        import subprocess
+        runningInInterpreter = os.path.basename(sys.executable).lower().startswith("python")
+        args = ["--jobmode",  self.indexTriggerPath, "--config",  AppConfig.userConfigFileName()]
+        if runningInInterpreter:
+            subprocess.Popen ([sys.executable, "UpdateIndex.py"] + args)
+        else:
+            if os.path.exists("UpdateIndex.exe"):
+                subprocess.Popen (["UpdateIndex.exe"] + args)
+            else:
+                raise RuntimerError("UpdateIndex.exe not found")
+        
+        # Check regularily if the update finished
+        if not self.indexUpdateTimer:
+            self.indexUpdateTimer = QTimer(self)
+            self.indexUpdateTimer.timeout.connect(self.__checkIndexUpdateProgress)
+        self.indexUpdateTimer.start(2000)
      
+    def __checkIndexUpdateProgress (self):
+        files = os.listdir(self.indexTriggerPath)
+        if not files:
+            self.indexUpdateTimer.stop()
+            self.__showIndexUpdateInProgress(False)
+            self.__informAboutIndexUpdate("Index update finshed")
+
+    def __informAboutIndexUpdate(self,  text):
+        pos = self.labelUpdate.parent().mapToGlobal(self.labelUpdate.pos())
+        pos.setX(pos.x()-50)
+        QToolTip.showText (pos, text,  self)
+
     # This is called by the base class when a new tab is added. We use this to connect the request for a new search
     # to open up in a new tab.
     def newTabAdded(self,  searchPage):
@@ -211,16 +242,38 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             else:
                 self.setTabText(index, self.trUtf8("Search"))
                 
+    def __showIndexUpdateInProgress (self, bInProgress):
+        if not self.labelUpdate:
+            self.labelUpdate = self.__addAnimatedUpdateLabel (self.cornerWidgetLayout(),  self.trUtf8("Update running..."))
+        if bInProgress:
+            self.buttonUpdate.hide()
+            self.labelUpdate.show()
+            self.buttonSettings.setEnabled(False)
+            self.labelUpdate.movie.start()
+        else:
+            self.labelUpdate.movie.stop()
+            self.buttonUpdate.show()
+            self.labelUpdate.hide()
+            self.buttonSettings.setEnabled(True)
+        
+    def failedToSaveUserConfigMessage(self):
+        QMessageBox.critical(self,
+                self.trUtf8("Failed to save user config"),
+                self.trUtf8("The user config file could not be saved to the user profile"),
+                QMessageBox.StandardButtons(QMessageBox.Ok))
+            
     def userConfigFailedToLoadMessage(self):
         QMessageBox.critical(self, 
                         self.trUtf8("Failed to load user config"),
                         self.trUtf8("The user config file could not be loaded from the user profile"),
                         QMessageBox.StandardButtons(QMessageBox.Ok))
-    
-def groupNameFromLocation(location):
-    return "index_" + location.indexName.replace(" ", "_")
-    
-    #pos = self.mapToGlobal(self.ui.buttonCustomScripts.pos())
-    #QToolTip.showText (pos, "Updating indexes",  self)
+                        
+    def failedToUpdateIndexesMessage(self):
+        QMessageBox.critical(self, 
+                        self.trUtf8("Error during index update"),
+                        self.trUtf8("The update process failed to update the desired indexes"),
+                        QMessageBox.StandardButtons(QMessageBox.Ok))
+                        
+
 
 

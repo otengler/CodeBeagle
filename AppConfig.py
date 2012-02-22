@@ -22,6 +22,7 @@ import FileTools
 
 appName = "CodeBeagle"
 appCompany = "OTE"
+appVersion = "1.0.24.0"
 configName = "config.txt"
 _config = None
 
@@ -33,7 +34,7 @@ class AppConfigReader:
 def appConfig():
     global _config
     if not _config:
-        _config = Config.Config(configName,  typeInfoFunc=configTypeInfo)
+        _config = configFromFile (configName)
         __loadUserConfig (_config)
     return _config
 
@@ -42,13 +43,21 @@ def refreshConfig():
     global _config
     _config = None
     
+# Returns the config from the given file but does not merge with the config in the profile
+def configFromFile (filename):
+    return Config.Config(filename,  typeInfoFunc=configTypeInfo)
+    
 # Returns just the user config
 def userConfig():
     config = Config.Config(typeInfoFunc=configTypeInfo)
     return __loadUserConfig(config)
     
-def getUserDataPath():
+def userDataPath():
     return FileTools.getAppDataPath(appName)
+    
+def userConfigFileName():
+    appDataPath = FileTools.getAppDataPath(appName)
+    return os.path.join(appDataPath, configName)
 
 def saveUserConfig (config):
     appDataPath = FileTools.getAppDataPath(appName)
@@ -65,9 +74,8 @@ def saveUserConfig (config):
                 raise e
     
 def __loadUserConfig (config):
-    appDataPath = FileTools.getAppDataPath(appName)
     try:
-        config.loadFile(os.path.join(appDataPath, configName))
+        config.loadFile(userConfigFileName())
         return config
     except IOError as e:
         if e.args[0] == 2: # Ignore a file not found error
@@ -86,6 +94,7 @@ def typeSourceViewerDefaults ():
       
 # Configurates the default values and types
 def configTypeInfo (config):
+    config.setType("profileUpdate",  Config.typeDefaultBool(False))
     config.setType("showCloseConfirmation",  Config.typeDefaultBool(False)) 
     config.setType("matchOverFiles",  Config.typeDefaultBool(False)) 
     config.setType("SourceViewer",  typeSourceViewerDefaults())

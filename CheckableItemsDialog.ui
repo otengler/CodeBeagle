@@ -49,7 +49,17 @@
     </widget>
    </item>
    <item row="1" column="0" colspan="3">
-    <widget class="QListView" name="listViewItems"/>
+    <widget class="QListView" name="listViewItems">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
