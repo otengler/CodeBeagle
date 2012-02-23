@@ -415,9 +415,12 @@ class FullTextIndex:
             if bHasFilters:
                  if not query.matchFolderAndExtensionFilter(fullpath):
                     continue
-            with fopen(fullpath) as input:
-                if reExpr.search(input.read()):
-                    finalResults.append (fullpath)
+            try:
+                with fopen(fullpath) as input:
+                    if reExpr.search(input.read()):
+                        finalResults.append (fullpath)
+            except:
+                pass
         return finalResults
     
     # Return the corresponding list of keysword IDs from a list of keyword strings

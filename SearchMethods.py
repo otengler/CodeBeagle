@@ -93,7 +93,11 @@ def customSearchAsync (script,  params, indexConf):
     query, folders, extensions, caseSensitive = params
     def performSearch (strSearch,  strFolderFilter="",  strExtensionFilter="",  bCaseSensitive=False):
         searchData = FullTextIndex.SearchQuery (strSearch,  strFolderFilter,  strExtensionFilter,  bCaseSensitive)
-        return searchAsync(searchData,  indexConf).matches
+        if indexConf.generateIndex:
+            return indexedSearchAsync(searchData,  indexConf).matches
+        else:
+            return directSearchAsync(searchData,  indexConf).matches
+            
     localsDict = { "re":  re, 
                         "performSearch" : performSearch, 
                        "query" : query,  
