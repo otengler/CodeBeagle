@@ -45,6 +45,7 @@ class SourceViewer (QWidget):
         self.sourceFont = None
         self.__processConfig()
         self.highlighter = Highlighter(self.ui.textEdit.document())
+        self.activateDynamicHighlight = False
         self.__reset()
         self.searchData = None
         
@@ -92,6 +93,9 @@ class SourceViewer (QWidget):
         try:
             with fopen(name) as file:
                 text = file.read()
+                # This simply disabled the highlighting of marked words if the document get too large.
+                # This works around a bug in Qt that rehighlighting is much too slow.
+                self.activateDynamicHighlight = len(text) < 30000
         except:
             text = self.trUtf8("Failed to open file")
         
@@ -140,14 +144,12 @@ class SourceViewer (QWidget):
     @pyqtSlot()
     def nextSearch(self):
         search = self.ui.editSearch.text()
-        self.highlighter.setDynamicHighlight(search)
         if search:
             self.ui.textEdit.find(search)
             
     @pyqtSlot()
     def previousSearch(self):
         search = self.ui.editSearch.text()
-        self.highlighter.setDynamicHighlight(search)
         if search:
             self.ui.textEdit.find(search,  QTextDocument.FindBackward)
 
@@ -170,7 +172,8 @@ class SourceViewer (QWidget):
             if modifiers != Qt.NoModifier:
                 self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
             else:
-                self.highlighter.setDynamicHighlight(text)
+                if self.activateDynamicHighlight:
+                    self.highlighter.setDynamicHighlight(text)
         
     @pyqtSlot()
     def showSearchFrame(self):

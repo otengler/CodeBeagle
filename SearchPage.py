@@ -97,8 +97,8 @@ class SearchPage (QWidget):
         QObject.connect(self.ui.comboExtensionFilter.lineEdit(), SIGNAL("returnPressed()"), self.performSearch)
         self.ui.listView.setItemDelegate(PathVisualizerDelegate.PathVisualizerDelegate(self.ui.listView))
         QObject.connect(self.ui.sourceViewer, SIGNAL("selectionFinishedWithKeyboardModifier(QString,int)"),self.newSearchBasedOnSelection) 
-        self.ui.sourceViewer.noPreviousMatch.connect(self.previousMatch)
-        self.ui.sourceViewer.noNextMatch.connect(self.nextMatch)
+        self.ui.sourceViewer.noPreviousMatch.connect(self.previousFile)
+        self.ui.sourceViewer.noNextMatch.connect(self.nextFile)
         self.perfReport = None
         self.indexConfig = []
         self.currentConfigName = "" # Display name of current config
@@ -157,11 +157,11 @@ class SearchPage (QWidget):
             self.ui.sourceViewer.showFile(name,  format)
         
     @pyqtSlot()
-    def nextMatch (self):
+    def nextFile (self):
         self.changeSelectedFile (1)
         
     @pyqtSlot()
-    def previousMatch (self):
+    def previousFile (self):
         self.changeSelectedFile (-1)
                 
     def changeSelectedFile (self, increment):
@@ -332,12 +332,6 @@ class SearchPage (QWidget):
             return
         url = QUrl.fromLocalFile (os.path.split(name)[0])
         QDesktopServices.openUrl (url)
-        
-        # Would be nice to select the file using shell API:
-        #ITEMIDLIST *pidl = ILCreateFromPath(filename);
-        #if(pidl) {
-        #    SHOpenFolderAndSelectItems(pidl,0,0,0);
-        #    ILFree(pidl);
         
     def getSelectedFile (self):
         index = self.ui.listView.currentIndex ()

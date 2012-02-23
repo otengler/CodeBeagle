@@ -81,8 +81,10 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.addAction(self.actionTab6)
         
         self.indexUpdateTimer = None
-        self.searchLocations = []
         self.indexTriggerPath = os.path.join (AppConfig.userDataPath (),  "TriggerUpdate")
+        
+        # If the index update is still running this will start the timer which watches for it to finish
+        self.__watchForIndexUpdate()
      
     @pyqtSlot()
     def activateTab1(self):
@@ -162,8 +164,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         if not config:
             self.userConfigFailedToLoadMessage()
         else:
-            self.searchLocations = IndexConfiguration.readConfig(config)
-            displayNames = [config.displayName() for config in self.searchLocations if config.generateIndex]
+            searchLocations = IndexConfiguration.readConfig(config)
+            displayNames = [config.displayName() for config in searchLocations if config.generateIndex]
             from CheckableItemsDialog import CheckableItemsDialog
             updateDialog = CheckableItemsDialog(self.trUtf8("Choose indexes to update"),  True, self)
             for name in displayNames:
@@ -176,8 +178,6 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     self.__triggerIndexUpdate (updateDisplayNames)
                 except:
                     self.failedToUpdateIndexesMessage()
-                else:
-                    self.__showIndexUpdateInProgress(True)
                
     # Check which indexes should be updated and trigger an asynchronous update 
     # This works by putting an file with the name of the index config group into %APPDATA%\CodeBeagle\IndexUpdate.
@@ -200,18 +200,29 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             else:
                 raise RuntimerError("UpdateIndex.exe not found")
         
-        # Check regularily if the update finished
-        if not self.indexUpdateTimer:
-            self.indexUpdateTimer = QTimer(self)
-            self.indexUpdateTimer.timeout.connect(self.__checkIndexUpdateProgress)
-        self.indexUpdateTimer.start(2000)
-     
+        self.__watchForIndexUpdate()
+    
+    # Check regularily if the update finished
+    def __watchForIndexUpdate(self):
+        if self.__indexUpdateRunning():
+            self.__showIndexUpdateInProgress(True)
+            if not self.indexUpdateTimer:
+                self.indexUpdateTimer = QTimer(self)
+                self.indexUpdateTimer.timeout.connect(self.__checkIndexUpdateProgress)
+            self.indexUpdateTimer.start(2000)
+   
     def __checkIndexUpdateProgress (self):
-        files = os.listdir(self.indexTriggerPath)
-        if not files:
+        if not self.__indexUpdateRunning():
             self.indexUpdateTimer.stop()
             self.__showIndexUpdateInProgress(False)
             self.__informAboutIndexUpdate("Index update finshed")
+            
+    def __indexUpdateRunning (self):
+        try:
+            files = os.listdir(self.indexTriggerPath)
+            return len(files) > 0
+        except:
+            return False
 
     def __informAboutIndexUpdate(self,  text):
         pos = self.labelUpdate.parent().mapToGlobal(self.labelUpdate.pos())
