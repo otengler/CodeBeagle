@@ -73,41 +73,27 @@ def setCheckBox (check, value):
     else:
         check.setCheckState(Qt.Unchecked)
 
-class SettingsDialog (QDialog):
-    def __init__ (self, parent,  searchLocations,  config):
-        super (SettingsDialog, self).__init__(parent)
-        self.ui = Ui_SettingsDialog()
-        self.ui.setupUi(self)
-        self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
-
+class LocationControl:
+    def __init__(self, settingsItem,  listView,  searchLocations,  readOnly):
+        self.settingsItem = settingsItem
+        self.listView = listView
+        self.readOnly = readOnly
+        
         self.model = QStandardItemModel()
-        self.ui.listViewLocations.setModel(self.model)
-        self.ui.listViewLocations.setItemDelegate (SettingsEditorDelegate(self.ui.listViewLocations))
-        
-        self.ui.listViewLocations.selectionModel().currentChanged.connect(self.selectionChanged)
-        self.ui.settingsItem.dataChanged.connect(self.updateDisplayRole)
-        
-        self.ui.editTabWidth.setText(str(config.SourceViewer.TabWidth))
-        setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
-        setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
+        self.listView.setModel(self.model)
+        self.listView.setItemDelegate (SettingsEditorDelegate(self.listView))
+
+        self.listView.selectionModel().currentChanged.connect(self.selectionChanged)
+        self.settingsItem.dataChanged.connect(self.updateDisplayRole)
         
         for location in searchLocations:
-            self.__addLocation(location)
+            self.addLocation(location)
             
         index = self.model.index(0, 0)
         if index.isValid():
-            self.ui.listViewLocations.setCurrentIndex(index)
+            self.listView.setCurrentIndex(index)
         else:
-            self.ui.settingsItem.resetAndDisable()
-            
-        self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
-        
-    def locations(self):
-        locs = []
-        for row in range(self.model.rowCount()):
-            index = self.model.index(row, 0)
-            locs.append(index.data(Qt.UserRole+1))
-        return locs
+            self.settingsItem.resetAndDisable()
         
     @pyqtSlot()
     def updateDisplayRole(self):
@@ -123,65 +109,108 @@ class SettingsDialog (QDialog):
     def saveDataForItem (self,  index):
         if not index.isValid():
             return
-        editor = self.ui.settingsItem
-        editor.enable()
-        location = IndexConfiguration (editor.name(),  editor.extensions(), editor.directories(), editor.dirExcludes(),  editor.indexDB(), editor.indexGenerationEnabled())
+        editor = self.settingsItem
+        location = IndexConfiguration (editor.name(),  
+                                                       editor.extensions(), 
+                                                       editor.directories(), 
+                                                       editor.dirExcludes(),  
+                                                       editor.indexDB(), 
+                                                       editor.indexGenerationEnabled())
         self.model.setData (index,  location,  Qt.UserRole+1)
 
     def loadDataFromItem (self,  index):
-        editor = self.ui.settingsItem
+        editor = self.settingsItem
         if not index.isValid():
             return editor.resetAndDisable()
         location = index.data(Qt.UserRole+1)
-        editor.setName (location.displayName())
-        editor.setDirectories(location.directoriesAsString())
-        editor.setExtensions(location.extensionsAsString())
-        editor.setDirExcludes(location.dirExcludesAsString())
-        if location.indexdb:
-            editor.setIndexDB(location.indexdb)
-        editor.enableIndexGeneration(location.generateIndex)
+        editor.setData (location.displayName(), 
+                                location.directoriesAsString(), 
+                                location.extensionsAsString(),  
+                                location.dirExcludesAsString(), 
+                                location.generateIndex, 
+                                location.indexdb)
+        editor.enable (not self.readOnly)
         
-    def __addLocation (self,  location):
+    def addLocation (self,  location,  activateLocation=False):
         rows = self.model.rowCount()
         if self.model.insertRow(rows):
             item = QStandardItem(location.displayName())
             item.setData(location)
             self.model.setItem(rows, item)
-            return self.model.index(rows, 0)
+            index = self.model.index(rows, 0)
+            if activateLocation and index.isValid():
+                self.listView.setCurrentIndex(index)
+                self.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
+                self.settingsItem.nameSelectAll()
+                
+    def locations(self):
+        locs = []
+        for row in range(self.model.rowCount()):
+            index = self.model.index(row, 0)
+            locs.append(index.data(Qt.UserRole+1))
+        return locs
+
+class SettingsDialog (QDialog):
+    def __init__ (self, parent,  searchLocations,  globalSearchLocations,  config):
+        super (SettingsDialog, self).__init__(parent)
+        self.ui = Ui_SettingsDialog()
+        self.ui.setupUi(self)
+        self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
+
+        self.ui.editTabWidth.setText(str(config.SourceViewer.TabWidth))
+        setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
+        setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
+
+        self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
+        self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
+            
+        self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
+        
+    def locations(self):
+        return self.myLocations.locations()
             
     @pyqtSlot()
     def addLocation (self):
         location = IndexConfiguration(self.trUtf8("New location"))
-        index = self.__addLocation(location)
+        self.myLocations.addLocation(location, True)
+        
+    @pyqtSlot()
+    def duplicateLocation(self):
+        index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
-            self.ui.listViewLocations.setCurrentIndex(index)
-        self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
-        self.ui.settingsItem.nameSelectAll()
+            location = index.data(Qt.UserRole+1)
+            duplicated = IndexConfiguration (self.trUtf8("Duplicated ") + location.displayName(), 
+                                                            location.extensionsAsString(), 
+                                                            location.directoriesAsString(), 
+                                                            location.dirExcludesAsString(), 
+                                                            "", 
+                                                            location.generateIndex)
+            self.myLocations.addLocation(duplicated, True)
         
     @pyqtSlot()
     def removeLocation (self):
         index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
-            self.model.removeRow(index.row())
+            self.myLocations.model.removeRow(index.row())
             
     @pyqtSlot()
     def okClicked(self):
         index = self.ui.listViewLocations.currentIndex()
         if index.isValid():
-            self.saveDataForItem (index)
+            self.myLocations.saveDataForItem (index)
         self.accept()
         
 def main():    
     import sys
     from Config import Config
     app = QApplication(sys.argv) 
-    locations = [IndexConfiguration("Qt Source",  "h,cpp", "D:\\qt", "D:\\index.dat"), IndexConfiguration("Linux")]
+    locations = [IndexConfiguration("Qt Source",  "h,cpp", "D:\\qt", "","D:\\index.dat"), IndexConfiguration("Linux", "", "", "", "", False)]
     conf = Config()
     conf.sourceViewer = Config()
     conf.sourceViewer.tabwidth = 4
     conf.matchOverFiles=True
     conf.showCloseConfirmation=True
-    w = SettingsDialog(None,locations, conf) 
+    w = SettingsDialog(None,locations, locations, conf) 
     w.show() 
     sys.exit(app.exec_()) 
 

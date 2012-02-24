@@ -30,11 +30,11 @@ class AppConfigReader:
     def __init__(self,  config):
         self.config = config
 
-# Read the global config.txt followed by a per user config.txt.
+# Read the global config.txt merged with a per user config.txt.
 def appConfig():
     global _config
     if not _config:
-        _config = configFromFile (configName)
+        _config = globalConfig()
         __loadUserConfig (_config)
     return _config
 
@@ -43,11 +43,15 @@ def refreshConfig():
     global _config
     _config = None
     
-# Returns the config from the given file but does not merge with the config in the profile
+# Reads the config from a file
 def configFromFile (filename):
     return Config.Config(filename,  typeInfoFunc=configTypeInfo)
     
-# Returns just the user config
+# Returns the global config
+def globalConfig():
+    return configFromFile (configName)
+    
+# Returns the user config
 def userConfig():
     config = Config.Config(typeInfoFunc=configTypeInfo)
     return __loadUserConfig(config)

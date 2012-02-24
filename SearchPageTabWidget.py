@@ -121,13 +121,16 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     # The settings allow to configure search locations (and index them).
     @pyqtSlot()
     def openSettings(self):
-        config = AppConfig.userConfig()
-        if not config:
+        try:
+            config = AppConfig.userConfig()
+            globalConfig = AppConfig.globalConfig()
+        except:
             self.userConfigFailedToLoadMessage()
         else:
-            indexes = IndexConfiguration.readConfig(config)
+            searchLocations = IndexConfiguration.readConfig(config)
+            globalSearchLocations = IndexConfiguration.readConfig(globalConfig)
             from SettingsDialog import SettingsDialog
-            settingsDlg = SettingsDialog(self, indexes,  config)
+            settingsDlg = SettingsDialog(self, searchLocations,  globalSearchLocations, config)
             if settingsDlg.exec():
                 self.__saveUserConfig (settingsDlg)
                 
@@ -143,9 +146,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             locConf.generateIndex = location.generateIndex
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + location.indexName.replace(" ",  "_"),  locConf)
-        tabWidth = settingsDlg.ui.editTabWidth.text()
-        if tabWidth:
-            config.sourceViewer.TabWidth = tabWidth
+        config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
         config.matchOverFiles = settingsDlg.ui.checkMatchOverFiles.checkState() == Qt.Checked
         config.showCloseConfirmation = settingsDlg.ui.checkConfirmClose.checkState() == Qt.Checked
         try:
@@ -155,13 +156,14 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         else:    
             # Refresh config
             AppConfig.refreshConfig()
-            indexConfig = IndexConfiguration.readConfig(AppConfig.appConfig())
-            self.configChanged.emit(indexConfig)
+            searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
+            self.configChanged.emit(searchLocations)
                
     @pyqtSlot()
     def updateIndex(self):
-        config = AppConfig.userConfig()
-        if not config:
+        try:
+            config = AppConfig.userConfig()
+        except:
             self.userConfigFailedToLoadMessage()
         else:
             searchLocations = IndexConfiguration.readConfig(config)

@@ -128,7 +128,7 @@
  <connections>
   <connection>
    <sender>checkBoxGenerateIndex</sender>
-   <signal>toggled(bool)</signal>
+   <signal>clicked(bool)</signal>
    <receiver>editIndexDB</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
@@ -144,7 +144,7 @@
   </connection>
   <connection>
    <sender>checkBoxGenerateIndex</sender>
-   <signal>toggled(bool)</signal>
+   <signal>clicked(bool)</signal>
    <receiver>buttonBrowseIndexLocation</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>

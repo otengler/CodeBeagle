@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-import uuid
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from Ui_SettingsItem import Ui_SettingsItem
@@ -35,12 +34,9 @@ class SettingsItem (QWidget):
         self.ui.editName.textEdited.connect(self.nameEdited)
         self.ui.editIndexDB.textEdited.connect(self.indexDBEdited)
         
-        self.ui.editName.textChanged.connect(self.dataChanged)
-        self.ui.editDirectories.textChanged.connect(self.dataChanged)
-        self.ui.editExtensions.textChanged.connect(self.dataChanged)
-            
-        # Part of a UUID to make the generated DB file unique
-        self.uniqueStr = str(uuid.uuid1()).split("-")[0]
+        self.ui.editName.textEdited.connect(self.dataChanged)
+        self.ui.editDirectories.textEdited.connect(self.dataChanged)
+        self.ui.editExtensions.textEdited.connect(self.dataChanged)
    
     def focusInEvent (self, event):
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
@@ -48,7 +44,7 @@ class SettingsItem (QWidget):
     # Suggest a name for the index db
     @pyqtSlot('QString')
     def nameEdited(self, text):
-        if self.buildDBName:
+        if self.buildDBName and self.indexGenerationEnabled():
             self.__updateDBName(text)
             
     def __updateDBName(self, text):
@@ -62,8 +58,6 @@ class SettingsItem (QWidget):
             location += AppConfig.appName
             location += os.path.sep
             location += text.replace(" ", "_")
-            location += "."
-            location += self.uniqueStr
             location += ".dat"
             self.ui.editIndexDB.setText(location)
     
@@ -101,40 +95,45 @@ class SettingsItem (QWidget):
     def nameSelectAll (self):
         self.ui.editName.selectAll()
        
-    def setName(self, name):
+    def setData (self, name, directories, extensions,  dirExcludes, bGeneratesIndex, indexDB):
         self.ui.editName.setText (name)
-        if not self.indexDB():
-            self.__updateDBName (name)
-    def name (self):
-        return self.ui.editName.text()
-        
-    def setDirectories(self, directories):
         self.ui.editDirectories.setText (directories)
-    def directories (self):
-        return self.ui.editDirectories.text()
-        
-    def setDirExcludes(self, dirExcludes):
         self.ui.editExcludeDirectories.setText (dirExcludes)
-    def dirExcludes (self):
-        return self.ui.editExcludeDirectories.text()
-        
-    def setExtensions(self, extensions):
         self.ui.editExtensions.setText (extensions)
-    def extensions (self):
-        return self.ui.editExtensions.text()
         
-    def setIndexDB(self, indexDB):
+        self.buildDBName = False
         if indexDB:
-            self.buildDBName = False
-        self.ui.editIndexDB.setText (indexDB)
-    def indexDB (self):
-        return self.ui.editIndexDB.text()
+            self.ui.editIndexDB.setText (indexDB)
+        else:
+            if bGeneratesIndex:
+                self.buildDBName = True
+                self.__updateDBName (name)
+            else:
+                self.ui.editIndexDB.setText (indexDB)
         
-    def enableIndexGeneration (self, bEnable):
-        if bEnable:
+        if bGeneratesIndex:
             self.ui.checkBoxGenerateIndex.setCheckState(Qt.Checked)
         else:
             self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
+            
+        self.ui.editIndexDB.setEnabled(bGeneratesIndex)
+        self.ui.buttonBrowseIndexLocation.setEnabled(bGeneratesIndex)
+
+    def name (self):
+        return self.ui.editName.text()
+          
+    def directories (self):
+        return self.ui.editDirectories.text()
+
+    def dirExcludes (self):
+        return self.ui.editExcludeDirectories.text()
+        
+    def extensions (self):
+        return self.ui.editExtensions.text()
+        
+    def indexDB (self):
+        return self.ui.editIndexDB.text()
+
     def indexGenerationEnabled (self):
         return self.ui.checkBoxGenerateIndex.checkState() == Qt.Checked
 
@@ -145,17 +144,16 @@ class SettingsItem (QWidget):
         self.ui.editDirectories.setText("")
         self.ui.editIndexDB.setText("")
         self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
-        self.__enable(False)
+        self.enable(False)
         
-    def enable(self):
-        self.__enable(True)
-        
-    def __enable(self, bEnable):
+    def enable(self, bEnable=True):
         self.ui.editExtensions.setEnabled(bEnable)
         self.ui.editName.setEnabled(bEnable)
         self.ui.editExcludeDirectories.setEnabled(bEnable)
         self.ui.editDirectories.setEnabled(bEnable)
-        self.ui.editIndexDB.setEnabled(bEnable)
         self.ui.checkBoxGenerateIndex.setEnabled(bEnable)
         self.ui.buttonDirectory.setEnabled(bEnable)
-
+        if bEnable and not self.indexGenerationEnabled():
+            bEnable=False
+        self.ui.editIndexDB.setEnabled(bEnable)
+        self.ui.buttonBrowseIndexLocation.setEnabled(bEnable)

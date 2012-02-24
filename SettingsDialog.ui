@@ -24,7 +24,7 @@
      </property>
      <widget class="QWidget" name="tabSearchLocations">
       <attribute name="title">
-       <string>Search locations</string>
+       <string>My search locations</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="1" column="0">
@@ -58,6 +58,13 @@
            <widget class="QPushButton" name="buttonAdd">
             <property name="text">
              <string>Add</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonDuplicate">
+            <property name="text">
+             <string>Duplicate</string>
             </property>
            </widget>
           </item>
@@ -100,6 +107,55 @@
        </item>
        <item row="3" column="0">
         <widget class="QListView" name="listViewLocations">
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOff</enum>
+         </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabGlobalSearchLocations">
+      <attribute name="title">
+       <string>Global search locations</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <widget class="QLabel" name="labelGlobalLocation">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global search locations are defined in config.txt and can only be viewed here but not edited. To change their settings modify config.txt or UserConfig.txt.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Global search location:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="frameGlobalSettingsItem">
+         <property name="frameShape">
+          <enum>QFrame::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="SettingsItem" name="globalSettingsItem" native="true"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelAvailableGlobalLocations">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Available search locations:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QListView" name="listViewGlobalLocations">
          <property name="horizontalScrollBarPolicy">
           <enum>Qt::ScrollBarAlwaysOff</enum>
          </property>
@@ -260,11 +316,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>buttonDuplicate</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>duplicateLocation()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>669</x>
+     <y>182</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>addLocation()</slot>
   <slot>removeLocation()</slot>
   <slot>okClicked()</slot>
   <slot>selectionChanged(QModelIndex)</slot>
+  <slot>duplicateLocation()</slot>
  </slots>
 </ui>
