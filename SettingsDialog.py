@@ -97,7 +97,7 @@ class LocationControl:
         
     @pyqtSlot()
     def updateDisplayRole(self):
-        index = self.ui.listViewLocations.currentIndex ()
+        index = self.listView.currentIndex ()
         if index.isValid():
             self.saveDataForItem (index)
         
@@ -157,6 +157,8 @@ class SettingsDialog (QDialog):
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
+        self.ui.fontComboBox.setCurrentFont(QFont(config.SourceViewer.FontFamily))
+        self.ui.editFontSize.setText(str(config.SourceViewer.FontSize))
         self.ui.editTabWidth.setText(str(config.SourceViewer.TabWidth))
         setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
         setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
@@ -198,6 +200,18 @@ class SettingsDialog (QDialog):
         index = self.ui.listViewLocations.currentIndex()
         if index.isValid():
             self.myLocations.saveDataForItem (index)
+            
+        # Check if there are search location with the same name and reject this
+        names = set()
+        for location in self.locations():
+            name = location.displayName().lower()
+            if name in names:
+                QMessageBox.warning(self,
+                    self.trUtf8("Duplicate search location names"),
+                    self.trUtf8("Please choose a unique name for each search location.") + " '" + location.displayName() + "' " +   self.trUtf8("is used more than once."),
+                    QMessageBox.StandardButtons(QMessageBox.Ok))
+                return
+            names.add(name)
         self.accept()
         
 def main():    

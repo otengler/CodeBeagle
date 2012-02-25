@@ -57,7 +57,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.setNewTabButtonText(self.trUtf8("New search"))
         self.setPrototypeForNewTab(SearchPage, self.trUtf8("Search"))
         searchPage = self.addNewTab()
-        searchPage.showFile ("help.html",  "html")
+        searchPage.showFile ("help.html",  False)
         
         # Add new tab (QKeySequence.AddTab is the same as Qt.CTRL + Qt.Key_T)
         self.actionNewTab = QAction(self, shortcut=QKeySequence.AddTab, triggered= self.addNewTab)
@@ -146,6 +146,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             locConf.generateIndex = location.generateIndex
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + location.indexName.replace(" ",  "_"),  locConf)
+        config.sourceViewer.FontFamily = settingsDlg.ui.fontComboBox.currentFont().family()
+        config.sourceViewer.FontSize = settingsDlg.ui.editFontSize.text()
         config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
         config.matchOverFiles = settingsDlg.ui.checkMatchOverFiles.checkState() == Qt.Checked
         config.showCloseConfirmation = settingsDlg.ui.checkConfirmClose.checkState() == Qt.Checked

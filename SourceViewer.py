@@ -34,6 +34,8 @@ class SourceViewer (QWidget):
         super (SourceViewer, self).__init__(parent)
         self.ui = Ui_SourceViewer()
         self.ui.setupUi(self)
+        self.ui.frameSearch.hide()
+        self.highlighter = Highlighter(self.ui.textEdit.document())
         
         # Use the same color for active and inactive selections of text. The contrast of inactive selections is too low.
         palette = QPalette()
@@ -41,13 +43,12 @@ class SourceViewer (QWidget):
         palette.setBrush (QPalette.Inactive,  QPalette.Highlight,  brush)
         self.ui.textEdit.setPalette(palette)
         
-        self.ui.frameSearch.hide()
         self.sourceFont = None
-        self.__processConfig()
-        self.highlighter = Highlighter(self.ui.textEdit.document())
+        self.searchData = None
+        self.isSourceCode = True
         self.activateDynamicHighlight = False
         self.__reset()
-        self.searchData = None
+        self.__processConfig()
         
         self.actionReloadFile = QAction(self, shortcut=Qt.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
@@ -61,12 +62,13 @@ class SourceViewer (QWidget):
         
         if not self.sourceFont:
             self.sourceFont = QFont()
-            self.sourceFont.setStyleHint (QFont.Monospace)
         
         # Apply font and tab changes (if any)
         if self.sourceFont.family().lower() != config.FontFamily.lower() or self.sourceFont.pointSize() != config.FontSize:
             self.sourceFont.setFamily(config.FontFamily)
             self.sourceFont.setPointSize(config.FontSize)
+            if self.isSourceCode:
+                self.ui.textEdit.setFont(self.sourceFont)
         
         if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
             self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
@@ -86,7 +88,7 @@ class SourceViewer (QWidget):
         self.searchData = searchData
         self.highlighter.setSearchData (searchData)
         
-    def showFile (self,  name,  format="source"):
+    def showFile (self,  name,  isSourceCode=True):
         self.__reset()
         self.ui.labelFile.setText(name)
         
@@ -99,12 +101,13 @@ class SourceViewer (QWidget):
         except:
             text = self.trUtf8("Failed to open file")
         
-        if format=="source":
+        self.isSourceCode = isSourceCode
+        if self.isSourceCode:
             self.highlighter.setRulesByFileName(name)
             self.ui.textEdit.setFont(self.sourceFont)
             self.ui.textEdit.setLineWrapMode(QTextEdit.NoWrap)
             self.ui.textEdit.setPlainText(text)
-        elif format=="html":
+        else:
             self.highlighter.highlightingRules = None
             self.ui.textEdit.setFont(self.font())
             self.ui.textEdit.setLineWrapMode(QTextEdit.WidgetWidth)
