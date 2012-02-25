@@ -77,7 +77,8 @@ class SettingsItem (QWidget):
             QFileDialog.Options(QFileDialog.ShowDirsOnly))
         
         if directory:
-            self.setDirectories(directory)
+            self.ui.editDirectories.setText (directory)
+            self.dataChanged.emit()
 
     @pyqtSlot()
     def browseForIndexDB(self):
