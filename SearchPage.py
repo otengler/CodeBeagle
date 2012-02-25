@@ -76,7 +76,11 @@ class StringListModel(QAbstractListModel):
         if role == Qt.SizeHintRole:
             return self.sizeHint
         if role == Qt.ToolTipRole and self.cutLeft:
-            return self.filelist[index.row()]
+            name = self.filelist[index.row()] 
+            fileinfo =QFileInfo(name)
+            lastmodified = fileinfo.lastModified().toString()
+            # replace with slahses as this will not break the tooltip after the drive letter
+            return name.replace("\\", "/") + "<br/>" + lastmodified 
         return None
 
 class SearchPage (QWidget):
