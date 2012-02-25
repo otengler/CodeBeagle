@@ -182,6 +182,9 @@ class SourceViewer (QWidget):
     def showSearchFrame(self):
         self.ui.frameSearch.show()
         self.ui.editSearch.setFocus(Qt.MouseFocusReason)
+        text = self.ui.textEdit.textCursor().selectedText().strip()
+        if text:
+            self.ui.editSearch.setText(text)
         self.ui.editSearch.selectAll()
         
     def __resetTextCursor (self):
