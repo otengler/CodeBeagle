@@ -24,6 +24,9 @@ del /q %BUILDDIR%\win32pipe.pyd
 del /q %BUILDDIR%\pyexpat.pyd
 del /q %BUILDDIR%\pywintypes32.dll
 
+xcopy qt.conf %BUILDDIR%
+mkdir %BUILDDIR%\plugins\imageformats
+xcopy %PYDIR%\lib\site-packages\PyQt4\plugins\imageformats\qgif4.dll %BUILDDIR%\plugins\imageformats\
 xcopy config.txt %BUILDDIR%
 xcopy help.html %BUILDDIR%
 xcopy gpl.txt %BUILDDIR%
@@ -31,5 +34,5 @@ xcopy lgpl.txt %BUILDDIR%
 xcopy readme.txt %BUILDDIR%
 xcopy scripts\* %BUILDDIR%\scripts\
 xcopy config\* %BUILDDIR%\config\
-move build\exe.win32-3.2 build\CodeBeagle
+move %BUILDDIR% build\CodeBeagle
 
