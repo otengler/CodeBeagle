@@ -25,6 +25,7 @@ from SearchPage import SearchPage
 from Config import Config
 import AppConfig
 import IndexConfiguration
+import UserHintDialog
   
 def setConfigBoolFromCheck (config,  check,  value):
     state = check.checkState() == Qt.Checked
@@ -84,6 +85,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         
         # If the index update is still running this will start the timer which watches for it to finish
         self.__watchForIndexUpdate()
+        
+        # Wait a second for the main window to display, then ask user for initial setup
+        QTimer.singleShot (500,  self.initialSetup)        
      
     @pyqtSlot()
     def activateTab1(self):
@@ -118,9 +122,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.buttonHelp = self.addButtonToCornerWidget (hbox,  self.trUtf8("Help"),  "Help.png",  self.openHelp)
         self.labelUpdate = None
         
-    # The settings allow to configure search locations (and index them).
+    # The settings allow to configure search locations.
     @pyqtSlot()
-    def openSettings(self):
+    def openSettings(self, createInitialLocation=False):
         try:
             config = AppConfig.userConfig()
             globalConfig = AppConfig.globalConfig()
@@ -131,6 +135,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             globalSearchLocations = IndexConfiguration.readConfig(globalConfig)
             from SettingsDialog import SettingsDialog
             settingsDlg = SettingsDialog(self, searchLocations,  globalSearchLocations, config)
+            if createInitialLocation:
+                settingsDlg.addLocation()
             if settingsDlg.exec():
                 self.__saveUserConfig (settingsDlg)
                 
@@ -281,6 +287,16 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.buttonUpdate.show()
             self.labelUpdate.hide()
             self.buttonSettings.setEnabled(True)
+            
+    @pyqtSlot()
+    def initialSetup(self):
+        if UserHintDialog.hintWouldBeShown("noLocations"):
+            locations = IndexConfiguration.readConfig(AppConfig.appConfig())
+            if len(locations)==0:
+                text = self.trUtf8("There are no search locations defined so far. Would you like to open the settings dialog and create a first search location now?")
+                res = UserHintDialog.showUserHint (self, "noLocations",  self.trUtf8("Initial setup"), text,  UserHintDialog.Yes,  True,  UserHintDialog.No)
+                if res == UserHintDialog.Yes:
+                    self.openSettings(createInitialLocation=True)
         
     def failedToSaveUserConfigMessage(self):
         QMessageBox.critical(self,
