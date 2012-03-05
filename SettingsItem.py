@@ -21,6 +21,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from Ui_SettingsItem import Ui_SettingsItem
 import AppConfig
+import FileTools
 
 class SettingsItem (QWidget):   
     dataChanged = pyqtSignal()
@@ -48,18 +49,9 @@ class SettingsItem (QWidget):
             self.__updateDBName(text)
             
     def __updateDBName(self, text):
-        location = ""
-        if "APPDATA" in os.environ:
-            location = os.path.expandvars("$APPDATA")
-        elif "HOME" in os.environ:
-            location = os.path.expandvars("$HOME")
-        if location:
-            location += os.path.sep
-            location += AppConfig.appName
-            location += os.path.sep
-            location += text.replace(" ", "_")
-            location += ".dat"
-            self.ui.editIndexDB.setText(location)
+        location = FileTools.getAppDataPath(AppConfig.appName)
+        location += os.path.join (location,  text.replace(" ", "_")+".dat")
+        self.ui.editIndexDB.setText(location)
     
     @pyqtSlot('QString')
     def indexDBEdited(self, text):

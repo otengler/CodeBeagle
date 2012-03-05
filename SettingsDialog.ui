@@ -225,14 +225,14 @@
        <item row="3" column="0" colspan="2">
         <widget class="QCheckBox" name="checkMatchOverFiles">
          <property name="text">
-          <string>Continue with next/previous file if there is no next/previous match in the current file</string>
+          <string>Clicking &quot;Next match&quot; continues with next file if the last match has been reached</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="4" column="0" colspan="2">
         <widget class="QCheckBox" name="checkConfirmClose">
          <property name="text">
-          <string>Confirm close</string>
+          <string>Ask whether to really close the application</string>
          </property>
         </widget>
        </item>

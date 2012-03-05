@@ -39,19 +39,22 @@ def fopen (name, mode='r'):
         f.close()
         raise
 
-# Return a path where the application may store data. For Windows this is where APPDATA points to.
+# Return a path where the application may store data. For Windows this is where APPDATA points to. 
 # For Linux HOME should work.
 def getAppDataPath (appName):
     if "APPDATA" in os.environ:
-        location = "$APPDATA"
+        appdata = os.path.expandvars("$APPDATA")
+        location = os.path.join(os.path.split(appdata)[0],"Local")
+        if not os.path.isdir(location):
+            location = appdata
     elif "HOME" in os.environ:
-        location = "$HOME"
+        location = os.path.expandvars("$HOME")
         appName = "." + appName # By convention config data is stored with a leading dot
     else:
-        raise RuntimeError("Path to app data not found. Neither APPDATA nor HOME is defined")
+        location = ""
     location = os.path.join(location, appName)
     location += os.path.sep
-    return os.path.expandvars(location)
+    return location
     
 def getTempPath ():
     return os.path.expandvars("$TEMP")

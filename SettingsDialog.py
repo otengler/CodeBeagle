@@ -165,6 +165,11 @@ class SettingsDialog (QDialog):
 
         self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
+        
+        # If there are no search locations from the global config.txt then remove the corresponding tab
+        if len(globalSearchLocations) == 0:
+            self.ui.tabWidget.removeTab(1)
+            del self.ui.tabGlobalSearchLocations
             
         self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
         

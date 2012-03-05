@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="default">
+    <file>resources/Help.png</file>
     <file>resources/Update.gif</file>
     <file>resources/Update.png</file>
     <file>resources/Settings.png</file>

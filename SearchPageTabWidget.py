@@ -56,8 +56,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         super(SearchPageTabWidget, self).__init__(parent)
         self.setNewTabButtonText(self.trUtf8("New search"))
         self.setPrototypeForNewTab(SearchPage, self.trUtf8("Search"))
-        searchPage = self.addNewTab()
-        searchPage.showFile ("help.html",  False)
+        self.addNewTab()
         
         # Add new tab (QKeySequence.AddTab is the same as Qt.CTRL + Qt.Key_T)
         self.actionNewTab = QAction(self, shortcut=QKeySequence.AddTab, triggered= self.addNewTab)
@@ -116,6 +115,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         super (SearchPageTabWidget,  self).addWidgetsToCornerWidget(hbox)
         self.buttonSettings = self.addButtonToCornerWidget (hbox,  self.trUtf8("Settings"),  "Settings.png",  self.openSettings)
         self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.trUtf8("Update index"),  "Update.png",  self.updateIndex)
+        self.buttonHelp = self.addButtonToCornerWidget (hbox,  self.trUtf8("Help"),  "Help.png",  self.openHelp)
         self.labelUpdate = None
         
     # The settings allow to configure search locations (and index them).
@@ -182,6 +182,14 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     self.__triggerIndexUpdate (updateDisplayNames)
                 except:
                     self.failedToUpdateIndexesMessage()
+                    
+    @pyqtSlot()
+    def openHelp(self):
+        from HelpViewerDialog import HelpViewerDialog
+        helpDialog = HelpViewerDialog(self)
+        helpDialog.setAttribute(Qt.WA_DeleteOnClose)
+        helpDialog.showFile("help.html")
+        helpDialog.show()
                
     # Check which indexes should be updated and trigger an asynchronous update 
     # This works by putting an file with the name of the index config group into %APPDATA%\CodeBeagle\IndexUpdate.

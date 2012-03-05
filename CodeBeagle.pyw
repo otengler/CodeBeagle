@@ -50,12 +50,10 @@ class MainWindow (QMainWindow):
                                                          QMessageBox.Yes)
             if QMessageBox.Yes != res:
                 event.ignore()
-                super (MainWindow, self).closeEvent(event)
                 return
         
         self.__saveGeometryAndState()
         event.accept()
-        super (MainWindow, self).closeEvent(event)
         
     def __restoreGeometryAndState(self):
         settings = QSettings(AppConfig.appCompany, AppConfig.appName);

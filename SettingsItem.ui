@@ -30,7 +30,7 @@
    <item row="1" column="0">
     <widget class="QLabel" name="labelDirectories">
      <property name="text">
-      <string>Directories:</string>
+      <string>Directory:</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -38,7 +38,11 @@
     </widget>
    </item>
    <item row="1" column="1">
-    <widget class="QLineEdit" name="editDirectories"/>
+    <widget class="QLineEdit" name="editDirectories">
+     <property name="toolTip">
+      <string/>
+     </property>
+    </widget>
    </item>
    <item row="1" column="2">
     <widget class="QPushButton" name="buttonDirectory">
@@ -64,7 +68,11 @@
     </widget>
    </item>
    <item row="2" column="1">
-    <widget class="QLineEdit" name="editExtensions"/>
+    <widget class="QLineEdit" name="editExtensions">
+     <property name="toolTip">
+      <string>Comma seperated list of extensions. E.g.: h,cpp,cs</string>
+     </property>
+    </widget>
    </item>
    <item row="3" column="0">
     <widget class="QLabel" name="label">
@@ -74,7 +82,11 @@
     </widget>
    </item>
    <item row="3" column="1">
-    <widget class="QLineEdit" name="editExcludeDirectories"/>
+    <widget class="QLineEdit" name="editExcludeDirectories">
+     <property name="toolTip">
+      <string>Comma seperated list of strings. If a string is part of the directory being indexed it is exluded</string>
+     </property>
+    </widget>
    </item>
    <item row="4" column="0">
     <widget class="QCheckBox" name="checkBoxGenerateIndex">
