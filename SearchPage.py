@@ -23,6 +23,12 @@ from PyQt4.QtGui import *
 from Ui_SearchPage import Ui_SearchPage 
 import PathVisualizerDelegate
 import SearchMethods
+import UserHintDialog
+
+userHintUseWildcards = """
+The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard. 
+E.g. <b>part*</b> matches also <b>partial</b>. See the help for more information about the search syntax.
+"""
 
 # Returns the first difference in two iterables
 def firstDifference(s1,s2):
@@ -248,6 +254,8 @@ class SearchPage (QWidget):
             self.reportFailedSearch(indexConf, e)
         else:
             self.__updateSearchResult(result)
+            text = self.trUtf8(userHintUseWildcards)
+            UserHintDialog.showUserHint (self, "useWildcards",  self.trUtf8("Try using wildcards"), text,  UserHintDialog.OK)
         
     def __updateSearchResult (self, result):
         if result.label:

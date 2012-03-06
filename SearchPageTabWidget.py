@@ -27,6 +27,12 @@ import AppConfig
 import IndexConfiguration
 import UserHintDialog
   
+userHintUpdateIndex = """
+Before search location which are based on a index can be used the index must be generated. 
+To do so press the 'Update Index' button in the toolbar to update the index of all or only some search locations. 
+The update runs in the background and continues even if you close this program.
+"""
+  
 def setConfigBoolFromCheck (config,  check,  value):
     state = check.checkState() == Qt.Checked
     if Qt.Checked == state:
@@ -86,7 +92,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         # If the index update is still running this will start the timer which watches for it to finish
         self.__watchForIndexUpdate()
         
-        # Wait a second for the main window to display, then ask user for initial setup
+        # Wait a little for the main window to display, then ask user for initial setup
         QTimer.singleShot (500,  self.initialSetup)        
      
     @pyqtSlot()
@@ -139,7 +145,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 settingsDlg.addLocation()
             if settingsDlg.exec():
                 self.__saveUserConfig (settingsDlg)
-                
+                text = self.trUtf8(userHintUpdateIndex)
+                UserHintDialog.showUserHint (self, "updateIndex",  self.trUtf8("Updating indexes"), text,  UserHintDialog.OK)
+
     def __saveUserConfig (self,  settingsDlg):
         locations = settingsDlg.locations()
         config = Config (typeInfoFunc=AppConfig.configTypeInfo)

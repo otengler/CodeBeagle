@@ -42,9 +42,6 @@
      <property name="text">
       <string>Show this hint again</string>
      </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
     </widget>
    </item>
    <item row="2" column="2">
