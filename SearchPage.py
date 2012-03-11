@@ -164,7 +164,7 @@ class SearchPage (QWidget):
         
     def showFile (self, name,  isSourceCode=True):
         if self.ui.sourceViewer.currentFile() != name:
-            self.ui.sourceViewer.showFile(name,  isSourceCode)
+            self.ui.sourceViewer.showFile(name)
         
     @pyqtSlot()
     def nextFile (self):

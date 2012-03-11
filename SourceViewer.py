@@ -22,6 +22,7 @@ from Ui_SourceViewer import Ui_SourceViewer
 from FileTools import fopen
 from AppConfig import appConfig
 import HighlighterConfiguration  
+import bisect
 import os
 
 class SourceViewer (QWidget):
@@ -35,7 +36,8 @@ class SourceViewer (QWidget):
         self.ui = Ui_SourceViewer()
         self.ui.setupUi(self)
         self.ui.frameSearch.hide()
-        self.highlighter = Highlighter(self.ui.textEdit.document())
+        self.highlighter = SyntaxHighlighter ()
+        self.ui.textEdit.setHighlighter(self.highlighter)
         
         # Use the same color for active and inactive selections of text. The contrast of inactive selections is too low.
         palette = QPalette()
@@ -45,7 +47,6 @@ class SourceViewer (QWidget):
         
         self.sourceFont = None
         self.searchData = None
-        self.isSourceCode = True
         self.activateDynamicHighlight = False
         self.__reset()
         self.__processConfig()
@@ -67,8 +68,7 @@ class SourceViewer (QWidget):
         if self.sourceFont.family().lower() != config.FontFamily.lower() or self.sourceFont.pointSize() != config.FontSize:
             self.sourceFont.setFamily(config.FontFamily)
             self.sourceFont.setPointSize(config.FontSize)
-            if self.isSourceCode:
-                self.ui.textEdit.setFont(self.sourceFont)
+            self.ui.textEdit.setFont(self.sourceFont)
         
         if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
             self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
@@ -81,14 +81,14 @@ class SourceViewer (QWidget):
         self.ui.textEdit.setPlainText("")
         self.__resetTextCursor()
         self.__setInfoLabel()
-        self.highlighter.setDynamicHighlight(None)
+        self.ui.textEdit.setDynamicHighlight(None)
     
     def setSearchData (self,  searchData):
         self.__reset()
         self.searchData = searchData
         self.highlighter.setSearchData (searchData)
         
-    def showFile (self,  name,  isSourceCode=True):
+    def showFile (self,  name):
         self.__reset()
         self.ui.labelFile.setText(name)
         
@@ -97,21 +97,12 @@ class SourceViewer (QWidget):
                 text = file.read()
                 # This simply disabled the highlighting of marked words if the document get too large.
                 # This works around a bug in Qt that rehighlighting is much too slow.
-                self.activateDynamicHighlight = len(text) < 30000
+                self.activateDynamicHighlight = True #len(text) < 30000
         except:
             text = self.trUtf8("Failed to open file")
         
-        self.isSourceCode = isSourceCode
-        if self.isSourceCode:
-            self.highlighter.setRulesByFileName(name)
-            self.ui.textEdit.setFont(self.sourceFont)
-            self.ui.textEdit.setLineWrapMode(QTextEdit.NoWrap)
-            self.ui.textEdit.setPlainText(text)
-        else:
-            self.highlighter.highlightingRules = None
-            self.ui.textEdit.setFont(self.font())
-            self.ui.textEdit.setLineWrapMode(QTextEdit.WidgetWidth)
-            self.ui.textEdit.setHtml (text)
+        self.highlighter.setRulesByFileName(name,  text)
+        self.ui.textEdit.setPlainText(text)
             
         if self.searchData:
             self.matches = [match for match in self.searchData.matches (text)]
@@ -176,7 +167,7 @@ class SourceViewer (QWidget):
                 self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
             else:
                 if self.activateDynamicHighlight:
-                    self.highlighter.setDynamicHighlight(text)
+                    self.ui.textEdit.setDynamicHighlight(text)
         
     @pyqtSlot()
     def showSearchFrame(self):
@@ -245,47 +236,13 @@ class SourceViewer (QWidget):
         if event.mimeData().hasUrls():
             name = event.mimeData().urls()[0].toLocalFile()
             self.showFile(name)
-            
+       
 class HighlightingRules:
-    def __init__(self,  rulesFile):
+    def __init__(self):
         self.rules = []
         self.multiCommentStart = None
         self.multiCommentStop = None
         self.commentFormat = None
-        self.execRulesFile (rulesFile)
-        
-    def execRulesFile (self,  rulesFile):
-        localsDict = { "Light" : QFont.Light,  
-                              "Normal" : QFont.Normal,  
-                              "DemiBold" : QFont.DemiBold,  
-                              "Bold" : QFont.Bold,  
-                              "Black" : QFont.Black,  
-                              
-                              "white" : Qt.white, 
-                              "black" : Qt.black, 
-                              "red" : Qt.red, 
-                              "darkRed" : Qt.darkRed, 
-                              "green" : Qt.green, 
-                              "darkGreen" : Qt.darkGreen, 
-                              "blue" : Qt.blue, 
-                              "darkBlue" : Qt.darkBlue, 
-                              "cyan" : Qt.cyan, 
-                              "darkCyan" : Qt.darkCyan, 
-                              "magenta" : Qt.magenta, 
-                              "darkMagenta" : Qt.darkMagenta, 
-                              "yellow" : Qt.yellow, 
-                              "darkYellow" : Qt.darkYellow, 
-                              "gray" : Qt.gray,
-                              "darkGray" : Qt.darkGray,
-                              "lightGray" : Qt.lightGray, 
-                        
-                              "addKeywords" : self.addKeywords, 
-                              "addCommentRule" : self.addCommentRule, 
-                              "addRule" : self.addRule}
-        
-        with open(os.path.join("config", rulesFile)) as script: 
-            code = compile(script.read(), rulesFile, 'exec')
-        exec(code,  globals(),  localsDict)
         
     # Adds a list of comma seperated keywords
     def addKeywords (self,  keywords,  fontWeight,  foreground):
@@ -316,11 +273,46 @@ class HighlightingRules:
         format.setFontWeight(fontWeight)
         format.setForeground(foreground)
         return format
+       
+def rulesFromFile (rulesFile):
+    rules = HighlightingRules()
+   
+    localsDict = { "Light" : QFont.Light,  
+                          "Normal" : QFont.Normal,  
+                          "DemiBold" : QFont.DemiBold,  
+                          "Bold" : QFont.Bold,  
+                          "Black" : QFont.Black,  
+                          
+                          "white" : Qt.white, 
+                          "black" : Qt.black, 
+                          "red" : Qt.red, 
+                          "darkRed" : Qt.darkRed, 
+                          "green" : Qt.green, 
+                          "darkGreen" : Qt.darkGreen, 
+                          "blue" : Qt.blue, 
+                          "darkBlue" : Qt.darkBlue, 
+                          "cyan" : Qt.cyan, 
+                          "darkCyan" : Qt.darkCyan, 
+                          "magenta" : Qt.magenta, 
+                          "darkMagenta" : Qt.darkMagenta, 
+                          "yellow" : Qt.yellow, 
+                          "darkYellow" : Qt.darkYellow, 
+                          "gray" : Qt.gray,
+                          "darkGray" : Qt.darkGray,
+                          "lightGray" : Qt.lightGray, 
+                    
+                          "addKeywords" : rules.addKeywords, 
+                          "addCommentRule" : rules.addCommentRule, 
+                          "addRule" : rules.addRule}
 
-class Highlighter(QSyntaxHighlighter):
-    def __init__(self, parent=None):
-        super(Highlighter, self).__init__(parent)
+    with open(os.path.join("config", rulesFile)) as script: 
+        code = compile(script.read(), rulesFile, 'exec')
+    exec(code,  globals(),  localsDict)
         
+    return rules
+
+class SyntaxHighlighter:
+    def __init__(self):
         self.highlighterConfig = HighlighterConfiguration.highlighter(appConfig().SourceViewer)
         
         # A dict mapping a file extension to a HighlightingRules object
@@ -335,15 +327,15 @@ class Highlighter(QSyntaxHighlighter):
         self.searchStringFormat.setBackground(Qt.yellow)
         self.searchStringFormat.setForeground(Qt.black)
         
-        self.dynamicHighlightFormat = QTextCharFormat()
-        self.dynamicHighlightFormat.setBackground(QColor(157, 240, 255))
-        self.dynamicHighlightFormat.setForeground(Qt.black)
+#        self.dynamicHighlightFormat = QTextCharFormat()
+#        self.dynamicHighlightFormat.setBackground(QColor(157, 240, 255))
+#        self.dynamicHighlightFormat.setForeground(Qt.black)
         
+        self.comments = []
         self.searchData = None
-        self.dynamicHighlight = None
         
     # Choose a set of highlighting rules depending on the file extension
-    def setRulesByFileName(self,  name):
+    def setRulesByFileName(self,  name,  text):
         ext = os.path.splitext(name)[1].lower()
         if ext.startswith("."):
             ext = ext[1:]
@@ -357,66 +349,84 @@ class Highlighter(QSyntaxHighlighter):
         if rulesFile in self.highlightingRulesCache:
             self.highlightingRules = self.highlightingRulesCache[rulesFile]
         else:
-            self.highlightingRules = HighlightingRules(rulesFile)
+            self.highlightingRules = rulesFromFile(rulesFile)
             self.highlightingRulesCache[rulesFile] = self.highlightingRules
+            
+        self.__setText(text)
+        
+    class CommentRange:
+        def __init__(self, index, length=0):
+            self.index = index
+            self.length = length
+            
+        def __lt__ (left,  right):
+            return left.index < right.index
+        
+    # Find all multiline comments in the document and store them as CommentRange objects in self.comments
+    def __setText(self,  text):
+        comments = []
+        if self.highlightingRules:
+            if self.highlightingRules.multiCommentStart and self.highlightingRules.multiCommentStop:
+                regStart = self.highlightingRules.multiCommentStart
+                regEnd = self.highlightingRules.multiCommentStop
+                startIndex = regStart.indexIn(text)
+                while startIndex>=0: 
+                    matchedLenStart = regStart.matchedLength()
+                    endIndex = regEnd.indexIn(text, startIndex+matchedLenStart)
+                    if endIndex == -1: # comment opened but not closed
+                        comments.append (self.CommentRange(startIndex,  len(text)-startIndex))
+                        break
+                    matchedLenEnd = regEnd.matchedLength()
+                    comments.append (self.CommentRange(startIndex,  endIndex+matchedLenEnd-startIndex))
+                    startIndex = regStart.indexIn(text,  endIndex+matchedLenEnd)
+        self.comments = comments
         
     def setSearchData (self, searchData):
         self.searchData = searchData
-        
-    def setDynamicHighlight(self,  text):
-        if self.dynamicHighlight != text:
-            self.dynamicHighlight = text
-            self.rehighlight()
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, position, text):
+        formats = []
+        
         if self.highlightingRules:
             # Single line highlighting rules
             for expression, format in self.highlightingRules.rules:
                 index = expression.indexIn(text)
                 while index >= 0:
                     length = expression.matchedLength()
-                    self.setFormat(index, length, format)
+                    formats.append((format, index, length))
                     index = expression.indexIn(text, index + length)
-
-            # Multi line highlighting rule, Block state 1 is in comment, 0 is outside comment
-            if self.highlightingRules.multiCommentStart and self.highlightingRules.multiCommentStop:
-                self.setCurrentBlockState(0)
-
-                startIndex = 0
-                matchedLenStart = 0
-                if self.previousBlockState() != 1:
-                    startIndex = self.highlightingRules.multiCommentStart.indexIn(text)
-                    if startIndex>=0: 
-                        matchedLenStart = self.highlightingRules.multiCommentStart.matchedLength()
-
-                while startIndex >= 0:
-                    endIndex = self.highlightingRules.multiCommentStop.indexIn(text, startIndex+matchedLenStart)
-
-                    if endIndex == -1:
-                        self.setCurrentBlockState(1)
-                        commentLength = len(text) - startIndex
-                        self.setFormat(startIndex, commentLength, self.highlightingRules.commentFormat)
-                        break
-                    else:
-                        commentLength = endIndex - startIndex + self.highlightingRules.multiCommentStop.matchedLength()
-                        self.setFormat(startIndex, commentLength, self.highlightingRules.commentFormat)
                     
-                    startIndex = self.highlightingRules.multiCommentStart.indexIn(text, startIndex + commentLength)
-                    if startIndex >= 0:
-                        matchedLenStart = self.highlightingRules.multiCommentStart.matchedLength()
-        
-        # Dynamic highlight (text under cursor)
-        if self.dynamicHighlight:
-            startIndex = 0
-            while startIndex >= 0:
-                startIndex = text.find(self.dynamicHighlight,  startIndex)
-                if startIndex != -1:
-                    self.setFormat(startIndex, len(self.dynamicHighlight), self.dynamicHighlightFormat)
-                    startIndex = startIndex + len(self.dynamicHighlight)
+        # Colorize multiline comments
+        pos = bisect.bisect_right (self.comments,  self.CommentRange(position))
+        if pos > 0:
+            pos -= 1
+            while pos < len(self.comments):
+                comment = self.comments[pos]
+                # Comment starts before end of line
+                if comment.index < position+len(text): 
+                    formats.append((self.highlightingRules.commentFormat,  comment.index-position,  comment.length))
+                else:
+                    break
+                pos += 1
         
         # Search match highlight
         if self.searchData:
             for index, length in self.searchData.matches (text):
-                self.setFormat(index, length, self.searchStringFormat)
-        
+                formats.append((self.searchStringFormat, index, length))
     
+        return formats
+    
+def main():    
+    import sys
+    app = QApplication(sys.argv) 
+    w = SourceViewer(None) 
+    w.show() 
+    w.showFile(r"D:\C++\qt-everywhere-opensource-src-4.7.3\src\svg\qsvghandler.cpp")
+    #w.showFile(r"D:\C++\qt-everywhere-opensource-src-4.7.3\src\svg\qsvghandler_p.h")
+    sys.exit(app.exec_()) 
+
+if __name__ == "__main__":
+    main()
+    
+
+

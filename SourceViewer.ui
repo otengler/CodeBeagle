@@ -273,18 +273,18 @@ p, li { white-space: pre-wrap; }
     </widget>
    </item>
    <item>
-    <widget class="QTextEdit" name="textEdit">
+    <widget class="HighlightingTextEdit" name="textEdit">
+     <property name="undoRedoEnabled">
+      <bool>false</bool>
+     </property>
      <property name="lineWrapMode">
-      <enum>QTextEdit::NoWrap</enum>
+      <enum>QPlainTextEdit::NoWrap</enum>
      </property>
      <property name="readOnly">
       <bool>true</bool>
      </property>
-     <property name="tabStopWidth">
-      <number>20</number>
-     </property>
      <property name="textInteractionFlags">
-      <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+      <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
      </property>
     </widget>
    </item>
@@ -324,6 +324,13 @@ p, li { white-space: pre-wrap; }
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HighlightingTextEdit</class>
+   <extends>QPlainTextEdit</extends>
+   <header>HighlightingTextEdit</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="SearchPage.qrc"/>
  </resources>
@@ -356,38 +363,6 @@ p, li { white-space: pre-wrap; }
     </hint>
     <hint type="destinationlabel">
      <x>234</x>
-     <y>276</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>textEdit</sender>
-   <signal>cursorPositionChanged()</signal>
-   <receiver>SourceViewer</receiver>
-   <slot>updateCurrentLine()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>288</x>
-     <y>281</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>288</x>
-     <y>276</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>textEdit</sender>
-   <signal>selectionChanged()</signal>
-   <receiver>SourceViewer</receiver>
-   <slot>highlightSelection()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>288</x>
-     <y>281</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>288</x>
      <y>276</y>
     </hint>
    </hints>
@@ -469,6 +444,38 @@ p, li { white-space: pre-wrap; }
     <hint type="destinationlabel">
      <x>288</x>
      <y>71</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>textEdit</sender>
+   <signal>cursorPositionChanged()</signal>
+   <receiver>SourceViewer</receiver>
+   <slot>updateCurrentLine()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>288</x>
+     <y>306</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>288</x>
+     <y>276</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>textEdit</sender>
+   <signal>selectionChanged()</signal>
+   <receiver>SourceViewer</receiver>
+   <slot>highlightSelection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>288</x>
+     <y>306</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>288</x>
+     <y>276</y>
     </hint>
    </hints>
   </connection>

@@ -35,7 +35,7 @@ class HelpViewerDialog (QDialog):
         except:
             text = self.trUtf8("Failed to open file")
         
-        self.ui.textEditHelp.setHtml (text)
+        self.ui.textBrowserHelp.setHtml (text)
         
 def main():    
     import sys
