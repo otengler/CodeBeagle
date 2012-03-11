@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2012-02-12, 23:20:43 -->
+<!-- Saved: 2012-03-11, 23:19:10 -->
 <!-- Copyright (C) 2012 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -56,6 +56,12 @@
     <Source>changes.txt</Source>
     <Source>CheckableItemsDialog.py</Source>
     <Source>Ui_CheckableItemsDialog.py</Source>
+    <Source>Ui_HelpBrowserDialog.py</Source>
+    <Source>HelpViewerDialog.py</Source>
+    <Source>Ui_HelpViewerDialog.py</Source>
+    <Source>UserHintDialog.py</Source>
+    <Source>Ui_UserHintDialog.py</Source>
+    <Source>HighlightingTextEdit.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>
@@ -66,6 +72,8 @@
     <Form>SettingsDialog.ui</Form>
     <Form>SettingsItem.ui</Form>
     <Form>CheckableItemsDialog.ui</Form>
+    <Form>HelpViewerDialog.ui</Form>
+    <Form>UserHintDialog.ui</Form>
   </Forms>
   <Translations>
     <Translation>CodeBeagle.ts</Translation>
