@@ -47,7 +47,6 @@ class SourceViewer (QWidget):
         
         self.sourceFont = None
         self.searchData = None
-        self.activateDynamicHighlight = False
         self.__reset()
         self.__processConfig()
         
@@ -95,13 +94,10 @@ class SourceViewer (QWidget):
         try:
             with fopen(name) as file:
                 text = file.read()
-                # This simply disabled the highlighting of marked words if the document get too large.
-                # This works around a bug in Qt that rehighlighting is much too slow.
-                self.activateDynamicHighlight = True #len(text) < 30000
         except:
             text = self.trUtf8("Failed to open file")
         
-        self.highlighter.setRulesByFileName(name,  text)
+        self.highlighter.setRulesByFileName(name,  text,  self.sourceFont)
         self.ui.textEdit.setPlainText(text)
             
         if self.searchData:
@@ -166,8 +162,7 @@ class SourceViewer (QWidget):
             if modifiers != Qt.NoModifier:
                 self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
             else:
-                if self.activateDynamicHighlight:
-                    self.ui.textEdit.setDynamicHighlight(text)
+                self.ui.textEdit.setDynamicHighlight(text)
         
     @pyqtSlot()
     def showSearchFrame(self):
@@ -238,11 +233,13 @@ class SourceViewer (QWidget):
             self.showFile(name)
        
 class HighlightingRules:
-    def __init__(self):
+    def __init__(self,  font):
         self.rules = []
+        self.lineComment = None
         self.multiCommentStart = None
         self.multiCommentStop = None
         self.commentFormat = None
+        self.font = font
         
     # Adds a list of comma seperated keywords
     def addKeywords (self,  keywords,  fontWeight,  foreground):
@@ -254,11 +251,11 @@ class HighlightingRules:
         
     # Adds comment rules. Each parameter is a regular expression  string. The multi line parameter are optional and can be empty.
     def addCommentRule (self, singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground):
-        self.addRule (singleLine,  fontWeight,  foreground)
+        self.commentFormat = self.__createFormat(fontWeight,  foreground)
+        self.lineComment = QRegExp(singleLine)
         if multiLineStart and multiLineEnd:
             self.multiCommentStart = QRegExp(multiLineStart)
             self.multiCommentStop = QRegExp(multiLineEnd)
-            self.commentFormat = self.__createFormat(fontWeight,  foreground)
         
     # Adds an arbitrary highlighting rule 
     def addRule (self, expr,  fontWeight,  foreground):
@@ -268,14 +265,15 @@ class HighlightingRules:
     def __addRule (self, expr,  format):
         self.rules.append((QRegExp(expr),  format))
         
-    def __createFormat (self, fontWeight, foreground):
+    def __createFormat (self,  fontWeight, foreground):
         format = QTextCharFormat()
+        format.setFont(self.font)
         format.setFontWeight(fontWeight)
         format.setForeground(foreground)
         return format
        
-def rulesFromFile (rulesFile):
-    rules = HighlightingRules()
+def rulesFromFile (rulesFile,  font):
+    rules = HighlightingRules(font)
    
     localsDict = { "Light" : QFont.Light,  
                           "Normal" : QFont.Normal,  
@@ -327,15 +325,11 @@ class SyntaxHighlighter:
         self.searchStringFormat.setBackground(Qt.yellow)
         self.searchStringFormat.setForeground(Qt.black)
         
-#        self.dynamicHighlightFormat = QTextCharFormat()
-#        self.dynamicHighlightFormat.setBackground(QColor(157, 240, 255))
-#        self.dynamicHighlightFormat.setForeground(Qt.black)
-        
         self.comments = []
         self.searchData = None
         
     # Choose a set of highlighting rules depending on the file extension
-    def setRulesByFileName(self,  name,  text):
+    def setRulesByFileName(self,  name,  text,  font):
         ext = os.path.splitext(name)[1].lower()
         if ext.startswith("."):
             ext = ext[1:]
@@ -349,7 +343,7 @@ class SyntaxHighlighter:
         if rulesFile in self.highlightingRulesCache:
             self.highlightingRules = self.highlightingRulesCache[rulesFile]
         else:
-            self.highlightingRules = rulesFromFile(rulesFile)
+            self.highlightingRules = rulesFromFile(rulesFile,  font)
             self.highlightingRulesCache[rulesFile] = self.highlightingRules
             
         self.__setText(text)
@@ -362,6 +356,14 @@ class SyntaxHighlighter:
         def __lt__ (left,  right):
             return left.index < right.index
         
+    def __textLineBefore(self,  text,  index):
+        pos = index
+        while pos > 0:
+            pos -= 1
+            if text[pos] == "\n":
+                return text[pos+1:index]
+        return text[0:index]
+        
     # Find all multiline comments in the document and store them as CommentRange objects in self.comments
     def __setText(self,  text):
         comments = []
@@ -372,12 +374,18 @@ class SyntaxHighlighter:
                 startIndex = regStart.indexIn(text)
                 while startIndex>=0: 
                     matchedLenStart = regStart.matchedLength()
-                    endIndex = regEnd.indexIn(text, startIndex+matchedLenStart)
-                    if endIndex == -1: # comment opened but not closed
-                        comments.append (self.CommentRange(startIndex,  len(text)-startIndex))
-                        break
-                    matchedLenEnd = regEnd.matchedLength()
-                    comments.append (self.CommentRange(startIndex,  endIndex+matchedLenEnd-startIndex))
+                    line = self.__textLineBefore (text, startIndex+matchedLenStart) # +matchedLenStart too catch things like "//*" 
+                    # Check if the multi line comment is commented out
+                    if self.highlightingRules.lineComment.indexIn (line) == -1:
+                        endIndex = regEnd.indexIn(text, startIndex+matchedLenStart)
+                        if endIndex == -1: # comment opened but not closed
+                            comments.append (self.CommentRange(startIndex,  len(text)-startIndex))
+                            break
+                        matchedLenEnd = regEnd.matchedLength()
+                        comments.append (self.CommentRange(startIndex,  endIndex+matchedLenEnd-startIndex))
+                    else:
+                        endIndex = startIndex
+                        matchedLenEnd = matchedLenStart
                     startIndex = regStart.indexIn(text,  endIndex+matchedLenEnd)
         self.comments = comments
         
@@ -386,15 +394,16 @@ class SyntaxHighlighter:
 
     def highlightBlock(self, position, text):
         formats = []
-        
-        if self.highlightingRules:
-            # Single line highlighting rules
-            for expression, format in self.highlightingRules.rules:
-                index = expression.indexIn(text)
-                while index >= 0:
-                    length = expression.matchedLength()
-                    formats.append((format, index, length))
-                    index = expression.indexIn(text, index + length)
+        if not self.highlightingRules:
+            return formats
+            
+        # Single line highlighting rules
+        for expression, format in self.highlightingRules.rules:
+            index = expression.indexIn(text)
+            while index >= 0:
+                length = expression.matchedLength()
+                formats.append((format, index, length))
+                index = expression.indexIn(text, index + length)
                     
         # Colorize multiline comments
         pos = bisect.bisect_right (self.comments,  self.CommentRange(position))
@@ -409,6 +418,13 @@ class SyntaxHighlighter:
                     break
                 pos += 1
         
+        # Single line comments
+        index = self.highlightingRules.lineComment.indexIn(text)
+        while index >= 0:
+            length = self.highlightingRules.lineComment.matchedLength()
+            formats.append((self.highlightingRules.commentFormat,  index, length))
+            index = self.highlightingRules.lineComment.indexIn(text, index + length)
+        
         # Search match highlight
         if self.searchData:
             for index, length in self.searchData.matches (text):
@@ -421,8 +437,8 @@ def main():
     app = QApplication(sys.argv) 
     w = SourceViewer(None) 
     w.show() 
-    w.showFile(r"D:\C++\qt-everywhere-opensource-src-4.7.3\src\svg\qsvghandler.cpp")
-    #w.showFile(r"D:\C++\qt-everywhere-opensource-src-4.7.3\src\svg\qsvghandler_p.h")
+    #w.showFile(r"D:\C++\qt-everywhere-opensource-src-4.7.3\src\svg\qsvghandler.cpp")
+    w.showFile(r"D:\test.cpp")
     sys.exit(app.exec_()) 
 
 if __name__ == "__main__":

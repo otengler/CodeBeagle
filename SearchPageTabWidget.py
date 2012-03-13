@@ -28,7 +28,7 @@ import IndexConfiguration
 import UserHintDialog
   
 userHintUpdateIndex = """
-Before search location which are based on a index can be used the index must be generated. 
+Before search locations which are based on a index can be used the index must be generated. 
 To do so press the 'Update Index' button in the toolbar to update the index of all or only some search locations. 
 The update runs in the background and continues even if you close this program.
 """
