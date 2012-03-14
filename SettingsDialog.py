@@ -31,6 +31,12 @@ class SettingsEditorDelegate (QStyledItemDelegate):
         else:
             self.boldFont = QFont (QApplication.font())
         self.boldFont.setBold (True)
+        self.defaultLocationRow = -1
+        self.defaultPixmap = QPixmap(":/default/resources/Default.png")
+        self.defaultPixmapSize = 20
+        
+    def setDefaultLocationRow (self, row):
+        self.defaultLocationRow = row
 
     def paint (self,  painter, option, index):
         QApplication.style().drawPrimitive(QStyle.PE_PanelItemViewItem, option, painter,  self.parent())
@@ -41,9 +47,9 @@ class SettingsEditorDelegate (QStyledItemDelegate):
         
         rect1 = QRect(rect)
         rect1.translate(12, 0)
-        rect1.setWidth(third)
+        rect1.setWidth(third-self.defaultPixmapSize)
         rect2 = QRect(rect1)
-        rect2.translate(third, 0)
+        rect2.translate(third+self.defaultPixmapSize, 0)
         rect2.setWidth(third*2)
         
         painter.save()
@@ -59,7 +65,11 @@ class SettingsEditorDelegate (QStyledItemDelegate):
             painter.drawText (rect2, Qt.AlignVCenter+Qt.TextWordWrap, dirs)
             
         painter.setFont(self.boldFont)
-        painter.drawText (rect1, Qt.AlignVCenter+Qt.TextWordWrap, location.displayName())
+        locationName = location.displayName() 
+        if index.row() == self.defaultLocationRow:
+            locationName = locationName + self.trUtf8(" (Default)")
+            painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize/2, self.defaultPixmapSize,  self.defaultPixmapSize,  self.defaultPixmap)
+        painter.drawText (rect1, Qt.AlignVCenter+Qt.TextWordWrap, locationName)
         
         painter.restore()
         
@@ -166,12 +176,28 @@ class SettingsDialog (QDialog):
         self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
         
+        # Check which location is the current default location
+        self.defaultLocationRow = -1
+        defaultLocation = config.defaultLocation
+        for row, location in enumerate(searchLocations):
+            if defaultLocation == location.displayName():
+                self.__defaultLocationChanged (row)
+        
         # If there are no search locations from the global config.txt then remove the corresponding tab
         if len(globalSearchLocations) == 0:
             self.ui.tabWidget.removeTab(1)
             del self.ui.tabGlobalSearchLocations
             
         self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
+        
+    def defaultLocation (self):
+        if self.defaultLocationRow != -1:
+            model = self.ui.listViewLocations.model()
+            index = model.index(self.defaultLocationRow, 0)
+            if index.isValid():
+                location = index.data(Qt.UserRole+1)
+                return location.displayName()
+        return ""
         
     def locations(self):
         return self.myLocations.locations()
@@ -180,6 +206,24 @@ class SettingsDialog (QDialog):
     def addLocation (self):
         location = IndexConfiguration(self.trUtf8("New location"))
         self.myLocations.addLocation(location, True)
+        
+    @pyqtSlot()
+    def setDefaultLocation (self):
+        index = self.ui.listViewLocations.currentIndex ()
+        if index.isValid():
+            self.__defaultLocationChanged (index.row())
+        else:
+            self.__defaultLocationChanged (-1)
+            
+    def __defaultLocationChanged(self, newDefaultRow):
+        self.defaultLocationRow = newDefaultRow
+        self.ui.listViewLocations.itemDelegate().setDefaultLocationRow(self.defaultLocationRow )
+        # Refresh the whole listview
+        model = self.ui.listViewLocations.model()
+        firstIndex = model.index(0, 0)
+        lastIndex = model.index(model.rowCount()-1, 0)
+        if firstIndex.isValid() and lastIndex.isValid():
+            self.ui.listViewLocations.model().dataChanged.emit(firstIndex, lastIndex)
         
     @pyqtSlot()
     def duplicateLocation(self):
@@ -227,6 +271,8 @@ def main():
     conf = Config()
     conf.sourceViewer = Config()
     conf.sourceViewer.tabwidth = 4
+    conf.sourceViewer.fontfamily = "Courier"
+    conf.sourceViewer.fontsize = 10
     conf.matchOverFiles=True
     conf.showCloseConfirmation=True
     w = SettingsDialog(None,locations, locations, conf) 

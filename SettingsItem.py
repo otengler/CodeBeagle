@@ -50,7 +50,7 @@ class SettingsItem (QWidget):
             
     def __updateDBName(self, text):
         location = FileTools.getAppDataPath(AppConfig.appName)
-        location += os.path.join (location,  text.replace(" ", "_")+".dat")
+        location = os.path.join (location,  text.replace(" ", "_")+".dat")
         self.ui.editIndexDB.setText(location)
     
     @pyqtSlot('QString')

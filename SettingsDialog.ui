@@ -115,6 +115,44 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="1">
+        <widget class="QFrame" name="frame">
+         <layout class="QVBoxLayout" name="verticalLayout_6">
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="buttonSetDefault">
+            <property name="toolTip">
+             <string>Default search location when the program starts</string>
+            </property>
+            <property name="text">
+             <string>Set default</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tabGlobalSearchLocations">
@@ -284,7 +322,9 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="SettingsDialog.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonAdd</sender>
@@ -366,6 +406,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>buttonSetDefault</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>setDefaultLocation()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>669</x>
+     <y>86</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>addLocation()</slot>
@@ -373,5 +429,6 @@
   <slot>okClicked()</slot>
   <slot>selectionChanged(QModelIndex)</slot>
   <slot>duplicateLocation()</slot>
+  <slot>setDefaultLocation()</slot>
  </slots>
 </ui>

@@ -20,5 +20,6 @@ copy /Y resources\Crystal\*.* resources\
 %PYRCC4% -o LeaveLastTabWidget_rc.py -py3 LeaveLastTabWidget.qrc
 %PYRCC4% -o MainWindow_rc.py -py3 MainWindow.qrc
 %PYRCC4% -o SearchPage_rc.py -py3 SearchPage.qrc
+%PYRCC4% -o SettingsDialog_rc.py -py3 SettingsDialog.qrc
 
  

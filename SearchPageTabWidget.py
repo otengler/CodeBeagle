@@ -165,6 +165,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
         config.matchOverFiles = settingsDlg.ui.checkMatchOverFiles.checkState() == Qt.Checked
         config.showCloseConfirmation = settingsDlg.ui.checkConfirmClose.checkState() == Qt.Checked
+        config.defaultLocation = settingsDlg.defaultLocation()
         try:
             AppConfig.saveUserConfig (config)
         except:
@@ -255,7 +256,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     def __informAboutIndexUpdate(self,  text):
         pos = self.labelUpdate.parent().mapToGlobal(self.labelUpdate.pos())
-        pos.setX(pos.x()-50)
+        pos.setX(pos.x())
         QToolTip.showText (pos, text,  self)
 
     # This is called by the base class when a new tab is added. We use this to connect the request for a new search

@@ -24,6 +24,7 @@ from Ui_SearchPage import Ui_SearchPage
 import PathVisualizerDelegate
 import SearchMethods
 import UserHintDialog
+import AppConfig
 
 userHintUseWildcards = """
 The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard. 
@@ -111,7 +112,7 @@ class SearchPage (QWidget):
         self.ui.sourceViewer.noNextMatch.connect(self.nextFile)
         self.perfReport = None
         self.indexConfig = []
-        self.currentConfigName = "" # Display name of current config
+        self.currentConfigName = AppConfig.appConfig().defaultLocation # Display name of current config
         # Hide the custom scripts button if there are no custom scripts on disk
         if len(getCustomScriptsFromDisk())==0:
             self.ui.buttonCustomScripts.hide()
