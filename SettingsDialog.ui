@@ -130,7 +130,7 @@
           <item>
            <widget class="QPushButton" name="buttonSetDefault">
             <property name="toolTip">
-             <string>Default search location when the program starts</string>
+             <string>Default search location for new search tabs</string>
             </property>
             <property name="text">
              <string>Set default</string>
@@ -159,8 +159,8 @@
       <attribute name="title">
        <string>Global search locations</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
-       <item>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0" rowspan="2" colspan="2">
         <widget class="QLabel" name="labelGlobalLocation">
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global search locations are defined in config.txt and can only be viewed here but not edited. To change their settings modify config.txt or UserConfig.txt.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Global search location:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -170,7 +170,7 @@
          </property>
         </widget>
        </item>
-       <item>
+       <item row="2" column="0">
         <widget class="QFrame" name="frameGlobalSettingsItem">
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
@@ -185,14 +185,14 @@
          </layout>
         </widget>
        </item>
-       <item>
+       <item row="3" column="0">
         <widget class="QLabel" name="labelAvailableGlobalLocations">
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Available search locations:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
-       <item>
+       <item row="4" column="0">
         <widget class="QListView" name="listViewGlobalLocations">
          <property name="horizontalScrollBarPolicy">
           <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -200,6 +200,44 @@
          <property name="editTriggers">
           <set>QAbstractItemView::NoEditTriggers</set>
          </property>
+        </widget>
+       </item>
+       <item row="2" column="1" rowspan="3">
+        <widget class="QFrame" name="frame_2">
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="buttonSetDefaultGlobal">
+            <property name="toolTip">
+             <string>Default search location for new search tabs</string>
+            </property>
+            <property name="text">
+             <string>Set default</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>285</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>
@@ -422,6 +460,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>buttonSetDefaultGlobal</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>setDefaultLocationGlobal()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>669</x>
+     <y>175</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>addLocation()</slot>
@@ -430,5 +484,6 @@
   <slot>selectionChanged(QModelIndex)</slot>
   <slot>duplicateLocation()</slot>
   <slot>setDefaultLocation()</slot>
+  <slot>setDefaultLocationGlobal()</slot>
  </slots>
 </ui>

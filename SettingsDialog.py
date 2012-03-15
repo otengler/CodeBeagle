@@ -34,7 +34,7 @@ class SettingsEditorDelegate (QStyledItemDelegate):
         self.defaultLocationRow = -1
         self.defaultPixmap = QPixmap(":/default/resources/Default.png")
         self.defaultPixmapSize = 20
-        
+    
     def setDefaultLocationRow (self, row):
         self.defaultLocationRow = row
 
@@ -177,11 +177,13 @@ class SettingsDialog (QDialog):
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
         
         # Check which location is the current default location
-        self.defaultLocationRow = -1
         defaultLocation = config.defaultLocation
         for row, location in enumerate(searchLocations):
             if defaultLocation == location.displayName():
-                self.__defaultLocationChanged (row)
+                self.__defaultLocationChanged (self.ui.listViewLocations,  self.ui.listViewGlobalLocations,  row)
+        for row, location in enumerate(globalSearchLocations):
+            if defaultLocation == location.displayName():
+                self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations,  row)
         
         # If there are no search locations from the global config.txt then remove the corresponding tab
         if len(globalSearchLocations) == 0:
@@ -191,12 +193,19 @@ class SettingsDialog (QDialog):
         self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
         
     def defaultLocation (self):
-        if self.defaultLocationRow != -1:
+        index = None
+        row = self.ui.listViewLocations.itemDelegate().defaultLocationRow
+        if row != -1:
             model = self.ui.listViewLocations.model()
-            index = model.index(self.defaultLocationRow, 0)
-            if index.isValid():
-                location = index.data(Qt.UserRole+1)
-                return location.displayName()
+            index = model.index(row, 0)
+        row = self.ui.listViewGlobalLocations.itemDelegate().defaultLocationRow
+        if row != -1:
+            model = self.ui.listViewGlobalLocations.model()
+            index = model.index(row, 0)
+            
+        if index and index.isValid():
+            location = index.data(Qt.UserRole+1)
+            return location.displayName()
         return ""
         
     def locations(self):
@@ -211,19 +220,27 @@ class SettingsDialog (QDialog):
     def setDefaultLocation (self):
         index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
-            self.__defaultLocationChanged (index.row())
+            self.__defaultLocationChanged (self.ui.listViewLocations,  self.ui.listViewGlobalLocations,  index.row())
         else:
-            self.__defaultLocationChanged (-1)
+            self.__defaultLocationChanged (self.ui.listViewLocations,  self.ui.listViewGlobalLocations,  -1)
             
-    def __defaultLocationChanged(self, newDefaultRow):
-        self.defaultLocationRow = newDefaultRow
-        self.ui.listViewLocations.itemDelegate().setDefaultLocationRow(self.defaultLocationRow )
-        # Refresh the whole listview
-        model = self.ui.listViewLocations.model()
+    @pyqtSlot()
+    def setDefaultLocationGlobal (self):
+        index = self.ui.listViewLocations.currentIndex ()
+        if index.isValid():
+            self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations, index.row())
+        else:
+            self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations,  -1)
+            
+    def __defaultLocationChanged(self, listviewCurrent,  listviewOther, newDefaultRow):
+        listviewCurrent.itemDelegate().setDefaultLocationRow(newDefaultRow)
+        listviewOther.itemDelegate().setDefaultLocationRow(-1)
+        # Refresh the listview
+        model = listviewCurrent.model()
         firstIndex = model.index(0, 0)
         lastIndex = model.index(model.rowCount()-1, 0)
         if firstIndex.isValid() and lastIndex.isValid():
-            self.ui.listViewLocations.model().dataChanged.emit(firstIndex, lastIndex)
+            model.dataChanged.emit(firstIndex, lastIndex)
         
     @pyqtSlot()
     def duplicateLocation(self):

@@ -33,10 +33,6 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.highlighter = None
         self.dynamicHighlight = None
         
-        #        self.dynamicHighlightFormat = QTextCharFormat()
-#        self.dynamicHighlightFormat.setBackground(QColor(157, 240, 255))
-#        self.dynamicHighlightFormat.setForeground(Qt.black)
-        
     def setHighlighter (self, highlighter):
         self.highlighter = highlighter
         
@@ -47,36 +43,26 @@ class HighlightingTextEdit (QPlainTextEdit):
         
     def paintEvent(self, event):
         firstVisibleBlock = self.firstVisibleBlock()
-        self.colorizeVisibleBlock(firstVisibleBlock)
+        self.colorizeVisibleBlocks(firstVisibleBlock)
         super(HighlightingTextEdit, self).paintEvent(event)
         
         if self.dynamicHighlight:
             painter = QPainter(self.viewport())
             metrics = painter.fontMetrics()
-            size = self.viewport().size()
-            block = firstVisibleBlock
-            while block.isValid():
-                bound = self.blockBoundingGeometry(block).translated(self.contentOffset())
+            for block, bound in self.visibleBlocks(firstVisibleBlock,  True):
                 bound = QRect(bound.left(), bound.top(), bound.width(), bound.height())
-                if bound.top() > size.height():
-                    break
                 startIndex = block.text().find(self.dynamicHighlight)
                 if startIndex != -1:
                     partBefore = block.text()[:startIndex]
                     rectBefore = metrics.boundingRect(bound, Qt.TextExpandTabs, partBefore,  self.tabStopWidth())
                     rectText = metrics.boundingRect(bound, Qt.TextExpandTabs,  self.dynamicHighlight, self.tabStopWidth())
-                    rectText.moveLeft(rectBefore.width()+4)
-                    painter.drawRect(rectText)
-                block = block.next()
+                    rectResult = QRect(rectBefore.right()+4,  rectBefore.top()+1,  rectText.width()+2,  rectText.height()-2)
+                    painter.setPen(Qt.darkGray)
+                    painter.drawRect(rectResult)
     
     @pyqtSlot()
-    def colorizeVisibleBlock(self,  firstVisibleBlock):
-        size = self.viewport().size()
-        block = firstVisibleBlock
-        while block.isValid():
-            top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
-            if top > size.height():
-                break
+    def colorizeVisibleBlocks(self,  firstVisibleBlock):
+        for block in self.visibleBlocks(firstVisibleBlock):
             # -1 means the block has not been highlighted yet
             if block.userState() == -1:
                 blockLength = len(block.text())
@@ -99,5 +85,18 @@ class HighlightingTextEdit (QPlainTextEdit):
                 if addFormats:
                     block.layout().setAdditionalFormats(addFormats)
                 block.setUserState(1)
+            
+    def visibleBlocks (self,  firstVisibleBlock,  bIncludeBound=False):
+        size = self.viewport().size()
+        block = firstVisibleBlock
+        while block.isValid():
+            bound = self.blockBoundingGeometry(block).translated(self.contentOffset())
+            if bound.top() > size.height():
+                break
+            if bIncludeBound:
+                yield block, bound
+            else:
+                yield block
             block = block.next()
+
 
