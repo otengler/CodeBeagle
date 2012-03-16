@@ -72,10 +72,11 @@ def directSearchAsync(searchData,  indexConf):
     matches = []
     for dir in indexConf.directories:
         for file in FullTextIndex.genFind(indexConf.extensions,  dir,  indexConf.dirExcludes):
-            with fopen(file) as input:
-                for match in searchData.matches(input.read()):
-                    matches.append(file)
-                    break
+            if searchData.matchFolderAndExtensionFilter (file):
+                with fopen(file) as input:
+                    for match in searchData.matches(input.read()):
+                        matches.append(file)
+                        break
     matches = removeDupsAndSort(matches)
     return ResultSet(matches, searchData)
     

@@ -17,11 +17,111 @@ CodeBeagle is written in Python and based on SqLite and Qt.
 </p>
 <br/>
 
+<b>Search syntax</b>
+<pre>foo bar</pre>
+<p>
+Matches <strong>foo</strong> followed by any number of white-space followed by <strong>bar</strong> but not <strong>foobar</strong>.
+</p>
+<p>The asterisk is allowed as the wildcard character to search for keywords that are only partially known:</p>
+<pre>foo*</pre>
+<p>
+Matches any keywords starting with <strong>foo</strong>. This should be quite efficient as the keywords are internally sorted alphabetically and SqLite should easily determine those
+starting with a particular string.
+</p>
+<pre>*bar</pre>
+<p>Matches any keyword ending with <strong>bar</strong>. This is less efficient as it requires to scan over all keywords.</p>
+<pre>int*ate</pre>
+<p>The asterisk is certainly also allowed in the middle of keywords. The example above would match <strong>intermediate</strong>.</p>
+<p>To search for a literal asterisk sign it must be separated by a blank:</p>
+<pre>a* * b</pre>
+<p>This matches all keywords starting with <strong>a</strong> followed by a literal asterisk and then by <strong>b</strong>.</p>
+<pre>a&lt;=b</pre>
+<p>
+Matches <strong>a</strong> followed by any number of white-space followed by <strong>&lt;=</strong> and finally followed by <strong>b</strong>.
+By typing a blank between <strong>&lt;</strong> and <strong>=</strong> the search phrase would also match if there are any number of white-space characters 
+in between.
+</p>
+<p>
+<br/>
+Technical background:<br/>
+The indexing associates the processed documents with their containing keywords. A keyword is an arbitrary 
+length string of alpha numerical characters, the underscore and the hash sign. The first step of searching is to split the search phrase into a sequence 
+of keyword and none-keyword parts.
+An example:
+</p>
+<pre>a != b</pre>
+<p>
+This yields the sequence <strong>a</strong>,<strong>!=</strong>,<strong>b</strong>. <strong>a</strong> and 
+<strong>b</strong> are keywords. The search can then compute all documents which contain these two
+keywords. This set of results will then be stripped down to the final result by reading the files and scanning for the full search phrase 
+using a regular expression. Any number of white-space is allowed between all parts of the sequence. In the example above there is no 
+white-space allowed between <strong>!</strong> and <strong>=</strong>. This would be the case if the search phrase was 
+<strong>a ! = b</strong>.
+</p>
+<br/>
+
+<b>Filtering the results</b>
+<p>The UI offers three filters to drill down the results:</p>
+<table border="1" summary="Filter options">
+  <tr>
+    <td>Filter by file/path</td>
+    <td>The file path of the results must contain this filter text as a sub-string to yield a match. If you want to pass more than one filter 
+    separate them with a comma</td>
+  </tr>
+  <tr>
+    <td>Filter by extension</td>
+    <td>Specified a list of extensions which are allowed in the result. The separator is the comma. The following syntax is allowed and all 
+    means the same:<strong>cpp,*.cpp,.cpp</strong></td>
+  </tr>
+  <tr>
+    <td>Case sensitive</td>
+    <td>If checked the case of the search phrase must match</td>
+  </tr>
+</table>
+<p><br/></p>
+
 <b>Configuration</b>
 <p>
-The configuration is stored in "config.txt". This file is expected to be in the same directory as the executables itself. 
-The most important things to configure are the directories to index, the extensions of the files to collect and the
-path where the index is stored. Here is an example how to define an index:
+Clicking on the <strong>Settings</strong> button open a dialog which allows to configure search locations and general settings
+like the font type and font size used in the file viewer. Search locations define the directory and file extensions to search. They come 
+in two flavours: Indexed and not indexed. Indexed search locations depend on an index file to be generated before any
+search can be performed. Therefore the search speed is high. Searching non indexed search locations does not need an 
+index file but is slower instead. The settings done in the dialog are stored in the user profile. If you want to configure machine wide 
+search locations independent of the currently logged on user read the chapter about the <a href="#GlobalConfig">global configuration file</a>.
+</p>
+<br>
+
+<b>Updating indexed search locations</b>
+<p>
+Indexed search locations can be created and updated in two ways. The first way is from the UI by clicking on the 
+<strong>Update index</strong> button. This allows to select which indexes you want to update. The update itself
+is then started as a background process and continues even if CodeBeagle is closed.<br/>
+The second way is by directly calling "UpdateIndex.exe". This allows to automate the index update for instance using a 
+scheduled task. 
+</p>
+<p>
+All indexes specified in the global configuration are created or updated when calling the command line program "UpdateIndex.exe". 
+Use the "--config" switch to additionaly update indexes configured for a specific user. The switch allows to specify the full path to 
+a user config file. User specific config files are written by CodeBeagle if you use the settings dialog to configure search locations. 
+They are located under "%APPDATA%\..\local\CodeBeagle\config.txt". If there is no "local" directory the %APPDATA% directory is 
+used. If %APPDATA% is not defined %HOME% is used.  Call "UpdateIndex.exe" with "--help" to show all parameters.<br/>
+For an automated index update I recommend to create a scheduled  task which runs "UpdateIndex.exe".
+</p>
+<p>
+The index update can be time consuming especially when being called for the first time.
+Building a fresh index for 30000 files takes about 80 minutes on my machine at work.
+The good thing is that an update for an already existing index is much faster as only modified and new files are processed.
+</p>
+<br/>
+
+<a name="GlobalConfig"/>
+<b>Global configuration file</b>
+<p>
+The global configuration is stored in "config.txt". CodeBeagle first reads the global "config.txt" and then merges it with 
+per user configuration from the user profile. This means that the user configuration takes precedence over the machine wide settings.
+This global config.txt is expected to be in the same directory as the executables itself.  The most important things to configure 
+are the directories to index, the extensions of the files to collect and the path where the index is stored. Here is an example how 
+to define an index:
 </p>
 <pre>
 Index1 {
@@ -119,79 +219,6 @@ a group using the "import {file} as {group}" syntax. The syntax "import {file} i
 of a config file in the current group.
 </p>
 <br/>
-
-<b>Updating the index</b>
-<p>
-All indexes specified in the configuration are created or updated when calling "UpdateIndex.exe". Especially when being called
-for the first this can be time consuming. Building a fresh index for 30000 files takes about 80 minutes on my machine at work.
-The good thing is that an update for an already existing index is much faster as only modified and new files are processed.
-"UpdateIndex.exe" has no fancy UI. It just shows a console window during the update of the index. I recommend to create a scheduled 
-task which runs "UpdateIndex.exe" e.g. once a day.
-</p>
-<br/>
-
-<b>Search syntax</b>
-<pre>foo bar</pre>
-<p>
-Matches <strong>foo</strong> followed by any number of white-space followed by <strong>bar</strong> but not <strong>foobar</strong>.
-</p>
-<p>The asterisk is allowed as the wildcard character to search for keywords that are only partially known:</p>
-<pre>foo*</pre>
-<p>
-Matches any keywords starting with <strong>foo</strong>. This should be quite efficient as the keywords are internally sorted alphabetically and SqLite should easily determine those
-starting with a particular string.
-</p>
-<pre>*bar</pre>
-<p>Matches any keyword ending with <strong>bar</strong>. This is less efficient as it requires to scan over all keywords.</p>
-<pre>int*ate</pre>
-<p>The asterisk is certainly also allowed in the middle of keywords. The example above would match <strong>intermediate</strong>.</p>
-<p>To search for a literal asterisk sign it must be separated by a blank:</p>
-<pre>a* * b</pre>
-<p>This matches all keywords starting with <strong>a</strong> followed by a literal asterisk and then by <strong>b</strong>.</p>
-<pre>a&lt;=b</pre>
-<p>
-Matches <strong>a</strong> followed by any number of white-space followed by <strong>&lt;=</strong> and finally followed by <strong>b</strong>.
-By typing a blank between <strong>&lt;</strong> and <strong>=</strong> the search phrase would also match if there are any number of white-space characters 
-in between.
-</p>
-<p>
-<br/>
-Technical background:<br/>
-The indexing associates the processed documents with their containing keywords. A keyword is an arbitrary 
-length string of alpha numerical characters, the underscore and the hash sign. The first step of searching is to split the search phrase into a sequence 
-of keyword and none-keyword parts.
-An example:
-</p>
-<pre>a != b</pre>
-<p>
-This yields the sequence <strong>a</strong>,<strong>!=</strong>,<strong>b</strong>. <strong>a</strong> and 
-<strong>b</strong> are keywords. The search can then compute all documents which contain these two
-keywords. This set of results will then be stripped down to the final result by reading the files and scanning for the full search phrase 
-using a regular expression. Any number of white-space is allowed between all parts of the sequence. In the example above there is no 
-white-space allowed between <strong>!</strong> and <strong>=</strong>. This would be the case if the search phrase was 
-<strong>a ! = b</strong>.
-</p>
-<br/>
-
-<b>Filtering the results</b>
-<p>The UI offers three filters to drill down the results:</p>
-<table border="1" summary="Filter options">
-  <tr>
-    <td>Filter by file/path</td>
-    <td>The file path of the results must contain this filter text as a sub-string to yield a match. If you want to pass more than one filter 
-    separate them with a comma</td>
-  </tr>
-  <tr>
-    <td>Filter by extension</td>
-    <td>Specified a list of extensions which are allowed in the result. The separator is the comma. The following syntax is allowed and all 
-    means the same:<strong>cpp,*.cpp,.cpp</strong></td>
-  </tr>
-  <tr>
-    <td>Case sensitive</td>
-    <td>If checked the case of the search phrase must match</td>
-  </tr>
-</table>
-<p><br/></p>
 
 <b>Keyboard shortcuts</b>
 <p>
@@ -384,7 +411,7 @@ which is internally used to construct a <strong>QTextCharFormat</strong>:
 
 <b>License</b>
 <p>
-CodeBeagle Copyright (C) 2011 Oliver Tengler
+CodeBeagle Copyright (C) 2011-2012 Oliver Tengler
 </p>
 <p>
 This program is free software: you can redistribute it and/or modify

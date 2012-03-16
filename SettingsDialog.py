@@ -226,7 +226,7 @@ class SettingsDialog (QDialog):
             
     @pyqtSlot()
     def setDefaultLocationGlobal (self):
-        index = self.ui.listViewLocations.currentIndex ()
+        index = self.ui.listViewGlobalLocations.currentIndex ()
         if index.isValid():
             self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations, index.row())
         else:

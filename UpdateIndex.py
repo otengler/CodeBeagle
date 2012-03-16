@@ -27,14 +27,14 @@ import AppConfig
 import FullTextIndex
 
 license = """
-CodeBeagle Copyright (C) 2011 Oliver Tengler;
+CodeBeagle Copyright (C) 2011-2012 Oliver Tengler;
 This program comes with ABSOLUTELY NO WARRANTY; 
 This is free software, and you are welcome to redistribute it under certain conditions; 
 """
 
 updateIndexDescription ="""Utility to update indexes for CodeBeagle. By default those indexes defined in config.txt are updated"""
 helpJobMode = """This mode is used by CodeBeagle to update indexes in the background. It reads job files from the given directory"""
-helpConfig="""Full path to config file. This parameter allows to specify additional config files beside the default config.txt"""
+helpConfig="""Full path to config file. This parameter allows to specify an additional config file beside the default config.txt. Can be specified more than once."""
 
 parser = argparse.ArgumentParser(description=updateIndexDescription,  epilog=license)
 parser.add_argument("-v", "--version", action='version', version="UpdateIndex " + AppConfig.appVersion)
@@ -110,7 +110,6 @@ def nextJob (jobDir):
 
 # Parse command line
 args = parser.parse_args()
-print(args.config)
 
 # Switch to application directory to be able to load the configuration even if we are 
 # executed from a different working directory.
