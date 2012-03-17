@@ -24,6 +24,7 @@ from  LeaveLastTabWidget import LeaveLastTabWidget
 from SearchPage import SearchPage
 from Config import Config
 import AppConfig
+import FileTools
 import IndexConfiguration
 import UserHintDialog
   
@@ -114,23 +115,18 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def activateTab6(self):
         self.setCurrentIndex(5)
     
-    def __addAnimatedUpdateLabel (self,  hbox,  text):
-        widget = AnimatedUpdateWidget (text, self)
-        widget.hide()
-        hbox.addWidget(widget)
-        return widget
-    
     # Register a button in the corner widget to open the settings dialog. This function is called by the base class.
     def addWidgetsToCornerWidget (self,  hbox):
         super (SearchPageTabWidget,  self).addWidgetsToCornerWidget(hbox)
         self.buttonSettings = self.addButtonToCornerWidget (hbox,  self.trUtf8("Settings"),  "Settings.png",  self.openSettings)
         self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.trUtf8("Update index"),  "Update.png",  self.updateIndex)
+        self.indexOfUpdateButton = hbox.count()-1
         self.buttonHelp = self.addButtonToCornerWidget (hbox,  self.trUtf8("Help"),  "Help.png",  self.openHelp)
         self.labelUpdate = None
         
     # The settings allow to configure search locations.
     @pyqtSlot()
-    def openSettings(self, createInitialLocation=False):
+    def openSettings(self, createInitialLocation=False, locationToAdd=None):
         try:
             config = AppConfig.userConfig()
             globalConfig = AppConfig.globalConfig()
@@ -143,6 +139,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             settingsDlg = SettingsDialog(self, searchLocations,  globalSearchLocations, config)
             if createInitialLocation:
                 settingsDlg.addLocation()
+            if locationToAdd:
+                settingsDlg.addExistingLocation(locationToAdd)
             if settingsDlg.exec():
                 self.__saveUserConfig (settingsDlg)
                 text = self.trUtf8(userHintUpdateIndex)
@@ -159,7 +157,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             locConf.dirExcludes = location.dirExcludesAsString()
             locConf.generateIndex = location.generateIndex
             locConf.indexdb = location.indexdb
-            setattr(config,  "Index_" + location.indexName.replace(" ",  "_"),  locConf)
+            setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
         config.sourceViewer.FontFamily = settingsDlg.ui.fontComboBox.currentFont().family()
         config.sourceViewer.FontSize = settingsDlg.ui.editFontSize.text()
         config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
@@ -175,6 +173,12 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             AppConfig.refreshConfig()
             searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
             self.configChanged.emit(searchLocations)
+    
+    # This is called when a directory is dropped on the application. This is a shortcut to create a search location.
+    @pyqtSlot('QString')
+    def addSearchLocationFromPath (self,  directory):
+        location = IndexConfiguration.IndexConfiguration(self.trUtf8("Search") + " '" + directory + "'", "",  directory, "", "", False)
+        self.openSettings (locationToAdd=location)
                
     @pyqtSlot()
     def updateIndex(self):
@@ -196,6 +200,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 try:
                     self.__triggerIndexUpdate (updateDisplayNames)
                 except:
+                    raise
                     self.failedToUpdateIndexesMessage()
                     
     @pyqtSlot()
@@ -213,7 +218,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         if not os.path.isdir(self.indexTriggerPath):
             os.mkdir(self.indexTriggerPath)
         for name in updateDisplayNames:
-            open(os.path.join(self.indexTriggerPath, name), "w").close()
+            open(os.path.join(self.indexTriggerPath, FileTools.removeInvalidFileChars(name)), "w").close()
     
         # Now start UpdateIndex.py as a subprocess. If we are running as "CodeBeagle.exe" then start "UpdateIndex.exe" instead
         import subprocess
@@ -258,12 +263,33 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         pos = self.labelUpdate.parent().mapToGlobal(self.labelUpdate.pos())
         pos.setX(pos.x())
         QToolTip.showText (pos, text,  self)
+        
+    def __addAnimatedUpdateLabel (self,  hbox,  text):
+        widget = AnimatedUpdateWidget (text, self)
+        widget.hide()
+        hbox.insertWidget(self.indexOfUpdateButton,  widget)
+        return widget
+        
+    def __showIndexUpdateInProgress (self, bInProgress):
+        if not self.labelUpdate:
+            self.labelUpdate = self.__addAnimatedUpdateLabel (self.cornerWidgetLayout(),  self.trUtf8("Update running..."))
+        if bInProgress:
+            self.buttonUpdate.hide()
+            self.labelUpdate.show()
+            self.buttonSettings.setEnabled(False)
+            self.labelUpdate.movie.start()
+        else:
+            self.labelUpdate.movie.stop()
+            self.buttonUpdate.show()
+            self.labelUpdate.hide()
+            self.buttonSettings.setEnabled(True)
 
     # This is called by the base class when a new tab is added. We use this to connect the request for a new search
     # to open up in a new tab.
     def newTabAdded(self,  searchPage):
         searchPage.newSearchRequested.connect (self.searchInNewTab)
         searchPage.searchFinished.connect (self.changeTabName)
+        searchPage.ui.sourceViewer.directoryDropped.connect(self.addSearchLocationFromPath)
         self.configChanged.connect (searchPage.reloadConfig)
         # Initially reload the config to pass the current search locations to the search page 
         searchPage.reloadConfig(IndexConfiguration.readConfig(AppConfig.appConfig()))
@@ -282,20 +308,6 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 self.setTabText(index, text)
             else:
                 self.setTabText(index, self.trUtf8("Search"))
-                
-    def __showIndexUpdateInProgress (self, bInProgress):
-        if not self.labelUpdate:
-            self.labelUpdate = self.__addAnimatedUpdateLabel (self.cornerWidgetLayout(),  self.trUtf8("Update running..."))
-        if bInProgress:
-            self.buttonUpdate.hide()
-            self.labelUpdate.show()
-            self.buttonSettings.setEnabled(False)
-            self.labelUpdate.movie.start()
-        else:
-            self.labelUpdate.movie.stop()
-            self.buttonUpdate.show()
-            self.labelUpdate.hide()
-            self.buttonSettings.setEnabled(True)
             
     @pyqtSlot()
     def initialSetup(self):

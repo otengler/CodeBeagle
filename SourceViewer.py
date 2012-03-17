@@ -30,6 +30,7 @@ class SourceViewer (QWidget):
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
     noPreviousMatch = pyqtSignal()
     noNextMatch = pyqtSignal()
+    directoryDropped = pyqtSignal('QString')
     
     def __init__ (self, parent):
         super (SourceViewer, self).__init__(parent)
@@ -230,7 +231,10 @@ class SourceViewer (QWidget):
         # check if the data contains urls
         if event.mimeData().hasUrls():
             name = event.mimeData().urls()[0].toLocalFile()
-            self.showFile(name)
+            if os.path.isfile(name):
+                self.showFile(name)
+            elif os.path.isdir(name):
+                self.directoryDropped.emit(name)
        
 class HighlightingRules:
     def __init__(self,  font):

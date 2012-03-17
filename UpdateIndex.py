@@ -80,7 +80,7 @@ def loadConfigFiles (args):
 def handleUpdateJobs (indexes,  jobDir):
     configByName = {}
     for conf in indexes:
-        configByName[conf.displayName().lower()] = conf
+        configByName[FileTools.removeInvalidFileChars(conf.displayName().lower())] = conf
         
     while True:
         jobData = nextJob(jobDir)

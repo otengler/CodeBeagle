@@ -91,5 +91,13 @@ class lockDir:
         os.rmdir (self.name)
         return False
 
+# Removes all character which are invalid for files
+def removeInvalidFileChars (text):
+    for c in "\\/:*?\"<>|":
+        text = text.replace(c, "")
+    return text
+    
+
+    
         
 

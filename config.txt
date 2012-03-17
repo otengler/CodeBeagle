@@ -11,6 +11,11 @@
 # Contains some information about the update process
 # updateIndexLog = D:\update.log
 
+PredefinedExtensions {
+exts1 = c,cpp,h
+exts2 = c,cpp,h,rc,rc2,sln,vcxproj
+}
+
 #
 # Source viewer settings
 #

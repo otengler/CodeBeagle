@@ -126,6 +126,9 @@ class Config:
 
     def __iter__(self):
         return self.__data.__iter__()
+        
+    def values(self):
+        return self.__data.values()
 
     def __repr__ (self):
         return self.__dumpRec (self, 0)

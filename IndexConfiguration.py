@@ -24,8 +24,11 @@ class IndexConfiguration:
         self.indexName = indexName
         self.generateIndex = generateIndex
         self.indexdb = indexdb
+        # Add the extensions into a set. This makes the lookup if an extension matches faster.
+        self.extensions = set()
+        for ext in (self.__makeExt(e) for e in extensions.split(",") if len(e)>0):
+            self.extensions.add(self.__makeExt(ext))
         # These list comprehensions split a string into a list making sure that an empty string returns an empty list
-        self.extensions = [e for e in (self.__makeExt(e) for e in extensions.split(",")) if len(e)>0]
         self.directories = [d for d in (d.strip() for d in directories.split(",")) if len(d)>0]
         self.dirExcludes = [d for d in (d.strip() for d in dirExcludes.split(",")) if len(d)>0]
         

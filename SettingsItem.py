@@ -37,7 +37,16 @@ class SettingsItem (QWidget):
         
         self.ui.editName.textEdited.connect(self.dataChanged)
         self.ui.editDirectories.textEdited.connect(self.dataChanged)
-        self.ui.editExtensions.textEdited.connect(self.dataChanged)
+        self.ui.comboExtensions.lineEdit().textEdited.connect(self.dataChanged)
+        self.ui.checkBoxGenerateIndex.clicked.connect(self.generateIndexClicked)
+        self.__addEntriesForExtensionsCombo()
+        
+    def __addEntriesForExtensionsCombo (self):
+        try:
+            for exts in AppConfig.appConfig().PredefinedExtensions.values():
+                self.ui.comboExtensions.addItem(exts)
+        except AttributeError:
+            pass
    
     def focusInEvent (self, event):
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
@@ -50,7 +59,7 @@ class SettingsItem (QWidget):
             
     def __updateDBName(self, text):
         location = FileTools.getAppDataPath(AppConfig.appName)
-        location = os.path.join (location,  text.replace(" ", "_")+".dat")
+        location = os.path.join (location,  FileTools.removeInvalidFileChars(text)+".dat")
         self.ui.editIndexDB.setText(location)
     
     @pyqtSlot('QString')
@@ -59,6 +68,11 @@ class SettingsItem (QWidget):
             self.buildDBName = False
         else:
             self.buildDBName = True
+          
+    @pyqtSlot('bool')
+    def generateIndexClicked (self,  checked):
+        if checked and not self.indexDB():
+            self.__updateDBName(self.name())
         
     @pyqtSlot()
     def browseForDirectory(self):
@@ -92,7 +106,7 @@ class SettingsItem (QWidget):
         self.ui.editName.setText (name)
         self.ui.editDirectories.setText (directories)
         self.ui.editExcludeDirectories.setText (dirExcludes)
-        self.ui.editExtensions.setText (extensions)
+        self.ui.comboExtensions.lineEdit().setText (extensions)
         
         self.buildDBName = False
         if indexDB:
@@ -122,7 +136,7 @@ class SettingsItem (QWidget):
         return self.ui.editExcludeDirectories.text()
         
     def extensions (self):
-        return self.ui.editExtensions.text()
+        return self.ui.comboExtensions.currentText()
         
     def indexDB (self):
         return self.ui.editIndexDB.text()
@@ -132,17 +146,17 @@ class SettingsItem (QWidget):
 
     def resetAndDisable(self):
         self.ui.editName.setText("")
-        self.ui.editExcludeDirectories.setText("")
-        self.ui.editExtensions.setText("")
+        self.ui.editExcludeDirectories.lineEdit().setText("")
+        self.ui.comboExtensions.setText("")
         self.ui.editDirectories.setText("")
         self.ui.editIndexDB.setText("")
         self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
         self.enable(False)
         
     def enable(self, bEnable=True):
-        self.ui.editExtensions.setEnabled(bEnable)
         self.ui.editName.setEnabled(bEnable)
         self.ui.editExcludeDirectories.setEnabled(bEnable)
+        self.ui.comboExtensions.setEnabled(bEnable)
         self.ui.editDirectories.setEnabled(bEnable)
         self.ui.checkBoxGenerateIndex.setEnabled(bEnable)
         self.ui.buttonDirectory.setEnabled(bEnable)

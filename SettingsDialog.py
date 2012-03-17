@@ -210,11 +210,14 @@ class SettingsDialog (QDialog):
         
     def locations(self):
         return self.myLocations.locations()
-            
+        
+    def addExistingLocation(self,  location,  activateLocation=True):
+        self.myLocations.addLocation(location, activateLocation)
+    
     @pyqtSlot()
     def addLocation (self):
         location = IndexConfiguration(self.trUtf8("New location"))
-        self.myLocations.addLocation(location, True)
+        self.addExistingLocation(location, True)
         
     @pyqtSlot()
     def setDefaultLocation (self):
