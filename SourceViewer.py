@@ -211,16 +211,22 @@ class SourceViewer (QWidget):
         extras.append(extra2)
         
         self.ui.textEdit.setExtraSelections (extras)
+        
+        cursor = self.ui.textEdit.textCursor()
+        cursor.setPosition(index)
         if scrollDir > 0:
-            extra2.cursor.movePosition(QTextCursor.Down, QTextCursor.MoveAnchor,  5)
+            cursor.movePosition(QTextCursor.Down, QTextCursor.MoveAnchor,  5)
         elif scrollDir < 0:
-            extra2.cursor.movePosition(QTextCursor.Up, QTextCursor.MoveAnchor,  5)
-        self.ui.textEdit.setTextCursor (extra2.cursor) # otherwise 'ensureCursorVisible' doesn't work
+            cursor.movePosition(QTextCursor.Up, QTextCursor.MoveAnchor,  5)
+        self.ui.textEdit.setTextCursor (cursor) # otherwise 'ensureCursorVisible' doesn't work
         self.ui.textEdit.ensureCursorVisible ()
         
-        matchCursor = self.ui.textEdit.textCursor()
-        matchCursor.setPosition(index)
-        self.ui.textEdit.setTextCursor(matchCursor) # jump back to match to make sure the line number of the match is correct
+        cursor.setPosition(index)
+        self.ui.textEdit.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
+        
+        # For whatever reasons the lines which were moved up or down with 'movePosition' are not refreshed after syntax 
+        # highlighting. Therefore an update of the widget is forced. 
+        QTimer.singleShot (1,  self.ui.textEdit.viewport().update)
         
     def dragEnterEvent(self, event):
         # check if the data contains urls
@@ -349,6 +355,8 @@ class SyntaxHighlighter:
         else:
             self.highlightingRules = rulesFromFile(rulesFile,  font)
             self.highlightingRulesCache[rulesFile] = self.highlightingRules
+            
+        self.searchStringFormat.setFont(font)
             
         self.__setText(text)
         

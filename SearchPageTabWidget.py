@@ -200,7 +200,6 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 try:
                     self.__triggerIndexUpdate (updateDisplayNames)
                 except:
-                    raise
                     self.failedToUpdateIndexesMessage()
                     
     @pyqtSlot()

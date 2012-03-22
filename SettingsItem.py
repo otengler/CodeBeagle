@@ -146,8 +146,8 @@ class SettingsItem (QWidget):
 
     def resetAndDisable(self):
         self.ui.editName.setText("")
-        self.ui.editExcludeDirectories.lineEdit().setText("")
-        self.ui.comboExtensions.setText("")
+        self.ui.editExcludeDirectories.setText("")
+        self.ui.comboExtensions.lineEdit().setText("")
         self.ui.editDirectories.setText("")
         self.ui.editIndexDB.setText("")
         self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
