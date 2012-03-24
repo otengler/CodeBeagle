@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2012-03-15, 00:04:06 -->
+<!-- Saved: 2012-03-24, 16:12:14 -->
 <!-- Copyright (C) 2012 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -62,6 +62,8 @@
     <Source>Ui_UserHintDialog.py</Source>
     <Source>HighlightingTextEdit.py</Source>
     <Source>SettingsDialog_rc.py</Source>
+    <Source>AboutDialog.py</Source>
+    <Source>Ui_AboutDialog.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>
@@ -74,6 +76,7 @@
     <Form>CheckableItemsDialog.ui</Form>
     <Form>HelpViewerDialog.ui</Form>
     <Form>UserHintDialog.ui</Form>
+    <Form>AboutDialog.ui</Form>
   </Forms>
   <Translations>
     <Translation>CodeBeagle.ts</Translation>
