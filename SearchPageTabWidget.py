@@ -122,6 +122,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.trUtf8("Update index"),  "Update.png",  self.updateIndex)
         self.indexOfUpdateButton = hbox.count()-1
         self.buttonHelp = self.addButtonToCornerWidget (hbox,  self.trUtf8("Help"),  "Help.png",  self.openHelp)
+        self.buttonAbout = self.addButtonToCornerWidget (hbox,  self.trUtf8("About"),  "CodeBeagle.png",  self.openAbout)
         self.labelUpdate = None
         
     # The settings allow to configure search locations.
@@ -209,6 +210,12 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         helpDialog.setAttribute(Qt.WA_DeleteOnClose)
         helpDialog.showFile("help.html")
         helpDialog.show()
+        
+    @pyqtSlot()
+    def openAbout(self):
+        from AboutDialog import AboutDialog
+        aboutDialog = AboutDialog(self)
+        aboutDialog.exec()
                
     # Check which indexes should be updated and trigger an asynchronous update 
     # This works by putting an file with the name of the index config group into %APPDATA%\CodeBeagle\IndexUpdate.

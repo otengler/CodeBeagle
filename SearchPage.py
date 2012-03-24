@@ -169,13 +169,13 @@ class SearchPage (QWidget):
         
     @pyqtSlot()
     def nextFile (self):
-        self.changeSelectedFile (1)
+        self.__changeSelectedFile (1)
         
     @pyqtSlot()
     def previousFile (self):
-        self.changeSelectedFile (-1)
+        self.__changeSelectedFile (-1)
                 
-    def changeSelectedFile (self, increment):
+    def __changeSelectedFile (self, increment):
         index = self.ui.listView.currentIndex()
         if index.isValid():
             nextIndex = self.ui.listView.model().index(index.row()+increment, 0)
@@ -274,15 +274,6 @@ class SearchPage (QWidget):
         name = index.data(Qt.UserRole)
         url = QUrl.fromLocalFile (name)
         QDesktopServices.openUrl (url)
-        
-    @pyqtSlot(QPoint)
-    def contextMenuRequested(self, pos):
-        menu = QMenu()
-        menu.addAction(self.trUtf8("Copy &full path"),  self.copyFullPath)
-        menu.addAction(self.trUtf8("Copy &path of containing folder"),  self.copyPathOfContainingFolder)
-        menu.addAction(self.trUtf8("Copy file &name"),  self.copyFileName)
-        menu.addAction(self.trUtf8("Open containing f&older"),  self.browseToFolder)
-        menu.exec(self.ui.listView.mapToGlobal(pos))
 
     @pyqtSlot()
     def performanceInfo (self):
@@ -314,39 +305,40 @@ class SearchPage (QWidget):
         with open (exportFile, "w",  -1,  "utf_8_sig") as output:
             output.write(result)
             
-    @pyqtSlot()
-    def copyFullPath(self):
-        name = self.getSelectedFile()
-        if not name:
+    @pyqtSlot(QPoint)
+    def contextMenuRequested(self, pos):
+        fullpath = self.__getSelectedFile()
+        if not fullpath:
             return
+        name = os.path.split(fullpath)[1]
+        menu = QMenu()
+        menu.addAction(self.trUtf8("Copy &full path"),  lambda: self.__copyFullPath(fullpath))
+        menu.addAction(self.trUtf8("Copy &path of containing folder"),  lambda: self.__copyPathOfContainingFolder(fullpath))
+        menu.addAction(self.trUtf8("Copy file &name"),  lambda: self.__copyFileName(name))
+        menu.addAction(self.trUtf8("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))
+        menu.addAction(self.trUtf8("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))
+        menu.exec(self.ui.listView.mapToGlobal(pos))
+            
+    def __copyFullPath(self,  name):
         clipboard = QApplication.clipboard()
         clipboard.setText(name)
         
-    @pyqtSlot()
-    def copyPathOfContainingFolder(self):
-        name = self.getSelectedFile()
-        if not name:
-            return
+    def __copyPathOfContainingFolder(self,  name):
         clipboard = QApplication.clipboard()
         clipboard.setText(os.path.split(name)[0])
      
-    @pyqtSlot()
-    def copyFileName(self):
-        name = self.getSelectedFile()
-        if not name:
-            return
+    def __copyFileName(self,  name):
         clipboard = QApplication.clipboard()
-        clipboard.setText(os.path.split(name)[1])   
+        clipboard.setText(name)   
         
-    @pyqtSlot()
-    def browseToFolder (self):
-        name = self.getSelectedFile()
-        if not name:
-            return
+    def __browseToFolder (self,  name):
         url = QUrl.fromLocalFile (os.path.split(name)[0])
         QDesktopServices.openUrl (url)
+    
+    def __searchForFileName (self,  name):
+        self.newSearchRequested.emit(name,  self.ui.comboLocation.currentText())
         
-    def getSelectedFile (self):
+    def __getSelectedFile (self):
         index = self.ui.listView.currentIndex ()
         if not index.isValid():
             return None

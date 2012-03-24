@@ -331,7 +331,6 @@ class SyntaxHighlighter:
         self.highlightingRules = None
         
         self.searchStringFormat = QTextCharFormat()
-        self.searchStringFormat.setFontWeight(QFont.Bold)
         self.searchStringFormat.setBackground(Qt.yellow)
         self.searchStringFormat.setForeground(Qt.black)
         
@@ -357,6 +356,7 @@ class SyntaxHighlighter:
             self.highlightingRulesCache[rulesFile] = self.highlightingRules
             
         self.searchStringFormat.setFont(font)
+        self.searchStringFormat.setFontWeight(QFont.Bold)
             
         self.__setText(text)
         
