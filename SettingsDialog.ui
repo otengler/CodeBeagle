@@ -37,7 +37,11 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="SettingsItem" name="settingsItem" native="true"/>
+           <widget class="SettingsItem" name="settingsItem" native="true">
+            <property name="focusPolicy">
+             <enum>Qt::TabFocus</enum>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -170,7 +174,11 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <widget class="SettingsItem" name="globalSettingsItem" native="true"/>
+           <widget class="SettingsItem" name="globalSettingsItem" native="true">
+            <property name="focusPolicy">
+             <enum>Qt::TabFocus</enum>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -360,6 +368,25 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>settingsItem</tabstop>
+  <tabstop>buttonSetDefault</tabstop>
+  <tabstop>listViewLocations</tabstop>
+  <tabstop>buttonAdd</tabstop>
+  <tabstop>buttonDuplicate</tabstop>
+  <tabstop>buttonRemove</tabstop>
+  <tabstop>globalSettingsItem</tabstop>
+  <tabstop>buttonSetDefaultGlobal</tabstop>
+  <tabstop>listViewGlobalLocations</tabstop>
+  <tabstop>fontComboBox</tabstop>
+  <tabstop>editFontSize</tabstop>
+  <tabstop>editTabWidth</tabstop>
+  <tabstop>checkMatchOverFiles</tabstop>
+  <tabstop>checkConfirmClose</tabstop>
+  <tabstop>buttonOK</tabstop>
+  <tabstop>buttonCancel</tabstop>
+ </tabstops>
  <resources>
   <include location="SettingsDialog.qrc"/>
  </resources>

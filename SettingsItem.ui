@@ -132,11 +132,12 @@
  <tabstops>
   <tabstop>editName</tabstop>
   <tabstop>editDirectories</tabstop>
+  <tabstop>buttonDirectory</tabstop>
+  <tabstop>comboExtensions</tabstop>
   <tabstop>editExcludeDirectories</tabstop>
   <tabstop>checkBoxGenerateIndex</tabstop>
   <tabstop>editIndexDB</tabstop>
   <tabstop>buttonBrowseIndexLocation</tabstop>
-  <tabstop>buttonDirectory</tabstop>
  </tabstops>
  <resources/>
  <connections>

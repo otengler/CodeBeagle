@@ -14,6 +14,7 @@ set PYRCC4=%PYDIR%\Lib\site-packages\PyQt4\pyrcc4.exe
 %PYTHON% %PYUIC% -o Ui_CheckableItemsDialog.py -x CheckableItemsDialog.ui 
 %PYTHON% %PYUIC% -o Ui_HelpViewerDialog.py -x HelpViewerDialog.ui 
 %PYTHON% %PYUIC% -o Ui_UserHintDialog.py -x UserHintDialog.ui 
+%PYTHON% %PYUIC% -o Ui_AboutDialog.py -x AboutDialog.ui 
 
 copy /Y resources\Crystal\*.* resources\
 

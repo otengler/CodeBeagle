@@ -63,6 +63,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>checkToggleAll</tabstop>
+  <tabstop>listViewItems</tabstop>
+  <tabstop>buttonOK</tabstop>
+  <tabstop>buttonCancel</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

@@ -346,7 +346,6 @@ class SearchPage (QWidget):
 
     # Show the user possible reason why the search threw an exception
     def reportFailedSearch(self, indexConf, e):
-        print ("Search failed: " + str(e))
         if indexConf.generateIndex:
             QMessageBox.warning(self,
                 self.trUtf8("Search failed"),
