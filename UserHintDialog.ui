@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>293</width>
-    <height>223</height>
+    <width>360</width>
+    <height>289</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,20 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="3">
     <widget class="QTextEdit" name="textEditHint">
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="tabChangesFocus">
+      <bool>true</bool>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
      <property name="textInteractionFlags">
-      <set>Qt::NoTextInteraction</set>
+      <set>Qt::TextSelectableByMouse</set>
      </property>
     </widget>
    </item>

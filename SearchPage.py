@@ -27,8 +27,8 @@ import UserHintDialog
 import AppConfig
 
 userHintUseWildcards = """
-The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard. 
-E.g. <b>part*</b> matches also <b>partial</b>. See the help for more information about the search syntax.
+<p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard. 
+E.g. <b>part*</b> matches also <b>partial</b>. See the help for more information about the search syntax.</p>
 """
 
 # Returns the first difference in two iterables

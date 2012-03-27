@@ -29,9 +29,15 @@ import IndexConfiguration
 import UserHintDialog
   
 userHintUpdateIndex = """
-Before search locations which are based on a index can be used the index must be generated. 
-To do so press the 'Update Index' button in the toolbar to update the index of all or only some search locations. 
-The update runs in the background and continues even if you close this program.
+<p align='justify'>You've just added your first indexed search location. The index must be generated before you can perform any searches.</p>
+<p align='justify'>Press the 'Update Index' button in the toolbar. The update runs in the background and 
+continues even if you close this program. During the update the index cannot be used. </p>
+<p align='justify'>You can also update the indexes with a scheduled task. See the help for details.</p>
+"""
+
+userHintInitialSetup= """
+<p align='justify'>There are no search locations defined so far. </p>
+<p align='justify'>Would you like to open the settings dialog and create a first search location now?</p>
 """
   
 def setConfigBoolFromCheck (config,  check,  value):
@@ -90,6 +96,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.indexUpdateTimer = None
         self.indexTriggerPath = os.path.join (AppConfig.userDataPath (),  "TriggerUpdate")
         
+        # A list of index names which are currently disabled because the update is running
+        self.disabledIndexes = []
         # If the index update is still running this will start the timer which watches for it to finish
         self.__watchForIndexUpdate()
         
@@ -143,13 +151,19 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             if locationToAdd:
                 settingsDlg.addExistingLocation(locationToAdd)
             if settingsDlg.exec():
-                self.__saveUserConfig (settingsDlg)
-                text = self.trUtf8(userHintUpdateIndex)
-                UserHintDialog.showUserHint (self, "updateIndex",  self.trUtf8("Updating indexes"), text,  UserHintDialog.OK)
+                bHadIndexedLocationsBefore = self.__containsIndexedLocation(searchLocations) or self.__containsIndexedLocation(globalSearchLocations)
+                self.__saveUserConfig (settingsDlg,  bHadIndexedLocationsBefore)
 
-    def __saveUserConfig (self,  settingsDlg):
+    def __containsIndexedLocation (self,  searchLocations):
+        for location in searchLocations:
+            if location.generateIndex:
+                return True
+        return False
+
+    def __saveUserConfig (self,  settingsDlg,  bHadIndexedLocationsBefore=True):
         locations = settingsDlg.locations()
         config = Config (typeInfoFunc=AppConfig.configTypeInfo)
+        bIndexedLocationFound = False
         for location in locations:
             locConf = Config(typeInfoFunc=IndexConfiguration.indexTypeInfo)
             locConf.indexName = location.indexName
@@ -159,6 +173,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             locConf.generateIndex = location.generateIndex
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
+            bIndexedLocationFound |= location.generateIndex
         config.sourceViewer.FontFamily = settingsDlg.ui.fontComboBox.currentFont().family()
         config.sourceViewer.FontSize = settingsDlg.ui.editFontSize.text()
         config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
@@ -170,6 +185,10 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         except:
             self.failedToSaveUserConfigMessage()
         else:    
+            # If the first indexed location was added show the user a hint that it must be updated first
+            if not bHadIndexedLocationsBefore and bIndexedLocationFound:
+                text = self.trUtf8(userHintUpdateIndex)
+                UserHintDialog.showUserHint (self, "updateIndex",  self.trUtf8("Updating indexes"), text,  UserHintDialog.OK)
             # Refresh config
             AppConfig.refreshConfig()
             searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
@@ -245,7 +264,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     
     # Check regularily if the update finished
     def __watchForIndexUpdate(self):
-        if self.__indexUpdateRunning():
+        running = self.__indexUpdateRunning()
+        self.__maintainRunningIndexUpdates(running)
+        if running:
             self.__showIndexUpdateInProgress(True)
             if not self.indexUpdateTimer:
                 self.indexUpdateTimer = QTimer(self)
@@ -253,7 +274,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.indexUpdateTimer.start(2000)
    
     def __checkIndexUpdateProgress (self):
-        if not self.__indexUpdateRunning():
+        running = self.__indexUpdateRunning()
+        self.__maintainRunningIndexUpdates(running)
+        if not running:
             self.indexUpdateTimer.stop()
             self.__showIndexUpdateInProgress(False)
             self.__informAboutIndexUpdate("Index update finshed")
@@ -261,10 +284,23 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def __indexUpdateRunning (self):
         try:
             files = os.listdir(self.indexTriggerPath)
-            return len(files) > 0
+            return files
         except:
-            return False
-
+            return []
+            
+    # Informs all search pages which search locations are currently not available
+    def __maintainRunningIndexUpdates(self,  running):
+        if len(running) != len(self.disabledIndexes):
+            self.disabledIndexes = running
+            searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
+            availableLocations = []
+            for location in searchLocations:
+                if not FileTools.removeInvalidFileChars(location.displayName()) in self.disabledIndexes:
+                    availableLocations.append (location)
+            self.configChanged.emit(availableLocations)
+        else:
+            self.disabledIndexes = running
+            
     def __informAboutIndexUpdate(self,  text):
         pos = self.labelUpdate.parent().mapToGlobal(self.labelUpdate.pos())
         pos.setX(pos.x())
@@ -320,7 +356,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         if UserHintDialog.hintWouldBeShown("noLocations"):
             locations = IndexConfiguration.readConfig(AppConfig.appConfig())
             if len(locations)==0:
-                text = self.trUtf8("There are no search locations defined so far. Would you like to open the settings dialog and create a first search location now?")
+                text = self.trUtf8(userHintInitialSetup)
                 res = UserHintDialog.showUserHint (self, "noLocations",  self.trUtf8("Initial setup"), text,  UserHintDialog.Yes,  True,  UserHintDialog.No)
                 if res == UserHintDialog.Yes:
                     self.openSettings(createInitialLocation=True)
