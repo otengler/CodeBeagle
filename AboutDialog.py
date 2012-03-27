@@ -16,6 +16,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from Ui_AboutDialog import Ui_AboutDialog
@@ -26,7 +27,9 @@ class AboutDialog (QDialog):
         super(AboutDialog, self).__init__(parent)
         self.ui = Ui_AboutDialog()
         self.ui.setupUi(self)
-        self.ui.labelVersion.setText(self.trUtf8("Version") + " " + AppConfig.appVersion)
+        version = sys.version_info
+        pythonAndQt = " (Python %u.%u.%u, Qt %s)" % (version.major, version.minor, version.micro, qVersion())
+        self.ui.labelVersion.setText(self.trUtf8("Version") + " " + AppConfig.appVersion + pythonAndQt)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         
 def main():    
