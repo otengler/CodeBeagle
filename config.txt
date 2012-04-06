@@ -11,6 +11,7 @@
 # Contains some information about the update process
 # updateIndexLog = D:\update.log
 
+# This list of extensions fills the extensions combo box in the settings dialog
 PredefinedExtensions {
 exts1 = c,cpp,h
 exts2 = c,cpp,h,rc,rc2,sln,vcxproj
@@ -40,7 +41,7 @@ import config\SourceViewer.txt as SourceViewer
 #}
 
 # Place your index definitions inside UserConfig.txt to preserve your settings when updating to 
-# new version.
+# a new version.
 import UserConfig.txt
 
 
