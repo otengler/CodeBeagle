@@ -1,7 +1,7 @@
 Binary distribution
 ===================
 
-There is no installation as such. Just unzip to a location you like and launch "CodeBeagle.exe" to start up the UI. To get started read help.html which is opened  by default. If CodeBeagle fails to launch your system probably misses the correct Microsoft Visual C++ runtime. To fix this download and install the "Microsoft Visual C++ 2008 SP1 Redistributable Package (x86)" from Microsoft.
+There is no installation as such. Just unzip to a location you like and launch "CodeBeagle.exe" to start up the UI. If CodeBeagle fails to launch your system probably misses the correct Microsoft Visual C++ runtime. To fix this download and install the "Microsoft Visual C++ 2008 SP1 Redistributable Package (x86)" from Microsoft.
 
 Running from source
 ===================
