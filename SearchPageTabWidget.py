@@ -151,8 +151,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             if locationToAdd:
                 settingsDlg.addExistingLocation(locationToAdd)
             if settingsDlg.exec():
-                bHadIndexedLocationsBefore = self.__containsIndexedLocation(searchLocations) or self.__containsIndexedLocation(globalSearchLocations)
-                self.__saveUserConfig (settingsDlg,  bHadIndexedLocationsBefore)
+                self.__saveUserConfig (searchLocations, globalSearchLocations, settingsDlg)
 
     def __containsIndexedLocation (self,  searchLocations):
         for location in searchLocations:
@@ -160,7 +159,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 return True
         return False
 
-    def __saveUserConfig (self,  settingsDlg,  bHadIndexedLocationsBefore=True):
+    def __saveUserConfig (self,  currentSearchLocations,  globalSearchLocations,  settingsDlg):
         locations = settingsDlg.locations()
         config = Config (typeInfoFunc=AppConfig.configTypeInfo)
         bIndexedLocationFound = False
@@ -186,6 +185,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.failedToSaveUserConfigMessage()
         else:    
             # If the first indexed location was added show the user a hint that it must be updated first
+            bHadIndexedLocationsBefore = self.__containsIndexedLocation(currentSearchLocations) or self.__containsIndexedLocation(globalSearchLocations)
             if not bHadIndexedLocationsBefore and bIndexedLocationFound:
                 text = self.trUtf8(userHintUpdateIndex)
                 UserHintDialog.showUserHint (self, "updateIndex",  self.trUtf8("Updating indexes"), text,  UserHintDialog.OK)

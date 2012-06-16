@@ -29,31 +29,6 @@ from FileTools import fopen
 reTokenize = re.compile("[\\w#]+")
 reQueryToken = re.compile("[\\w#*]+")
 
-def genFind (filepat, strRootDir,  dirExcludes=[]):
-    dirExcludes = [dir.lower() for dir in dirExcludes]
-    for path, dirlist, filelist in os.walk (strRootDir):
-        if dirExcludes:
-            pathLower = path.lower()
-            found=False
-            for exclude in dirExcludes:
-                if pathLower.find(exclude) != -1:
-                    found=True
-                    break
-            if found:
-                continue
-        for name in (name for name in filelist if os.path.splitext(name)[1] in filepat):
-            yield os.path.join(path,name) 
-     
-def genTokens (file):
-        for token in reTokenize.findall(file.read()):
-            yield token
-            
-def safeLen (obj):
-    try:
-        return len(obj)
-    except:
-        return 0
-
 strSetup="""
 CREATE TABLE IF NOT EXISTS keywords(
   id INTEGER PRIMARY KEY,
@@ -89,6 +64,55 @@ CREATE TABLE IF NOT EXISTS indexInfo(
 
 IndexPart = 1
 ScanPart= 2
+
+def genFind (filepat, strRootDir,  dirExcludes=[]):
+    dirExcludes = [dir.lower() for dir in dirExcludes]
+    for path, dirlist, filelist in os.walk (strRootDir):
+        if dirExcludes:
+            pathLower = path.lower()
+            found=False
+            for exclude in dirExcludes:
+                if pathLower.find(exclude) != -1:
+                    found=True
+                    break
+            if found:
+                continue
+        for name in (name for name in filelist if os.path.splitext(name)[1].lower() in filepat):
+            yield os.path.join(path,name) 
+     
+def genTokens (file):
+        for token in reTokenize.findall(file.read()):
+            yield token
+            
+def safeLen (obj):
+    try:
+        return len(obj)
+    except:
+        return 0
+        
+def intersectSortedLists(l1,l2):
+    l = 0
+    r = 0   
+    l3 = []
+    try:
+        itemL = l1[l]
+        itemR = l2[r]
+        while (True):
+            if itemL < itemR:
+                l += 1
+                itemL = l1[l]
+            elif itemL > itemR:
+                r += 1
+                itemR = l2[r]
+            else:
+                l3.append(itemL)
+                l += 1
+                r += 1
+                itemL = l1[l]
+                itemR = l2[r]
+    except IndexError:
+        pass
+    return l3
 
 def getTokens (str):
     parts = []
@@ -343,6 +367,17 @@ class UpdateStatistics:
         s = "New docs: %u, Updated docs: %u, Unchanged: %u"  % (self.nNew,  self.nUpdated,  self.nUnchanged)
         return s
 
+class Keyword:
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+        
+    def __repr__(self):
+        return "%s (%u)" % (self.name, self.id)
+        
+    def __eq__(self,other):
+        return self.id==other.id and self.name==other.name
+
 class FullTextIndex:
     def __init__(self,  strDbLocation):
         self.strDbLocation = strDbLocation
@@ -368,7 +403,8 @@ class FullTextIndex:
         print ("Associations: " + str(associations))
         return (documents, documentsInIndex,  keywords, associations)
 
-    def search (self, query,  perfReport = None):
+    # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
+    def search (self, query,  perfReport = None,  commonKeywordMap={},  manualIntersect=True):
         if not isinstance (query,Query):
             raise RuntimeError("query must be a Query derived object")
         
@@ -378,22 +414,23 @@ class FullTextIndex:
         if not perfReport:
             perfReport = PerformanceReport()
         
+        q = self.conn.cursor()
+        
+        # The result is a list of lists of Keyword objects
+        kwList = []
         with perfReport.newAction ("Finding keywords") as action:
-            q = self.conn.cursor()
-            stmt = ""
-            for kwIDs in self.__getKeywordIds (q, query.indexedPartsLower(),  reportAction=action):
-                if len(kwIDs):
-                    if stmt:
-                        stmt += " INTERSECT "
-                    inString = ",".join((str(i) for i in kwIDs))
-                    stmt += "SELECT DISTINCT fullpath FROM kw2doc,documents WHERE docID=id AND kwID IN (%s)" % (inString, )
-            if not stmt:
+            kwList = self.__getKeywords (q, query.indexedPartsLower(),  reportAction=action)
+            if not kwList:
                 return []
         
+        goodKeywords, badKeywords = self.__qualifyKeywords (kwList, commonKeywordMap)
+        
         with perfReport.newAction ("Finding documents") as action:
-            q.execute (stmt + " ORDER BY fullpath")
-            result = q.fetchall()
-            if action: action.addData ("%u matches",  safeLen(result))
+            if not manualIntersect:
+                result = self.__findDocsByKeywords (q,  goodKeywords,  badKeywords)
+            else:
+                result = self.__findDocsByKeywordsManualIntersect (q,  goodKeywords,  badKeywords,  action)
+            action.addData ("%u matches",  safeLen(result))
             if not result:
                 return []
             
@@ -407,6 +444,44 @@ class FullTextIndex:
                 else:
                     return [r[0] for r in result if query.matchFolderAndExtensionFilter(r[0])]
             
+    def __findDocsByKeywords (self,  q,  goodKeywords, badKeywords):
+        kwList = goodKeywords + badKeywords
+        stmt = ""
+        for keywords in kwList:
+            if stmt:
+                stmt += " INTERSECT "
+            inString = ",".join((str(keyword.id) for keyword in keywords))
+            stmt += "SELECT DISTINCT fullpath FROM kw2doc,documents WHERE docID=id AND kwID IN (%s)" % (inString, )
+        q.execute (stmt + " ORDER BY fullpath")
+        return q.fetchall()
+        
+    def __findDocsByKeywordsManualIntersect (self, q,  goodKeywords, badKeywords,  reportAction):
+        result= None
+        allKeywords = [(True, keywords) for keywords in goodKeywords] + [(False, keywords) for keywords in badKeywords]
+        for isGood, keywords in allKeywords:
+            # Stop if all good keywords have been used and the result is stripped down to less than 100 files
+            if not isGood:
+                kwNames = ",".join((keyword.name for keyword in keywords))
+                if not result is None and len(result) < 100:
+                    reportAction.addData ("Search stopped with common keyword '%s'" % (kwNames, ))
+                    break
+                else:
+                    if not result is None:
+                        reportAction.addData ("Common keyword '%s' used because %u matches are too much" % (kwNames, len(result)))
+                    else:
+                        reportAction.addData ("Common keyword '%s' used as first keyword" % (kwNames, ))
+            inString = ",".join((str(keyword.id) for keyword in keywords))
+            stmt = "SELECT DISTINCT fullpath FROM kw2doc,documents WHERE docID=id AND kwID IN (%s) ORDER BY fullpath" % (inString, )
+            q.execute (stmt)
+            kwMatches = q.fetchall()
+            if result is None:
+                result = kwMatches
+            else:
+                result = intersectSortedLists (result,  kwMatches)
+            if not result:
+                return []
+        return result
+           
     def __filterDocsBySearchPhrase (self,  results,  query):
         finalResults = []
         reExpr = query.regExForMatches()
@@ -422,29 +497,49 @@ class FullTextIndex:
             except:
                 pass
         return finalResults
+        
+    # Receives a list of lists of Keywords and returns a two lists.
+    # The first list contains the good keywords in input order. These are keywords which are not found if commonKeywordMap.
+    # The second list contains the bad keywords which were found in commonKeywordMap ordered from the less worst to the worst.
+    def __qualifyKeywords (self, kwList,  commonKeywordMap):
+        goodKeywords = []
+        badKeywordsTemp = [] # contains touples (quality,keywords) in order to sort by quality
+        for keywords in kwList:
+            # Check if one of the keywords is found in mapCommonKeywords
+            quality = None
+            for keyword in keywords:
+                if keyword.name in commonKeywordMap:
+                    q= commonKeywordMap[keyword.name]
+                    if not quality or q < quality:
+                        quality = q
+            if quality is None:
+                # Not in the common keyword map
+                goodKeywords.append(keywords)
+            else:
+                # In the common keyword map
+                badKeywordsTemp.append((quality, keywords))
+        badKeywords = [keywords for quality, keywords in sorted(badKeywordsTemp, reverse=True)]
+        return goodKeywords, badKeywords
     
-    # Return the corresponding list of keysword IDs from a list of keyword strings
-    def __getKeywordIds (self,  q,  keywordList,  returnEmptyListIfKeywordNotFound=True,  reportAction=None):
+    # Receives a list of keywords which might contain wildcards. For every passed keyword a list of Keyword objects
+    # is returned. If a keyword is not found an empty list is returned.
+    def __getKeywords (self,  q,  keywordList,  reportAction=None):
         keys = []
         for kw in keywordList:
-            query = "SELECT id FROM keywords WHERE"
+            query = "SELECT id,keyword FROM keywords WHERE"
             if kw.find("*")!=-1:
                 query = query + " keyword LIKE ? ESCAPE '!'"
                 kw = kw.replace("_", "!_")
                 kw = kw.replace("*", "%")
             else:
                 query = query + " keyword=?"
-            
             q.execute(query, (kw, ))
             result = q.fetchall()
             if not result:
                 if reportAction: reportAction.addData ("String '%s' was not found",  kw)
-                if returnEmptyListIfKeywordNotFound:
-                    return []
-                else:
-                    keys.append([])
+                return []
             if reportAction: reportAction.addData ("String '%s' results in %u keyword matches",  kw,  len(result))
-            keys.append([r[0] for r in result])
+            keys.append([Keyword(r[0], r[1]) for r in result])
         return keys
                     
     def updateIndex (self, directories,  extensions,  dirExcludes=[],  statistics=None):
@@ -531,6 +626,15 @@ class FullTextIndex:
        c.execute ("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
        return c.lastrowid
     
+def buildMapFromCommonKeywordFile (name):
+    mapCommonKeywords = {}
+    if name:
+        with open(name, "r") as input:
+            for number, keyword in ((number, keyword.strip().lower()) for number, keyword in enumerate(input)):
+                if keyword:
+                    mapCommonKeywords[keyword] = number
+    return mapCommonKeywords
+
 def resolveKeywordId (q, i):
     q.execute("SELECT keyword FROM keywords WHERE id=:kw", {"kw":i})
     return q.fetchone()[0]

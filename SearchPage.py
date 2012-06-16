@@ -22,6 +22,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from Ui_SearchPage import Ui_SearchPage 
 import PathVisualizerDelegate
+import FullTextIndex
 import SearchMethods
 import UserHintDialog
 import AppConfig
@@ -113,9 +114,16 @@ class SearchPage (QWidget):
         self.perfReport = None
         self.indexConfig = []
         self.currentConfigName = AppConfig.appConfig().defaultLocation # Display name of current config
+        self.commonKeywordMap = self.__loadCommonKeywordMap()
         # Hide the custom scripts button if there are no custom scripts on disk
         if len(getCustomScriptsFromDisk())==0:
             self.ui.buttonCustomScripts.hide()
+            
+    def __loadCommonKeywordMap(self):
+        try:
+            return FullTextIndex.buildMapFromCommonKeywordFile (AppConfig.appConfig().commonKeywords)
+        except:
+            return {}
             
     def focusInEvent (self, event):
         self.ui.comboSearch.setFocus(Qt.ActiveWindowFocusReason)
@@ -233,7 +241,7 @@ class SearchPage (QWidget):
             return
         
         try:
-            result = SearchMethods.customSearch (self, script,  params, indexConf)
+            result = SearchMethods.customSearch (self, script,  params, indexConf,  self.commonKeywordMap)
         except Exception as e:
             self.reportCustomSearchFailed (e)
         else:
@@ -250,7 +258,7 @@ class SearchPage (QWidget):
             return
         
         try:
-            result = SearchMethods.search (self, params, indexConf)
+            result = SearchMethods.search (self, params, indexConf,  self.commonKeywordMap)
         except Exception as e:
             self.reportFailedSearch(indexConf, e)
         else:

@@ -52,7 +52,7 @@ class IndexConfiguration:
         ext = ext.strip()
         if ext and not ext.startswith("."):
             ext = "." + ext
-        return ext
+        return ext.lower()
         
     def __str__(self):
         s    = "Name       : " + self.indexName + "\n"
@@ -62,6 +62,14 @@ class IndexConfiguration:
         s += "Excludes   : " + str(self.dirExcludes) + "\n"
         s += "Extensions : " + str(self.extensions) + "\n"
         return s
+        
+    def __eq__(self,other):
+        return self.indexName==other.indexName and \
+            self.generateIndex==other.generateIndex and \
+            self.indexdb == other.indexdb and \
+            self.directories == other.directories and \
+            self.dirExcludes == other.dirExcludes and \
+            self.extensions == other.extensions
         
 # Configurates the type information for the index configuration
 def indexTypeInfo (config):

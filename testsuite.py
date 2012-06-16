@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from FullTextIndex import FullTextIndex, SearchQuery,  UpdateStatistics
+from FullTextIndex import *
 import unittest
 import shutil
 import stat
@@ -211,9 +211,41 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual (stats[2], 0)
         self.assertEqual (stats[3], 0)
         
-    
+    def testCommonKeywords(self):
+        testPath = os.path.join(getModulePath (), "tests")
+        os.chdir(testPath)
+        delFile ("test.dat")
+        
+        fti = FullTextIndex("test.dat")
+        commonKeywords = buildMapFromCommonKeywordFile("CommonKeywords.txt")
+        # h
+        # if
+        # for
+        # while
+        
+        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(100, "wichtiger")], [Keyword(101, "hinweis")]], commonKeywords)
+        print (good, bad)
+        self.assertEqual(len(good), 2)
+        self.assertEqual(len(bad), 0)
+        self.assertEqual(good[0], [Keyword(100, "wichtiger")])
+        self.assertEqual(good[1], [Keyword(101, "hinweis")])
+        
+        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(100, "iostream")], [Keyword(101, "h")]], commonKeywords)
+        print (good, bad)
+        self.assertEqual(len(good), 1)
+        self.assertEqual(len(bad), 1)
+        self.assertEqual(good[0], [Keyword(100, "iostream")])
+        self.assertEqual(bad[0], [Keyword(101, "h")])
+        
+        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(50, "func")], [Keyword(100, "whi"), Keyword(101, "while")], [Keyword(102, "true")]], commonKeywords)
+        print (good, bad)
+        self.assertEqual(len(good), 2)
+        self.assertEqual(len(bad), 1)
+        self.assertEqual(good[0], [Keyword(50, "func")])
+        self.assertEqual(good[1], [Keyword(102, "true")])
+        self.assertEqual(bad[0], [Keyword(100, "whi"), Keyword(101, "while")])
+        
 if __name__ == "__main__":
     unittest.main()
 
 
-               

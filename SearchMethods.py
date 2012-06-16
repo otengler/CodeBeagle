@@ -49,24 +49,24 @@ class ScriptSearchData:
                 return
 
 # This executes an indexed or a direct search. This depends  on the IndexConfiguration setting "gneerateIndex".
-def search (parent,  params,  indexConf):
+def search (parent,  params, indexConf,  commonKeywordMap={}):
     strSearch, strFolderFilter,  strExtensionFilter, bCaseSensitive = params
     if not len(strSearch):
         return ResultSet()
     searchData = FullTextIndex.SearchQuery (strSearch,  strFolderFilter,  strExtensionFilter,  bCaseSensitive)
     if indexConf.generateIndex:
-        result = AsynchronousTask.execute (parent,  indexedSearchAsync,  searchData, indexConf)
+        result = AsynchronousTask.execute (parent,  indexedSearchAsync,  searchData, commonKeywordMap, indexConf)
     else:
         result = AsynchronousTask.execute (parent,  directSearchAsync,  searchData,  indexConf)
         
     result.label = strSearch
     return result
     
-def indexedSearchAsync(searchData, indexConf):
+def indexedSearchAsync(searchData, commonKeywordMap, indexConf):
     perfReport = FullTextIndex.PerformanceReport()
     with perfReport.newAction("Init database"):
         fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
-    return ResultSet (fti.search (searchData,  perfReport),  searchData,  perfReport)
+    return ResultSet (fti.search (searchData,  perfReport,  commonKeywordMap),  searchData,  perfReport)
     
 def directSearchAsync(searchData,  indexConf):
     matches = []
@@ -83,19 +83,19 @@ def directSearchAsync(searchData,  indexConf):
 # Executes a custom search script from disk. The script receives a locals dictionary with all neccessary
 # search parameters and returns its result in the variable "result". The variable "highlight" must be set
 # to a regular expression which is used to highlight the matches in the result.
-def customSearch (parent, script,  params, indexConf):
+def customSearch (parent, script,  params, indexConf,  commonKeywordMap={}):
     strSearch, strFolderFilter,  strExtensionFilter, bCaseSensitive = params
     if not len(strSearch):
         return ResultSet()
-    return AsynchronousTask.execute (parent,  customSearchAsync, os.path.join("scripts", script), params, indexConf)
+    return AsynchronousTask.execute (parent,  customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap,  indexConf)
     
-def customSearchAsync (script,  params, indexConf):
+def customSearchAsync (script,  params, commonKeywordMap,  indexConf):
     import re
     query, folders, extensions, caseSensitive = params
     def performSearch (strSearch,  strFolderFilter="",  strExtensionFilter="",  bCaseSensitive=False):
         searchData = FullTextIndex.SearchQuery (strSearch,  strFolderFilter,  strExtensionFilter,  bCaseSensitive)
         if indexConf.generateIndex:
-            return indexedSearchAsync(searchData,  indexConf).matches
+            return indexedSearchAsync(searchData,  commonKeywordMap,  indexConf).matches
         else:
             return directSearchAsync(searchData,  indexConf).matches
             

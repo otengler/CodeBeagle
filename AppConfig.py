@@ -100,6 +100,7 @@ def typeSourceViewerDefaults ():
 def configTypeInfo (config):
     config.setType("profileUpdate",  Config.typeDefaultBool(False))
     config.setType("showCloseConfirmation",  Config.typeDefaultBool(False)) 
+    config.setType("commonKeywords", Config.typeDefaultString(""))
     config.setType("matchOverFiles",  Config.typeDefaultBool(False)) 
     config.setType("defaultLocation",  Config.typeDefaultString(""))
     config.setType("SourceViewer",  typeSourceViewerDefaults())
