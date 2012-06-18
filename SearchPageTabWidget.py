@@ -27,12 +27,14 @@ import AppConfig
 import FileTools
 import IndexConfiguration
 import UserHintDialog
-  
+
 userHintUpdateIndex = """
-<p align='justify'>You've just added your first indexed search location. The index must be generated before you can perform any searches.</p>
-<p align='justify'>Press the 'Update Index' button in the toolbar. The update runs in the background and 
-continues even if you close this program. During the update the index cannot be used. </p>
-<p align='justify'>You can also update the indexes with a scheduled task. See the help for details.</p>
+<p align='justify'>You added or changed indexed search locations:
+%(locations)s
+</p>
+<p align='justify'>Do you want me to update the indexes now?</p>
+<p align='jusitfy'> The update runs in the background and continues even if you close the program. During the update the index cannot be used. 
+To manually start the index update press the 'Update Index' button in the toolbar. See the help for more details.</p>
 """
 
 userHintInitialSetup= """
@@ -151,18 +153,11 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             if locationToAdd:
                 settingsDlg.addExistingLocation(locationToAdd)
             if settingsDlg.exec():
-                self.__saveUserConfig (searchLocations, globalSearchLocations, settingsDlg)
+                self.__saveUserConfig (searchLocations, settingsDlg)
 
-    def __containsIndexedLocation (self,  searchLocations):
-        for location in searchLocations:
-            if location.generateIndex:
-                return True
-        return False
-
-    def __saveUserConfig (self,  currentSearchLocations,  globalSearchLocations,  settingsDlg):
+    def __saveUserConfig (self,  currentSearchLocations,  settingsDlg):
         locations = settingsDlg.locations()
         config = Config (typeInfoFunc=AppConfig.configTypeInfo)
-        bIndexedLocationFound = False
         for location in locations:
             locConf = Config(typeInfoFunc=IndexConfiguration.indexTypeInfo)
             locConf.indexName = location.indexName
@@ -172,7 +167,6 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             locConf.generateIndex = location.generateIndex
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
-            bIndexedLocationFound |= location.generateIndex
         config.sourceViewer.FontFamily = settingsDlg.ui.fontComboBox.currentFont().family()
         config.sourceViewer.FontSize = settingsDlg.ui.editFontSize.text()
         config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
@@ -183,16 +177,40 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             AppConfig.saveUserConfig (config)
         except:
             self.failedToSaveUserConfigMessage()
-        else:    
-            # If the first indexed location was added show the user a hint that it must be updated first
-            bHadIndexedLocationsBefore = self.__containsIndexedLocation(currentSearchLocations) or self.__containsIndexedLocation(globalSearchLocations)
-            if not bHadIndexedLocationsBefore and bIndexedLocationFound:
-                text = self.trUtf8(userHintUpdateIndex)
-                UserHintDialog.showUserHint (self, "updateIndex",  self.trUtf8("Updating indexes"), text,  UserHintDialog.OK)
+        else: 
+            updateDisplayNames = self.__getAddedOrChangedIndexedSearchLocations (currentSearchLocations,  locations)
+            if updateDisplayNames:
+                # Show a user hint which allows to update added or changed indexes<ul>
+                locationsHtml = "<ul>"
+                for displayName in updateDisplayNames:
+                   locationsHtml += "<li>" + displayName + "</li>"
+                locationsHtml += "</ul>"
+                text = self.trUtf8(userHintUpdateIndex) % {"locations" : locationsHtml}
+                result = UserHintDialog.showUserHint (self, "updateIndexes",  self.trUtf8("Update indexes"), text,  
+                                                                            UserHintDialog.Yes, False,  UserHintDialog.No,  True,  bShowHintAgain=True)
+                if result == UserHintDialog.Yes:
+                    try:
+                        self.__triggerIndexUpdate (updateDisplayNames)
+                    except:
+                        self.failedToUpdateIndexesMessage()
+                
             # Refresh config
             AppConfig.refreshConfig()
             searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
             self.configChanged.emit(searchLocations)
+        
+    # Returns a list of display names of added or changed indexed search locations 
+    def __getAddedOrChangedIndexedSearchLocations (self,  currentSearchLocations,  newSearchLocations):
+        changedLocations = []
+        for location in newSearchLocations:
+            bFound = False
+            for oldLocation in currentSearchLocations:
+                if location == oldLocation:
+                    bFound = True
+                    break
+            if not bFound:
+                changedLocations.append(location.displayName())
+        return changedLocations
     
     # This is called when a directory is dropped on the application. This is a shortcut to create a search location.
     @pyqtSlot('QString')

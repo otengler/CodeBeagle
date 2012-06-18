@@ -44,6 +44,12 @@ class UserHintDialog (QDialog):
     def setHtmlText(self, text):
         self.ui.textEditHint.setHtml (text)
         
+    def setShowHintAgainCheckbox (self,  bCheck):
+        if bCheck:
+            self.ui.checkShowHint.setCheckState(Qt.Checked)
+        else:
+            self.ui.checkShowHint.setCheckState(Qt.Unchecked)
+        
     def showHintAgain(self):
         return self.ui.checkShowHint.checkState() == Qt.Checked
         
@@ -92,7 +98,7 @@ def hintWouldBeShown(hintID):
 # Show the user a hint which can be suppressed with a check box in the future.
 # hintID is an arbitrary string which must be unique for each user hint. The return value is the button which was pressed to 
 # close the dialog or NoResult if the hint dialog was not shown or closed by any other mean.
-def showUserHint (parent,  hintID,  title,  htmlText,  button1,  default1=True,  button2=None, default2=False):
+def showUserHint (parent,  hintID,  title,  htmlText,  button1,  default1=True,  button2=None, default2=False,  bShowHintAgain=False):
     settings = QSettings(AppConfig.appCompany, AppConfig.appName)
     hintStore = "hint_" + hintID
     value = settings.value(hintStore)
@@ -100,6 +106,7 @@ def showUserHint (parent,  hintID,  title,  htmlText,  button1,  default1=True, 
         dialog = UserHintDialog(parent) 
         dialog.setTitle(title)
         dialog.setHtmlText(htmlText)
+        dialog.setShowHintAgainCheckbox (bShowHintAgain)
         dialog.addButton(button1, default1)
         if button2:
             dialog.addButton(button2, default2)
