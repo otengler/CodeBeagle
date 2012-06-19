@@ -203,13 +203,14 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def __getAddedOrChangedIndexedSearchLocations (self,  currentSearchLocations,  newSearchLocations):
         changedLocations = []
         for location in newSearchLocations:
-            bFound = False
-            for oldLocation in currentSearchLocations:
-                if location == oldLocation:
-                    bFound = True
-                    break
-            if not bFound:
-                changedLocations.append(location.displayName())
+            if location.generateIndex:
+                bFound = False
+                for oldLocation in currentSearchLocations:
+                    if location == oldLocation:
+                        bFound = True
+                        break
+                if not bFound:
+                    changedLocations.append(location.displayName())
         return changedLocations
     
     # This is called when a directory is dropped on the application. This is a shortcut to create a search location.
