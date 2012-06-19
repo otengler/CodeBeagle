@@ -17,10 +17,10 @@ exts1 = c,cpp,h
 exts2 = c,cpp,h,rc,rc2,sln,vcxproj
 }
 
-# Comment to disable a search optimization which skips keywords which are too common to be useful.
+# Comment in to enable a search optimization which skips keywords which are too common to be useful.
 # The keyword file contains one keyword per line. The file should be sorted from the worst keyword to the
 # less bad keyword.
-commonKeywords = config/CommonKeywords.txt
+#commonKeywords = config/CommonKeywords.txt
 
 #
 # Source viewer settings

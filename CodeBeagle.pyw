@@ -22,6 +22,12 @@ from PyQt4.QtGui import *
 from  Ui_MainWindow import Ui_MainWindow
 import AppConfig
 import FileTools
+from UpdateCheck import UpdateCheck
+import UserHintDialog
+
+userHintNewVersionAvailable = """
+<p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
+"""
 
 def main(): 
     app = QApplication(sys.argv) 
@@ -39,7 +45,10 @@ class MainWindow (QMainWindow):
         super(MainWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.updateCheck = UpdateCheck(self)
         self.__restoreGeometryAndState()
+        self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
+        self.updateCheck.checkForUpdates()
         
     def closeEvent(self,  event):
         if  AppConfig.appConfig().showCloseConfirmation:
@@ -55,17 +64,29 @@ class MainWindow (QMainWindow):
         self.__saveGeometryAndState()
         event.accept()
         
+    def newerVersionFound(self, version):
+        text = userHintNewVersionAvailable % {"version":version}
+        result = UserHintDialog.showUserHint (self, "newVersion"+version,  self.trUtf8("New version available"), text,  
+                                                                    UserHintDialog.Yes, True,  UserHintDialog.No,  False,  bShowHintAgain=True)
+        if result == UserHintDialog.Yes:
+            url = QUrl ("http://sourceforge.net/projects/codebeagle/files/")
+            QDesktopServices.openUrl (url)
+        
     def __restoreGeometryAndState(self):
         settings = QSettings(AppConfig.appCompany, AppConfig.appName);
         if settings.value("geometry"):
             self.restoreGeometry(settings.value("geometry"))
         if settings.value("windowState"):
             self.restoreState (settings.value("windowState"))
+        if settings.value("lastUpdateCheck"):
+            self.updateCheck.lastUpdateCheck = settings.value("lastUpdateCheck")
         
     def __saveGeometryAndState (self):
         settings = QSettings(AppConfig.appCompany, AppConfig.appName)
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
+        if self.updateCheck.lastUpdateCheck:
+            settings.setValue("lastUpdateCheck", self.updateCheck.lastUpdateCheck)
 
 if __name__ == "__main__":
     main()
