@@ -22,7 +22,12 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtNetwork import *
 import AppConfig
+
+# Formats a version string "1.1.2" as "01.01.02" which makes the version easily comparable
+def formatVersion (version):
+    return ".".join(("%02u" % i) for i in map(int,version.split(".")))
     
+# Check for program updates
 class UpdateCheck (QObject):
     newerVersionFound = pyqtSignal('QString')
     
@@ -36,22 +41,22 @@ class UpdateCheck (QObject):
             status = int(reply.attribute(QNetworkRequest.HttpStatusCodeAttribute))
             if 2 == status/100:
                 html = str (reply.readAll().data(),  "latin_1")
-                reVersion = re.compile("CodeBeagle\.(\d+\.\d+\.\d+)\.(zip|7z)",re.IGNORECASE)
+                reVersion = re.compile("CodeBeagle[-\w]*\.(\d+\.\d+\.\d+)\.(zip|7z)",re.IGNORECASE)
                 cur=0
                 versions = set ()
                 while True:
                     result = reVersion.search(html, cur)
                     if result:
                         startPos, endPos = result.span()
-                        versions.add(result.group(1))
+                        versions.add((formatVersion(result.group(1)),  result.group(1)))
                         cur = endPos
                     else:
                         break
                 sortedVersions = sorted([ver for ver in versions],reverse=True)
                 
-                currentVersion = ".".join(AppConfig.appVersion.split(".")[0:3])
-                if sortedVersions[0] > currentVersion:
-                    self.newerVersionFound.emit(sortedVersions[0])
+                currentVersion = formatVersion(".".join(AppConfig.appVersion.split(".")[0:3]))
+                if sortedVersions[0][0] > currentVersion:
+                    self.newerVersionFound.emit(sortedVersions[0][1])
         
     # Initiates a check if there is a newer version of CodeBeagle available
     def checkForUpdates(self):
