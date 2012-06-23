@@ -22,6 +22,9 @@ exts2 = c,cpp,h,rc,rc2,sln,vcxproj
 # less bad keyword.
 #commonKeywords = config/CommonKeywords.txt
 
+# Check for new versions of CodeBeagle every X days. 0 disables the check
+updateCheckPeriod = 7
+
 #
 # Source viewer settings
 #

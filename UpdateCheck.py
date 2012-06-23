@@ -60,9 +60,14 @@ class UpdateCheck (QObject):
         
     # Initiates a check if there is a newer version of CodeBeagle available
     def checkForUpdates(self):
+        updateCheckPeriod = AppConfig.appConfig().updateCheckPeriod
+        # 0 disables the update check
+        if 0 == updateCheckPeriod:
+            return
+        
         now = QDateTime.currentDateTime()
         if self.lastUpdateCheck:
-            nextCheck = QDateTime.fromMSecsSinceEpoch (self.lastUpdateCheck).addDays(7)
+            nextCheck = QDateTime.fromMSecsSinceEpoch (self.lastUpdateCheck).addDays(updateCheckPeriod)
             if now < nextCheck:
                 return
         self.lastUpdateCheck = now.toMSecsSinceEpoch()
