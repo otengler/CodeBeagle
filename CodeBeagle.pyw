@@ -73,7 +73,7 @@ class MainWindow (QMainWindow):
             QDesktopServices.openUrl (url)
         
     def __restoreGeometryAndState(self):
-        settings = QSettings(AppConfig.appCompany, AppConfig.appName);
+        settings = QSettings(AppConfig.appCompany, AppConfig.appName)
         if settings.value("geometry"):
             self.restoreGeometry(settings.value("geometry"))
         if settings.value("windowState"):

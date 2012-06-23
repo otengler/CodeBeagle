@@ -43,5 +43,5 @@ class PathDragListView (QListView):
             mimeData = QMimeData()
             mimeData.setUrls (urls)
             drag = QDrag(self)
-            drag.setMimeData(mimeData);
+            drag.setMimeData(mimeData)
             drag.exec(Qt.CopyAction)

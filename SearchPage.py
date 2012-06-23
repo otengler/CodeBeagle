@@ -17,13 +17,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from Ui_SearchPage import Ui_SearchPage 
 import PathVisualizerDelegate
 import FullTextIndex
 import SearchMethods
+import CustomContextMenu
 import UserHintDialog
 import AppConfig
 
@@ -41,6 +41,15 @@ def firstDifference(s1,s2):
 
 def getCustomScriptsFromDisk():
     return [s for s in os.listdir("scripts") if os.path.splitext(s)[1].lower() == ".script"]
+
+def exceptionAsString (limit=5):
+        import sys
+        import io
+        import traceback
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        memFile = io.StringIO()
+        traceback.print_exception(exc_type, exc_value, exc_traceback, limit=limit, file=memFile)
+        return memFile.getvalue()
 
 class StringListModel(QAbstractListModel): 
     def __init__(self, filelist,  parent=None): 
@@ -242,8 +251,8 @@ class SearchPage (QWidget):
         
         try:
             result = SearchMethods.customSearch (self, script,  params, indexConf,  self.commonKeywordMap)
-        except Exception as e:
-            self.reportCustomSearchFailed (e)
+        except:
+            self.reportCustomSearchFailed ()
         else:
             self.__updateSearchResult(result)
         
@@ -259,8 +268,8 @@ class SearchPage (QWidget):
         
         try:
             result = SearchMethods.search (self, params, indexConf,  self.commonKeywordMap)
-        except Exception as e:
-            self.reportFailedSearch(indexConf, e)
+        except:
+            self.reportFailedSearch(indexConf)
         else:
             self.__updateSearchResult(result)
             text = self.trUtf8(userHintUseWildcards)
@@ -325,6 +334,18 @@ class SearchPage (QWidget):
         menu.addAction(self.trUtf8("Copy file &name"),  lambda: self.__copyFileName(name))
         menu.addAction(self.trUtf8("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))
         menu.addAction(self.trUtf8("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))
+        
+        entries = CustomContextMenu.customMenuEntries (AppConfig.appConfig())
+        for entry in entries:
+            try:
+                entry.executionFailed.disconnect() # will raise error if there are no connections
+            except:
+                pass
+            entry.executionFailed.connect (self.reportCustomContextMenuFailed)
+            # The default lambda argument is used to preserve the value of entry for each lambda. Otherwise all lambdas would call the last entry.execute
+            # See http://stackoverflow.com/questions/2295290/what-do-lambda-function-closures-capture-in-python
+            menu.addAction(entry.title,  lambda entry=entry: entry.execute (self.__getSelectedFiles()))
+        
         menu.exec(self.ui.listView.mapToGlobal(pos))
             
     def __copyFullPath(self,  name):
@@ -351,9 +372,30 @@ class SearchPage (QWidget):
         if not index.isValid():
             return None
         return index.data(Qt.UserRole)
+        
+    def __getSelectedFiles (self):
+        filenames = []
+        indexes = self.ui.listView.selectedIndexes ()
+        for index in indexes:
+            if index.isValid():
+                filenames.append (index.data(Qt.UserRole))
+        return filenames
+
+    @pyqtSlot(CustomContextMenu.CustomContextMenu)
+    def reportCustomContextMenuFailed (self,  contextMenuError):
+        if not contextMenuError.exception:
+            QMessageBox.warning(self,
+                self.trUtf8("Custom context menu failed"),
+                self.trUtf8("Failed to start '") + contextMenuError.program + self.trUtf8("' for:\n") + "\n".join(contextMenuError.failedFiles),
+                QMessageBox.StandardButtons(QMessageBox.Ok))
+        else:
+            QMessageBox.warning(self,
+                self.trUtf8("Custom context menu failed"),
+                self.trUtf8("The custom context menu script '") + contextMenuError.program + self.trUtf8("' failed to execute:\n") + exceptionAsString(),
+                QMessageBox.StandardButtons(QMessageBox.Ok))
 
     # Show the user possible reason why the search threw an exception
-    def reportFailedSearch(self, indexConf, e):
+    def reportFailedSearch(self, indexConf):
         if indexConf.generateIndex:
             QMessageBox.warning(self,
                 self.trUtf8("Search failed"),
@@ -365,18 +407,11 @@ class SearchPage (QWidget):
                 self.trUtf8("""Please check that the search location exists and is accessible."""),
                 QMessageBox.StandardButtons(QMessageBox.Ok))
             
-    def reportCustomSearchFailed (self,  e):
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        
-        import io
-        import traceback
-        memFile = io.StringIO()
-        traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5, file=memFile)
-        
+    def reportCustomSearchFailed (self):
         QMessageBox.warning(self,
                 self.trUtf8("Custom search failed"),
-                self.trUtf8("Custom search scripts are written in Python. The following exception info might help to find the problem:\n") + memFile.getvalue(),
+                self.trUtf8("Custom search scripts are written in Python. The following exception info might help to find the problem:\n") + exceptionAsString(),
                 QMessageBox.StandardButtons(QMessageBox.Ok))
-        
-        
+
+
     

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2012-06-19, 22:42:28 -->
+<!-- Saved: 2012-06-23, 16:42:31 -->
 <!-- Copyright (C) 2012 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -65,6 +65,7 @@
     <Source>Ui_AboutDialog.py</Source>
     <Source>PerformanceTest.py</Source>
     <Source>UpdateCheck.py</Source>
+    <Source>CustomContextMenu.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>

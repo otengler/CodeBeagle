@@ -271,6 +271,40 @@ of a config file in the current group.
 </p>
 <p><br/></p>
 
+<b>Custom context menu entries</b>
+<p>
+The context menu of the tree control which shows the matches can be extended with additonal entries. These entries can either simply
+start an executable or execute a script file which contains python code. The following examples show how to configure both types:
+</p>
+<pre>
+ContextMenu1 {
+    title = Notepad
+    executable = %windir%\notepad.exe
+    args = "%file%"
+    showWindow = True
+}
+</pre>
+<p>
+As the example illustrates environment variables are resolved properly. The command line of the executable is specified in <strong>args</strong>.
+The special variable <strong>%file%</strong> is resolved as the selected file in the tree control. If more than one file is selected the
+executable is started for each of the files.
+</p>
+<pre>
+ContextMenu2 {
+    title = Checkout from version control
+    script = contextmenu\checkout.py
+}
+</pre>
+<p>
+The list of selected files in the tree control is passed as a string list in the variable <strong>files</strong>. Here is an example:
+</p>
+<pre>
+import subprocess
+for file in files:
+    subprocess.Popen ([r"C:\windows\notepad.exe"] + [file])
+</pre>
+<p><br/></p>
+
 <b>Custom search scripts</b>
 <p>
 These scripts written in Python allow to automate search tasks. At start-up of the application all files with the extension ".script" 
@@ -408,6 +442,8 @@ which is internally used to construct a <strong>QTextCharFormat</strong>:
   <li>Black</li>
 </ul>
 <br/>
+
+
 
 <b>License</b>
 <p>

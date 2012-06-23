@@ -313,7 +313,7 @@ def rulesFromFile (rulesFile,  font):
                           "addCommentRule" : rules.addCommentRule, 
                           "addRule" : rules.addRule}
 
-    with open(os.path.join("config", rulesFile)) as script: 
+    with fopen(os.path.join("config", rulesFile)) as script: 
         code = compile(script.read(), rulesFile, 'exec')
     exec(code,  globals(),  localsDict)
         

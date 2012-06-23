@@ -108,7 +108,7 @@ def customSearchAsync (script,  params, commonKeywordMap,  indexConf):
                        "results" : [],  
                        "highlight" : None,  
                        "label" : "Custom script"}
-    with open(script) as file: 
+    with fopen(script) as file: 
         code = compile(file.read(), script, 'exec')
     exec(code,  globals(),  localsDict)
     

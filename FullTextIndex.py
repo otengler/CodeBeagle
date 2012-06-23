@@ -629,7 +629,7 @@ class FullTextIndex:
 def buildMapFromCommonKeywordFile (name):
     mapCommonKeywords = {}
     if name:
-        with open(name, "r") as input:
+        with fopen(name, "r") as input:
             for number, keyword in ((number, keyword.strip().lower()) for number, keyword in enumerate(input)):
                 if keyword:
                     mapCommonKeywords[keyword] = number
