@@ -20,12 +20,14 @@ import os
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 from Ui_SearchPage import Ui_SearchPage 
+import AsynchronousTask
 import PathVisualizerDelegate
 import FullTextIndex
 import SearchMethods
 import CustomContextMenu
 import UserHintDialog
 import AppConfig
+from ExceptionTools import exceptionAsString
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard. 
@@ -41,15 +43,6 @@ def firstDifference(s1,s2):
 
 def getCustomScriptsFromDisk():
     return [s for s in os.listdir("scripts") if os.path.splitext(s)[1].lower() == ".script"]
-
-def exceptionAsString (limit=5):
-        import sys
-        import io
-        import traceback
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        memFile = io.StringIO()
-        traceback.print_exception(exc_type, exc_value, exc_traceback, limit=limit, file=memFile)
-        return memFile.getvalue()
 
 class StringListModel(QAbstractListModel): 
     def __init__(self, filelist,  parent=None): 
@@ -344,7 +337,7 @@ class SearchPage (QWidget):
             entry.executionFailed.connect (self.reportCustomContextMenuFailed)
             # The default lambda argument is used to preserve the value of entry for each lambda. Otherwise all lambdas would call the last entry.execute
             # See http://stackoverflow.com/questions/2295290/what-do-lambda-function-closures-capture-in-python
-            menu.addAction(entry.title,  lambda entry=entry: entry.execute (self.__getSelectedFiles()))
+            menu.addAction(entry.title,  lambda entry=entry: AsynchronousTask.execute (self, entry.execute,  self.__getSelectedFiles()))
         
         menu.exec(self.ui.listView.mapToGlobal(pos))
             
@@ -391,7 +384,7 @@ class SearchPage (QWidget):
         else:
             QMessageBox.warning(self,
                 self.trUtf8("Custom context menu failed"),
-                self.trUtf8("The custom context menu script '") + contextMenuError.program + self.trUtf8("' failed to execute:\n") + exceptionAsString(),
+                self.trUtf8("The custom context menu script '") + contextMenuError.program + self.trUtf8("' failed to execute:\n") + contextMenuError.exception,
                 QMessageBox.StandardButtons(QMessageBox.Ok))
 
     # Show the user possible reason why the search threw an exception

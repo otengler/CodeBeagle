@@ -17,9 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from PyQt4.QtCore import *
 import Config
 from FileTools import fopen
-from PyQt4.QtCore import *
+from ExceptionTools import exceptionAsString
 
 # Launches an executable for each of the files passed via context menu
 class ExecuteProgramTask:
@@ -61,8 +62,8 @@ class CustomScriptTask:
             with fopen(self.script) as file: 
                 code = compile(file.read(), self.script, 'exec')
             exec(code,  globals(),  localsDict)
-        except Exception as e:
-            contextMenu.executionFailed.emit (ContextMenuError(self.script,  files,  e))
+        except:
+            contextMenu.executionFailed.emit (ContextMenuError(self.script,  files,  exceptionAsString()))
 
 class ContextMenuError:
     def __init__(self,  program,  failedFiles,  exception=None):
