@@ -61,6 +61,7 @@ class MainWindow (QMainWindow):
                 event.ignore()
                 return
         
+        self.updateCheck.shutdownUpdateCheck() # this waits for the update check thread to complete
         self.__saveGeometryAndState()
         event.accept()
         
