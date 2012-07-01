@@ -13,7 +13,6 @@ del /q %BUILDDIR%\tk85.dll
 del /q %BUILDDIR%\tk85.dll
 del /q %BUILDDIR%\_ctypes.pyd
 del /q %BUILDDIR%\_hashlib.pyd
-del /q %BUILDDIR%\_socket.pyd
 del /q %BUILDDIR%\_ssl.pyd
 del /q %BUILDDIR%\_tkinter.pyd
 del /q %BUILDDIR%\bz2.pyd
