@@ -20,6 +20,7 @@ import sys
 import os
 import codecs
 import time
+import collections
 
 def fopen (name, mode='r'):
     f = open(name, mode, -1, "latin_1")
@@ -96,8 +97,25 @@ def removeInvalidFileChars (text):
     for c in "\\/:*?\"<>|":
         text = text.replace(c, "")
     return text
-    
 
-    
+# Returns the most common extension in a directory
+def getMostCommonExtensionInDirectory (directory):
+    try:
+        entries = os.listdir(directory)
+    except:
+        return ""
+    m = collections.defaultdict(lambda:0)
+    count = 0
+    mostCommon = ""
+    for entry in entries:
+        ext = os.path.splitext(entry)[1].lower()
+        curr = m[ext]+1
+        m[ext]=curr
+        if curr > count:
+            count = curr
+            mostCommon = ext
+            if count > len(entries)/2:
+                break
+    return mostCommon
         
 

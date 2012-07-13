@@ -216,7 +216,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     # This is called when a directory is dropped on the application. This is a shortcut to create a search location.
     @pyqtSlot('QString')
     def addSearchLocationFromPath (self,  directory):
-        location = IndexConfiguration.IndexConfiguration(self.trUtf8("Search") + " '" + directory + "'", "",  directory, "", "", False)
+        ext = FileTools.getMostCommonExtensionInDirectory (directory)
+        location = IndexConfiguration.IndexConfiguration(self.trUtf8("Search") + " '" + directory + "'", ext,  directory, "", "", False)
+        
         self.openSettings (locationToAdd=location)
                
     @pyqtSlot()
