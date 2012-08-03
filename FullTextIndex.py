@@ -186,6 +186,10 @@ class TestSearchParts(unittest.TestCase):
         self.assertEqual (splitSearchParts("linux *"), [(IndexPart,"linux"),(ScanPart,"*")])
         self.assertEqual (splitSearchParts("#if a"), [(IndexPart,"#if"),(ScanPart,""),(IndexPart,"a")])
 
+class QueryError (RuntimeError):
+    def __init__(self, strReason):
+        super(QueryError, self).__init__(strReason)
+
 class Query (metaclass = abc.ABCMeta):
     def __init__(self,  strSearch, strFolderFilter="",  strExtensionFilter="",  bCaseSensitive=False):
         self.folderFilter = createFolderFilter(strFolderFilter)
@@ -197,7 +201,7 @@ class Query (metaclass = abc.ABCMeta):
         self.parts = splitSearchParts (strSearch)
         # Check that the search contains at least one indexed part. 
         if not self.hasPartType(IndexPart):
-            raise RuntimeError("The search does not contain any indexed part")
+            raise QueryError("Sorry, you can't search for that.")
     
     # All indexed parts
     def indexedPartsLower(self):
@@ -276,7 +280,7 @@ class FindAllQuery (Query):
         for i,s in self.parts:
             if i == ScanPart:
                 if s != "":
-                    raise RuntimeError("The element '%s' of the search string is not indexed! Remove it or search for the full phrase" % (s,))
+                    raise QueryError("The element '%s' of the search string is not indexed! Remove it or search for the full phrase." % (s,))
             else:
                 parts.append ((i,s))
 

@@ -261,6 +261,8 @@ class SearchPage (QWidget):
         
         try:
             result = SearchMethods.search (self, params, indexConf,  self.commonKeywordMap)
+        except FullTextIndex.QueryError as error:
+            self.reportQueryError(error)
         except:
             self.reportFailedSearch(indexConf)
         else:
@@ -385,6 +387,12 @@ class SearchPage (QWidget):
             QMessageBox.warning(self,
                 self.trUtf8("Custom context menu failed"),
                 self.trUtf8("The custom context menu script '") + contextMenuError.program + self.trUtf8("' failed to execute:\n") + contextMenuError.exception,
+                QMessageBox.StandardButtons(QMessageBox.Ok))
+
+    def reportQueryError(self,  error):
+        QMessageBox.information(self,
+                self.trUtf8("Search not possible"),
+                str(error),
                 QMessageBox.StandardButtons(QMessageBox.Ok))
 
     # Show the user possible reason why the search threw an exception
