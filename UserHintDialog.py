@@ -91,7 +91,7 @@ def hintWouldBeShown(hintID):
     settings = QSettings(AppConfig.appCompany, AppConfig.appName)
     hintStore = "hint_" + hintID
     value = settings.value(hintStore)
-    if value == None or value:
+    if value == None or int(value):
         return True
     return False
         
@@ -102,7 +102,7 @@ def showUserHint (parent,  hintID,  title,  htmlText,  button1,  default1=True, 
     settings = QSettings(AppConfig.appCompany, AppConfig.appName)
     hintStore = "hint_" + hintID
     value = settings.value(hintStore)
-    if value == None or value:
+    if value == None or int(value):
         dialog = UserHintDialog(parent) 
         dialog.setTitle(title)
         dialog.setHtmlText(htmlText)

@@ -20,7 +20,6 @@ import sys
 import os
 import codecs
 import time
-import collections
 
 def fopen (name, mode='r'):
     f = open(name, mode, -1, "latin_1")
@@ -57,8 +56,14 @@ def getAppDataPath (appName):
     location += os.path.sep
     return location
     
+# Return a path which can be used to store temporary data
 def getTempPath ():
-    return os.path.expandvars("$TEMP")
+    if "TEMP" in os.environ:
+        return os.path.expandvars("$TEMP")
+    elif "HOME" in os.environ:
+        return os.path.expandvars("$HOME")
+    else:
+        return ""
     
 # Switch to application directory. This helps to locate files by a relative path.
 def switchToAppDir ():
@@ -82,7 +87,8 @@ class lockDir:
         for i in range(self.retries):
             try:
                 os.mkdir (self.name)
-            except:
+            except Exception as e:
+                print ("lockDir: " + str(e))
                 time.sleep(self.delay/1000.0)
             else:
                 return self
@@ -97,25 +103,8 @@ def removeInvalidFileChars (text):
     for c in "\\/:*?\"<>|":
         text = text.replace(c, "")
     return text
+    
 
-# Returns the most common extension in a directory
-def getMostCommonExtensionInDirectory (directory):
-    try:
-        entries = os.listdir(directory)
-    except:
-        return ""
-    m = collections.defaultdict(lambda:0)
-    count = 0
-    mostCommon = ""
-    for entry in entries:
-        ext = os.path.splitext(entry)[1].lower()
-        curr = m[ext]+1
-        m[ext]=curr
-        if curr > count:
-            count = curr
-            mostCommon = ext
-            if count > len(entries)/2:
-                break
-    return mostCommon
+    
         
 

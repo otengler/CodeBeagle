@@ -29,7 +29,7 @@ updateCheckPeriod = 7
 # Source viewer settings
 #
 
-import config\SourceViewer.txt as SourceViewer
+import config/SourceViewer.txt as SourceViewer
 
 #
 # Sample index config below. Please override in UserConfig.txt.

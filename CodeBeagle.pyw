@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 Copyright (C) 2011 Oliver Tengler
@@ -80,7 +81,7 @@ class MainWindow (QMainWindow):
         if settings.value("windowState"):
             self.restoreState (settings.value("windowState"))
         if settings.value("lastUpdateCheck"):
-            self.updateCheck.lastUpdateCheck = settings.value("lastUpdateCheck")
+            self.updateCheck.lastUpdateCheck = int(settings.value("lastUpdateCheck"))
         
     def __saveGeometryAndState (self):
         settings = QSettings(AppConfig.appCompany, AppConfig.appName)
