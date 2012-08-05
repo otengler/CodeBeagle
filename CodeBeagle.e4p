@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2012-06-24, 19:58:19 -->
+<!-- Saved: 2012-08-05, 18:02:50 -->
 <!-- Copyright (C) 2012 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -67,6 +67,7 @@
     <Source>UpdateCheck.py</Source>
     <Source>CustomContextMenu.py</Source>
     <Source>ExceptionTools.py</Source>
+    <Source>HighlightingRulesCache.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>

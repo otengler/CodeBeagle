@@ -16,31 +16,179 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import bisect
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
-
-class Highlighter:
-    def __init__(self):
-        pass
         
-    # Return a list of touples with (charFormat,start,length)
-    def highlightBlock (self, postion,  text):
-        return []
+class HighlightingRules:
+    def __init__(self,  font):
+        self.rules = []
+        self.lineComment = None
+        self.multiCommentStart = None
+        self.multiCommentStop = None
+        self.commentFormat = None
+        self.font = font
+        
+    # Adds a list of comma seperated keywords
+    def addKeywords (self,  keywords,  fontWeight,  foreground):
+        keywords = keywords.strip()
+        kwList = keywords.split(",")
+        # We build a single expression which matches all keywords
+        expr = "|".join(("\\b" + kw + "\\b" for kw in kwList))
+        self.addRule (expr,  fontWeight,  foreground)
+        
+    # Adds comment rules. Each parameter is a regular expression  string. The multi line parameter are optional and can be empty.
+    def addCommentRule (self, singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground):
+        self.commentFormat = self.__createFormat(fontWeight,  foreground)
+        self.lineComment = QRegExp(singleLine)
+        if multiLineStart and multiLineEnd:
+            self.multiCommentStart = QRegExp(multiLineStart)
+            self.multiCommentStop = QRegExp(multiLineEnd)
+        
+    # Adds an arbitrary highlighting rule 
+    def addRule (self, expr,  fontWeight,  foreground):
+        format = self.__createFormat(fontWeight,  foreground)
+        self.__addRule (expr,  format)
+        
+    # Needed to change the font after the HighlightingRules object has been created
+    def setFont (self,  font):
+        for rule in self.rules:
+            rule[1].setFont(font)
+        self.commentFormat.setFont(font)
+        
+    def __addRule (self, expr,  format):
+        self.rules.append((QRegExp(expr),  format))
+        
+    def __createFormat (self,  fontWeight, foreground):
+        format = QTextCharFormat()
+        format.setFont(self.font)
+        format.setFontWeight(fontWeight)
+        format.setForeground(foreground)
+        return format
+        
+class SyntaxHighlighter:
+    def __init__(self):
+        # The current rules
+        self.highlightingRules = None
+        
+        self.searchStringFormat = QTextCharFormat()
+        self.searchStringFormat.setBackground(Qt.yellow)
+        self.searchStringFormat.setForeground(Qt.black)
+        
+        self.comments = []
+        self.searchData = None
+        
+    def setFont (self,  font):
+        if self.highlightingRules:
+            self.highlightingRules.setFont (font)
+        
+    def setHighlightingRules (self,  rules,  text):
+        self.highlightingRules = rules
+        self.searchStringFormat.setFont(rules.font)
+        self.searchStringFormat.setFontWeight(QFont.Bold)
+        # Text is needed to compute the syntax highlighting for multiline comments
+        self.__setText(text)
+        
+    class CommentRange:
+        def __init__(self, index, length=0):
+            self.index = index
+            self.length = length
+            
+        def __lt__ (left,  right):
+            return left.index < right.index
+        
+    def __textLineBefore(self,  text,  index):
+        pos = index
+        while pos > 0:
+            pos -= 1
+            if text[pos] == "\n":
+                return text[pos+1:index]
+        return text[0:index]
+        
+    # Find all multiline comments in the document and store them as CommentRange objects in self.comments
+    def __setText(self,  text):
+        comments = []
+        if self.highlightingRules:
+            if self.highlightingRules.multiCommentStart and self.highlightingRules.multiCommentStop:
+                regStart = self.highlightingRules.multiCommentStart
+                regEnd = self.highlightingRules.multiCommentStop
+                startIndex = regStart.indexIn(text)
+                while startIndex>=0: 
+                    matchedLenStart = regStart.matchedLength()
+                    line = self.__textLineBefore (text, startIndex+matchedLenStart) # +matchedLenStart too catch things like "//*" 
+                    # Check if the multi line comment is commented out
+                    if self.highlightingRules.lineComment.indexIn (line) == -1:
+                        endIndex = regEnd.indexIn(text, startIndex+matchedLenStart)
+                        if endIndex == -1: # comment opened but not closed
+                            comments.append (self.CommentRange(startIndex,  len(text)-startIndex))
+                            break
+                        matchedLenEnd = regEnd.matchedLength()
+                        comments.append (self.CommentRange(startIndex,  endIndex+matchedLenEnd-startIndex))
+                    else:
+                        endIndex = startIndex
+                        matchedLenEnd = matchedLenStart
+                    startIndex = regStart.indexIn(text,  endIndex+matchedLenEnd)
+        self.comments = comments
+        
+    # searchData must support the function 'matches' which yields the tuple (start, length) for each match
+    def setSearchData (self, searchData):
+        self.searchData = searchData
+
+    def highlightBlock(self, position, text):
+        formats = []
+        if not self.highlightingRules:
+            return formats
+            
+        # Single line highlighting rules
+        for expression, format in self.highlightingRules.rules:
+            index = expression.indexIn(text)
+            while index >= 0:
+                length = expression.matchedLength()
+                formats.append((format, index, length))
+                index = expression.indexIn(text, index + length)
+                    
+        # Colorize multiline comments
+        pos = bisect.bisect_right (self.comments,  self.CommentRange(position))
+        if pos > 0:
+            pos -= 1
+            while pos < len(self.comments):
+                comment = self.comments[pos]
+                # Comment starts before end of line
+                if comment.index < position+len(text): 
+                    formats.append((self.highlightingRules.commentFormat,  comment.index-position,  comment.length))
+                else:
+                    break
+                pos += 1
+        
+        # Single line comments
+        index = self.highlightingRules.lineComment.indexIn(text)
+        while index >= 0:
+            length = self.highlightingRules.lineComment.matchedLength()
+            formats.append((self.highlightingRules.commentFormat,  index, length))
+            index = self.highlightingRules.lineComment.indexIn(text, index + length)
+        
+        # Search match highlight
+        if self.searchData:
+            for index, length in self.searchData.matches (text):
+                formats.append((self.searchStringFormat, index, length))
+    
+        return formats
 
 class HighlightingTextEdit (QPlainTextEdit):
     def __init__ (self, parent):
         super(HighlightingTextEdit, self).__init__(parent)
-        self.highlighter = None
+        self.highlighter = SyntaxHighlighter()
         self.dynamicHighlight = None
-        
-    def setHighlighter (self, highlighter):
-        self.highlighter = highlighter
         
     def setDynamicHighlight(self,  text):
         if self.dynamicHighlight != text:
             self.dynamicHighlight = text
             self.viewport().update()
-        
+            
+    def setFont(self,  font):
+        self.highlighter.setFont(font)
+        super(HighlightingTextEdit, self).setFont (font)
+ 
     def paintEvent(self, event):
         firstVisibleBlock = self.firstVisibleBlock()
         self.colorizeVisibleBlocks(firstVisibleBlock)
@@ -60,7 +208,6 @@ class HighlightingTextEdit (QPlainTextEdit):
                     painter.setPen(Qt.darkGray)
                     painter.drawRect(rectResult)
     
-    @pyqtSlot()
     def colorizeVisibleBlocks(self,  firstVisibleBlock):
         for block in self.visibleBlocks(firstVisibleBlock):
             # -1 means the block has not been highlighted yet

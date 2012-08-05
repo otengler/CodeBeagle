@@ -117,6 +117,8 @@ class SearchPage (QWidget):
         self.indexConfig = []
         self.currentConfigName = AppConfig.appConfig().defaultLocation # Display name of current config
         self.commonKeywordMap = self.__loadCommonKeywordMap()
+        self.matches = []
+        self.lockedResultSet = None # matches are filtered with this set
         # Hide the custom scripts button if there are no custom scripts on disk
         if len(getCustomScriptsFromDisk())==0:
             self.ui.buttonCustomScripts.hide()
@@ -173,8 +175,8 @@ class SearchPage (QWidget):
         name = index.data(Qt.UserRole)
         self.showFile (name)
         
-    def showFile (self, name,  isSourceCode=True):
-        if self.ui.sourceViewer.currentFile() != name:
+    def showFile (self, name):
+        if self.ui.sourceViewer.currentFile != name:
             self.ui.sourceViewer.showFile(name)
         
     @pyqtSlot()
@@ -274,12 +276,25 @@ class SearchPage (QWidget):
         if result.label:
             self.searchFinished.emit(self, result.label)
         self.perfReport = result.perfReport
+        # Filter results if we currently have a locked result set
+        if self.lockedResultSet:
+            matches = FullTextIndex.intersectSortedLists (self.lockedResultSet, result.matches)
+        else:
+            matches = result.matches
+        self.matches = matches
         self.ui.sourceViewer.setSearchData (result.searchData)
-        self.ui.labelMatches.setText("%u " % (len(result.matches), ) + self.trUtf8("matches"))
-        model = StringListModel(result.matches)
-        sizeHint = self.ui.listView.itemDelegate().computeSizeHint(result.matches,  model.cutLeft)
+        self.ui.labelMatches.setText("%u " % (len(matches), ) + self.trUtf8("matches"))
+        model = StringListModel(matches)
+        sizeHint = self.ui.listView.itemDelegate().computeSizeHint(matches,  model.cutLeft)
         model.setSizeHint(sizeHint)
         self.ui.listView.setModel(model)
+        
+    @pyqtSlot()
+    def lockResultSet (self,  bChecked):
+        if bChecked:
+            self.lockedResultSet = self.matches[:] # copy the matches, a reference is not enough
+        else:
+            self.lockedResultSet = None
         
     @pyqtSlot(QModelIndex)
     def openFileWithSystem(self, index):
