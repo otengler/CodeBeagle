@@ -123,6 +123,28 @@ class SearchPage (QWidget):
         if len(getCustomScriptsFromDisk())==0:
             self.ui.buttonCustomScripts.hide()
             
+        # Move some elements of the search bar to a second row if the screen width is too small. This avoid
+        # clipping errors if the widget has to paint below minimum size.
+        screenGeometry = QApplication.desktop().screenGeometry()
+        if screenGeometry.width() < 1200:
+            self.ui.frameSearch2 = QFrame(self)
+            self.ui.frameSearch2.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
+            self.ui.horizontalLayout2 = QHBoxLayout(self.ui.frameSearch2)
+            self.ui.horizontalLayout2.setContentsMargins(22, 0, 22, -1)
+            layout = self.ui.horizontalLayout2
+            layout.removeWidget(self.ui.labelFolderFilter)
+            layout.removeWidget(self.ui.comboFolderFilter)
+            layout.removeWidget(self.ui.labelExtensionFilter)
+            layout.removeWidget(self.ui.comboExtensionFilter)
+            layout.removeWidget(self.ui.checkCaseSensitive)
+            layout.addWidget(self.ui.labelFolderFilter)
+            layout.addWidget(self.ui.comboFolderFilter)
+            layout.addWidget(self.ui.labelExtensionFilter)
+            layout.addWidget(self.ui.comboExtensionFilter)
+            layout.addWidget(self.ui.checkCaseSensitive)
+            layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+            self.layout().insertWidget(1, self.ui.frameSearch2)
+            
     def __loadCommonKeywordMap(self):
         try:
             return FullTextIndex.buildMapFromCommonKeywordFile (AppConfig.appConfig().commonKeywords)
