@@ -114,8 +114,10 @@ class SourceViewer (QWidget):
     def nextMatch (self):
         if self.curMatch < len(self.matches)-1:
             self.curMatch += 1
-            self.__scrollToMatch (self.curMatch,)
+            self.__scrollToMatch (self.curMatch)
             self.__setInfoLabel ()
+            if not self.bMatchOverFiles:
+                self.__enableNextPrevious()
         else:
             if self.bMatchOverFiles:
                 self.noNextMatch.emit()
@@ -124,8 +126,10 @@ class SourceViewer (QWidget):
     def previousMatch (self):
         if self.curMatch > 0:
             self.curMatch -= 1
-            self.__scrollToMatch (self.curMatch,)
+            self.__scrollToMatch (self.curMatch)
             self.__setInfoLabel ()
+            if not self.bMatchOverFiles:
+                self.__enableNextPrevious()
         else:
             if self.bMatchOverFiles:
                 self.noPreviousMatch.emit()
@@ -171,6 +175,15 @@ class SourceViewer (QWidget):
         if text:
             self.ui.editSearch.setText(text)
         self.ui.editSearch.selectAll()
+        
+    # Disable next/previous buttons if they don't make sense
+    def __enableNextPrevious (self):          
+        bEnablePrevious = self.curMatch > 0
+        if self.ui.buttonMatchPrevious.isEnabled() != bEnablePrevious:
+            self.ui.buttonMatchPrevious.setEnabled(bEnablePrevious)
+        bEnableNext = self.curMatch < len(self.matches)-1
+        if self.ui.buttonMatchNext.isEnabled() != bEnableNext:
+            self.ui.buttonMatchNext.setEnabled(bEnableNext)
         
     def __resetTextCursor (self):
         cursor = self.ui.textEdit.textCursor()
