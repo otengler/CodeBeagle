@@ -44,10 +44,18 @@ def main():
 class MainWindow (QMainWindow):
     def __init__ (self):
         super(MainWindow, self).__init__()
+        # Restore last used search location name
+        self.appSettings = QSettings(AppConfig.appCompany, AppConfig.appName)
+        if self.appSettings.value("lastUsedSearchLocation"):
+            AppConfig.setLastUsedConfigName(self.appSettings.value("lastUsedSearchLocation"))
+        # Now setup UI. This already uses the restored search location name
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.updateCheck = UpdateCheck(self)
         self.__restoreGeometryAndState()
+        # Finally prepare and launch the update check
+        self.updateCheck = UpdateCheck(self)
+        if self.appSettings.value("lastUpdateCheck"):
+            self.updateCheck.lastUpdateCheck = int(self.appSettings.value("lastUpdateCheck"))
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
         
@@ -63,6 +71,9 @@ class MainWindow (QMainWindow):
                 return
         
         self.updateCheck.shutdownUpdateCheck() # this waits for the update check thread to complete
+        if self.updateCheck.lastUpdateCheck:
+            self.appSettings.setValue("lastUpdateCheck", self.updateCheck.lastUpdateCheck)
+        self.appSettings.setValue("lastUsedSearchLocation", AppConfig.lastUsedConfigName())
         self.__saveGeometryAndState()
         event.accept()
         
@@ -73,22 +84,16 @@ class MainWindow (QMainWindow):
         if result == UserHintDialog.Yes:
             url = QUrl ("http://sourceforge.net/projects/codebeagle/files/")
             QDesktopServices.openUrl (url)
-        
+         
     def __restoreGeometryAndState(self):
-        settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-        if settings.value("geometry"):
-            self.restoreGeometry(settings.value("geometry"))
-        if settings.value("windowState"):
-            self.restoreState (settings.value("windowState"))
-        if settings.value("lastUpdateCheck"):
-            self.updateCheck.lastUpdateCheck = int(settings.value("lastUpdateCheck"))
+        if self.appSettings.value("geometry"):
+            self.restoreGeometry(self.appSettings.value("geometry"))
+        if self.appSettings.value("windowState"):
+            self.restoreState (self.appSettings.value("windowState"))
         
     def __saveGeometryAndState (self):
-        settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-        settings.setValue("geometry", self.saveGeometry())
-        settings.setValue("windowState", self.saveState())
-        if self.updateCheck.lastUpdateCheck:
-            settings.setValue("lastUpdateCheck", self.updateCheck.lastUpdateCheck)
+        self.appSettings.setValue("geometry", self.saveGeometry())
+        self.appSettings.setValue("windowState", self.saveState())
 
 if __name__ == "__main__":
     main()

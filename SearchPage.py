@@ -115,7 +115,8 @@ class SearchPage (QWidget):
         self.ui.sourceViewer.noNextMatch.connect(self.nextFile)
         self.perfReport = None
         self.indexConfig = []
-        self.currentConfigName = AppConfig.appConfig().defaultLocation # Display name of current config
+        self.currentConfigName = self.__chooseInitialLocation ()
+        self.unavailableConfigName = None
         self.commonKeywordMap = self.__loadCommonKeywordMap()
         self.matches = []
         self.lockedResultSet = None # matches are filtered with this set
@@ -127,23 +128,15 @@ class SearchPage (QWidget):
         # clipping errors if the widget has to paint below minimum size.
         screenGeometry = QApplication.desktop().screenGeometry()
         if screenGeometry.width() < 1200:
-            self.ui.frameSearch2 = QFrame(self)
-            self.ui.frameSearch2.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
-            self.ui.horizontalLayout2 = QHBoxLayout(self.ui.frameSearch2)
-            self.ui.horizontalLayout2.setContentsMargins(22, 0, 22, -1)
-            layout = self.ui.horizontalLayout2
-            layout.removeWidget(self.ui.labelFolderFilter)
-            layout.removeWidget(self.ui.comboFolderFilter)
-            layout.removeWidget(self.ui.labelExtensionFilter)
-            layout.removeWidget(self.ui.comboExtensionFilter)
-            layout.removeWidget(self.ui.checkCaseSensitive)
-            layout.addWidget(self.ui.labelFolderFilter)
-            layout.addWidget(self.ui.comboFolderFilter)
-            layout.addWidget(self.ui.labelExtensionFilter)
-            layout.addWidget(self.ui.comboExtensionFilter)
-            layout.addWidget(self.ui.checkCaseSensitive)
-            layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
-            self.layout().insertWidget(1, self.ui.frameSearch2)
+            self.__layoutForLowScreenWidth()
+            
+    # Return the display name of the initial config. This is either the configured default location or if there is no default location
+    # the last used location.
+    def __chooseInitialLocation (self):
+        configName = AppConfig.appConfig().defaultLocation # Display name of current config
+        if not configName:
+            configName = AppConfig.lastUsedConfigName()
+        return configName
             
     def __loadCommonKeywordMap(self):
         try:
@@ -159,7 +152,13 @@ class SearchPage (QWidget):
         # updateSearchLocationList rebuilds the list which modifies self.currentConfigName so the current config must be preserved
         backupCurrentConfigName = self.currentConfigName 
         self.__updateSearchLocationList (searchLocationList)
-        self.setCurrentSearchLocation (backupCurrentConfigName)
+        if self.unavailableConfigName and self.setCurrentSearchLocation (self.unavailableConfigName):
+            # Successfully switched backed to previous config
+            self.unavailableConfigName = None
+        elif not self.setCurrentSearchLocation (backupCurrentConfigName):
+            # The config is no longer available. This happens most probably during an index update. If the config becomes available later
+            # we can switch back to it.
+            self.unavailableConfigName = backupCurrentConfigName
         self.ui.sourceViewer.reloadConfig()
         
     def __updateSearchLocationList(self,  searchLocationList):
@@ -179,7 +178,7 @@ class SearchPage (QWidget):
             if searchLocationName == config.displayName():
                 self.ui.comboLocation.setCurrentIndex(i)
                 self.currentConfigName = searchLocationName
-                return
+                return True
         # Nothing found, select first one 
         if len(self.searchLocationList) > 0:
             self.ui.comboLocation.setCurrentIndex (0)
@@ -187,6 +186,7 @@ class SearchPage (QWidget):
         else:
             self.ui.comboLocation.setCurrentIndex(-1)
             self.currentConfigName = ""
+        return False
             
     @pyqtSlot('QString')
     def currentLocationChanged(self, currentConfigName):
@@ -282,6 +282,8 @@ class SearchPage (QWidget):
         params, indexConf = self.__prepareSearch ()
         if not indexConf:
             return
+
+        AppConfig.setLastUsedConfigName(indexConf.displayName())
         
         try:
             result = SearchMethods.search (self, params, indexConf,  self.commonKeywordMap)
@@ -412,6 +414,25 @@ class SearchPage (QWidget):
             if index.isValid():
                 filenames.append (index.data(Qt.UserRole))
         return filenames
+        
+    def __layoutForLowScreenWidth (self):
+        self.ui.frameSearch2 = QFrame(self)
+        self.ui.frameSearch2.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
+        self.ui.horizontalLayout2 = QHBoxLayout(self.ui.frameSearch2)
+        self.ui.horizontalLayout2.setContentsMargins(22, 0, 22, -1)
+        layout = self.ui.horizontalLayout2
+        layout.removeWidget(self.ui.labelFolderFilter)
+        layout.removeWidget(self.ui.comboFolderFilter)
+        layout.removeWidget(self.ui.labelExtensionFilter)
+        layout.removeWidget(self.ui.comboExtensionFilter)
+        layout.removeWidget(self.ui.checkCaseSensitive)
+        layout.addWidget(self.ui.labelFolderFilter)
+        layout.addWidget(self.ui.comboFolderFilter)
+        layout.addWidget(self.ui.labelExtensionFilter)
+        layout.addWidget(self.ui.comboExtensionFilter)
+        layout.addWidget(self.ui.checkCaseSensitive)
+        layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.layout().insertWidget(1, self.ui.frameSearch2)
 
     @pyqtSlot(CustomContextMenu.CustomContextMenu)
     def reportCustomContextMenuFailed (self,  contextMenuError):

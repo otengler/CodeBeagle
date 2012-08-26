@@ -25,10 +25,7 @@ appCompany = "OTE"
 appVersion = "1.1.2.0"
 configName = "config.txt"
 _config = None
-
-class AppConfigReader:
-    def __init__(self,  config):
-        self.config = config
+_lastUsedConfigName =  ""
 
 # Read the global config.txt merged with a per user config.txt.
 def appConfig():
@@ -106,8 +103,12 @@ def configTypeInfo (config):
     config.setType("defaultLocation",  Config.typeDefaultString(""))
     config.setType("SourceViewer",  typeSourceViewerDefaults())
 
+def lastUsedConfigName ():
+    return _lastUsedConfigName
 
-
+def setLastUsedConfigName (name):
+    global _lastUsedConfigName
+    _lastUsedConfigName = name
  
  
  
