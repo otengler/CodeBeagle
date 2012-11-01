@@ -26,8 +26,9 @@ import unittest
 import logging
 from FileTools import fopen
 
-reTokenize = re.compile("[\\w#]+")
-reQueryToken = re.compile("[\\w#*]+")
+reTokenize = re.compile(r"[\w#]+")
+reQueryToken = re.compile(r"[\w#*]+")
+reMatchWords = re.compile(r"(\*\*)([0-9]+)")
 
 strSetup="""
 CREATE TABLE IF NOT EXISTS keywords(
@@ -64,6 +65,7 @@ CREATE TABLE IF NOT EXISTS indexInfo(
 
 IndexPart = 1
 ScanPart= 2
+MatchWordsPart = 3
 
 def genFind (filepat, strRootDir,  dirExcludes=[]):
     dirExcludes = [dir.lower() for dir in dirExcludes]
@@ -114,6 +116,7 @@ def intersectSortedLists(l1,l2):
         pass
     return l3
 
+# Return tokens which are in the index
 def getTokens (str):
     parts = []
     pos=0
@@ -121,7 +124,7 @@ def getTokens (str):
         result = reQueryToken.search(str,pos)
         if result:
             begin,pos = result.span()
-            if result.group(0) != "*": # * is a wildcard inside search tokens
+            if result.group(0).replace("*", "") != "": # skip parts with asterisks only, they are not in the index
                 parts.append((begin, pos))
         else:
             break
@@ -131,9 +134,9 @@ def getTokens (str):
 def kwExpr (kw):
     # If the keyword starts with '#' it is not matched if we search for word boundaries (\\b)
     if not kw.startswith("#"): 
-        return "\\b" + kw.replace("*",  "\\w*") + "\\b"
+        return r"\b" + kw.replace("*",  r"\w*") + r"\b"
     else:
-        return kw.replace("*",  "\\w*")
+        return kw.replace("*",  r"\w*")
 
 def trimScanPart (s):
     return s.replace(" ", "")
@@ -146,8 +149,14 @@ def splitSearchParts (str):
         if begin > pos:
             partScanPart = (ScanPart, trimScanPart(str[pos:begin]))
             parts.append(partScanPart)
-        partIndexPart = (IndexPart, str[begin:end])
-        parts.append(partIndexPart)
+        token = str[begin:end]
+        result = reMatchWords.match(token) # special handling for **X syntax. It means to search for X unknown words
+        if result and int(result.group(2))>0:
+            matchWordsPart = (MatchWordsPart, int(result.group(2)))
+            parts.append(matchWordsPart)
+        else:
+            partIndexPart = (IndexPart, token)
+            parts.append(partIndexPart)
         pos = end
     if pos < len(str):
         end = len(str)
@@ -185,6 +194,8 @@ class TestSearchParts(unittest.TestCase):
         self.assertEqual (splitSearchParts("hallo* we*lt"), [(IndexPart,"hallo*"),(ScanPart,""),(IndexPart,"we*lt")])
         self.assertEqual (splitSearchParts("linux *"), [(IndexPart,"linux"),(ScanPart,"*")])
         self.assertEqual (splitSearchParts("#if a"), [(IndexPart,"#if"),(ScanPart,""),(IndexPart,"a")])
+        self.assertEqual (splitSearchParts("a **2"), [(IndexPart,"a"),(ScanPart,""),(MatchWordsPart, 2)])
+        self.assertEqual (splitSearchParts("a ***"), [(IndexPart,"a"),(ScanPart,"***")])
 
 class QueryError (RuntimeError):
     def __init__(self, strReason):
@@ -200,16 +211,22 @@ class Query (metaclass = abc.ABCMeta):
             self.reFlags = re.IGNORECASE
         self.parts = splitSearchParts (strSearch)
         # Check that the search contains at least one indexed part. 
-        if not self.hasPartType(IndexPart):
+        if not self.hasPartTypeEqualTo(IndexPart):
             raise QueryError("Sorry, you can't search for that.")
     
     # All indexed parts
     def indexedPartsLower(self):
         return (part[1].lower() for part in self.parts if part[0] == IndexPart)
     
-    def hasPartType (self,  partType):
+    def hasPartTypeEqualTo (self,  partType):
         for part in self.parts:
             if part[0] == partType:
+                return True
+        return False
+        
+    def hasPartTypeUnequalTo (self,  partType):
+        for part in self.parts:
+            if part[0] != partType:
                 return True
         return False
         
@@ -265,11 +282,13 @@ class SearchQuery (Query):
             elif ScanPart == t:
                 # Regex special characters [\^$.|?*+()
                 for c in s:
-                    if c in "[\\^$.|?*+()":
+                    if c in r"[\^$.|?*+()":
                         regParts.append("\\" + c)
                     else:
                         regParts.append(c)
-        reExpr = re.compile("\\s*".join(regParts), self.reFlags)
+            elif MatchWordsPart:
+                regParts.append(r"(?:(?:\s+)?\S+){1,%u}?" % s) 
+        reExpr = re.compile(r"\s*".join(regParts), self.reFlags)
         return reExpr
         
 class FindAllQuery (Query):
@@ -438,7 +457,7 @@ class FullTextIndex:
             if not result:
                 return []
             
-        if (query.partCount() > 1 and query.hasPartType(ScanPart)) or query.bCaseSensitive:
+        if (query.partCount() > 1 and query.hasPartTypeUnequalTo(IndexPart)) or query.bCaseSensitive:
             with perfReport.newAction("Filtering results"):
                 return self.__filterDocsBySearchPhrase ((r[0] for r in result), query)
         else:
@@ -485,7 +504,7 @@ class FullTextIndex:
             if not result:
                 return []
         return result
-           
+
     def __filterDocsBySearchPhrase (self,  results,  query):
         finalResults = []
         reExpr = query.regExForMatches()
