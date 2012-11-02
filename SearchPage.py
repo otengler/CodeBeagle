@@ -358,16 +358,19 @@ class SearchPage (QWidget):
             
     @pyqtSlot(QPoint)
     def contextMenuRequested(self, pos):
-        fullpath = self.__getSelectedFile()
-        if not fullpath:
+        files = self.__getSelectedFiles()
+        if not files:
             return
+        fullpath = files[0]
         name = os.path.split(fullpath)[1]
         menu = QMenu()
-        menu.addAction(self.trUtf8("Copy &full path"),  lambda: self.__copyFullPath(fullpath))
-        menu.addAction(self.trUtf8("Copy &path of containing folder"),  lambda: self.__copyPathOfContainingFolder(fullpath))
-        menu.addAction(self.trUtf8("Copy file &name"),  lambda: self.__copyFileName(name))
-        menu.addAction(self.trUtf8("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))
-        menu.addAction(self.trUtf8("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))
+        menu.addAction(self.trUtf8("Copy &full path"),  lambda: self.__copyFullPaths(files))
+        if len(files)==1:
+            menu.addAction(self.trUtf8("Copy &path of containing folder"),  lambda: self.__copyPathOfContainingFolder(fullpath))
+        menu.addAction(self.trUtf8("Copy file &name"),  lambda: self.__copyFileNames(files))
+        if len(files)==1:
+            menu.addAction(self.trUtf8("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))
+            menu.addAction(self.trUtf8("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(fullpath))
         
         entries = CustomContextMenu.customMenuEntries (AppConfig.appConfig())
         for entry in entries:
@@ -382,17 +385,18 @@ class SearchPage (QWidget):
         
         menu.exec(self.ui.listView.mapToGlobal(pos))
             
-    def __copyFullPath(self,  name):
-        clipboard = QApplication.clipboard()
-        clipboard.setText(name)
+    def __copyFullPaths(self,  names):
+        clipboard = QApplication.clipboard()  
+        clipboard.setText(os.linesep.join(names))
         
     def __copyPathOfContainingFolder(self,  name):
         clipboard = QApplication.clipboard()
         clipboard.setText(os.path.split(name)[0])
      
-    def __copyFileName(self,  name):
+    def __copyFileNames(self,  names):
         clipboard = QApplication.clipboard()
-        clipboard.setText(name)   
+        text = os.linesep.join(os.path.split(name)[1] for name in names)
+        clipboard.setText(text)   
         
     def __browseToFolder (self,  name):
         url = QUrl.fromLocalFile (os.path.split(name)[0])
@@ -400,12 +404,6 @@ class SearchPage (QWidget):
     
     def __searchForFileName (self,  name):
         self.newSearchRequested.emit(name,  self.ui.comboLocation.currentText())
-        
-    def __getSelectedFile (self):
-        index = self.ui.listView.currentIndex ()
-        if not index.isValid():
-            return None
-        return index.data(Qt.UserRole)
         
     def __getSelectedFiles (self):
         filenames = []
