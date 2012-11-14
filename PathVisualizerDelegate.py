@@ -33,16 +33,8 @@ class PathVisualizerDelegate (QStyledItemDelegate):
             self.pathBoldFont = QFont (QApplication.font())
         self.pathBoldFont.setBold (True)
         self.pathBoldFontMetrics = QFontMetrics(self.pathBoldFont)
-        
-        # On Vista and above we must not use the "HighlightedText" color because its contrast to the selection rectangle
-        # is to little. 
-        style = QApplication.style()
-        if style.objectName().lower() == "windowsvista":
-            self.selectedPathColor = self.pathDarkGrayColor
-            self.seletedFileColor = self.fileColor
-        else:
-            self.selectedPathColor = QApplication.palette().color (QPalette.Active,  QPalette.HighlightedText)
-            self.seletedFileColor = self.selectedPathColor
+        self.selectedPathColor = self.pathDarkGrayColor
+        self.seletedFileColor = self.fileColor
         
     def paint (self,  painter, option,  index):
         if option.type != QStyleOption.SO_ViewItem:

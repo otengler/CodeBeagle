@@ -342,7 +342,7 @@ class SearchPage (QWidget):
         for row in range(model.rowCount()):
             index = model.index(row, 0)
             if result:
-                result += "\n"
+                result += os.linesep
             result += model.data(index, Qt.UserRole)
             
         exportFile = QFileDialog.getSaveFileName(
