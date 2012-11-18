@@ -22,7 +22,7 @@ import FileTools
 
 appName = "CodeBeagle"
 appCompany = "OTE"
-appVersion = "1.1.3.0"
+appVersion = "1.1.4.0"
 configName = "config.txt"
 _config = None
 _lastUsedConfigName =  ""
