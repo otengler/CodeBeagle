@@ -77,6 +77,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         # Add new tab (QKeySequence.AddTab is the same as Qt.CTRL + Qt.Key_T)
         self.actionNewTab = QAction(self, shortcut=QKeySequence.AddTab, triggered= self.addNewTab)
         self.addAction(self.actionNewTab)
+        # Close current tab
+        self.actionRemoveCurrentTab = QAction(self, shortcut=Qt.CTRL + Qt.Key_W, triggered= self.removeCurrentTab)
+        self.addAction(self.actionRemoveCurrentTab)
         
         # Open settings
         self.actionOpenSettings = QAction(self, shortcut=Qt.CTRL + Qt.Key_S, triggered= self.openSettings)

@@ -370,7 +370,7 @@ class SearchPage (QWidget):
         menu.addAction(self.trUtf8("Copy file &name"),  lambda: self.__copyFileNames(files))
         if len(files)==1:
             menu.addAction(self.trUtf8("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))
-            menu.addAction(self.trUtf8("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(fullpath))
+            menu.addAction(self.trUtf8("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))
         
         entries = CustomContextMenu.customMenuEntries (AppConfig.appConfig())
         for entry in entries:

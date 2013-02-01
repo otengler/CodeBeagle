@@ -85,6 +85,11 @@ class LeaveLastTabWidget (QTabWidget):
     def newTabAdded(self,  widget):
         pass
         
+    def removeCurrentTab(self):
+        index = self.currentIndex()
+        if -1 != index:
+            self.removeTabButNotLast(index)
+        
     @pyqtSlot(int)
     def focusSetter(self, index):
         widget = self.widget(index)
