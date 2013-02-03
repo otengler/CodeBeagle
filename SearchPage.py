@@ -113,12 +113,14 @@ class SearchPage (QWidget):
         QObject.connect(self.ui.sourceViewer, SIGNAL("selectionFinishedWithKeyboardModifier(QString,int)"),self.newSearchBasedOnSelection) 
         self.ui.sourceViewer.noPreviousMatch.connect(self.previousFile)
         self.ui.sourceViewer.noNextMatch.connect(self.nextFile)
+        self.ui.splitter.setSizes((1, 2)) # distribute splitter space 1:2
         self.perfReport = None
         self.indexConfig = []
         self.currentConfigName = self.__chooseInitialLocation ()
         self.unavailableConfigName = None
         self.commonKeywordMap = self.__loadCommonKeywordMap()
         self.matches = []
+        self.sourceFont = None
         self.lockedResultSet = None # matches are filtered with this set
         # Hide the custom scripts button if there are no custom scripts on disk
         if len(getCustomScriptsFromDisk())==0:
@@ -146,6 +148,27 @@ class SearchPage (QWidget):
             
     def focusInEvent (self, event):
         self.ui.comboSearch.setFocus(Qt.ActiveWindowFocusReason)
+        
+    @pyqtSlot(bool)
+    def switchView(self, bChecked):
+        if bChecked:
+            self.ui.stackedWidget.setCurrentIndex(1)
+            self.ui.matchesOverview.activate()
+        else:
+            self.ui.stackedWidget.setCurrentIndex(0)
+        
+    def __updateSourceFont (self):
+        if not self.sourceFont:
+            self.sourceFont = QFont()
+        
+        config = AppConfig.appConfig().SourceViewer
+        
+        # Apply font and tab changes (if any)
+        if self.sourceFont.family().lower() != config.FontFamily.lower() or self.sourceFont.pointSize() != config.FontSize:
+            self.sourceFont.setFamily(config.FontFamily)
+            self.sourceFont.setPointSize(config.FontSize)
+            
+        return self.sourceFont
           
     @pyqtSlot(list)
     def reloadConfig (self,searchLocationList):
@@ -159,7 +182,8 @@ class SearchPage (QWidget):
             # The config is no longer available. This happens most probably during an index update. If the config becomes available later
             # we can switch back to it.
             self.unavailableConfigName = backupCurrentConfigName
-        self.ui.sourceViewer.reloadConfig()
+        self.ui.sourceViewer.reloadConfig(self.__updateSourceFont())
+        self.ui.matchesOverview.reloadConfig(self.__updateSourceFont())
         
     def __updateSearchLocationList(self,  searchLocationList):
         self.searchLocationList = searchLocationList
@@ -307,6 +331,7 @@ class SearchPage (QWidget):
             matches = result.matches
         self.matches = matches
         self.ui.sourceViewer.setSearchData (result.searchData)
+        self.ui.matchesOverview.setSearchResult(self.matches, result.searchData)
         self.ui.labelMatches.setText("%u " % (len(matches), ) + self.trUtf8("matches"))
         model = StringListModel(matches)
         sizeHint = self.ui.listView.itemDelegate().computeSizeHint(matches,  model.cutLeft)

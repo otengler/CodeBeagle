@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2012-08-05, 18:02:50 -->
-<!-- Copyright (C) 2012 ,  -->
+<!-- Saved: 2013-02-03, 19:29:20 -->
+<!-- Copyright (C) 2013 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
   <Hash>edbc19d33221c49f85611098167e8c1b450b4cbd</Hash>
@@ -68,6 +68,8 @@
     <Source>CustomContextMenu.py</Source>
     <Source>ExceptionTools.py</Source>
     <Source>HighlightingRulesCache.py</Source>
+    <Source>MatchesOverview.py</Source>
+    <Source>Ui_MatchesOverview.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>
@@ -81,6 +83,7 @@
     <Form>HelpViewerDialog.ui</Form>
     <Form>UserHintDialog.ui</Form>
     <Form>AboutDialog.ui</Form>
+    <Form>MatchesOverview.ui</Form>
   </Forms>
   <Translations>
     <Translation>CodeBeagle.ts</Translation>

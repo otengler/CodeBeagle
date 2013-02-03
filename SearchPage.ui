@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1104</width>
-    <height>644</height>
+    <width>1094</width>
+    <height>707</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -287,7 +287,7 @@ p, li { white-space: pre-wrap; }
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
       <property name="topMargin">
        <number>0</number>
       </property>
@@ -346,6 +346,20 @@ p, li { white-space: pre-wrap; }
               <property name="icon">
                <iconset resource="SearchPage.qrc">
                 <normaloff>:/default/resources/Export.png</normaloff>:/default/resources/Export.png</iconset>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="buttonSwitchView">
+              <property name="icon">
+               <iconset resource="SearchPage.qrc">
+                <normaloff>:/default/resources/Overview.png</normaloff>:/default/resources/Overview.png</iconset>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
               </property>
               <property name="flat">
                <bool>true</bool>
@@ -429,13 +443,43 @@ p, li { white-space: pre-wrap; }
           </item>
          </layout>
         </widget>
-        <widget class="SourceViewer" name="sourceViewer" native="true">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <widget class="QStackedWidget" name="stackedWidget">
+         <property name="currentIndex">
+          <number>0</number>
          </property>
+         <widget class="QWidget" name="page1">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="margin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="SourceViewer" name="sourceViewer" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="page2">
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="margin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="MatchesOverview" name="matchesOverview" native="true"/>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </widget>
       </item>
@@ -455,6 +499,12 @@ p, li { white-space: pre-wrap; }
    <class>PathDragListView</class>
    <extends>QListView</extends>
    <header>PathDragListView</header>
+  </customwidget>
+  <customwidget>
+   <class>MatchesOverview</class>
+   <extends>QWidget</extends>
+   <header>MatchesOverview</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
@@ -621,6 +671,22 @@ p, li { white-space: pre-wrap; }
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>buttonSwitchView</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>SearchPage</receiver>
+   <slot>switchView(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>574</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>546</x>
+     <y>353</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>fileSelected(QModelIndex)</slot>
@@ -632,5 +698,6 @@ p, li { white-space: pre-wrap; }
   <slot>execCustomScripts()</slot>
   <slot>currentLocationChanged()</slot>
   <slot>lockResultSet(bool)</slot>
+  <slot>switchView(bool)</slot>
  </slots>
 </ui>

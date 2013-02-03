@@ -46,27 +46,22 @@ class SourceViewer (QWidget):
         self.sourceFont = None
         self.searchData = None
         self.__reset()
-        self.__processConfig()
+        self.__processConfig(None)
         
         self.actionReloadFile = QAction(self, shortcut=Qt.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
         
-    def reloadConfig (self):
-        self.__processConfig()
+    def reloadConfig (self,  font):
+        self.__processConfig(font)
         
-    def __processConfig (self):
-        config = appConfig().SourceViewer
-        self.bMatchOverFiles = appConfig().matchOverFiles
-        
-        if not self.sourceFont:
-            self.sourceFont = QFont()
-        
-        # Apply font and tab changes (if any)
-        if self.sourceFont.family().lower() != config.FontFamily.lower() or self.sourceFont.pointSize() != config.FontSize:
-            self.sourceFont.setFamily(config.FontFamily)
-            self.sourceFont.setPointSize(config.FontSize)
+    def __processConfig (self,  font):
+        if font:
+            self.sourceFont = font
             self.ui.textEdit.setFont(self.sourceFont)
         
+        self.bMatchOverFiles = appConfig().matchOverFiles
+
+        config = appConfig().SourceViewer
         if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
             self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
         
@@ -234,10 +229,6 @@ class SourceViewer (QWidget):
         
         cursor.setPosition(index)
         self.ui.textEdit.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
-        
-        # For whatever reasons the lines which were moved up or down with 'movePosition' are not refreshed after syntax 
-        # highlighting. Therefore an update of the widget is forced. 
-        QTimer.singleShot (1,  self.ui.textEdit.viewport().update)
         
     def dragEnterEvent(self, event):
         # check if the data contains urls
