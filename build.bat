@@ -1,4 +1,4 @@
-set PYDIR=C:\Python32
+set PYDIR=C:\Python33
 set PYTHON=%PYDIR%\python
 
 set PYUIC=%PYDIR%\Lib\site-packages\PyQt4\uic\pyuic.py
@@ -15,6 +15,7 @@ set PYRCC4=%PYDIR%\Lib\site-packages\PyQt4\pyrcc4.exe
 %PYTHON% %PYUIC% -o Ui_HelpViewerDialog.py -x HelpViewerDialog.ui 
 %PYTHON% %PYUIC% -o Ui_UserHintDialog.py -x UserHintDialog.ui 
 %PYTHON% %PYUIC% -o Ui_AboutDialog.py -x AboutDialog.ui 
+%PYTHON% %PYUIC% -o Ui_MatchesOverview.py -x MatchesOverview.ui 
 
 copy /Y resources\Crystal\*.* resources\
 

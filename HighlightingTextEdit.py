@@ -196,8 +196,9 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.viewport().update()
             
     def setFont(self,  font):
-        self.highlighter.setFont(font)
         super(HighlightingTextEdit, self).setFont (font)
+        self.viewport().setFont(font)
+        self.highlighter.setFont(font)
  
     def paintEvent(self, event):
         firstVisibleBlock = self.firstVisibleBlock()

@@ -97,7 +97,7 @@ class SearchPage (QWidget):
     # Triggered when a new search tab is requested which should be opened using a given search string
     # First parameter is the search string, the second the display name of the search configuration (IndexConfiguration)
     newSearchRequested = pyqtSignal('QString', 'QString')
-    # Triggered when a search is started
+    # Triggered when a search has finished
     searchFinished = pyqtSignal('QWidget', 'QString')
     
     def __init__ (self, parent):
@@ -106,11 +106,12 @@ class SearchPage (QWidget):
         self.ui.setupUi(self)
         self.ui.frameSearch.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.frameResult.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
+        self.ui.listView.setItemDelegate(PathVisualizerDelegate.PathVisualizerDelegate(self.ui.listView))
         QObject.connect(self.ui.comboSearch.lineEdit(), SIGNAL("returnPressed()"), self.performSearch)
         QObject.connect(self.ui.comboFolderFilter.lineEdit(), SIGNAL("returnPressed()"), self.performSearch)
         QObject.connect(self.ui.comboExtensionFilter.lineEdit(), SIGNAL("returnPressed()"), self.performSearch)
-        self.ui.listView.setItemDelegate(PathVisualizerDelegate.PathVisualizerDelegate(self.ui.listView))
-        QObject.connect(self.ui.sourceViewer, SIGNAL("selectionFinishedWithKeyboardModifier(QString,int)"),self.newSearchBasedOnSelection) 
+        self.ui.sourceViewer.selectionFinishedWithKeyboardModifier.connect(self.newSearchBasedOnSelection)
+        self.ui.matchesOverview.selectionFinishedWithKeyboardModifier.connect(self.newSearchBasedOnSelection)
         self.ui.sourceViewer.noPreviousMatch.connect(self.previousFile)
         self.ui.sourceViewer.noNextMatch.connect(self.nextFile)
         self.ui.splitter.setSizes((1, 2)) # distribute splitter space 1:2
@@ -220,6 +221,7 @@ class SearchPage (QWidget):
     def fileSelected (self,  index):
         name = index.data(Qt.UserRole)
         self.showFile (name)
+        self.ui.matchesOverview.scrollToFile(index.row())
         
     def showFile (self, name):
         if self.ui.sourceViewer.currentFile != name:

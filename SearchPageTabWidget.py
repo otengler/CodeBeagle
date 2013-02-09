@@ -176,6 +176,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         config.matchOverFiles = settingsDlg.ui.checkMatchOverFiles.checkState() == Qt.Checked
         config.showCloseConfirmation = settingsDlg.ui.checkConfirmClose.checkState() == Qt.Checked
         config.defaultLocation = settingsDlg.defaultLocation()
+        config.previewLines = int(settingsDlg.ui.editPreviewLines.text())
         try:
             AppConfig.saveUserConfig (config)
         except:

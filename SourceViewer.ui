@@ -273,7 +273,7 @@ p, li { white-space: pre-wrap; }
     </widget>
    </item>
    <item>
-    <widget class="HighlightingTextEdit" name="textEdit">
+    <widget class="SourceHighlightingTextEdit" name="textEdit">
      <property name="undoRedoEnabled">
       <bool>false</bool>
      </property>
@@ -326,9 +326,9 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
-   <class>HighlightingTextEdit</class>
+   <class>SourceHighlightingTextEdit</class>
    <extends>QPlainTextEdit</extends>
-   <header>HighlightingTextEdit</header>
+   <header>SourceHighlightingTextEdit</header>
   </customwidget>
  </customwidgets>
  <resources>
@@ -452,22 +452,6 @@ p, li { white-space: pre-wrap; }
    <signal>cursorPositionChanged()</signal>
    <receiver>SourceViewer</receiver>
    <slot>updateCurrentLine()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>288</x>
-     <y>306</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>288</x>
-     <y>276</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>textEdit</sender>
-   <signal>selectionChanged()</signal>
-   <receiver>SourceViewer</receiver>
-   <slot>highlightSelection()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>288</x>

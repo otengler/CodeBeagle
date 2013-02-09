@@ -121,11 +121,11 @@ class LocationControl:
             return
         editor = self.settingsItem
         location = IndexConfiguration (editor.name(),  
-                                                       editor.extensions(), 
-                                                       editor.directories(), 
-                                                       editor.dirExcludes(),  
-                                                       editor.indexDB(), 
-                                                       editor.indexGenerationEnabled())
+                                        editor.extensions(), 
+                                        editor.directories(), 
+                                        editor.dirExcludes(),  
+                                        editor.indexDB(), 
+                                        editor.indexGenerationEnabled())
         self.model.setData (index,  location,  Qt.UserRole+1)
 
     def loadDataFromItem (self,  index):
@@ -134,11 +134,11 @@ class LocationControl:
             return editor.resetAndDisable()
         location = index.data(Qt.UserRole+1)
         editor.setData (location.displayName(), 
-                                location.directoriesAsString(), 
-                                location.extensionsAsString(),  
-                                location.dirExcludesAsString(), 
-                                location.generateIndex, 
-                                location.indexdb)
+                        location.directoriesAsString(), 
+                        location.extensionsAsString(),  
+                        location.dirExcludesAsString(), 
+                        location.generateIndex, 
+                        location.indexdb)
         editor.enable (not self.readOnly)
         
     def addLocation (self,  location,  activateLocation=False):
@@ -170,6 +170,7 @@ class SettingsDialog (QDialog):
         self.ui.fontComboBox.setCurrentFont(QFont(config.SourceViewer.FontFamily))
         self.ui.editFontSize.setText(str(config.SourceViewer.FontSize))
         self.ui.editTabWidth.setText(str(config.SourceViewer.TabWidth))
+        self.ui.editPreviewLines.setText(str(config.previewLines))
         setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
         setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
 

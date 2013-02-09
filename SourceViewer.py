@@ -37,12 +37,6 @@ class SourceViewer (QWidget):
         self.ui.setupUi(self)
         self.ui.frameSearch.hide()
         
-        # Use the same color for active and inactive selections of text. The contrast of inactive selections is too low.
-        palette = QPalette()
-        brush = palette.brush (QPalette.Active,  QPalette.Highlight)
-        palette.setBrush (QPalette.Inactive,  QPalette.Highlight,  brush)
-        self.ui.textEdit.setPalette(palette)
-        
         self.sourceFont = None
         self.searchData = None
         self.__reset()
@@ -50,6 +44,9 @@ class SourceViewer (QWidget):
         
         self.actionReloadFile = QAction(self, shortcut=Qt.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
+        
+        # Forward the signal
+        self.ui.textEdit.selectionFinishedWithKeyboardModifier.connect(self.selectionFinishedWithKeyboardModifier)
         
     def reloadConfig (self,  font):
         self.__processConfig(font)
@@ -145,22 +142,6 @@ class SourceViewer (QWidget):
     def updateCurrentLine (self):
         line = self.ui.textEdit.textCursor().blockNumber()+1
         self.ui.labelCursor.setText(self.trUtf8("Line") + " %u" % (line, ))
-    
-    @pyqtSlot()    
-    def highlightSelection(self):
-        if QApplication.mouseButtons() != Qt.NoButton: # only react on a finished selection. otherwise we update the highlight too often
-            return
-        text = self.ui.textEdit.textCursor().selectedText().strip()
-        if not text or len(text)>64:
-            return
-        
-        # Allow other components to react on selection of tokens with keyboard modifiers
-        modifiers = int(QApplication.keyboardModifiers())
-        if modifiers & int(Qt.ShiftModifier)==0:
-            if modifiers != Qt.NoModifier:
-                self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
-            else:
-                self.ui.textEdit.setDynamicHighlight(text)
         
     @pyqtSlot()
     def showSearchFrame(self):

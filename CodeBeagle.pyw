@@ -62,10 +62,10 @@ class MainWindow (QMainWindow):
     def closeEvent(self,  event):
         if  AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
-                                                         self.trUtf8("Really close?"),
-                                                         self.trUtf8("Do you really want to close the application?"),
-                                                         QMessageBox.StandardButtons(QMessageBox.No | QMessageBox.Yes),
-                                                         QMessageBox.Yes)
+                self.trUtf8("Really close?"),
+                self.trUtf8("Do you really want to close the application?"),
+                QMessageBox.StandardButtons(QMessageBox.No | QMessageBox.Yes),
+                QMessageBox.Yes)
             if QMessageBox.Yes != res:
                 event.ignore()
                 return
