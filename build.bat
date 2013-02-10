@@ -1,5 +1,4 @@
-set PYDIR=C:\Python33
-set PYTHON=%PYDIR%\python
+call buildvars.bat
 
 set PYUIC=%PYDIR%\Lib\site-packages\PyQt4\uic\pyuic.py
 set PYRCC4=%PYDIR%\Lib\site-packages\PyQt4\pyrcc4.exe

@@ -9,8 +9,8 @@ CodeBeagle=Executable(
 )
 
 UpdateIndex=Executable(
-	script = "UpdateIndex.py", 
-	targetName = "UpdateIndex.exe"
+    script = "UpdateIndex.py",
+    targetName = "UpdateIndex.exe"
 )
 
 setup(  
