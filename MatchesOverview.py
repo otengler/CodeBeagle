@@ -281,7 +281,7 @@ class MatchesOverview (QWidget):
         return self.__addLine(text,  True)
     
     def __addLine(self, text,  bIsBold = False):
-        labelItem = RecyclingVerticalScrollArea.Labeltem(text,  bIsBold,  14)
+        labelItem = RecyclingVerticalScrollArea.Labeltem(text,  bIsBold,  20)
         return self.scrollItems.addItem(labelItem)
         
     def __addText(self, name,  lines):
