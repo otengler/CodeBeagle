@@ -186,9 +186,8 @@ class HighlightingTextEdit (QPlainTextEdit):
         
     def setPlainText(self,  text):
         super(HighlightingTextEdit, self).setPlainText(text)
-        # For whatever reasons the lines which were moved up or down with 'movePosition' are not refreshed after syntax 
-        # highlighting. Therefore an update of the widget is forced. 
-        QTimer.singleShot (1,  self.viewport().update)
+        # For whatever reasons some lines are not highlighted properly without another 'update'
+        QTimer.singleShot (1, self.viewport().update)
         
     def setDynamicHighlight(self,  text):
         if self.dynamicHighlight != text:

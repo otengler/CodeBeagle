@@ -19,29 +19,45 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 import ProgressBar
+import threading
 
 class AsynchronousTask (QThread):
-    def __init__(self,  function , *args):
+    def __init__(self,  function , *args,  bEnableCancel=False,  cancelAction=None):
         super(AsynchronousTask, self).__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.function = function
         self.args = args
+        self.bEnableCancel = bEnableCancel
+        self.cancelAction = cancelAction
         self.result = None
+        self.cancelEvent = None
+        if self.bEnableCancel:
+            self.cancelEvent = threading.Event()
         
     def run(self):
         try:
-            self.result = self.function (*self.args)
+            self.result = self.function (*self.args, cancelEvent=self.cancelEvent)
         except Exception as e:
             self.result = e
+            
+    @pyqtSlot()
+    def cancel (self):
+        if self.cancelEvent:
+            self.cancelEvent.set()
+        if self.cancelAction:
+            self.cancelAction()
 
-def execute (parent,  func,  *args):
+def execute (parent,  func,  *args,  bEnableCancel=False, cancelAction=None):
     progress = None
     try:
-        progress = ProgressBar.ProgressBar(parent)
-        progress.show()
+        progress = ProgressBar.ProgressBar(parent,  bEnableCancel)
         
-        searchTask = AsynchronousTask (func,  *args)
+        searchTask = AsynchronousTask (func,  *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction)
         QObject.connect(searchTask,  SIGNAL("finished()"),  progress.close)
         QObject.connect(searchTask,  SIGNAL("terminated()"),  progress.close)
+        
+        progress.onCancelClicked.connect (searchTask.cancel)
+        progress.show()
+        
         searchTask.start()
         progress.exec()
         searchTask.wait()

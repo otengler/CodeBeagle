@@ -101,6 +101,7 @@ def configTypeInfo (config):
     config.setType("commonKeywords", Config.typeDefaultString(""))
     config.setType("updateCheckPeriod",  Config.typeDefaultInt(0))
     config.setType("matchOverFiles",  Config.typeDefaultBool(False)) 
+    config.setType("showPerformanceButton",  Config.typeDefaultBool(False))
     config.setType("defaultLocation",  Config.typeDefaultString(""))
     config.setType("SourceViewer",  typeSourceViewerDefaults())
 

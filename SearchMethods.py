@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+import threading
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import *
 import AsynchronousTask
@@ -48,27 +49,45 @@ class ScriptSearchData:
             else:
                 return
 
-# This executes an indexed or a direct search. This depends  on the IndexConfiguration setting "gneerateIndex".
+# This executes an indexed or a direct search. This depends on the IndexConfiguration setting "generateIndex".
 def search (parent,  params, indexConf,  commonKeywordMap={}):
     strSearch, strFolderFilter,  strExtensionFilter, bCaseSensitive = params
     if not len(strSearch):
         return ResultSet()
     searchData = FullTextIndex.SearchQuery (strSearch,  strFolderFilter,  strExtensionFilter,  bCaseSensitive)
     if indexConf.generateIndex:
-        result = AsynchronousTask.execute (parent,  indexedSearchAsync,  searchData, commonKeywordMap, indexConf)
+        ftiSearch = FullTextIndexSearch ()
+        result = AsynchronousTask.execute (parent,  ftiSearch,  searchData, commonKeywordMap, indexConf,  
+                                           bEnableCancel=True,  cancelAction=ftiSearch.cancel)
     else:
-        result = AsynchronousTask.execute (parent,  directSearchAsync,  searchData,  indexConf)
+        result = AsynchronousTask.execute (parent,  directSearchAsync,  searchData,  indexConf,  
+                                           bEnableCancel=True)
         
     result.label = strSearch
     return result
     
-def indexedSearchAsync(searchData, commonKeywordMap, indexConf):
-    perfReport = FullTextIndex.PerformanceReport()
-    with perfReport.newAction("Init database"):
-        fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
-    return ResultSet (fti.search (searchData,  perfReport,  commonKeywordMap),  searchData,  perfReport)
+# Holds an instance of FullTextIndex. Setting the instance is secured by a lock because
+# the call to 'cancel' may happen any time - also during construction and assignment of FullTextIndex
+class FullTextIndexSearch:
+    def __init__(self):
+        self.fti = None
+        self.lock = threading.Lock() 
     
-def directSearchAsync(searchData,  indexConf):
+    def __call__(self, searchData, commonKeywordMap, indexConf, cancelEvent=None):
+        perfReport = FullTextIndex.PerformanceReport()
+        with perfReport.newAction("Init database"):
+            with self.lock:
+                self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
+            result = ResultSet (self.fti.search (searchData,  perfReport,  commonKeywordMap, cancelEvent=cancelEvent),  searchData,  perfReport)
+        self.fti = None
+        return result
+        
+    def cancel (self):
+        with self.lock:
+            if self.fti:
+                self.fti.interrupt()
+        
+def directSearchAsync(searchData,  indexConf, cancelEvent=None):
     matches = []
     for dir in indexConf.directories:
         for file in FullTextIndex.genFind(indexConf.extensions,  dir,  indexConf.dirExcludes):
@@ -77,6 +96,8 @@ def directSearchAsync(searchData,  indexConf):
                     for match in searchData.matches(input.read()):
                         matches.append(file)
                         break
+            if cancelEvent and cancelEvent.is_set():
+                return ResultSet([], searchData)
     matches = removeDupsAndSort(matches)
     return ResultSet(matches, searchData)
     

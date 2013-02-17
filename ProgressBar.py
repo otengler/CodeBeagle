@@ -21,7 +21,17 @@ from PyQt4.QtGui import *
 from Ui_ProgressBar import Ui_ProgressBar 
 
 class ProgressBar (QDialog):
-    def __init__ (self, parent):
+    onCancelClicked = pyqtSignal()
+    
+    def __init__ (self, parent, bEnableCancel=False):
         super(ProgressBar, self).__init__(parent,  Qt.SplashScreen)
         self.ui = Ui_ProgressBar()
         self.ui.setupUi(self)
+        self.ui.frame.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
+        if not bEnableCancel:
+            self.ui.buttonCancel.setEnabled(False)
+            
+    @pyqtSlot()
+    def cancelClicked(self):
+        self.ui.buttonCancel.setEnabled(False)
+        self.onCancelClicked.emit()

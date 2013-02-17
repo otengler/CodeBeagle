@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2013-02-09, 22:01:03 -->
+<!-- Saved: 2013-02-12, 20:44:30 -->
 <!-- Copyright (C) 2013 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -72,6 +72,7 @@
     <Source>Ui_MatchesOverview.py</Source>
     <Source>RecyclingVerticalScrollArea.py</Source>
     <Source>SourceHighlightingTextEdit.py</Source>
+    <Source>CodeBeagleAutomation.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>

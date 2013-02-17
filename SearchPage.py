@@ -126,6 +126,9 @@ class SearchPage (QWidget):
         # Hide the custom scripts button if there are no custom scripts on disk
         if len(getCustomScriptsFromDisk())==0:
             self.ui.buttonCustomScripts.hide()
+        # Hide the performance info button if showPerformanceButton is false
+        if not AppConfig.appConfig().showPerformanceButton:
+            self.ui.buttonInfo.hide()
             
         # Move some elements of the search bar to a second row if the screen width is too small. This avoid
         # clipping errors if the widget has to paint below minimum size.

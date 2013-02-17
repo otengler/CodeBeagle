@@ -173,7 +173,7 @@ class MatchesInFile:
 
 # Returns a list of all matches in all files
 # This read sall files and retrieves the matches with some lines surounding them
-def extractMatches ( matches, searchData, linesOfContext):     
+def extractMatches ( matches, searchData, linesOfContext, cancelEvent=None):     
     results = []
     for name in matches:
         matchList = MatchesInFile(name)
@@ -203,6 +203,8 @@ def extractMatches ( matches, searchData, linesOfContext):
                     lines.append(lineIndex.getLine(i))
                 matchList.addMatches(startLine, lines)
             results.append(matchList)
+        if cancelEvent and cancelEvent.is_set():
+            return results
     return results
 
 class MatchesOverview (QWidget):
@@ -266,7 +268,8 @@ class MatchesOverview (QWidget):
         self.matchIndexes = []
         
         if self.matches:
-            results = AsynchronousTask.execute (self, extractMatches,  self.matches,  self.searchData,  self.linesOfContext)
+            results = AsynchronousTask.execute (self, extractMatches,  self.matches,  self.searchData,  self.linesOfContext, 
+                                                bEnableCancel=True)
         
             for result in results:
                 index = self.__addHeader(result.name)

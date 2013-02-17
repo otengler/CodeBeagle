@@ -425,9 +425,20 @@ class FullTextIndex:
         associations = int(q.fetchone()[0])
         print ("Associations: " + str(associations))
         return (documents, documentsInIndex,  keywords, associations)
+        
+    def interrupt (self):
+        self.conn.interrupt()
 
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
-    def search (self, query,  perfReport = None,  commonKeywordMap={},  manualIntersect=True):
+    def search (self, query,  perfReport = None,  commonKeywordMap={},  manualIntersect=True,  cancelEvent=None):
+        try:
+            return self.__search (query,  perfReport,  commonKeywordMap,  manualIntersect,  cancelEvent)
+        except sqlite3.OperationalError as e:
+            if str(e) == "interrupted":
+                return []
+            raise
+        
+    def __search (self,  query,  perfReport,  commonKeywordMap,  manualIntersect,  cancelEvent):
         if not isinstance (query,Query):
             raise RuntimeError("query must be a Query derived object")
         
@@ -459,7 +470,7 @@ class FullTextIndex:
             
         if (query.partCount() > 1 and query.hasPartTypeUnequalTo(IndexPart)) or query.bCaseSensitive:
             with perfReport.newAction("Filtering results"):
-                return self.__filterDocsBySearchPhrase ((r[0] for r in result), query)
+                return self.__filterDocsBySearchPhrase ((r[0] for r in result), query, cancelEvent)
         else:
             with perfReport.newAction("Returning results"):
                 if not query.folderFilter and not query.extensionFilter:
@@ -505,7 +516,7 @@ class FullTextIndex:
                 return []
         return result
 
-    def __filterDocsBySearchPhrase (self,  results,  query):
+    def __filterDocsBySearchPhrase (self,  results,  query,  cancelEvent=None):
         finalResults = []
         reExpr = query.regExForMatches()
         bHasFilters = query.folderFilter or query.extensionFilter
@@ -519,6 +530,10 @@ class FullTextIndex:
                         finalResults.append (fullpath)
             except:
                 pass
+                
+            if cancelEvent and cancelEvent.is_set():
+                return []
+                
         return finalResults
         
     # Receives a list of lists of Keywords and returns a two lists.
