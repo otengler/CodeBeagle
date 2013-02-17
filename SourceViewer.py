@@ -213,7 +213,7 @@ class SourceViewer (QWidget):
         
         # For whatever reasons the lines which were moved up or down with 'movePosition' are not refreshed after syntax 
         # highlighting. Therefore an update of the widget is forced. 
-        QTimer.singleShot (1,  self.ui.textEdit.viewport().update)
+        QTimer.singleShot (10, self.ui.textEdit.viewport().update)
         
     def dragEnterEvent(self, event):
         # check if the data contains urls

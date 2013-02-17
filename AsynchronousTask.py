@@ -35,7 +35,10 @@ class AsynchronousTask (QThread):
         
     def run(self):
         try:
-            self.result = self.function (*self.args, cancelEvent=self.cancelEvent)
+            if self.cancelEvent:
+                self.result = self.function (*self.args, cancelEvent=self.cancelEvent)
+            else:
+                self.result = self.function (*self.args)
         except Exception as e:
             self.result = e
             
@@ -46,6 +49,10 @@ class AsynchronousTask (QThread):
         if self.cancelAction:
             self.cancelAction()
 
+# Executes the action performed by the callable 'func' called with *args in a seperate thread. 
+# During the action a progress bar is shown. If 'bEnableCancel' is true the callable is 
+# passed the named parameter 'cancelEvent'. It contains an event object whose 'is_set' function
+# can be used to test if it is signalled.
 def execute (parent,  func,  *args,  bEnableCancel=False, cancelAction=None):
     progress = None
     try:

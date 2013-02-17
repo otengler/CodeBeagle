@@ -187,7 +187,7 @@ class HighlightingTextEdit (QPlainTextEdit):
     def setPlainText(self,  text):
         super(HighlightingTextEdit, self).setPlainText(text)
         # For whatever reasons some lines are not highlighted properly without another 'update'
-        QTimer.singleShot (1, self.viewport().update)
+        QTimer.singleShot (10, self.viewport().update)
         
     def setDynamicHighlight(self,  text):
         if self.dynamicHighlight != text:
