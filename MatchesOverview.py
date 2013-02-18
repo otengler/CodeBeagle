@@ -75,7 +75,10 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         self.name = name
         
     def generateItem (self, parent):
-        return FixedSizeSourcePreview(parent)
+        edit = FixedSizeSourcePreview(parent)
+        # Forward the signal to MatchesOverview instance
+        edit.selectionFinishedWithKeyboardModifier.connect (self.matchesOverview.selectionFinishedWithKeyboardModifier)       
+        return edit
         
     def configureItem(self, edit):
         rules = HighlightingRulesCache.rules().getRulesByFileName(self.name,  self.matchesOverview.sourceFont)
@@ -84,9 +87,6 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         edit.highlighter.setHighlightingRules (rules,  self.text)
         edit.highlighter.setSearchData (self.matchesOverview.searchData)
         edit.setPlainText(self.text)
-        
-        # Forward the signal to MatchesOverview instance
-        edit.selectionFinishedWithKeyboardModifier.connect (self.matchesOverview.selectionFinishedWithKeyboardModifier)
         
     def getType(self):
         return FixedSizeSourcePreview
