@@ -97,7 +97,7 @@ class SettingsItem (QWidget):
             QFileDialog.Options(QFileDialog.DontConfirmOverwrite))
                 
         if len(indexDB[0]): # indexDB is a touple: file,filter
-            self.setIndexDB(indexDB[0]) 
+            self.ui.editIndexDB.setText (indexDB[0])
        
     def nameSelectAll (self):
         self.ui.editName.selectAll()
