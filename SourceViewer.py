@@ -48,6 +48,14 @@ class SourceViewer (QWidget):
         # Forward the signal
         self.ui.textEdit.selectionFinishedWithKeyboardModifier.connect(self.selectionFinishedWithKeyboardModifier)
         
+        # Help the text edit to update the syntax highlighting. This works around an
+        # update problem of the text edit used in a scroll area.
+        self.ui.textEdit.updateNeeded.connect(self.textEditUpdateNeeded)
+        
+    @pyqtSlot()
+    def textEditUpdateNeeded (self):
+        self.ui.textEdit.viewport().update ()
+        
     def reloadConfig (self,  font):
         self.__processConfig(font)
         
@@ -210,10 +218,6 @@ class SourceViewer (QWidget):
         
         cursor.setPosition(index)
         self.ui.textEdit.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
-        
-        # For whatever reasons the lines which were moved up or down with 'movePosition' are not refreshed after syntax 
-        # highlighting. Therefore an update of the widget is forced. 
-        QTimer.singleShot (10, self.ui.textEdit.viewport().update)
         
     def dragEnterEvent(self, event):
         # check if the data contains urls

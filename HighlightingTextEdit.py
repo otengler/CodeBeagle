@@ -175,6 +175,8 @@ class SyntaxHighlighter:
         return formats
 
 class HighlightingTextEdit (QPlainTextEdit):
+    updateNeeded = pyqtSignal()
+    
     def __init__ (self, parent):
         super(HighlightingTextEdit, self).__init__(parent)
         self.highlighter = SyntaxHighlighter()
@@ -201,7 +203,8 @@ class HighlightingTextEdit (QPlainTextEdit):
  
     def paintEvent(self, event):
         firstVisibleBlock = self.firstVisibleBlock()
-        self.colorizeVisibleBlocks(firstVisibleBlock)
+        bColorizedBlocks = self.colorizeVisibleBlocks(firstVisibleBlock)
+        
         super(HighlightingTextEdit, self).paintEvent(event)
         
         if self.dynamicHighlight:
@@ -217,11 +220,20 @@ class HighlightingTextEdit (QPlainTextEdit):
                     rectResult = QRect(rectBefore.right()+4,  rectBefore.top()+1,  rectText.width()+2,  rectText.height()-2)
                     painter.setPen(Qt.darkGray)
                     painter.drawRect(rectResult)
+        
+        # Sometimes lines which are highlighted for the first time are not updated properly.
+        # This happens regularily if the text edit is scolled using the page down key.
+        # The following signal is emited if new lines were highlighted. The receiver
+        # is expected to call "update" on the control. Not nice but it works...
+        if bColorizedBlocks:
+            self.updateNeeded.emit()
     
     def colorizeVisibleBlocks(self,  firstVisibleBlock):
+        bColorizedBlocks = False
         for block in self.visibleBlocks(firstVisibleBlock):
             # -1 means the block has not been highlighted yet
             if block.userState() == -1:
+                bColorizedBlocks = True
                 blockLength = len(block.text())
                 formats = self.highlighter.highlightBlock(block.position(), block.text())
                 addFormats = []
@@ -242,6 +254,7 @@ class HighlightingTextEdit (QPlainTextEdit):
                 if addFormats:
                     block.layout().setAdditionalFormats(addFormats)
                 block.setUserState(1)
+        return bColorizedBlocks
             
     def visibleBlocks (self,  firstVisibleBlock,  bIncludeBound=False):
         size = self.viewport().size()
