@@ -166,22 +166,32 @@ def splitSearchParts (str):
     
 def createFolderFilter (strFilter):
     strFilter = strFilter.strip().lower()
+    filter = []
     if not strFilter:
-        return None
-    return [item.strip() for item in strFilter.split(",")]
+        return filter
+    for item in (item.strip() for item in strFilter.split(",")):
+        if item.startswith("-"):
+            filter.append((item[1:], False))
+        else:
+            filter.append((item, True))
+    return filter
 
 # Transform the comma seperated list so that every extension looks like ".ext".
 # Also remove '*' to support *.ext
 def createExtensionFilter (strFilter):
     strFilter = strFilter.strip().lower()
-    if not strFilter:
-        return None
     filter = []
+    if not strFilter:
+        return filter
     for item in strFilter.split(","):
         item = item.strip().replace("*", "")
+        bPositiveFilter = True
+        if item.startswith("-"):
+            item = item[1:]
+            bPositiveFilter = False
         if not item.startswith("."):
             item = "." + item
-        filter.append(item)
+        filter.append((item, bPositiveFilter))
     return filter
 
 class TestSearchParts(unittest.TestCase):
@@ -205,6 +215,10 @@ class Query (metaclass = abc.ABCMeta):
     def __init__(self,  strSearch, strFolderFilter="",  strExtensionFilter="",  bCaseSensitive=False):
         self.folderFilter = createFolderFilter(strFolderFilter)
         self.extensionFilter = createExtensionFilter(strExtensionFilter)
+        self.hasFilters = False
+        if self.folderFilter or self.extensionFilter:
+            self.hasFilters = True
+            
         self.bCaseSensitive = bCaseSensitive
         self.reFlags = 0
         if not self.bCaseSensitive:
@@ -249,21 +263,37 @@ class Query (metaclass = abc.ABCMeta):
                 return
         
     def matchFolderAndExtensionFilter (self, strFileName):
-        if not self.folderFilter and not self.extensionFilter:
+        if not self.hasFilters:
             return True
         strFileName = strFileName.lower()
-        bFolderFilterMatches = True
-        if self.folderFilter:
-            bFolderFilterMatches = False
-            for filter in self.folderFilter:
-                if strFileName.find(filter) != -1:
-                    bFolderFilterMatches = True
-                    break
+        bHasPositiveFilter = False
+        bPositiveFilterMatches = False
+        for filter, bPositive in self.folderFilter:
+            if bPositive:
+                bHasPositiveFilter = True
+            if strFileName.find(filter) != -1:
+                if not bPositive:
+                    return False
+                else:
+                    bPositiveFilterMatches = True
+        if bHasPositiveFilter and not bPositiveFilterMatches:
+            return False
+
         ext = os.path.splitext(strFileName)[1]
-        bExtensionFilterMatches = True
-        if self.extensionFilter:
-            bExtensionFilterMatches = ext in self.extensionFilter
-        return bFolderFilterMatches and bExtensionFilterMatches
+        bHasPositiveFilter = False
+        bPositiveFilterMatches = False
+        for filter, bPositive in self.extensionFilter:
+            if bPositive:
+                bHasPositiveFilter = True
+            if ext in filter:
+                if not bPositive:
+                    return False
+                else:
+                    bPositiveFilterMatches = True
+        if bHasPositiveFilter and not bPositiveFilterMatches:
+            return False
+        
+        return True
         
     @abc.abstractmethod
     def regExForMatches(self):
