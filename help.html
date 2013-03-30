@@ -69,12 +69,12 @@ white-space allowed between <strong>!</strong> and <strong>=</strong>. This woul
   <tr>
     <td>Filter by file/path</td>
     <td>The file path of the results must contain this filter text as a sub-string to yield a match. If you want to pass more than one filter 
-    separate them with a comma</td>
+    separate them with a comma. A minus sign before a filter allows to exclude matches.</td>
   </tr>
   <tr>
     <td>Filter by extension</td>
     <td>Specified a list of extensions which are allowed in the result. The separator is the comma. The following syntax is allowed and all 
-    means the same:<strong>cpp,*.cpp,.cpp</strong></td>
+    means the same:<strong>cpp,*.cpp,.cpp</strong>. A minus sign before an extension allows to exclude this extension.</td>
   </tr>
   <tr>
     <td>Case sensitive</td>
@@ -141,8 +141,8 @@ Index2 {
 <p>
 This indexes all files in "D:\source1" and "E:\source2" with the extensions "h","cpp" and "c" and stores the result in 
 "D:\mysource.dat". The section name which specifies the index must start with "index" (case doesn't matter).  Optionally
-you can specify a list of comma seperated strings in the property "dirExcludes". All directories containing one of these strings
-will be excluded. The path they are compared with is not terminated with a path seperator. As illustrated by the 
+you can specify a list of comma separated strings in the property "dirExcludes". All directories containing one of these strings
+will be excluded. The path they are compared with is not terminated with a path separator. As illustrated by the 
 section "Index2" you are not restricted to only one index definition. When several indexes are defined you can select 
 the index to search in the upper right corner.
 </p>
@@ -406,7 +406,7 @@ which is internally used to construct a <strong>QTextCharFormat</strong>:
 <table border="1" summary="Adding highlighting rules">
   <tr>
     <td>addKeywords (keywordList,  fontWeight,  foreground)</td>
-    <td>Adds highlighting to keywords. <strong>keywordList</strong> is a comma seperated string with all keywords.
+    <td>Adds highlighting to keywords. <strong>keywordList</strong> is a comma separated string with all keywords.
   </tr>
   <tr>
     <td>addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)</td>
