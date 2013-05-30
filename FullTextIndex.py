@@ -285,7 +285,7 @@ class Query (metaclass = abc.ABCMeta):
         for filter, bPositive in self.extensionFilter:
             if bPositive:
                 bHasPositiveFilter = True
-            if ext in filter:
+            if ext == filter:
                 if not bPositive:
                     return False
                 else:
