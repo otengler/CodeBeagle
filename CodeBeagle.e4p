@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric5 project file for project CodeBeagle -->
-<!-- Saved: 2013-02-12, 20:44:30 -->
+<!-- Saved: 2013-06-19, 22:49:52 -->
 <!-- Copyright (C) 2013 ,  -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -73,6 +73,8 @@
     <Source>RecyclingVerticalScrollArea.py</Source>
     <Source>SourceHighlightingTextEdit.py</Source>
     <Source>CodeBeagleAutomation.py</Source>
+    <Source>Ui_GotoLineDialog.py</Source>
+    <Source>GotoLineDialog.py</Source>
   </Sources>
   <Forms>
     <Form>MainWindow.ui</Form>
@@ -87,6 +89,7 @@
     <Form>UserHintDialog.ui</Form>
     <Form>AboutDialog.ui</Form>
     <Form>MatchesOverview.ui</Form>
+    <Form>GotoLineDialog.ui</Form>
   </Forms>
   <Translations>
     <Translation>CodeBeagle.ts</Translation>

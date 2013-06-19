@@ -28,7 +28,7 @@ import AppConfig
 import FullTextIndex
 
 license = """
-CodeBeagle Copyright (C) 2011-2012 Oliver Tengler;
+CodeBeagle Copyright (C) 2011-2013 Oliver Tengler;
 This program comes with ABSOLUTELY NO WARRANTY; 
 This is free software, and you are welcome to redistribute it under certain conditions; 
 """

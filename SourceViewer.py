@@ -44,6 +44,9 @@ class SourceViewer (QWidget):
         
         self.actionReloadFile = QAction(self, shortcut=Qt.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
+        self.actionGotoLine = QAction(self, shortcut=Qt.CTRL+Qt.Key_G, triggered=self.gotoLine)
+        self.addAction(self.actionGotoLine)
+        
         
         # Forward the signal
         self.ui.textEdit.selectionFinishedWithKeyboardModifier.connect(self.selectionFinishedWithKeyboardModifier)
@@ -110,6 +113,17 @@ class SourceViewer (QWidget):
         if self.currentFile:
             self.showFile(self.currentFile)
         
+    @pyqtSlot()
+    def gotoLine(self):
+        from GotoLineDialog import GotoLineDialog
+        gotoDialog = GotoLineDialog(self)
+        if gotoDialog.exec() == QDialog.Accepted:
+            block = self.ui.textEdit.document().findBlockByLineNumber (gotoDialog.getLine())
+            if block.isValid():
+                cursor = self.ui.textEdit.textCursor()
+                cursor.setPosition(block.position())
+                self.ui.textEdit.setTextCursor(cursor)
+    
     @pyqtSlot()
     def nextMatch (self):
         if self.curMatch < len(self.matches)-1:
