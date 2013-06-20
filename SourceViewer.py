@@ -118,7 +118,12 @@ class SourceViewer (QWidget):
         from GotoLineDialog import GotoLineDialog
         gotoDialog = GotoLineDialog(self)
         if gotoDialog.exec() == QDialog.Accepted:
-            block = self.ui.textEdit.document().findBlockByLineNumber (gotoDialog.getLine())
+            line = gotoDialog.getLine()-1
+            if line < 0:
+                line = 0
+            elif line >= self.ui.textEdit.document().blockCount():
+                line = self.ui.textEdit.document().blockCount()-1
+            block = self.ui.textEdit.document().findBlockByLineNumber (line)
             if block.isValid():
                 cursor = self.ui.textEdit.textCursor()
                 cursor.setPosition(block.position())
