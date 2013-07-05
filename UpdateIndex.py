@@ -76,6 +76,15 @@ def loadConfigFiles (args):
     for name in configFiles:
         print ("Load config " + name)
         conf.loadFile(name)
+    # managedConfig is an override for the config file maintained by 
+    # CodeBeagle. Normally this file is stored in the user profile.
+    # Because UpdateIndex.exe runs with a high probability from a 
+    # scheduled task we cannot pull in files from the user profile because
+    # we don't know the user. But if there is an override it makes
+    # sense to include the managed config.
+    if conf.managedConfig:
+        print ("Load config " + conf.managedConfig)
+        conf.loadFile(conf.managedConfig)
     return conf
 
 def handleUpdateJobs (indexes,  jobDir):

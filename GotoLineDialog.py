@@ -31,4 +31,8 @@ class GotoLineDialog (QDialog):
         self.ui.editLine.setFocus(Qt.ActiveWindowFocusReason)
         
     def getLine(self):
-        return int(self.ui.editLine.text())
+        try:
+            return int(self.ui.editLine.text())
+        except ValueError:
+            return 0
+        

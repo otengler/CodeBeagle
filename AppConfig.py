@@ -32,7 +32,7 @@ def appConfig():
     global _config
     if not _config:
         _config = globalConfig()
-        __loadUserConfig (_config)
+        __loadUserConfig (_config.managedConfig, _config)
     return _config
 
 # The next call to "appConfig" will read a fresh config
@@ -48,10 +48,11 @@ def configFromFile (filename):
 def globalConfig():
     return configFromFile (configName)
     
-# Returns the user config
+# Returns the user config. The global config is loaded first to retrieve a possible override
+# of the user config file location. The default is to use the user profile.
 def userConfig():
-    config = Config.Config(typeInfoFunc=configTypeInfo)
-    return __loadUserConfig(config)
+    userConfig = Config.Config(typeInfoFunc=configTypeInfo)
+    return __loadUserConfig(globalConfig().managedConfig, userConfig)
     
 def userDataPath():
     return FileTools.getAppDataPath(appName)
@@ -61,8 +62,13 @@ def userConfigFileName():
     return os.path.join(appDataPath, configName)
 
 def saveUserConfig (config):
-    appDataPath = FileTools.getAppDataPath(appName)
-    name = os.path.join(appDataPath, configName)
+    if appConfig().managedConfig:
+        name = appConfig().managedConfig
+        configPath = os.path.split(name)[0]
+    else:
+        configPath = FileTools.getAppDataPath(appName)
+        name = os.path.join(configPath, configName)
+    
     for i in range(2):
         try:
             with open (name, "w",  -1,  "utf_8_sig") as output:
@@ -70,13 +76,16 @@ def saveUserConfig (config):
             return
         except IOError as e:
             if e.args[0] == 2: # Create path and try again
-                os.mkdir(appDataPath)
+                os.mkdir(configPath)
             else:
                 raise e
     
-def __loadUserConfig (config):
+def __loadUserConfig (managedConfigFile, config):
     try:
-        config.loadFile(userConfigFileName())
+        if managedConfigFile:
+            config.loadFile(managedConfigFile)
+        else:
+            config.loadFile(userConfigFileName())
         return config
     except IOError as e:
         if e.args[0] == 2: # Ignore a file not found error
@@ -104,6 +113,7 @@ def configTypeInfo (config):
     config.setType("showPerformanceButton",  Config.typeDefaultBool(False))
     config.setType("defaultLocation",  Config.typeDefaultString(""))
     config.setType("SourceViewer",  typeSourceViewerDefaults())
+    config.setType("managedConfig", Config.typeDefaultString(""))
 
 def lastUsedConfigName ():
     return _lastUsedConfigName

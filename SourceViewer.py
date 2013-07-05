@@ -128,6 +128,7 @@ class SourceViewer (QWidget):
                 cursor = self.ui.textEdit.textCursor()
                 cursor.setPosition(block.position())
                 self.ui.textEdit.setTextCursor(cursor)
+                self.ui.textEdit.setFocus(Qt.ActiveWindowFocusReason)
     
     @pyqtSlot()
     def nextMatch (self):

@@ -87,7 +87,7 @@ class UpdateCheck (QObject):
             self.updateThread = None
         
     def __checkFinished(self):
-        if self.updateThread:
+        if self.updateThread and self.updateThread.latestVersion:
             currentVersion = ".".join(AppConfig.appVersion.split(".")[0:3])
             if formatVersion(self.updateThread.latestVersion) > formatVersion(currentVersion):
                 self.newerVersionFound.emit(self.updateThread.latestVersion)
