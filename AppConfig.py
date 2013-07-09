@@ -32,7 +32,7 @@ def appConfig():
     global _config
     if not _config:
         _config = globalConfig()
-        __loadUserConfig (_config.managedConfig, _config)
+        __loadUserConfig (_config)
     return _config
 
 # The next call to "appConfig" will read a fresh config
@@ -42,7 +42,7 @@ def refreshConfig():
     
 # Reads the config from a file
 def configFromFile (filename):
-    return Config.Config(filename,  typeInfoFunc=configTypeInfo)
+    return Config.Config(filename, typeInfoFunc=configTypeInfo)
     
 # Returns the global config
 def globalConfig():
@@ -52,22 +52,28 @@ def globalConfig():
 # of the user config file location. The default is to use the user profile.
 def userConfig():
     userConfig = Config.Config(typeInfoFunc=configTypeInfo)
-    return __loadUserConfig(globalConfig().managedConfig, userConfig)
+    return __loadUserConfig(userConfig)
     
+# Points to the user profile
 def userDataPath():
     return FileTools.getAppDataPath(appName)
-    
-def userConfigFileName():
-    appDataPath = FileTools.getAppDataPath(appName)
-    return os.path.join(appDataPath, configName)
-
-def saveUserConfig (config):
+   
+def userConfigPath():
     if appConfig().managedConfig:
         name = appConfig().managedConfig
-        configPath = os.path.split(name)[0]
+        return os.path.split(name)[0]
     else:
-        configPath = FileTools.getAppDataPath(appName)
-        name = os.path.join(configPath, configName)
+        return userDataPath()
+  
+def userConfigFileName():
+    if appConfig().managedConfig:
+        return appConfig().managedConfig
+    else:
+        return os.path.join(userDataPath(), configName)
+
+def saveUserConfig (config):
+    configPath = userConfigPath()
+    name = userConfigFileName()
     
     for i in range(2):
         try:
@@ -80,12 +86,9 @@ def saveUserConfig (config):
             else:
                 raise e
     
-def __loadUserConfig (managedConfigFile, config):
+def __loadUserConfig (config):
     try:
-        if managedConfigFile:
-            config.loadFile(managedConfigFile)
-        else:
-            config.loadFile(userConfigFileName())
+        config.loadFile(userConfigFileName())
         return config
     except IOError as e:
         if e.args[0] == 2: # Ignore a file not found error

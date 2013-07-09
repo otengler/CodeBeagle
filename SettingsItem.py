@@ -58,7 +58,7 @@ class SettingsItem (QWidget):
             self.__updateDBName(text)
             
     def __updateDBName(self, text):
-        location = FileTools.getAppDataPath(AppConfig.appName)
+        location = AppConfig.userConfigPath()
         location = os.path.join (location,  FileTools.removeInvalidFileChars(text)+".dat")
         self.ui.editIndexDB.setText(location)
     
