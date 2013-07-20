@@ -643,9 +643,9 @@ class FullTextIndex:
                     try:
                         if timestamp != mTime:
                             self.__updateFile (c, q, docID, strFullPath, mTime)
+                            c.execute ("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
                             if statistics:
                                 if timestamp != 0: 
-                                    c.execute ("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
                                     statistics.incUpdated()
                                 else: 
                                     statistics.incNew()
@@ -666,9 +666,11 @@ class FullTextIndex:
             logging.info ("Cleaning documents")
             c.execute ("DELETE FROM documents WHERE id IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
             logging.info ("Cleaning document index")
-            c.execute("DELETE FROM documentInIndex WHERE indexID < :index",  {"index":nextIndexID})
+            c.execute("DELETE FROM documentInIndex WHERE indexID < :index", {"index":nextIndexID})
             logging.info ("Removing orphaned keywords")
             c.execute("DELETE FROM keywords WHERE id NOT IN (SELECT kwID FROM kw2doc)")
+            logging.info ("Removing old indexInfo entry")
+            c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
         logging.info("Done")
 
     def __updateFile (self, c, q, docID, strFullPath, mTime):
