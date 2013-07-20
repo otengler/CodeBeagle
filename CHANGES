@@ -1,0 +1,44 @@
+1.2.1 (7/20/2013):
+- Fix bug in extension filter
+- Added goto dialog accessible via CTRL-G
+- Added option to config.txt to setup the config file written by the UI
+
+1.2.0 (3/30/2013):
+- Added a view which shows an excerpt of all search matches on a single page. The amount of text which is extracted can be configured
+- The minus sign can be used to suppress matches in the file/path and extension filter. E.g. "-cs" to remove all .cs files from the result
+- The search can now be canceled
+- Added hotkey "CTRL-W" to close current tab
+
+1.1.4 (11/18/2012):
+- Add search syntax **N to search for N unknown words/tokens. See help for an example.
+- Context menu entries "Copy full path" and "Copy file name" now work properly if multiple items are selected
+- Change background color of highlighted match in list view for better contrast for systems prior to Vista (or with disabled theming)
+- Bug fix: Dragging of directories on the main window works again (was broken in 1.1.3). This allow to quick add search locations.
+
+1.1.3 (9/7/2012):
+- Added search in matches to allow drilling down results
+- Disable next/previous button if there is no next/previous match
+- Restore search location in combo box after index update
+- Adjust UI for small horizontal resolution
+- Improved Linux compatibility
+
+1.1.2 (7/1/2012):
+- Bug fix: Handle file extensions case insensitive
+- Ask to update the index of changed or added search locations
+- Added a weekly update check
+- Optional optimization which skips too common keywords. See config.txt.
+- Add custom context menu entries to the list control showing the matches
+
+1.1.1 (4/6/2012):
+- Performance of syntax highlighting is much better
+- Added possibility to search not indexed locations. The search syntax stays the same.
+- Added a per user configuration in "%APPDATA%\..\local\CodeBeagle\config.txt". The settings are managed by a configuration dialog which allows to add search locations and font settings.
+- User defined indexes can be updated from the UI
+- Directories can be excluded from indexing/searching
+- Next/previous match now optionally opens the next/previous file when pressed on the last/first match
+- Added context menu entry to search for current file name in a new tab
+- UpdateIndex now also works when started from a relative path
+- Moved help to separate dialog
+
+1.0.24 (1/5/2012):
+Initial release
