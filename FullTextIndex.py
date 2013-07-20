@@ -138,6 +138,9 @@ def kwExpr (kw):
     else:
         return kw.replace("*",  r"\w*")
 
+def splitFilterTokens(filter):
+    pass
+
 def trimScanPart (s):
     return s.replace(" ", "")
 
@@ -170,10 +173,11 @@ def createFolderFilter (strFilter):
     if not strFilter:
         return filter
     for item in (item.strip() for item in strFilter.split(",")):
-        if item.startswith("-"):
-            filter.append((item[1:], False))
-        else:
-            filter.append((item, True))
+        if item:
+            if item.startswith("-"):
+                filter.append((item[1:], False))
+            else:
+                filter.append((item, True))
     return filter
 
 # Transform the comma seperated list so that every extension looks like ".ext".
@@ -183,15 +187,15 @@ def createExtensionFilter (strFilter):
     filter = []
     if not strFilter:
         return filter
-    for item in strFilter.split(","):
-        item = item.strip().replace("*", "")
-        bPositiveFilter = True
-        if item.startswith("-"):
-            item = item[1:]
-            bPositiveFilter = False
-        if not item.startswith("."):
-            item = "." + item
-        filter.append((item, bPositiveFilter))
+    for item in (item.strip().replace("*", "") for item in strFilter.split(",")):
+        if item:
+            bPositiveFilter = True
+            if item.startswith("-"):
+                item = item[1:]
+                bPositiveFilter = False
+            if not item.startswith("."):
+                item = "." + item
+            filter.append((item, bPositiveFilter))
     return filter
 
 class TestSearchParts(unittest.TestCase):
