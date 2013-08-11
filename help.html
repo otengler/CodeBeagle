@@ -324,10 +324,10 @@ desired script. The script is then called with the search phrase and all filters
 Here is a basic example to illustrate this:
 </p>
 <pre>
-results.extend (performSearch(query, folders, extensions, caseSensitive))
+result.matches.extend (performSearch(query, folders, extensions, caseSensitive))
 </pre>
 <p>The result of this script is identical to what the regular "Find" button does. As you can see the script uses predefined variables and the function 
-<strong>performSearch</strong>. Here is a list of all input variables:</p>
+<strong>performSearch</strong>. Here is a list of all other input variables and functions:</p>
 <table border="1" summary="Input variables">
   <tr>
     <td>query</td>
@@ -345,22 +345,27 @@ results.extend (performSearch(query, folders, extensions, caseSensitive))
     <td>caseSensitive</td>
     <td>Boolean if case sensitive is checked</td>
   </tr>
+  <tr>
+    <td>regexFromText(query)</td>
+    <td>Returns the regex object which can be used to highlight "query"</td>
+  </tr>
 </table>
 <p>After the script has finished its work the following variables are inspected to be able display the result:</p>
 <table border="1" summary="Output variables">
   <tr>
-    <td>results</td>
+    <td>result.matches</td>
     <td>A list of file names with the matches. Each list entry must be the full path to the matching file</td>
   </tr>
   <tr>
-    <td>highlight</td>
+    <td>result.highlight</td>
     <td>A regular expression object from the module <strong>re</strong> which is used to highlight the 
     matches in each of the matching files. This is necessary because only the search script knows what the criterias 
     are which resulted in the returned matches. If you do not set this variable the default is to highlight the initial 
-    <strong>query </strong> string</td>
+    <strong>query </strong> string. Use <strong>regexFromText </strong> to obtain the regex for 
+    instance in order to combine multiple regexes.</td>
   </tr>
   <tr>
-    <td>label</td>
+    <td>result.label</td>
     <td>Allows to set the label of the search tab. If you do not set this variable the default is "Custom script"</td>
   </tr>
 </table>

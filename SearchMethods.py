@@ -106,42 +106,68 @@ def directSearchAsync(searchData,  indexConf, cancelEvent=None):
 # to a regular expression which is used to highlight the matches in the result.
 def customSearch (parent, script,  params, indexConf,  commonKeywordMap={}):
     strSearch, strFolderFilter,  strExtensionFilter, bCaseSensitive = params
-    if not len(strSearch):
-        return ResultSet()
     return AsynchronousTask.execute (parent,  customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap,  indexConf)
     
 def customSearchAsync (script,  params, commonKeywordMap,  indexConf):
     import re
     query, folders, extensions, caseSensitive = params
     def performSearch (strSearch,  strFolderFilter="",  strExtensionFilter="",  bCaseSensitive=False):
+        if not strSearch:
+            return []
         searchData = FullTextIndex.SearchQuery (strSearch,  strFolderFilter,  strExtensionFilter,  bCaseSensitive)
         if indexConf.generateIndex:
-            return indexedSearchAsync(searchData,  commonKeywordMap,  indexConf).matches
+            ftiSearch = FullTextIndexSearch()
+            return ftiSearch(searchData,  commonKeywordMap,  indexConf).matches
         else:
             return directSearchAsync(searchData,  indexConf).matches
-            
-    localsDict = { "re":  re, 
-                        "performSearch" : performSearch, 
-                       "query" : query,  
-                       "folders" : folders,  
-                       "extensions" : extensions,  
-                       "caseSensitive" : caseSensitive,  
-                       "results" : [],  
-                       "highlight" : None,  
-                       "label" : "Custom script"}
-    with fopen(script) as file: 
-        code = compile(file.read(), script, 'exec')
+        
+    def regexFromText(strQuery,  bCaseSensitive):
+        query = FullTextIndex.FindAllQuery(strQuery, "", "",  bCaseSensitive)
+        return query.regExForMatches()
+      
+    class Result:
+        def __init__(self):
+            self.matches = []
+            self.highlight = None
+            self.label = "Custom script"
+      
+    localsDict = {  "re":  re, 
+                    "performSearch" : performSearch, 
+                    "regexFromText" : regexFromText, 
+                    "query" : query,  
+                    "folders" : folders,  
+                    "extensions" : extensions,  
+                    "caseSensitive" : caseSensitive,  
+                    "result" : Result()}
+                    
+    # The actual script is wrapped in the function "customSearch". It is needed to 
+    # establish a proper scope which enables access to local variables from sub functions 
+    # analog to globals. Example what caused problems:
+    # import time
+    # def foo(files):
+    #    time.sleep(5)
+    # foo(files)
+    # This failed in previous versions with "global 'time' not found". 
+    scriptCode=""
+    with fopen(script) as file:
+        scriptCode="def customSearch(re,performSearch,regexFromText,query,folders,extensions,caseSensitive,result):\n"
+        for line in file:
+            scriptCode += "\t"
+            scriptCode += line
+        scriptCode += "\ncustomSearch(re,performSearch,regexFromText,query,folders,extensions,caseSensitive,result)\n"
+        
+    code = compile(scriptCode, script, 'exec')
     exec(code,  globals(),  localsDict)
     
-    matches = localsDict["results"]
-    highlight =  localsDict["highlight"]
-    label = localsDict["label"]
+    matches = localsDict["result"].matches
+    highlight =  localsDict["result"].highlight
+    label = localsDict["result"].label
     
     matches = removeDupsAndSort(matches)
     if highlight:
         searchData = ScriptSearchData (highlight)
     else:
-        # Highlight  by default the query
+        # Highlight by default the query
         searchData = FullTextIndex.SearchQuery (query, "",  "",  caseSensitive)
     
     return ResultSet (matches,  searchData,  label=label)

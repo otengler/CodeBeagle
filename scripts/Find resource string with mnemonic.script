@@ -6,9 +6,9 @@
 #   extensions     The extension filter
 #   caseSensitive  Boolean if case sensitive is checked
 # Output:
-#   results        A list of file names with the matches
-#   highlight      A regular expression which can be used to search for a match in the files
-#   label          The label of the search tab
+#   result.matches       A list of file names with the matches
+#   result.highlight      A regular expression which can be used to search for a match in the files
+#   result.label          The label of the search tab
 # Functions:
 #   performSearch  Call to perform a search in the index
 
@@ -22,12 +22,11 @@ for i in range(len(query)):
 	if regex:
 		regex += "|"
 	regex = regex + query[:i] + "\\s*&\\s*" + query[i:]
-	token = query[:i]+"&"+query[i:]
-	results.extend (performSearch(token, folders, extensions, caseSensitive))
+result.matches.extend (performSearch(regex, folders, extensions, caseSensitive))
 	
 # Compile the regex to highlight the matches
-highlight = re.compile(regex, reFlags)
+result.highlight = re.compile(regex, reFlags)
 # Set a text for the tab label
-label = "Mnemonic string '" + query + "'"
+result.label = "Mnemonic string '" + query + "'"
 
 	
