@@ -626,7 +626,6 @@ class FullTextIndex:
             nextIndexID = self.__getNextIndexRun (c)
             
             for strRootDir in directories:
-                logging.info ("-"*80)
                 logging.info ("Updating index in " + strRootDir)
                 for strFullPath in genFind(extensions, strRootDir,  dirExcludes):
                     mTime = os.stat(strFullPath)[8]

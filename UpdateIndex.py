@@ -23,6 +23,7 @@ import time
 import logging
 import cProfile
 import FileTools
+import ExceptionTools
 import IndexConfiguration
 import AppConfig
 import FullTextIndex
@@ -57,10 +58,15 @@ def setupLogging (conf):
         logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
     
 def updateIndex (config):
-    fti=FullTextIndex.FullTextIndex(config.indexdb)
-    statistics = FullTextIndex.UpdateStatistics()
-    taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  config.dirExcludes, statistics)
-    logging.info (statistics)
+    logging.info ("-"*80)
+    logging.info ("Updating index '%s'" % config.indexName)
+    try:
+        fti=FullTextIndex.FullTextIndex(config.indexdb)
+        statistics = FullTextIndex.UpdateStatistics()
+        taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  config.dirExcludes, statistics)
+        logging.info (statistics)
+    except:
+        logging.error ("Exception caught while updating index:\n%s" % ExceptionTools.exceptionAsString(None))
     
 def updateIndexes(indexes):
     for config in indexes:
