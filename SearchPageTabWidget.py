@@ -245,7 +245,6 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 # The items returned are touples: (index,value)
                 updateDisplayNames = [name for i, name in updateDialog.checkedItems()]
                 try:
-                    1/0
                     self.__triggerIndexUpdate (updateDisplayNames)
                 except:
                     self.failedToUpdateIndexesMessage()
