@@ -140,7 +140,7 @@ class Config:
                 s += "\n"
             s = s + " " *2*level + k
             if type(v) is Config:
-                s = s + " {\n"
+                s += " {\n"
                 s = s + self.__dumpRec (v,  level+1)
                 s = s + "\n" + " " *2*level + "}"
             else:

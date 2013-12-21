@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="default">
+    <file>resources/MatchList.png</file>
     <file>resources/Overview.png</file>
     <file>resources/Close.png</file>
     <file>resources/CustomSearch.png</file>

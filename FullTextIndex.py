@@ -381,7 +381,7 @@ class ReportAction:
     def __str__(self):
         s = self.name
         if self.duration:
-            s = s + " (%3.2f s)" % (self.duration, )
+            s += " (%3.2f s)" % (self.duration, )
         for d in self.data:
             s += "\n"
             s += d
@@ -402,7 +402,7 @@ class PerformanceReport:
         for a in self.actions:
             if s:
                 s += "\n\n"
-            s = s + str(a)
+            s += str(a)
         return s
 
 class UpdateStatistics:
@@ -464,7 +464,8 @@ class FullTextIndex:
         self.conn.interrupt()
 
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
-    def search (self, query,  perfReport = None,  commonKeywordMap={},  manualIntersect=True,  cancelEvent=None):
+    def search(self, query, perfReport=None, commonKeywordMap=None, manualIntersect=True, cancelEvent=None):
+        if not commonKeywordMap: commonKeywordMap = {}
         try:
             return self.__search (query,  perfReport,  commonKeywordMap,  manualIntersect,  cancelEvent)
         except sqlite3.OperationalError as e:
@@ -600,11 +601,11 @@ class FullTextIndex:
         for kw in keywordList:
             query = "SELECT id,keyword FROM keywords WHERE"
             if kw.find("*")!=-1:
-                query = query + " keyword LIKE ? ESCAPE '!'"
+                query += " keyword LIKE ? ESCAPE '!'"
                 kw = kw.replace("_", "!_")
                 kw = kw.replace("*", "%")
             else:
-                query = query + " keyword=?"
+                query += " keyword=?"
             q.execute(query, (kw, ))
             result = q.fetchall()
             if not result:
@@ -614,7 +615,8 @@ class FullTextIndex:
             keys.append([Keyword(r[0], r[1]) for r in result])
         return keys
                     
-    def updateIndex (self, directories,  extensions,  dirExcludes=[],  statistics=None):
+    def updateIndex(self, directories, extensions, dirExcludes=None, statistics=None):
+        if not dirExcludes: dirExcludes = []
         c = self.conn.cursor ()
         q = self.conn.cursor ()
         

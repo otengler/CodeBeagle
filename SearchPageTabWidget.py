@@ -175,6 +175,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
         config.matchOverFiles = settingsDlg.ui.checkMatchOverFiles.checkState() == Qt.Checked
         config.showCloseConfirmation = settingsDlg.ui.checkConfirmClose.checkState() == Qt.Checked
+        config.showMatchList = settingsDlg.ui.checkShowMatchList.checkState() == Qt.Checked
         config.defaultLocation = settingsDlg.defaultLocation()
         config.previewLines = int(settingsDlg.ui.editPreviewLines.text())
         try:

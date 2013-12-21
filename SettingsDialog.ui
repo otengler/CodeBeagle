@@ -20,7 +20,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tabSearchLocations">
       <attribute name="title">
@@ -272,14 +272,14 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="1" column="0">
         <widget class="QLabel" name="labelFontSize">
          <property name="text">
           <string>Font size:</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="1" column="1">
         <widget class="QLineEdit" name="editFontSize">
          <property name="maximumSize">
           <size>
@@ -289,14 +289,14 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="2" column="0">
         <widget class="QLabel" name="labelTabWidth">
          <property name="text">
           <string>Tab width:</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="2" column="1">
         <widget class="QLineEdit" name="editTabWidth">
          <property name="maximumSize">
           <size>
@@ -306,14 +306,14 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="labelPreviewLines">
          <property name="text">
           <string>Lines to show in overview:</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="3" column="1">
         <widget class="QLineEdit" name="editPreviewLines">
          <property name="maximumSize">
           <size>
@@ -323,17 +323,24 @@
          </property>
         </widget>
        </item>
-       <item row="5" column="0" colspan="2">
+       <item row="4" column="0" colspan="2">
         <widget class="QCheckBox" name="checkMatchOverFiles">
          <property name="text">
           <string>Clicking &quot;Next match&quot; continues with next file if the last match has been reached</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="0" colspan="2">
+       <item row="5" column="0" colspan="2">
         <widget class="QCheckBox" name="checkConfirmClose">
          <property name="text">
           <string>Ask whether to really close the application</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkShowMatchList">
+         <property name="text">
+          <string>Show match list on right side by default</string>
          </property>
         </widget>
        </item>

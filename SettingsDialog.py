@@ -173,6 +173,7 @@ class SettingsDialog (QDialog):
         self.ui.editPreviewLines.setText(str(config.previewLines))
         setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
         setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
+        setCheckBox (self.ui.checkShowMatchList, config.showMatchList)
 
         self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)

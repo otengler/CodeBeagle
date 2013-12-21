@@ -108,7 +108,8 @@ def typeSourceViewerDefaults ():
 # Configurates the default values and types
 def configTypeInfo (config):
     config.setType("profileUpdate",  Config.typeDefaultBool(False))
-    config.setType("showCloseConfirmation",  Config.typeDefaultBool(False)) 
+    config.setType("showCloseConfirmation",  Config.typeDefaultBool(False))
+    config.setType("showMatchList", Config.typeDefaultBool(False))
     config.setType("previewLines",  Config.typeDefaultInt(5))
     config.setType("commonKeywords", Config.typeDefaultString(""))
     config.setType("updateCheckPeriod",  Config.typeDefaultInt(0))
