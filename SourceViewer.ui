@@ -536,7 +536,7 @@ p, li { white-space: pre-wrap; }
   </connection>
   <connection>
    <sender>buttonMatchList</sender>
-   <signal>toggled(bool)</signal>
+   <signal>clicked(bool)</signal>
    <receiver>frameMatchList</receiver>
    <slot>setVisible(bool)</slot>
    <hints>

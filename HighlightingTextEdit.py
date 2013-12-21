@@ -161,11 +161,12 @@ class SyntaxHighlighter:
                 pos += 1
         
         # Single line comments
-        index = self.highlightingRules.lineComment.indexIn(text)
-        while index >= 0:
-            length = self.highlightingRules.lineComment.matchedLength()
-            formats.append((self.highlightingRules.commentFormat,  index, length))
-            index = self.highlightingRules.lineComment.indexIn(text, index + length)
+        if self.highlightingRules.lineComment:
+            index = self.highlightingRules.lineComment.indexIn(text)
+            while index >= 0:
+                length = self.highlightingRules.lineComment.matchedLength()
+                formats.append((self.highlightingRules.commentFormat,  index, length))
+                index = self.highlightingRules.lineComment.indexIn(text, index + length)
         
         # Search match highlight
         if self.searchData:

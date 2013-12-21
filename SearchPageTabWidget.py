@@ -27,6 +27,7 @@ import AppConfig
 import FileTools
 import IndexConfiguration
 import UserHintDialog
+import StackTraceMessageBox
 
 userHintUpdateIndex = """
 <p align='justify'>You added or changed indexed search locations:
@@ -244,6 +245,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 # The items returned are touples: (index,value)
                 updateDisplayNames = [name for i, name in updateDialog.checkedItems()]
                 try:
+                    1/0
                     self.__triggerIndexUpdate (updateDisplayNames)
                 except:
                     self.failedToUpdateIndexesMessage()
@@ -388,22 +390,19 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     self.openSettings(createInitialLocation=True)
         
     def failedToSaveUserConfigMessage(self):
-        QMessageBox.critical(self,
+        StackTraceMessageBox.show(self,
                 self.trUtf8("Failed to save user config"),
-                self.trUtf8("The user config file could not be saved to the user profile"),
-                QMessageBox.StandardButtons(QMessageBox.Ok))
+                self.trUtf8("The user config file could not be saved to the user profile"))
             
     def userConfigFailedToLoadMessage(self):
-        QMessageBox.critical(self, 
+        StackTraceMessageBox.show(self,
                         self.trUtf8("Failed to load user config"),
-                        self.trUtf8("The user config file could not be loaded from the user profile"),
-                        QMessageBox.StandardButtons(QMessageBox.Ok))
+                        self.trUtf8("The user config file could not be loaded from the user profile"))
                         
     def failedToUpdateIndexesMessage(self):
-        QMessageBox.critical(self, 
+        StackTraceMessageBox.show(self,
                         self.trUtf8("Error during index update"),
-                        self.trUtf8("The update process failed to update the desired indexes"),
-                        QMessageBox.StandardButtons(QMessageBox.Ok))
+                        self.trUtf8("The update process failed to update the desired indexes"))
                         
 
 

@@ -27,7 +27,7 @@ import SearchMethods
 import CustomContextMenu
 import UserHintDialog
 import AppConfig
-from ExceptionTools import exceptionAsString
+import StackTraceMessageBox
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard. 
@@ -476,29 +476,24 @@ class SearchPage (QWidget):
                 QMessageBox.StandardButtons(QMessageBox.Ok))
 
     def reportQueryError(self,  error):
-        QMessageBox.information(self,
+        StackTraceMessageBox.show(self,
                 self.trUtf8("Search not possible"),
-                str(error),
-                QMessageBox.StandardButtons(QMessageBox.Ok))
+                str(error))
 
     # Show the user possible reason why the search threw an exception
     def reportFailedSearch(self, indexConf):
         if indexConf.generateIndex:
-            QMessageBox.warning(self,
+            StackTraceMessageBox.show(self,
                 self.trUtf8("Search failed"),
-                self.trUtf8("""Maybe the index has not been generated yet or is not accessible?"""),
-                QMessageBox.StandardButtons(QMessageBox.Ok))
+                self.trUtf8("""Maybe the index has not been generated yet or is not accessible?"""))
         else:
-            QMessageBox.warning(self,
+            StackTraceMessageBox.show(self,
                 self.trUtf8("Search failed"),
-                self.trUtf8("""Please check that the search location exists and is accessible."""),
-                QMessageBox.StandardButtons(QMessageBox.Ok))
+                self.trUtf8("""Please check that the search location exists and is accessible."""))
             
     def reportCustomSearchFailed (self):
-        QMessageBox.warning(self,
+        StackTraceMessageBox.show(self,
                 self.trUtf8("Custom search failed"),
-                self.trUtf8("Custom search scripts are written in Python. The following exception info might help to find the problem:\n") + exceptionAsString(),
-                QMessageBox.StandardButtons(QMessageBox.Ok))
+                self.trUtf8("Custom search scripts are written in Python. Click on 'Show details' to display the stack trace."))
 
 
-    

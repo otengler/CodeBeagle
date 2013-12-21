@@ -15,7 +15,8 @@ set PYRCC4=%PYDIR%\Lib\site-packages\PyQt4\pyrcc4.exe
 %PYTHON% %PYUIC% -o Ui_UserHintDialog.py -x UserHintDialog.ui 
 %PYTHON% %PYUIC% -o Ui_AboutDialog.py -x AboutDialog.ui 
 %PYTHON% %PYUIC% -o Ui_MatchesOverview.py -x MatchesOverview.ui 
-%PYTHON% %PYUIC% -o Ui_GotoLineDialog.py -x GotoLineDialog.ui 
+%PYTHON% %PYUIC% -o Ui_GotoLineDialog.py -x GotoLineDialog.ui
+%PYTHON% %PYUIC% -o Ui_StackTraceMessageBox.py -x StackTraceMessageBox.ui
 
 copy /Y resources\Crystal\*.* resources\
 
@@ -23,5 +24,6 @@ copy /Y resources\Crystal\*.* resources\
 %PYRCC4% -o MainWindow_rc.py -py3 MainWindow.qrc
 %PYRCC4% -o SearchPage_rc.py -py3 SearchPage.qrc
 %PYRCC4% -o SettingsDialog_rc.py -py3 SettingsDialog.qrc
+%PYRCC4% -o StackTraceMessageBox_rc.py -py3 StackTraceMessageBox.qrc
 
  
