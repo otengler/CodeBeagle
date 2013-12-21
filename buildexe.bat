@@ -7,7 +7,6 @@ if exist build rmdir /s /q build
 del /q %BUILDDIR%\_hashlib.pyd
 del /q %BUILDDIR%\_ssl.pyd
 del /q %BUILDDIR%\select.pyd
-del /q %BUILDDIR%\unicodedata.pyd
 del /q %BUILDDIR%\win32api.pyd
 del /q %BUILDDIR%\pyexpat.pyd
 del /q %BUILDDIR%\_bz2.pyd
