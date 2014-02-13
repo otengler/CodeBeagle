@@ -59,8 +59,23 @@ class CustomScriptTask:
     def execute(self, contextMenu,  files):
         localsDict = { "files":  files }
         try:
-            with fopen(self.script) as file: 
-                code = compile(file.read(), self.script, 'exec')
+            # The actual script is wrapped in the function "contextMenu". It is needed to 
+            # establish a proper scope which enables access to local variables from sub functions 
+            # analog to globals. Example what caused problems:
+            # import time
+            # def foo(files):
+            #    time.sleep(5)
+            # foo(files)
+            # This failed in previous versions with "global 'time' not found". 
+            scriptCode=""
+            with fopen(self.script) as file:
+                scriptCode="def contextMenu(files):\n"
+                for line in file:
+                    scriptCode += "\t"
+                    scriptCode += line
+                scriptCode += "\ncontextMenu(files)\n"
+                    
+            code = compile(scriptCode, self.script, 'exec')
             exec(code,  globals(),  localsDict)
         except:
             contextMenu.executionFailed.emit (ContextMenuError(self.script,  files,  exceptionAsString()))
