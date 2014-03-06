@@ -82,7 +82,7 @@ def saveUserConfig (config):
             return
         except IOError as e:
             if e.args[0] == 2: # Create path and try again
-                os.mkdir(configPath)
+                os.makedirs(configPath)
             else:
                 raise e
     

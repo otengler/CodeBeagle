@@ -51,6 +51,7 @@ class SourceViewer (QWidget):
         # Forward the signal
         self.ui.textEdit.selectionFinishedWithKeyboardModifier.connect(self.selectionFinishedWithKeyboardModifier)
         self.ui.listMatchesWidget.currentRowChanged.connect(self.matchListRowChanged)
+        self.ui.listMatchesWidget.itemDoubleClicked.connect(self.matchListItemDoubleClicked)
         
         # Help the text edit to update the syntax highlighting. This works around an
         # update problem of the text edit used in a scroll area.
@@ -64,6 +65,13 @@ class SourceViewer (QWidget):
     def matchListRowChanged(self, row):
         if row != -1:
             self.setCurrentMatch(row)
+
+    # Force jumping to a match. Useful to jump to the same match again.
+    @pyqtSlot(QListWidgetItem)
+    def matchListItemDoubleClicked(self, item):
+        row = self.ui.listMatchesWidget.currentRow()
+        if row != -1:
+            self.setCurrentMatch(row, True)
 
     @pyqtSlot()
     def textEditUpdateNeeded (self):
@@ -166,8 +174,8 @@ class SourceViewer (QWidget):
             if self.bMatchOverFiles:
                 self.noPreviousMatch.emit()
 
-    def setCurrentMatch(self, index):
-        if index>=0 and index<len(self.matches) and index != self.curMatch:
+    def setCurrentMatch(self, index, forceSet=False):
+        if index>=0 and index<len(self.matches) and (index != self.curMatch or forceSet):
             self.__setMatchIndex(index)
             self.__scrollToMatch (self.curMatch)
             self.__setInfoLabel ()

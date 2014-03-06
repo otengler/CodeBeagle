@@ -26,14 +26,6 @@ class SourceHighlightingTextEdit (HighlightingTextEdit.HighlightingTextEdit):
     
     def __init__(self, parent=None):
         super(SourceHighlightingTextEdit, self).__init__(parent)
-        
-        # Use the same color for active and inactive selections of text. The contrast of 
-        # inactive selections is too low.
-        palette = QPalette()
-        brush = palette.brush (QPalette.Active,  QPalette.Highlight)
-        palette.setBrush (QPalette.Inactive,  QPalette.Highlight,  brush)
-        self.setPalette(palette)
-        
         self.selectionChanged.connect (self.highlightSelection)
     
     @pyqtSlot()    

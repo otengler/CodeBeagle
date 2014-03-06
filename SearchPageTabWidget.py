@@ -268,7 +268,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     # It is picked up by UpdateIndex.py which has a special mode for this task.
     def __triggerIndexUpdate (self,  updateDisplayNames):
         if not os.path.isdir(self.indexTriggerPath):
-            os.mkdir(self.indexTriggerPath)
+            os.makedirs(self.indexTriggerPath)
         for name in updateDisplayNames:
             open(os.path.join(self.indexTriggerPath, FileTools.removeInvalidFileChars(name)), "w").close()
     

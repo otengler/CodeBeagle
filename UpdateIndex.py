@@ -124,32 +124,35 @@ def nextJob (jobDir):
             return (file,  jobFileRunning)
     return None
 
-# Parse command line
-args = parser.parse_args()
+try:
+    # Parse command line
+    args = parser.parse_args()
 
-# Switch to application directory to be able to load the configuration even if we are 
-# executed from a different working directory.
-FileTools.switchToAppDir()
+    # Switch to application directory to be able to load the configuration even if we are 
+    # executed from a different working directory.
+    FileTools.switchToAppDir()
 
-conf = loadConfigFiles (args)
-indexes = IndexConfiguration.readConfig(conf)
+    conf = loadConfigFiles (args)
+    indexes = IndexConfiguration.readConfig(conf)
 
-if args.jobmode:
-    runGuardDir = os.path.join(FileTools.getTempPath (), "UpdateIndex_running")
-    while True:
-        with FileTools.lockDir(runGuardDir):
-            setupLogging (conf)
-            logging.info ("UpdateIndex watches directory '" + args.jobmode + "'")
-            handleUpdateJobs (indexes,  args.jobmode)
-        if not nextJob (args.jobmode):
-            logging.info ("No more jobs found")
-            break
-else:
-    setupLogging (conf)
-    if conf.profileUpdate:
-        cProfile.run("updateIndexes(indexes)")
+    if args.jobmode:
+        runGuardDir = os.path.join(FileTools.getTempPath (), "UpdateIndex_running")
+        while True:
+            with FileTools.lockDir(runGuardDir):
+                setupLogging (conf)
+                logging.info ("UpdateIndex watches directory '" + args.jobmode + "'")
+                handleUpdateJobs (indexes,  args.jobmode)
+            if not nextJob (args.jobmode):
+                logging.info ("No more jobs found")
+                break
     else:
-        updateIndexes(indexes)
+        setupLogging (conf)
+        if conf.profileUpdate:
+            cProfile.run("updateIndexes(indexes)")
+        else:
+            updateIndexes(indexes)
+except:
+    print ("Exception caught while updating index:\n%s" % ExceptionTools.exceptionAsString(None))
 
 # Synchronization in slave mode between UI and UpdateIndex:
 #
