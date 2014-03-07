@@ -97,7 +97,7 @@ class lockDir:
        
     def __exit__(self, exc_type, exc_val, exc_tb):
         os.rmdir (self.name)
-        return False
+        return False # do not suppress exception
 
 # Removes all character which are invalid for files
 def removeInvalidFileChars (text):
@@ -125,5 +125,51 @@ def getMostCommonExtensionInDirectory (directory):
                     break
     return mostCommon
 
+class PidFile:
+    # Pass full path to file where current process ID is stored
+    def __init__(self, name):
+        self.name = name
+        self.pidfile = None
         
+    def exists(self):
+        return os.path.isfile(self.name)
+        
+    # Reads the PID from a pid file or returns 0 if there is no PID file
+    def read(self) -> int:
+        try:
+            with open(self.name, "r") as file:
+                pid = int(file.read())
+        except:
+            return 0
+        return pid
+            
+    def remove(self):
+        if os.path.isfile(self.name):
+            try:
+                os.unlink(self.name)
+            except:
+                pass
+            
+    def __enter__(self):
+        pid = os.getpid()
+        try:
+            self.pidfile = open(self.name, "x")
+            self.pidfile.write("%u" % pid)
+            self.pidfile.flush()
+        except:
+            print("Failed to create PID file at '%s'" % self.name)
+            raise
+        return self
+       
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.pidfile:
+            self.pidfile.close()
+        self.remove()
+        return False # do not suppress exception
 
+def isProcessAlive(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except:
+        return False

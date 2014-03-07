@@ -28,6 +28,7 @@ import FileTools
 import IndexConfiguration
 import UserHintDialog
 import StackTraceMessageBox
+import UpdateIndex
 
 userHintUpdateIndex = """
 <p align='justify'>You added or changed indexed search locations:
@@ -102,6 +103,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.indexUpdateTimer = None
         self.indexTriggerPath = os.path.join (AppConfig.userDataPath (),  "TriggerUpdate")
         
+        self.handleUncleanShutdown()
+        
         # A list of index names which are currently disabled because the update is running
         self.disabledIndexes = []
         # If the index update is still running this will start the timer which watches for it to finish
@@ -109,6 +112,12 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         
         # Wait a little for the main window to display, then ask user for initial setup
         QTimer.singleShot (500,  self.initialSetup)        
+     
+    # If UpdateIndex.exe crashes or is terminated by the user some files are 
+    # left behind which cause CodeBeagle to think that there is an update index running.
+    # Clean this up.
+    def handleUncleanShutdown(self):
+        UpdateIndex.handleUncleanShutdown(self.indexTriggerPath)
      
     @pyqtSlot()
     def activateTab1(self):

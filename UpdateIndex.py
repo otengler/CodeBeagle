@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+import sys
 import argparse
 import time
 import logging
@@ -124,35 +125,88 @@ def nextJob (jobDir):
             return (file,  jobFileRunning)
     return None
 
-try:
+def handleUncleanShutdown(jobDir):
+    pidfile, bStaleFileWasRemoved = getPidFile()
+    if bStaleFileWasRemoved:
+        cleanupCrash(jobDir)
+
+# Cleans up stuff left behind from a crash
+def cleanupCrash(jobDir):
+    guarddir = os.path.join(FileTools.getTempPath (), "UpdateIndex_running")
+    if os.path.isdir(guarddir):
+        try:
+            os.rmdir(guarddir)
+        except:
+            pass
+    
+    if jobDir:
+        files = os.listdir(jobDir)
+        for file in files:
+            if file.endswith(".running"):
+                jobFile = os.path.join(jobDir, file)
+                try:
+                    os.unlink(jobFile)
+                except:
+                    pass
+
+# Returns touple (pidfile, bStaleFileWasRemoved)
+def getPidFile():
+    pidname = os.path.join(FileTools.getTempPath (), "codebeagle.pid")
+    pidfile = FileTools.PidFile(pidname)
+    bStaleFileWasRemoved = False
+    
+    if pidfile.exists():
+        pid = pidfile.read()
+        if pid and FileTools.isProcessAlive(pid):
+            print ("Update index process with PID %u is already running" % pid)
+        else:
+            print ("Found a stale PID file for process %u - cleaning up data" % pid)
+            pidfile.remove()
+            bStaleFileWasRemoved = True
+            
+    return (pidfile, bStaleFileWasRemoved)
+
+def main():
     # Parse command line
     args = parser.parse_args()
+    
+    pidfile, bStaleFileWasRemoved = getPidFile()
+            
+    # This writes the current PID and make sure the file is removed at the end
+    with pidfile:
+        cleanupCrash(args.jobmode)
+        
+        # Switch to application directory to be able to load the configuration even if we are 
+        # executed from a different working directory.
+        FileTools.switchToAppDir()
 
-    # Switch to application directory to be able to load the configuration even if we are 
-    # executed from a different working directory.
-    FileTools.switchToAppDir()
+        conf = loadConfigFiles (args)
+        indexes = IndexConfiguration.readConfig(conf)
 
-    conf = loadConfigFiles (args)
-    indexes = IndexConfiguration.readConfig(conf)
-
-    if args.jobmode:
-        runGuardDir = os.path.join(FileTools.getTempPath (), "UpdateIndex_running")
-        while True:
-            with FileTools.lockDir(runGuardDir):
-                setupLogging (conf)
-                logging.info ("UpdateIndex watches directory '" + args.jobmode + "'")
-                handleUpdateJobs (indexes,  args.jobmode)
-            if not nextJob (args.jobmode):
-                logging.info ("No more jobs found")
-                break
-    else:
-        setupLogging (conf)
-        if conf.profileUpdate:
-            cProfile.run("updateIndexes(indexes)")
+        if args.jobmode:
+            runGuardDir = os.path.join(FileTools.getTempPath (), "UpdateIndex_running")
+            while True:
+                with FileTools.lockDir(runGuardDir):
+                    setupLogging (conf)
+                    logging.info ("UpdateIndex watches directory '" + args.jobmode + "'")
+                    handleUpdateJobs (indexes, args.jobmode)
+                if not nextJob (args.jobmode):
+                    logging.info ("No more jobs found")
+                    break
         else:
-            updateIndexes(indexes)
-except:
-    print ("Exception caught while updating index:\n%s" % ExceptionTools.exceptionAsString(None))
+            setupLogging (conf)
+            if conf.profileUpdate:
+                cProfile.run("updateIndexes(indexes)")
+            else:
+                updateIndexes(indexes)
+
+if __name__ == "__main__":
+    try:
+        main()
+        sys.exit(0)
+    except:
+        print ("Exception caught while updating index:\n%s" % ExceptionTools.exceptionAsString(None))
+        sys.exit(1)
 
 # Synchronization in slave mode between UI and UpdateIndex:
 #
