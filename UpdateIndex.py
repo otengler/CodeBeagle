@@ -128,7 +128,9 @@ def nextJob (jobDir):
 def handleUncleanShutdown(jobDir):
     pidfile, bStaleFileWasRemoved = getPidFile()
     if bStaleFileWasRemoved:
-        cleanupCrash(jobDir)
+        # This writes the current PID and make sure the file is removed at the end
+        with pidfile:
+            cleanupCrash(jobDir)
 
 # Cleans up stuff left behind from a crash
 def cleanupCrash(jobDir):
