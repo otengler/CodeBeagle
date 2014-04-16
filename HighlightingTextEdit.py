@@ -151,14 +151,14 @@ class SyntaxHighlighter:
         pos = bisect.bisect_right (self.comments,  self.CommentRange(position))
         if pos > 0:
             pos -= 1
-            while pos < len(self.comments):
-                comment = self.comments[pos]
-                # Comment starts before end of line
-                if comment.index < position+len(text): 
-                    formats.append((self.highlightingRules.commentFormat,  comment.index-position,  comment.length))
-                else:
-                    break
-                pos += 1
+        while pos < len(self.comments):
+            comment = self.comments[pos]
+            # Comment starts before end of line
+            if comment.index < position+len(text): 
+                formats.append((self.highlightingRules.commentFormat, comment.index-position, comment.length))
+            else:
+                break
+            pos += 1
         
         # Single line comments
         if self.highlightingRules.lineComment:
@@ -213,14 +213,17 @@ class HighlightingTextEdit (QPlainTextEdit):
             metrics = painter.fontMetrics()
             for block, bound in self.visibleBlocks(firstVisibleBlock,  True):
                 bound = QRect(bound.left(), bound.top(), bound.width(), bound.height())
-                startIndex = block.text().find(self.dynamicHighlight)
-                if startIndex != -1:
-                    partBefore = block.text()[:startIndex]
-                    rectBefore = metrics.boundingRect(bound, Qt.TextExpandTabs, partBefore,  self.tabStopWidth())
-                    rectText = metrics.boundingRect(bound, Qt.TextExpandTabs,  self.dynamicHighlight, self.tabStopWidth())
-                    rectResult = QRect(rectBefore.right()+4,  rectBefore.top()+1,  rectText.width()+2,  rectText.height()-2)
-                    painter.setPen(Qt.darkGray)
-                    painter.drawRect(rectResult)
+                startIndex = 0
+                while startIndex != -1:
+                    startIndex = block.text().find(self.dynamicHighlight, startIndex)
+                    if startIndex != -1:
+                        partBefore = block.text()[:startIndex]
+                        rectBefore = metrics.boundingRect(bound, Qt.TextExpandTabs, partBefore,  self.tabStopWidth())
+                        rectText = metrics.boundingRect(bound, Qt.TextExpandTabs,  self.dynamicHighlight, self.tabStopWidth())
+                        rectResult = QRect(rectBefore.right()+4,  rectBefore.top()+1,  rectText.width()+2,  rectText.height()-2)
+                        painter.setPen(Qt.darkGray)
+                        painter.drawRect(rectResult)
+                        startIndex += len(self.dynamicHighlight)
         
         # Sometimes lines which are highlighted for the first time are not updated properly.
         # This happens regularily if the text edit is scolled using the page down key.
