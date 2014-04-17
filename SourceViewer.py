@@ -280,7 +280,21 @@ class SourceViewer (QWidget):
                 self.showFile(name)
             elif os.path.isdir(name):
                 self.directoryDropped.emit(name)
-
+    
+    class EditorState:
+        def __init__(self, scrollPosition, currentMatch):
+            self.scrollPosition = scrollPosition
+            self.currentMatch = currentMatch
+    
+    def saveEditorState(self):
+        currentMatch = self.curMatch
+        scrollPosition = self.ui.textEdit.verticalScrollBar ().sliderPosition ()
+        return SourceViewer.EditorState(scrollPosition, currentMatch)
+        
+    def restoreEditorState(self, state):
+        self.setCurrentMatch(state.currentMatch)
+        self.ui.textEdit.verticalScrollBar ().setSliderPosition (state.scrollPosition)
+        
 def main():
     import sys
     app = QApplication(sys.argv)

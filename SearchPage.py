@@ -48,8 +48,15 @@ class StringListModel(QAbstractListModel):
     def __init__(self, filelist,  parent=None): 
         super(StringListModel, self).__init__(parent)
         self.filelist = filelist
+        self.editorState = {} # maps from file index to an editor state object
         self.sizeHint = None
         self.cutLeft = self.__computeCutLeft()
+        
+    def getEditorState(self, row):
+        return self.editorState.get(row)
+        
+    def setEditorState(self, row, state):
+        self.editorState[row] = state
         
     def setSizeHint(self, sizeHint):
         self.sizeHint = sizeHint
@@ -123,6 +130,7 @@ class SearchPage (QWidget):
         self.matches = []
         self.sourceFont = None
         self.lockedResultSet = None # matches are filtered with this set
+        self.selectedFileIndex = None
         # Hide the custom scripts button if there are no custom scripts on disk
         if len(getCustomScriptsFromDisk())==0:
             self.ui.buttonCustomScripts.hide()
@@ -219,12 +227,18 @@ class SearchPage (QWidget):
     @pyqtSlot('QString')
     def currentLocationChanged(self, currentConfigName):
         self.currentConfigName = currentConfigName
-        
+     
     @pyqtSlot(QModelIndex)
     def fileSelected (self,  index):
+        if self.selectedFileIndex is not None:
+            self.ui.listView.model().setEditorState(self.selectedFileIndex, self.ui.sourceViewer.saveEditorState())
+        self.selectedFileIndex = index.row()
         name = index.data(Qt.UserRole)
         self.showFile (name)
         self.ui.matchesOverview.scrollToFile(index.row())
+        editorState = self.ui.listView.model().getEditorState(index.row())
+        if editorState:
+            self.ui.sourceViewer.restoreEditorState(editorState)
         
     def showFile (self, name):
         if self.ui.sourceViewer.currentFile != name:
