@@ -507,7 +507,7 @@ class SearchPage (QWidget):
 
     # Show the user possible reason why the search threw an exception
     def reportFailedSearch(self, indexConf):
-        if indexConf.generateIndex:
+        if indexConf.generatesIndex():
             StackTraceMessageBox.show(self,
                 self.trUtf8("Search failed"),
                 self.trUtf8("""Maybe the index has not been generated yet or is not accessible?"""))

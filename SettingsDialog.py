@@ -125,7 +125,7 @@ class LocationControl:
                                         editor.directories(), 
                                         editor.dirExcludes(),  
                                         editor.indexDB(), 
-                                        editor.indexGenerationEnabled())
+                                        editor.indexUpdateMode())
         self.model.setData (index,  location,  Qt.UserRole+1)
 
     def loadDataFromItem (self,  index):
@@ -137,7 +137,7 @@ class LocationControl:
                         location.directoriesAsString(), 
                         location.extensionsAsString(),  
                         location.dirExcludesAsString(), 
-                        location.generateIndex, 
+                        location.indexUpdateMode, 
                         location.indexdb)
         editor.enable (not self.readOnly)
         
@@ -257,7 +257,7 @@ class SettingsDialog (QDialog):
                                                             location.directoriesAsString(), 
                                                             location.dirExcludesAsString(), 
                                                             "", 
-                                                            location.generateIndex)
+                                                            location.indexUpdateMode)
             self.myLocations.addLocation(duplicated, True)
         
     @pyqtSlot()

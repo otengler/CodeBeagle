@@ -177,7 +177,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             locConf.extensions = location.extensionsAsString()
             locConf.directories =  location.directoriesAsString()
             locConf.dirExcludes = location.dirExcludesAsString()
-            locConf.generateIndex = location.generateIndex
+            locConf.indexUpdateMode = location.indexUpdateMode
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
         config.sourceViewer.FontFamily = settingsDlg.ui.fontComboBox.currentFont().family()
@@ -218,7 +218,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def __getAddedOrChangedIndexedSearchLocations (self,  currentSearchLocations,  newSearchLocations):
         changedLocations = []
         for location in newSearchLocations:
-            if location.generateIndex:
+            if location.indexUpdateMode == IndexConfiguration.ManualIndexUpdate or location.indexUpdateMode == IndexConfiguration.TriggeredIndexUpdate:
                 bFound = False
                 for oldLocation in currentSearchLocations:
                     if location == oldLocation:
@@ -244,7 +244,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.userConfigFailedToLoadMessage()
         else:
             searchLocations = IndexConfiguration.readConfig(config)
-            displayNames = [config.displayName() for config in searchLocations if config.generateIndex]
+            displayNames = [conf.displayName() for conf in searchLocations if config.generatesIndex()]
             from CheckableItemsDialog import CheckableItemsDialog
             updateDialog = CheckableItemsDialog(self.trUtf8("Choose indexes to update"),  True, self)
             for name in displayNames:

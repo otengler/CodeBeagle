@@ -22,6 +22,7 @@ from PyQt4.QtGui import *
 from Ui_SettingsItem import Ui_SettingsItem
 import AppConfig
 import FileTools
+import IndexConfiguration
 
 class SettingsItem (QWidget):   
     dataChanged = pyqtSignal()
@@ -38,8 +39,9 @@ class SettingsItem (QWidget):
         self.ui.editName.textEdited.connect(self.dataChanged)
         self.ui.editDirectories.textEdited.connect(self.dataChanged)
         self.ui.comboExtensions.lineEdit().textEdited.connect(self.dataChanged)
-        self.ui.checkBoxGenerateIndex.clicked.connect(self.generateIndexClicked)
+        self.ui.comboIndexUpdateMode.currentIndexChanged.connect(self.updateIndexModeChanged)
         self.__addEntriesForExtensionsCombo()
+        self.__addEntriesForIndexUpdateModeCombo()
         
     def __addEntriesForExtensionsCombo (self):
         try:
@@ -47,6 +49,12 @@ class SettingsItem (QWidget):
                 self.ui.comboExtensions.addItem(exts)
         except AttributeError:
             pass
+            
+    def __addEntriesForIndexUpdateModeCombo(self):
+        self.ui.comboIndexUpdateMode.addItem("Do not generate an index")
+        self.ui.comboIndexUpdateMode.addItem("Manual index update with CodeBeagle")
+        self.ui.comboIndexUpdateMode.addItem("Update index when UpdateIndex.exe is run")
+        #self.ui.comboIndexUpdateMode.addItem("Keep index permanently up to date")
    
     def focusInEvent (self, event):
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
@@ -69,10 +77,14 @@ class SettingsItem (QWidget):
         else:
             self.buildDBName = True
           
-    @pyqtSlot('bool')
-    def generateIndexClicked (self,  checked):
-        if checked and not self.indexDB():
+    @pyqtSlot('int')
+    def updateIndexModeChanged (self,  index):
+        indexWanted = (index != IndexConfiguration.NoIndexWanted)
+        self.ui.editIndexDB.setEnabled(indexWanted)
+        self.ui.buttonBrowseIndexLocation.setEnabled(indexWanted)
+        if indexWanted and not self.indexDB():
             self.__updateDBName(self.name())
+        self.dataChanged.emit()
         
     @pyqtSlot()
     def browseForDirectory(self):
@@ -102,7 +114,7 @@ class SettingsItem (QWidget):
     def nameSelectAll (self):
         self.ui.editName.selectAll()
        
-    def setData (self, name, directories, extensions,  dirExcludes, bGeneratesIndex, indexDB):
+    def setData (self, name, directories, extensions,  dirExcludes, indexUpdateMode, indexDB):
         self.ui.editName.setText (name)
         self.ui.editDirectories.setText (directories)
         self.ui.editExcludeDirectories.setText (dirExcludes)
@@ -112,19 +124,13 @@ class SettingsItem (QWidget):
         if indexDB:
             self.ui.editIndexDB.setText (indexDB)
         else:
-            if bGeneratesIndex:
+            if indexUpdateMode != IndexConfiguration.NoIndexWanted:
                 self.buildDBName = True
                 self.__updateDBName (name)
             else:
-                self.ui.editIndexDB.setText (indexDB)
+                self.ui.editIndexDB.setText ("")
         
-        if bGeneratesIndex:
-            self.ui.checkBoxGenerateIndex.setCheckState(Qt.Checked)
-        else:
-            self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
-            
-        self.ui.editIndexDB.setEnabled(bGeneratesIndex)
-        self.ui.buttonBrowseIndexLocation.setEnabled(bGeneratesIndex)
+        self.ui.comboIndexUpdateMode.setCurrentIndex(indexUpdateMode)
 
     def name (self):
         return self.ui.editName.text()
@@ -142,7 +148,10 @@ class SettingsItem (QWidget):
         return self.ui.editIndexDB.text()
 
     def indexGenerationEnabled (self):
-        return self.ui.checkBoxGenerateIndex.checkState() == Qt.Checked
+        return self.ui.comboIndexUpdateMode.currentIndex != IndexConfiguration.NoIndexWanted
+
+    def indexUpdateMode(self):
+        return self.ui.comboIndexUpdateMode.currentIndex()
 
     def resetAndDisable(self):
         self.ui.editName.setText("")
@@ -150,7 +159,6 @@ class SettingsItem (QWidget):
         self.ui.comboExtensions.lineEdit().setText("")
         self.ui.editDirectories.setText("")
         self.ui.editIndexDB.setText("")
-        self.ui.checkBoxGenerateIndex.setCheckState(Qt.Unchecked)
         self.enable(False)
         
     def enable(self, bEnable=True):
@@ -158,7 +166,6 @@ class SettingsItem (QWidget):
         self.ui.editExcludeDirectories.setEnabled(bEnable)
         self.ui.comboExtensions.setEnabled(bEnable)
         self.ui.editDirectories.setEnabled(bEnable)
-        self.ui.checkBoxGenerateIndex.setEnabled(bEnable)
         self.ui.buttonDirectory.setEnabled(bEnable)
         if bEnable and not self.indexGenerationEnabled():
             bEnable=False

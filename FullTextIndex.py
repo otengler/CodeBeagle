@@ -571,7 +571,7 @@ class FullTextIndex:
                 
         return finalResults
         
-    # Receives a list of lists of Keywords and returns a two lists.
+    # Receives a list of lists of Keywords and returns as two lists.
     # The first list contains the good keywords in input order. These are keywords which are not found if commonKeywordMap.
     # The second list contains the bad keywords which were found in commonKeywordMap ordered from the less worst to the worst.
     def __qualifyKeywords (self, kwList,  commonKeywordMap):
@@ -591,7 +591,7 @@ class FullTextIndex:
             else:
                 # In the common keyword map
                 badKeywordsTemp.append((quality, keywords))
-        badKeywords = [keywords for quality, keywords in sorted(badKeywordsTemp, reverse=True)]
+        badKeywords = [keywords for unusedQuality, keywords in sorted(badKeywordsTemp, reverse=True)]
         return goodKeywords, badKeywords
     
     # Receives a list of keywords which might contain wildcards. For every passed keyword a list of Keyword objects

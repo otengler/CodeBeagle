@@ -113,6 +113,9 @@ class Config:
     def __getitem__(self, attr):
         attr = attr.lower()
         return self.__data[attr]
+        
+    def __contains__(self,  attr):
+        return attr.lower() in self.__data
 
     def __setattr__(self, attr,  value):
         if attr.startswith("_Config__"):
@@ -244,6 +247,10 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(c.di, 42)
         c.setType("ds",  typeDefaultString("Spam"))
         self.assertEqual(c.ds, "Spam")
+        hasB1 = "b1" in c
+        self.assertEqual(hasB1,  True)
+        hasX1 = "x1" in c
+        self.assertEqual(hasX1,  False)
 
 if __name__ == "__main__":
     unittest.main()

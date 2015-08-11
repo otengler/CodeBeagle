@@ -81,16 +81,6 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QCheckBox" name="checkBoxGenerateIndex">
-     <property name="text">
-      <string>Generate index</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
    <item row="5" column="0">
     <widget class="QLabel" name="labelIndexLocation">
      <property name="text">
@@ -127,6 +117,20 @@
      </property>
     </widget>
    </item>
+   <item row="4" column="1">
+    <widget class="QComboBox" name="comboIndexUpdateMode">
+     <property name="insertPolicy">
+      <enum>QComboBox::NoInsert</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Index update mode:</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <tabstops>
@@ -135,44 +139,11 @@
   <tabstop>buttonDirectory</tabstop>
   <tabstop>comboExtensions</tabstop>
   <tabstop>editExcludeDirectories</tabstop>
-  <tabstop>checkBoxGenerateIndex</tabstop>
   <tabstop>editIndexDB</tabstop>
   <tabstop>buttonBrowseIndexLocation</tabstop>
  </tabstops>
  <resources/>
  <connections>
-  <connection>
-   <sender>checkBoxGenerateIndex</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>editIndexDB</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>220</x>
-     <y>143</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>270</x>
-     <y>181</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBoxGenerateIndex</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>buttonBrowseIndexLocation</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>220</x>
-     <y>143</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>451</x>
-     <y>181</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>buttonDirectory</sender>
    <signal>clicked()</signal>

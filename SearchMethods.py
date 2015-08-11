@@ -49,13 +49,13 @@ class ScriptSearchData:
             else:
                 return
 
-# This executes an indexed or a direct search. This depends on the IndexConfiguration setting "generateIndex".
+# This executes an indexed or a direct search. This depends on the IndexConfiguration setting "indexUpdateMode".
 def search (parent,  params, indexConf,  commonKeywordMap={}):
     strSearch, strFolderFilter,  strExtensionFilter, bCaseSensitive = params
     if not len(strSearch):
         return ResultSet()
     searchData = FullTextIndex.SearchQuery (strSearch,  strFolderFilter,  strExtensionFilter,  bCaseSensitive)
-    if indexConf.generateIndex:
+    if indexConf.generatesIndex():
         ftiSearch = FullTextIndexSearch ()
         result = AsynchronousTask.execute (parent,  ftiSearch,  searchData, commonKeywordMap, indexConf,  
                                            bEnableCancel=True,  cancelAction=ftiSearch.cancel)
@@ -115,7 +115,7 @@ def customSearchAsync (script,  params, commonKeywordMap,  indexConf):
         if not strSearch:
             return []
         searchData = FullTextIndex.SearchQuery (strSearch,  strFolderFilter,  strExtensionFilter,  bCaseSensitive)
-        if indexConf.generateIndex:
+        if indexConf.generatesIndex():
             ftiSearch = FullTextIndexSearch()
             return ftiSearch(searchData,  commonKeywordMap,  indexConf).matches
         else:
