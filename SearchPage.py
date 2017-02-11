@@ -28,6 +28,7 @@ import CustomContextMenu
 import UserHintDialog
 import AppConfig
 import StackTraceMessageBox
+from AppConfig import appConfig
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard. 
@@ -363,7 +364,14 @@ class SearchPage (QWidget):
         sizeHint = self.ui.listView.itemDelegate().computeSizeHint(matches,  model.cutLeft)
         model.setSizeHint(sizeHint)
         self.ui.listView.setModel(model)
-        
+        # Activate first match if enabled in config
+        if appConfig().activateFirstMatch:
+            if model.rowCount() > 0:
+                index = self.ui.listView.model().index(0, 0)
+                if index.isValid():
+                    self.ui.listView.setCurrentIndex(index)
+                    self.ui.listView.activated.emit(index)
+            
     @pyqtSlot()
     def lockResultSet (self,  bChecked):
         if bChecked:

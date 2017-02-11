@@ -1,0 +1,6 @@
+__pycache__/
+build/
+resources/*.*
+Ui_*.py
+*_rc.py
+_eric5project/

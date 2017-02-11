@@ -171,6 +171,7 @@ class SettingsDialog (QDialog):
         self.ui.editFontSize.setText(str(config.SourceViewer.FontSize))
         self.ui.editTabWidth.setText(str(config.SourceViewer.TabWidth))
         self.ui.editPreviewLines.setText(str(config.previewLines))
+        setCheckBox (self.ui.checkActivateFirstMatch, config.activateFirstMatch)
         setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
         setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
         setCheckBox (self.ui.checkShowMatchList, config.showMatchList)
