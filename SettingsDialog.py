@@ -16,132 +16,132 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import * 
+from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from Ui_SettingsDialog import Ui_SettingsDialog
 from IndexConfiguration import IndexConfiguration
 
-class SettingsEditorDelegate (QStyledItemDelegate):
+class SettingsEditorDelegate(QStyledItemDelegate):
     itemHeight = 40
-    
-    def __init__(self,  parent=None):
-        super (QStyledItemDelegate,  self).__init__(parent)
+
+    def __init__(self, parent=None):
+        super(QStyledItemDelegate, self).__init__(parent)
         if parent:
-            self.boldFont = QFont (parent.font())
+            self.boldFont = QFont(parent.font())
         else:
-            self.boldFont = QFont (QApplication.font())
-        self.boldFont.setBold (True)
+            self.boldFont = QFont(QApplication.font())
+        self.boldFont.setBold(True)
         self.defaultLocationRow = -1
         self.defaultPixmap = QPixmap(":/default/resources/Default.png")
         self.defaultPixmapSize = 20
-    
-    def setDefaultLocationRow (self, row):
+
+    def setDefaultLocationRow(self, row):
         self.defaultLocationRow = row
 
-    def paint (self,  painter, option, index):
-        QApplication.style().drawPrimitive(QStyle.PE_PanelItemViewItem, option, painter,  self.parent())
-        
+    def paint(self, painter, option, index):
+        QApplication.style().drawPrimitive(QStyle.PE_PanelItemViewItem, option, painter, self.parent())
+
         rect = QRect(option.rect)
         rect.setHeight(self.itemHeight)
         third = (rect.width()-12) / 3
-        
+
         rect1 = QRect(rect)
         rect1.translate(12, 0)
         rect1.setWidth(third-self.defaultPixmapSize)
         rect2 = QRect(rect1)
         rect2.translate(third+self.defaultPixmapSize, 0)
         rect2.setWidth(third*2)
-        
+
         painter.save()
-        
+
         location = index.data(Qt.UserRole+1)
-        
-        if len(location.directories)>0:
+
+        if len(location.directories) > 0:
             dirs = self.trUtf8("Directories: ") + ",".join(location.directories)
-            if len(location.extensions)>0:
+            if len(location.extensions) > 0:
                 dirs += " ("
                 dirs += self.trUtf8("Extensions: ") + ",".join(location.extensions)
                 dirs += ")"
-            painter.drawText (rect2, Qt.AlignVCenter+Qt.TextWordWrap, dirs)
-            
+            painter.drawText(rect2, Qt.AlignVCenter + Qt.TextWordWrap, dirs)
+
         painter.setFont(self.boldFont)
-        locationName = location.displayName() 
+        locationName = location.displayName()
         if index.row() == self.defaultLocationRow:
             locationName = locationName + self.trUtf8(" (Default)")
-            painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize/2, self.defaultPixmapSize,  self.defaultPixmapSize,  self.defaultPixmap)
-        painter.drawText (rect1, Qt.AlignVCenter+Qt.TextWordWrap, locationName)
-        
+            painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize/2, self.defaultPixmapSize, self.defaultPixmapSize, self.defaultPixmap)
+        painter.drawText(rect1, Qt.AlignVCenter + Qt.TextWordWrap, locationName)
+
         painter.restore()
-        
-    def sizeHint (self,  option,  index):
+
+    def sizeHint(self, option, index):
         baseHint = super(SettingsEditorDelegate, self).sizeHint(option, index)
         return QSize(baseHint.width(), self.itemHeight)
 
-def setCheckBox (check, value):
+def setCheckBox(check, value):
     if value:
         check.setCheckState(Qt.Checked)
     else:
         check.setCheckState(Qt.Unchecked)
 
 class LocationControl:
-    def __init__(self, settingsItem,  listView,  searchLocations,  readOnly):
+    def __init__(self, settingsItem, listView, searchLocations, readOnly):
         self.settingsItem = settingsItem
         self.listView = listView
         self.readOnly = readOnly
-        
+
         self.model = QStandardItemModel()
         self.listView.setModel(self.model)
-        self.listView.setItemDelegate (SettingsEditorDelegate(self.listView))
+        self.listView.setItemDelegate(SettingsEditorDelegate(self.listView))
 
         self.listView.selectionModel().currentChanged.connect(self.selectionChanged)
         self.settingsItem.dataChanged.connect(self.updateDisplayRole)
-        
+
         for location in searchLocations:
             self.addLocation(location)
-            
+
         index = self.model.index(0, 0)
         if index.isValid():
             self.listView.setCurrentIndex(index)
         else:
             self.settingsItem.resetAndDisable()
-        
+
     @pyqtSlot()
     def updateDisplayRole(self):
-        index = self.listView.currentIndex ()
+        index = self.listView.currentIndex()
         if index.isValid():
-            self.saveDataForItem (index)
-        
+            self.saveDataForItem(index)
+
     @pyqtSlot('QModelIndex', 'QModelIndex')
-    def selectionChanged(self, current,  previous):
-        self.saveDataForItem (previous)
+    def selectionChanged(self, current, previous):
+        self.saveDataForItem(previous)
         self.loadDataFromItem(current)
-        
-    def saveDataForItem (self,  index):
+
+    def saveDataForItem(self, index):
         if not index.isValid():
             return
         editor = self.settingsItem
-        location = IndexConfiguration (editor.name(),  
-                                        editor.extensions(), 
-                                        editor.directories(), 
-                                        editor.dirExcludes(),  
-                                        editor.indexDB(), 
-                                        editor.indexUpdateMode())
-        self.model.setData (index,  location,  Qt.UserRole+1)
+        location = IndexConfiguration(editor.name(),
+                                      editor.extensions(),
+                                      editor.directories(),
+                                      editor.dirExcludes(),
+                                      editor.indexDB(),
+                                      editor.indexUpdateMode())
+        self.model.setData(index, location, Qt.UserRole+1)
 
-    def loadDataFromItem (self,  index):
+    def loadDataFromItem(self, index):
         editor = self.settingsItem
         if not index.isValid():
             return editor.resetAndDisable()
         location = index.data(Qt.UserRole+1)
-        editor.setData (location.displayName(), 
-                        location.directoriesAsString(), 
-                        location.extensionsAsString(),  
-                        location.dirExcludesAsString(), 
-                        location.indexUpdateMode, 
-                        location.indexdb)
-        editor.enable (not self.readOnly)
-        
-    def addLocation (self,  location,  activateLocation=False):
+        editor.setData(location.displayName(),
+                       location.directoriesAsString(),
+                       location.extensionsAsString(),
+                       location.dirExcludesAsString(),
+                       location.indexUpdateMode,
+                       location.indexdb)
+        editor.enable(not self.readOnly)
+
+    def addLocation(self, location, activateLocation=False):
         rows = self.model.rowCount()
         if self.model.insertRow(rows):
             item = QStandardItem(location.displayName())
@@ -152,7 +152,7 @@ class LocationControl:
                 self.listView.setCurrentIndex(index)
                 self.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
                 self.settingsItem.nameSelectAll()
-                
+
     def locations(self):
         locs = []
         for row in range(self.model.rowCount()):
@@ -178,7 +178,7 @@ class SettingsDialog (QDialog):
 
         self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
-        
+
         # Check which location is the current default location
         defaultLocation = config.defaultLocation
         for row, location in enumerate(searchLocations):
@@ -187,14 +187,14 @@ class SettingsDialog (QDialog):
         for row, location in enumerate(globalSearchLocations):
             if defaultLocation == location.displayName():
                 self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations,  row)
-        
+
         # If there are no search locations from the global config.txt then remove the corresponding tab
         if len(globalSearchLocations) == 0:
             self.ui.tabWidget.removeTab(1)
             del self.ui.tabGlobalSearchLocations
-            
+
         self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
-        
+
     def defaultLocation (self):
         index = None
         row = self.ui.listViewLocations.itemDelegate().defaultLocationRow
@@ -205,23 +205,23 @@ class SettingsDialog (QDialog):
         if row != -1:
             model = self.ui.listViewGlobalLocations.model()
             index = model.index(row, 0)
-            
+
         if index and index.isValid():
             location = index.data(Qt.UserRole+1)
             return location.displayName()
         return ""
-        
+
     def locations(self):
         return self.myLocations.locations()
-        
+
     def addExistingLocation(self,  location,  activateLocation=True):
         self.myLocations.addLocation(location, activateLocation)
-    
+
     @pyqtSlot()
     def addLocation (self):
         location = IndexConfiguration(self.trUtf8("New location"))
         self.addExistingLocation(location, True)
-        
+
     @pyqtSlot()
     def setDefaultLocation (self):
         index = self.ui.listViewLocations.currentIndex ()
@@ -229,7 +229,7 @@ class SettingsDialog (QDialog):
             self.__defaultLocationChanged (self.ui.listViewLocations,  self.ui.listViewGlobalLocations,  index.row())
         else:
             self.__defaultLocationChanged (self.ui.listViewLocations,  self.ui.listViewGlobalLocations,  -1)
-            
+
     @pyqtSlot()
     def setDefaultLocationGlobal (self):
         index = self.ui.listViewGlobalLocations.currentIndex ()
@@ -237,7 +237,7 @@ class SettingsDialog (QDialog):
             self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations, index.row())
         else:
             self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations,  -1)
-            
+
     def __defaultLocationChanged(self, listviewCurrent,  listviewOther, newDefaultRow):
         listviewCurrent.itemDelegate().setDefaultLocationRow(newDefaultRow)
         listviewOther.itemDelegate().setDefaultLocationRow(-1)
@@ -247,32 +247,32 @@ class SettingsDialog (QDialog):
         lastIndex = model.index(model.rowCount()-1, 0)
         if firstIndex.isValid() and lastIndex.isValid():
             model.dataChanged.emit(firstIndex, lastIndex)
-        
+
     @pyqtSlot()
     def duplicateLocation(self):
         index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
             location = index.data(Qt.UserRole+1)
-            duplicated = IndexConfiguration (self.trUtf8("Duplicated ") + location.displayName(), 
-                                                            location.extensionsAsString(), 
-                                                            location.directoriesAsString(), 
-                                                            location.dirExcludesAsString(), 
-                                                            "", 
+            duplicated = IndexConfiguration (self.trUtf8("Duplicated ") + location.displayName(),
+                                                            location.extensionsAsString(),
+                                                            location.directoriesAsString(),
+                                                            location.dirExcludesAsString(),
+                                                            "",
                                                             location.indexUpdateMode)
             self.myLocations.addLocation(duplicated, True)
-        
+
     @pyqtSlot()
     def removeLocation (self):
         index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
             self.myLocations.model.removeRow(index.row())
-            
+
     @pyqtSlot()
     def okClicked(self):
         index = self.ui.listViewLocations.currentIndex()
         if index.isValid():
             self.myLocations.saveDataForItem (index)
-            
+
         # Check if there are search location with the same name and reject this
         names = set()
         for location in self.locations():
@@ -285,11 +285,11 @@ class SettingsDialog (QDialog):
                 return
             names.add(name)
         self.accept()
-        
-def main():    
+
+def main():
     import sys
     from Config import Config
-    app = QApplication(sys.argv) 
+    app = QApplication(sys.argv)
     locations = [IndexConfiguration("Qt Source",  "h,cpp", "D:\\qt", "","D:\\index.dat"), IndexConfiguration("Linux", "", "", "", "", False)]
     conf = Config()
     conf.sourceViewer = Config()
@@ -298,9 +298,9 @@ def main():
     conf.sourceViewer.fontsize = 10
     conf.matchOverFiles=True
     conf.showCloseConfirmation=True
-    w = SettingsDialog(None,locations, locations, conf) 
-    w.show() 
-    sys.exit(app.exec_()) 
+    w = SettingsDialog(None,locations, locations, conf)
+    w.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()

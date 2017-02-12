@@ -29,93 +29,93 @@ import IndexConfiguration
 import AppConfig
 import FullTextIndex
 
-license = """
+codebeagleLicense = """
 CodeBeagle Copyright (C) 2011-2014 Oliver Tengler;
 This program comes with ABSOLUTELY NO WARRANTY; 
 This is free software, and you are welcome to redistribute it under certain conditions; 
 """
 
-updateIndexDescription ="""Utility to update indexes for CodeBeagle. By default those indexes defined in config.txt are updated"""
+updateIndexDescription = """Utility to update indexes for CodeBeagle. By default those indexes defined in config.txt are updated"""
 helpJobMode = """This mode is used by CodeBeagle to update indexes in the background. It reads job files from the given directory"""
-helpConfig="""Full path to config file. This parameter allows to specify an additional config file beside the default config.txt. Can be specified more than once."""
-helpResidentMode="""Stay resident as a system tray application and maintain all indexes which are configured for automatic updates"""
+helpConfig = """Full path to config file. This parameter allows to specify an additional config file beside the default config.txt. Can be specified more than once."""
+helpResidentMode = """Stay resident as a system tray application and maintain all indexes which are configured for automatic updates"""
 
-parser = argparse.ArgumentParser(description=updateIndexDescription,  epilog=license)
+parser = argparse.ArgumentParser(description=updateIndexDescription, epilog=codebeagleLicense)
 parser.add_argument("-v", "--version", action='version', version="UpdateIndex " + AppConfig.appVersion)
-parser.add_argument("--jobmode",  metavar='DIR', type=str, help=helpJobMode)
-parser.add_argument("--resident",  action='store_true',  help=helpResidentMode)
-parser.add_argument("-c", "--config",  action="append",  default=[AppConfig.configName],  type=str,  help=helpConfig)
+parser.add_argument("--jobmode", metavar='DIR', type=str, help=helpJobMode)
+parser.add_argument("--resident", action='store_true', help=helpResidentMode)
+parser.add_argument("-c", "--config", action="append", default=[AppConfig.configName], type=str, help=helpConfig)
 
-def taketime (name,  func, *args):
+def taketime(name, func, *args):
     t1 = time.clock()
     result = func(*args)
     t2 = time.clock()
-    logging.info (name + " %3.2f min" % ((t2-t1)/60.0,))
+    logging.info(name + " %3.2f min" % ((t2-t1)/60.0,))
     return result
 
-def setupLogging (conf):
+def setupLogging(conf):
     try:
         log = conf.updateIndexLog
-        logging.basicConfig(filename=log,  format='%(asctime)s %(message)s',  level=logging.INFO)
+        logging.basicConfig(filename=log, format='%(asctime)s %(message)s', level=logging.INFO)
     except AttributeError:
-        logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
-    
-def updateIndex (config):
-    logging.info ("-"*80)
-    logging.info ("Updating index '%s'" % config.indexName)
+        logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+
+def updateIndex(config):
+    logging.info("-"*80)
+    logging.info("Updating index '%s'", config.indexName)
     try:
-        fti=FullTextIndex.FullTextIndex(config.indexdb)
+        fti = FullTextIndex.FullTextIndex(config.indexdb)
         statistics = FullTextIndex.UpdateStatistics()
-        taketime("Updating index took ",  fti.updateIndex,   config.directories,  config.extensions,  config.dirExcludes, statistics)
-        logging.info (statistics)
+        taketime("Updating index took ", fti.updateIndex, config.directories, config.extensions, config.dirExcludes, statistics)
+        logging.info(statistics)
     except:
-        logging.error ("Exception caught while updating index:\n%s" % ExceptionTools.exceptionAsString(None))
-    
+        logging.error("Exception caught while updating index:\n%s", ExceptionTools.exceptionAsString(None))
+
 def updateIndexes(indexes):
     for config in indexes:
         if config.indexUpdateMode == IndexConfiguration.TriggeredIndexUpdate:
-            updateIndex (config)
+            updateIndex(config)
 
-def loadConfigFiles (args):
+def loadConfigFiles(args):
     configFiles = args.config
     if not configFiles:
         configFiles = [AppConfig.configName]
-    conf = AppConfig.configFromFile (configFiles[0])
+    conf = AppConfig.configFromFile(configFiles[0])
     configFiles = configFiles[1:]
     for name in configFiles:
-        print ("Load config " + name)
+        print("Load config " + name)
         conf.loadFile(name)
-    # managedConfig is an override for the config file maintained by 
+    # managedConfig is an override for the config file maintained by
     # CodeBeagle. Normally this file is stored in the user profile.
-    # Because UpdateIndex.exe runs with a high probability from a 
+    # Because UpdateIndex.exe runs with a high probability from a
     # scheduled task we cannot pull in files from the user profile because
     # we don't know the user. But if there is an override it makes
     # sense to include the managed config.
     if conf.managedConfig:
-        print ("Load config " + conf.managedConfig)
+        print("Load config " + conf.managedConfig)
         conf.loadFile(conf.managedConfig)
     return conf
 
-def handleUpdateJobs (indexes,  jobDir):
+def handleUpdateJobs(indexes, jobDir):
     configByName = {}
     for conf in indexes:
         configByName[FileTools.removeInvalidFileChars(conf.displayName().lower())] = conf
-        
+
     while True:
         jobData = nextJob(jobDir)
         if not jobData:
             break
         index, jobFile = jobData
-        logging.info ("Handle job '" + index + "'")
+        logging.info("Handle job '" + index + "'")
         try:
             conf = configByName[index.lower()]
-            updateIndex (conf)
+            updateIndex(conf)
         except KeyError:
             logging.warning("No index for this job found")
         finally:
             os.unlink(jobFile)
-    
-def nextJob (jobDir):
+
+def nextJob(jobDir):
     files = os.listdir(jobDir)
     if not files:
         return None
@@ -123,8 +123,8 @@ def nextJob (jobDir):
         if not file.endswith(".running"):
             jobFile = os.path.join(jobDir, files[0])
             jobFileRunning = jobFile + ".running"
-            os.rename(jobFile,  jobFileRunning)
-            return (file,  jobFileRunning)
+            os.rename(jobFile, jobFileRunning)
+            return (file, jobFileRunning)
     return None
 
 def handleUncleanShutdown(jobDir):
@@ -136,13 +136,13 @@ def handleUncleanShutdown(jobDir):
 
 # Cleans up stuff left behind from a crash
 def cleanupCrash(jobDir):
-    guarddir = os.path.join(FileTools.getTempPath (), "UpdateIndex_running")
+    guarddir = os.path.join(FileTools.getTempPath(), "UpdateIndex_running")
     if os.path.isdir(guarddir):
         try:
             os.rmdir(guarddir)
         except:
             pass
-    
+
     if jobDir:
         files = os.listdir(jobDir)
         for file in files:
@@ -155,50 +155,50 @@ def cleanupCrash(jobDir):
 
 # Returns touple (pidfile, bStaleFileWasRemoved)
 def getPidFile():
-    pidname = os.path.join(FileTools.getTempPath (), "codebeagle.pid")
+    pidname = os.path.join(FileTools.getTempPath(), "codebeagle.pid")
     pidfile = FileTools.PidFile(pidname)
     bStaleFileWasRemoved = False
-    
+
     if pidfile.exists():
         pid = pidfile.read()
         if pid and FileTools.isProcessAlive(pid):
-            print ("Update index process with PID %u is already running" % pid)
+            print("Update index process with PID %u is already running" % pid)
         else:
-            print ("Found a stale PID file for process %u - cleaning up data" % pid)
+            print("Found a stale PID file for process %u - cleaning up data" % pid)
             pidfile.remove()
             bStaleFileWasRemoved = True
-            
+
     return (pidfile, bStaleFileWasRemoved)
 
 def main():
     # Parse command line
     args = parser.parse_args()
-    
+
     pidfile, bStaleFileWasRemoved = getPidFile()
-            
+
     # This writes the current PID and make sure the file is removed at the end
     with pidfile:
         cleanupCrash(args.jobmode)
-        
-        # Switch to application directory to be able to load the configuration even if we are 
+
+        # Switch to application directory to be able to load the configuration even if we are
         # executed from a different working directory.
         FileTools.switchToAppDir()
 
-        conf = loadConfigFiles (args)
+        conf = loadConfigFiles(args)
         indexes = IndexConfiguration.readConfig(conf)
 
         if args.jobmode:
-            runGuardDir = os.path.join(FileTools.getTempPath (), "UpdateIndex_running")
+            runGuardDir = os.path.join(FileTools.getTempPath(), "UpdateIndex_running")
             while True:
                 with FileTools.lockDir(runGuardDir):
-                    setupLogging (conf)
-                    logging.info ("UpdateIndex watches directory '" + args.jobmode + "'")
-                    handleUpdateJobs (indexes, args.jobmode)
-                if not nextJob (args.jobmode):
-                    logging.info ("No more jobs found")
+                    setupLogging(conf)
+                    logging.info("UpdateIndex watches directory '" + args.jobmode + "'")
+                    handleUpdateJobs(indexes, args.jobmode)
+                if not nextJob(args.jobmode):
+                    logging.info("No more jobs found")
                     break
         else:
-            setupLogging (conf)
+            setupLogging(conf)
             if conf.profileUpdate:
                 cProfile.run("updateIndexes(indexes)")
             else:
@@ -209,12 +209,12 @@ if __name__ == "__main__":
         main()
         sys.exit(0)
     except:
-        print ("Exception caught while updating index:\n%s" % ExceptionTools.exceptionAsString(None))
+        print("Exception caught while updating index:\n%s" % ExceptionTools.exceptionAsString(None))
         sys.exit(1)
 
 # Synchronization in slave mode between UI and UpdateIndex:
 #
-# UI: 
+# UI:
 # Write job file
 # Launch UpdateIndex process
 #

@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
-from  Ui_MainWindow import Ui_MainWindow
+from PyQt4.QtCore import QSettings, QUrl
+from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QDesktopServices
+from Ui_MainWindow import Ui_MainWindow
 import AppConfig
 import FileTools
 from UpdateCheck import UpdateCheck
@@ -30,24 +30,25 @@ userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
 """
 
-def main(): 
-    app = QApplication(sys.argv) 
-    
-    # Switch to application directory to be able to load the configuration and search scripts even if we are 
+def main():
+    app = QApplication(sys.argv)
+
+    # Switch to application directory to be able to load the configuration and search scripts even if we are
     # executed from a different working directory.
     FileTools.switchToAppDir()
-    
-    w = MainWindow() 
-    w.show() 
-    sys.exit(app.exec_()) 
-    
-class MainWindow (QMainWindow):
-    def __init__ (self):
+
+    wnd = MainWindow()
+    wnd.show()
+    sys.exit(app.exec_())
+
+class MainWindow(QMainWindow):
+    def __init__(self):
         super(MainWindow, self).__init__()
         # Restore last used search location name
         self.appSettings = QSettings(AppConfig.appCompany, AppConfig.appName)
         if self.appSettings.value("lastUsedSearchLocation"):
-            AppConfig.setLastUsedConfigName(self.appSettings.value("lastUsedSearchLocation"))
+            AppConfig.setLastUsedConfigName(
+                self.appSettings.value("lastUsedSearchLocation"))
         # Now setup UI. This already uses the restored search location name
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -55,43 +56,49 @@ class MainWindow (QMainWindow):
         # Finally prepare and launch the update check
         self.updateCheck = UpdateCheck(self)
         if self.appSettings.value("lastUpdateCheck"):
-            self.updateCheck.lastUpdateCheck = int(self.appSettings.value("lastUpdateCheck"))
+            self.updateCheck.lastUpdateCheck = int(
+                self.appSettings.value("lastUpdateCheck"))
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
-        
-    def closeEvent(self,  event):
-        if  AppConfig.appConfig().showCloseConfirmation:
+
+    def closeEvent(self, event):
+        if AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
-                self.trUtf8("Really close?"),
-                self.trUtf8("Do you really want to close the application?"),
-                QMessageBox.StandardButtons(QMessageBox.No | QMessageBox.Yes),
-                QMessageBox.Yes)
+                                       self.trUtf8("Really close?"),
+                                       self.trUtf8(
+                                           "Do you really want to close the application?"),
+                                       QMessageBox.StandardButtons(
+                                           QMessageBox.No | QMessageBox.Yes),
+                                       QMessageBox.Yes)
             if QMessageBox.Yes != res:
                 event.ignore()
                 return
-        
-        self.updateCheck.shutdownUpdateCheck() # this waits for the update check thread to complete
+
+        # this waits for the update check thread to complete
+        self.updateCheck.shutdownUpdateCheck()
         if self.updateCheck.lastUpdateCheck:
-            self.appSettings.setValue("lastUpdateCheck", self.updateCheck.lastUpdateCheck)
-        self.appSettings.setValue("lastUsedSearchLocation", AppConfig.lastUsedConfigName())
+            self.appSettings.setValue(
+                "lastUpdateCheck", self.updateCheck.lastUpdateCheck)
+        self.appSettings.setValue(
+            "lastUsedSearchLocation", AppConfig.lastUsedConfigName())
         self.__saveGeometryAndState()
         event.accept()
-        
+
     def newerVersionFound(self, version):
-        text = userHintNewVersionAvailable % {"version":version}
-        result = UserHintDialog.showUserHint (self, "newVersion"+version,  self.trUtf8("New version available"), text,  
-                                                                    UserHintDialog.Yes, True,  UserHintDialog.No,  False,  bShowHintAgain=True)
+        text = userHintNewVersionAvailable % {"version": version}
+        result = UserHintDialog.showUserHint(self, "newVersion" + version, self.trUtf8("New version available"), text,
+                                             UserHintDialog.Yes, True, UserHintDialog.No, False, bShowHintAgain=True)
         if result == UserHintDialog.Yes:
-            url = QUrl ("http://sourceforge.net/projects/codebeagle/files/")
-            QDesktopServices.openUrl (url)
-         
+            url = QUrl("http://sourceforge.net/projects/codebeagle/files/")
+            QDesktopServices.openUrl(url)
+
     def __restoreGeometryAndState(self):
         if self.appSettings.value("geometry"):
             self.restoreGeometry(self.appSettings.value("geometry"))
         if self.appSettings.value("windowState"):
-            self.restoreState (self.appSettings.value("windowState"))
-        
-    def __saveGeometryAndState (self):
+            self.restoreState(self.appSettings.value("windowState"))
+
+    def __saveGeometryAndState(self):
         self.appSettings.setValue("geometry", self.saveGeometry())
         self.appSettings.setValue("windowState", self.saveState())
 
