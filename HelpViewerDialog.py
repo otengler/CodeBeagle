@@ -16,8 +16,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QApplication
 from FileTools import fopen
 from Ui_HelpViewerDialog import Ui_HelpViewerDialog
 
@@ -26,24 +26,25 @@ class HelpViewerDialog (QDialog):
         super(HelpViewerDialog, self).__init__(parent,  Qt.Dialog | Qt.WindowMinMaxButtonsHint)
         self.ui = Ui_HelpViewerDialog()
         self.ui.setupUi(self)
+        self.ui.okButton.clicked.connect(self.accept)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
-        
+
     def showFile (self, name):
         try:
             with fopen(name) as file:
                 text = file.read()
         except:
             text = self.trUtf8("Failed to open file")
-        
+
         self.ui.textBrowserHelp.setHtml (text)
-        
-def main():    
+
+def main():
     import sys
-    app = QApplication(sys.argv) 
-    w = HelpViewerDialog(None) 
+    app = QApplication(sys.argv)
+    w = HelpViewerDialog(None)
     w.showFile("help.html")
-    w.show() 
-    sys.exit(app.exec_()) 
+    w.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()

@@ -17,23 +17,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from PyQt4.QtCore import *
+from PyQt5.QtCore import QObject, pyqtSignal
 import Config
 from FileTools import fopen
 from ExceptionTools import exceptionAsString
 
-# Launches an executable for each of the files passed via context menu
 class ExecuteProgramTask:
+    """Launches an executable for each of the files passed via context menu"""
     def __init__(self, program,  args,  bShowWindow):
         super(ExecuteProgramTask, self).__init__()
         self.program = os.path.expandvars(program)
         self.args =args
         self.bShowWindow = bShowWindow
-        
-    def execute (self,  contextMenu,  files):
+
+    def execute (self, contextMenu, files):
         import subprocess
         import shlex
-        
+
         failedFiles = []
         for file in files:
             os.environ["file"] = file
@@ -47,26 +47,28 @@ class ExecuteProgramTask:
                 subprocess.Popen ([self.program] + args,  startupinfo=si)
             except:
                 failedFiles.append (file)
-            
+
         if failedFiles:
             contextMenu.executionFailed.emit (ContextMenuError(self.program,  failedFiles))
-        
-# Executes an python script with all of the files passed via context menu
+
 class CustomScriptTask:
+    """Executes an python script with all of the files passed via context menu"""
     def __init__(self,  script):
         self.script = script
-        
-    def execute(self, contextMenu,  files):
+
+    def execute(self, contextMenu, files):
+        """
+        The actual script is wrapped in the function "contextMenu". It is needed to
+        establish a proper scope which enables access to local variables from sub functions
+        analog to globals. Example what caused problems:
+        import time
+        def foo(files):
+            time.sleep(5)
+            foo(files)
+        This failed in previous versions with "global 'time' not found".
+        """
         localsDict = { "files":  files }
         try:
-            # The actual script is wrapped in the function "contextMenu". It is needed to 
-            # establish a proper scope which enables access to local variables from sub functions 
-            # analog to globals. Example what caused problems:
-            # import time
-            # def foo(files):
-            #    time.sleep(5)
-            # foo(files)
-            # This failed in previous versions with "global 'time' not found". 
             scriptCode=""
             with fopen(self.script) as file:
                 scriptCode="def contextMenu(files):\n"
@@ -74,9 +76,9 @@ class CustomScriptTask:
                     scriptCode += "\t"
                     scriptCode += line
                 scriptCode += "\ncontextMenu(files)\n"
-                    
+
             code = compile(scriptCode, self.script, 'exec')
-            exec(code,  globals(),  localsDict)
+            exec(code, globals(), localsDict)
         except:
             contextMenu.executionFailed.emit (ContextMenuError(self.script,  files,  exceptionAsString()))
 
@@ -87,36 +89,36 @@ class ContextMenuError:
         self.exception = exception
 
 class CustomContextMenu (QObject):
-    executionFailed = pyqtSignal(ContextMenuError)  
-    
+    executionFailed = pyqtSignal(ContextMenuError)
+
     def __init__(self, title, task):
         super(CustomContextMenu, self).__init__()
         self.title = title
         self.task = task
-        
-    def execute (self,  files):
+
+    def execute (self, files):
         self.task.execute(self,  files)
 
 _customMenuEntries = None
 
-# Returns a list of CustomContextMenu objects 
 def customMenuEntries (conf):
+    """Returns a list of CustomContextMenu objects"""
     global _customMenuEntries
     if _customMenuEntries is None:
         try:
             _customMenuEntries = __readConfig(conf)
         except:
             _customMenuEntries = []
-    return _customMenuEntries 
-    
-# Configurates the type information for the context menu configuration
+    return _customMenuEntries
+
 def contextMenuTypeInfo (config):
+    """Configurates the type information for the context menu configuration"""
     config.setType("title", Config.typeDefaultString("Custom context menu"))
     config.setType("executable", Config.typeDefaultString(""))
     config.setType("args",  Config.typeDefaultString(""))
     config.setType("showWindow",  Config.typeDefaultBool(True))
     config.setType("script", Config.typeDefaultString(""))
-        
+
 # Returns a list of Index objects from the config
 # ContextMenu1 {
 # title = Notepad
@@ -129,21 +131,21 @@ def __readConfig (conf):
         if group.startswith("contextmenu"):
             menus.append(group)
     menus.sort()
-    
+
     entries = []
     for group in menus:
         menuConf= conf[group]
         contextMenuTypeInfo (menuConf)
-        
+
         title = menuConf.title
         executable = menuConf.executable
         script = menuConf.script
-        
+
         if executable:
             entries.append(CustomContextMenu(title,  ExecuteProgramTask(executable,  menuConf.args,  menuConf.showWindow)))
         elif script:
             entries.append(CustomContextMenu(title,  CustomScriptTask(script)))
-        
+
     return entries
-    
+
 

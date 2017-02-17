@@ -1,4 +1,4 @@
-set PYDIR=C:\Python33_venv\codebeagle
+set PYDIR=C:\Python36_venv\codebeagle
 set PYTHON=%PYDIR%\python
 if exist "C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe" (
     set mt="C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe"

@@ -1,7 +1,7 @@
 call buildvars.bat
 
-set PYUIC=%PYDIR%\Lib\site-packages\PyQt4\uic\pyuic.py
-set PYRCC4=%PYDIR%\Lib\site-packages\PyQt4\pyrcc4.exe
+set PYUIC=%PYDIR%\scripts\pyuic5.exe
+set PYRCC4=%PYDIR%\scripts\pyrcc5.exe
 
 %PYTHON% %PYUIC% -o Ui_MainWindow.py -x MainWindow.ui 
 %PYTHON% %PYUIC% -o Ui_LeaveLastTabWidget.py -x LeaveLastTabWidget.ui 
@@ -20,10 +20,10 @@ set PYRCC4=%PYDIR%\Lib\site-packages\PyQt4\pyrcc4.exe
 
 copy /Y resources\Crystal\*.* resources\
 
-%PYRCC4% -o LeaveLastTabWidget_rc.py -py3 LeaveLastTabWidget.qrc
-%PYRCC4% -o MainWindow_rc.py -py3 MainWindow.qrc
-%PYRCC4% -o SearchPage_rc.py -py3 SearchPage.qrc
-%PYRCC4% -o SettingsDialog_rc.py -py3 SettingsDialog.qrc
-%PYRCC4% -o StackTraceMessageBox_rc.py -py3 StackTraceMessageBox.qrc
+%PYRCC4% -o LeaveLastTabWidget_rc.py LeaveLastTabWidget.qrc
+%PYRCC4% -o MainWindow_rc.py MainWindow.qrc
+%PYRCC4% -o SearchPage_rc.py SearchPage.qrc
+%PYRCC4% -o SettingsDialog_rc.py SettingsDialog.qrc
+%PYRCC4% -o StackTraceMessageBox_rc.py StackTraceMessageBox.qrc
 
  

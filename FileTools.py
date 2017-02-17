@@ -40,9 +40,11 @@ def fopen (name, mode='r'):
         f.close()
         raise
 
-# Return a path where the application may store data. For Windows this is where APPDATA points to. 
-# For Linux HOME should work.
 def getAppDataPath (appName):
+    """
+    Return a path where the application may store data. For Windows this is where APPDATA points to.
+    For Linux HOME should work.
+    """
     if "APPDATA" in os.environ:
         appdata = os.path.expandvars("$APPDATA")
         location = os.path.join(os.path.split(appdata)[0],"Local")
@@ -56,51 +58,53 @@ def getAppDataPath (appName):
     location = os.path.join(location, appName)
     location += os.path.sep
     return location
-    
-# Return a path which can be used to store temporary data
+
 def getTempPath ():
+    """Return a path which can be used to store temporary data"""
     if "TEMP" in os.environ:
         return os.path.expandvars("$TEMP")
     elif "HOME" in os.environ:
         return os.path.expandvars("$HOME")
     else:
         return ""
-    
-# Switch to application directory. This helps to locate files by a relative path.
+
 def switchToAppDir ():
+    """Switch to application directory. This helps to locate files by a relative path."""
     try:
         dirName = os.path.dirname(sys.argv[0])
         if dirName:
             os.chdir(dirName)
     except Exception as  e:
         print ("Failed to switch to application directory: " + str(e))
-        
-# Creates a directory during a context manager scope.
-# with lockDir("C:\\dir"):
-#     pass
-class lockDir:
+
+class LockDir:
+    """
+    Creates a directory during a context manager scope.
+    with LockDir("C:\\dir"):
+        pass
+    """
     def __init__(self,  name, retries=5, delay=200):
         self.name = name
         self.retries = retries
         self.delay = delay
-        
+
     def __enter__(self):
         for i in range(self.retries):
             try:
                 os.mkdir (self.name)
             except Exception as e:
-                print ("lockDir: " + str(e))
+                print ("LockDir: " + str(e))
                 time.sleep(self.delay/1000.0)
             else:
                 return self
         raise RuntimeError("Failed to create lock directory")
-       
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         os.rmdir (self.name)
         return False # do not suppress exception
 
-# Removes all character which are invalid for files
 def removeInvalidFileChars (text):
+    """Removes all character which are invalid for files."""
     for c in "\\/:*?\"<>|":
         text = text.replace(c, "")
     return text
@@ -126,15 +130,15 @@ def getMostCommonExtensionInDirectory (directory):
     return mostCommon
 
 class PidFile:
-    # Pass full path to file where current process ID is stored
+    """Pass full path to file where current process ID is stored."""
     def __init__(self, name):
         self.name = name
         self.pidfile = None
-        
+
     def exists(self):
+        """Reads the PID from a pid file or returns 0 if there is no PID file."""
         return os.path.isfile(self.name)
-        
-    # Reads the PID from a pid file or returns 0 if there is no PID file
+
     def read(self) -> int:
         try:
             with open(self.name, "r") as file:
@@ -142,14 +146,14 @@ class PidFile:
         except:
             return 0
         return pid
-            
+
     def remove(self):
         if os.path.isfile(self.name):
             try:
                 os.unlink(self.name)
             except:
                 pass
-            
+
     def __enter__(self):
         pid = os.getpid()
         try:
@@ -160,7 +164,7 @@ class PidFile:
             print("Failed to create PID file at '%s'" % self.name)
             raise
         return self
-       
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.pidfile:
             self.pidfile.close()

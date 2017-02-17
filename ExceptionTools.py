@@ -17,11 +17,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 def exceptionAsString (limit=5):
-        import sys
-        import io
-        import traceback
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        memFile = io.StringIO()
-        traceback.print_exception(exc_type, exc_value, exc_traceback, limit=limit, file=memFile)
-        return memFile.getvalue()
+    """Prints the current exception into a string"""
+    import sys
+    import io
+    import traceback
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    memFile = io.StringIO()
+    traceback.print_exception(exc_type, exc_value, exc_traceback, limit=limit, file=memFile)
+    return memFile.getvalue()
 

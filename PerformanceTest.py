@@ -40,13 +40,13 @@ def main():
         result = genTestQueries(r"D:\qt473.dat")
         with open("testQueries.txt", "w") as f:
             f.write(result)
-    
+
     db = FullTextIndex.FullTextIndex(r"D:\qt473.dat")
     queries = [line.strip() for line in open("testQueries.txt").readlines()]
     taketime (performanceTest , db, queries,  False)
     taketime (performanceTest , db, queries,  True)
-    
+
 if __name__ == '__main__':
     main()
-    
+
 

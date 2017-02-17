@@ -18,8 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from PyQt4.QtCore import QSettings, QUrl
-from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QDesktopServices
+from PyQt5.QtCore import QSettings, QUrl
+from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from Ui_MainWindow import Ui_MainWindow
 import AppConfig
 import FileTools

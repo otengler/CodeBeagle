@@ -17,31 +17,31 @@ class CodeBeagleAutomation:
 
     # indexName = Name of configuration from global or user local config
     # The rest of the parameters are similar to the UI parameters.
-    def search (self, indexName, searchPhrase, filterDirectories, filterExtensions, caseSensitive):
+    def search(self, indexName, searchPhrase, filterDirectories, filterExtensions, caseSensitive):
 
         indexName = indexName.lower()
 
-        # Switch to application directory to be able to load the configuration even if we are 
+        # Switch to application directory to be able to load the configuration even if we are
         # executed from a different working directory.
         FileTools.switchToAppDir()
-        
+
         conf = AppConfig.appConfig()
-        
+
         indexes = IndexConfiguration.readConfig(conf)
         # Build a map from index name to index database for those configuration which actually generate an index
-        indexMap = dict( (conf.indexName.lower(), conf.indexdb) for conf in indexes if conf.generatesIndex())
+        indexMap = dict((conf.indexName.lower(), conf.indexdb) for conf in indexes if conf.generatesIndex())
 
         if not indexName in indexMap:
             return []
 
-        query = FullTextIndex.SearchQuery (searchPhrase, filterDirectories, filterExtensions, caseSensitive)
-        
+        query = FullTextIndex.SearchQuery(searchPhrase, filterDirectories, filterExtensions, caseSensitive)
+
         fti = FullTextIndex.FullTextIndex(indexMap[indexName])
 
         return fti.search(query)
 
-if __name__=='__main__':
-    import win32com.server.register 
+if __name__== '__main__':
+    import win32com.server.register
     win32com.server.register.UseCommandLine(CodeBeagleAutomation)
 
 #import pythoncom

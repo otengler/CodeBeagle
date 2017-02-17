@@ -16,14 +16,14 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
+from PyQt5.QtCore import Qt, QUrl, QMimeData, QDrag
+from PyQt5.QtWidgets import QListView, QApplication
 
 class PathDragListView (QListView):
     def __init__ (self, parent):
         super(PathDragListView, self).__init__(parent)
         self.startPos = None
-        
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.startPos = event.pos()
@@ -33,7 +33,7 @@ class PathDragListView (QListView):
         if self.startPos and event.buttons() and Qt.LeftButton:
             distance = (event.pos() - self.startPos).manhattanLength()
             if distance >= QApplication.startDragDistance():
-               self.performDrag()
+                self.performDrag()
         super (PathDragListView,  self).mouseMoveEvent(event)
 
     def performDrag(self):

@@ -17,76 +17,76 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from FileTools import fopen
 import HighlightingTextEdit
 import HighlighterConfiguration
 from AppConfig import appConfig
-        
-# Provides a cache for HighlightingRules objects. It provides fast lookup by file name extension.
+
 class RulesCache:
+    """Provides a cache for HighlightingRules objects. It provides fast lookup by file name extension."""
     def __init__ (self):
         self.highlighterConfig = HighlighterConfiguration.highlighter(appConfig().SourceViewer)
         # A dict mapping a file extension to a HighlightingRules object
         self.highlightingRulesCache = {}
         self.extensionsToRulesFile = {}
-        
-    # Choose a set of highlighting rules depending on the file extension
+
     def getRulesByFileName(self,  name,  font):
+        """Choose a set of highlighting rules depending on the file extension."""
         ext = os.path.splitext(name)[1].lower()
         if ext.startswith("."):
             ext = ext[1:]
-            
+
         if ext in self.extensionsToRulesFile:
             rulesFile = self.extensionsToRulesFile[ext]
         else:
             rulesFile = self.highlighterConfig.lookup(ext)
             self.extensionsToRulesFile[ext] = rulesFile
-            
+
         if rulesFile in self.highlightingRulesCache:
             highlightingRules = self.highlightingRulesCache[rulesFile]
         else:
             highlightingRules = self.rulesFromFile(rulesFile,  font)
             self.highlightingRulesCache[rulesFile] = highlightingRules
-            
+
         return highlightingRules
 
     def rulesFromFile (self, rulesFile,  font):
         rules = HighlightingTextEdit.HighlightingRules(font)
-       
-        localsDict = { "Light" : QFont.Light,  
-                              "Normal" : QFont.Normal,  
-                              "DemiBold" : QFont.DemiBold,  
-                              "Bold" : QFont.Bold,  
-                              "Black" : QFont.Black,  
-                              
-                              "white" : Qt.white, 
-                              "black" : Qt.black, 
-                              "red" : Qt.red, 
-                              "darkRed" : Qt.darkRed, 
-                              "green" : Qt.green, 
-                              "darkGreen" : Qt.darkGreen, 
-                              "blue" : Qt.blue, 
-                              "darkBlue" : Qt.darkBlue, 
-                              "cyan" : Qt.cyan, 
-                              "darkCyan" : Qt.darkCyan, 
-                              "magenta" : Qt.magenta, 
-                              "darkMagenta" : Qt.darkMagenta, 
-                              "yellow" : Qt.yellow, 
-                              "darkYellow" : Qt.darkYellow, 
-                              "gray" : Qt.gray,
-                              "darkGray" : Qt.darkGray,
-                              "lightGray" : Qt.lightGray, 
-                        
-                              "addKeywords" : rules.addKeywords, 
-                              "addCommentRule" : rules.addCommentRule, 
-                              "addRule" : rules.addRule}
 
-        with fopen(os.path.join("config", rulesFile)) as script: 
+        localsDict = { "Light" : QFont.Light,
+                       "Normal" : QFont.Normal,
+                       "DemiBold" : QFont.DemiBold,
+                       "Bold" : QFont.Bold,
+                       "Black" : QFont.Black,
+
+                       "white" : Qt.white,
+                       "black" : Qt.black,
+                       "red" : Qt.red,
+                       "darkRed" : Qt.darkRed,
+                       "green" : Qt.green,
+                       "darkGreen" : Qt.darkGreen,
+                       "blue" : Qt.blue,
+                       "darkBlue" : Qt.darkBlue,
+                       "cyan" : Qt.cyan,
+                       "darkCyan" : Qt.darkCyan,
+                       "magenta" : Qt.magenta,
+                       "darkMagenta" : Qt.darkMagenta,
+                       "yellow" : Qt.yellow,
+                       "darkYellow" : Qt.darkYellow,
+                       "gray" : Qt.gray,
+                       "darkGray" : Qt.darkGray,
+                       "lightGray" : Qt.lightGray,
+
+                       "addKeywords" : rules.addKeywords,
+                       "addCommentRule" : rules.addCommentRule,
+                       "addRule" : rules.addRule}
+
+        with fopen(os.path.join("config", rulesFile)) as script:
             code = compile(script.read(), rulesFile, 'exec')
         exec(code,  globals(),  localsDict)
-            
+
         return rules
 
 _rulesCache = None

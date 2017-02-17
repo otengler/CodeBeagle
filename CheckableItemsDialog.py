@@ -16,27 +16,31 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
+from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtWidgets import QApplication, QDialog
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from Ui_CheckableItemsDialog import Ui_CheckableItemsDialog
 
-class CheckableItemsDialog (QDialog):
-    def __init__ (self, title, bCheckAllState, parent):
-        super (CheckableItemsDialog, self).__init__(parent)
+class CheckableItemsDialog(QDialog):
+    def __init__(self, title, bCheckAllState, parent):
+        super(CheckableItemsDialog, self).__init__(parent)
         self.ui = Ui_CheckableItemsDialog()
         self.ui.setupUi(self)
+        self.ui.buttonOK.clicked.connect(self.accept)
+        self.ui.buttonCancel.clicked.connect(self.reject)
+        self.ui.checkToggleAll.toggled.connect(self.checkAll)
         self.setWindowTitle(title)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
-        
+
         self.model = QStandardItemModel()
-        
+
         self.ui.listViewItems.setModel(self.model)
         if bCheckAllState:
             self.ui.checkToggleAll.setCheckState(Qt.Checked)
         else:
             self.ui.checkToggleAll.setCheckState(Qt.Unchecked)
-        
-    def addItem (self, name,  bCheck=True):
+
+    def addItem(self, name, bCheck=True):
         item = QStandardItem(name)
         item.setFlags(Qt.ItemIsUserCheckable | item.flags())
         if bCheck:
@@ -44,37 +48,37 @@ class CheckableItemsDialog (QDialog):
         else:
             item.setData(Qt.Unchecked, Qt.CheckStateRole)
         self.model.appendRow(item)
-        
+
     def checkedItems(self):
         items = []
         for i in range(self.model.rowCount()):
             index = self.model.index(i, 0)
-            if index.data (Qt.CheckStateRole) == Qt.Checked:
-                items.append ((i, index.data()))
+            if index.data(Qt.CheckStateRole) == Qt.Checked:
+                items.append((i, index.data()))
         return items
-        
+
     @pyqtSlot(bool)
-    def checkAll (self, bCheckAll):
+    def checkAll(self, bCheckAll):
         if bCheckAll:
             flag = Qt.Checked
         else:
             flag = Qt.Unchecked
         for i in range(self.model.rowCount()):
             index = self.model.index(i, 0)
-            self.model.setData(index, flag,  Qt.CheckStateRole)
+            self.model.setData(index, flag, Qt.CheckStateRole)
 
-def main():    
+def main():
     import sys
-    app = QApplication(sys.argv)  
-    w = CheckableItemsDialog("Choose indexes to update",  True, None) 
+    app = QApplication(sys.argv)
+    w = CheckableItemsDialog("Choose indexes to update", True, None)
     w.addItem("Amber")
     w.addItem("Silver")
     w.addItem("Gold")
-    w.show() 
+    w.show()
     if w.exec():
         items = w.checkedItems()
-        print (items)
-    sys.exit(app.exec_()) 
+        print(items)
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()

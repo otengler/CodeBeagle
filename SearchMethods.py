@@ -18,8 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import threading
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
 import AsynchronousTask
 import FullTextIndex
 from FileTools import fopen
@@ -35,8 +33,8 @@ class ScriptSearchData:
     def __init__(self, reExpr):
         self.reExpr = reExpr
 
-    # Yields all matches in str. Each match is returned as the touple (position,length)
     def matches(self, data):
+        """Yields all matches in str. Each match is returned as the touple (position,length)."""
         if not self.reExpr:
             return
         cur = 0
@@ -49,8 +47,8 @@ class ScriptSearchData:
             else:
                 return
 
-# This executes an indexed or a direct search. This depends on the IndexConfiguration setting "indexUpdateMode".
 def search(parent, params, indexConf, commonKeywordMap={}):
+    """This executes an indexed or a direct search. This depends on the IndexConfiguration setting "indexUpdateMode"."""
     strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
     if not len(strSearch):
         return ResultSet()
@@ -64,9 +62,11 @@ def search(parent, params, indexConf, commonKeywordMap={}):
     result.label = strSearch
     return result
 
-# Holds an instance of FullTextIndex. Setting the instance is secured by a lock because
-# the call to 'cancel' may happen any time - also during construction and assignment of FullTextIndex
 class FullTextIndexSearch:
+    """
+    Holds an instance of FullTextIndex. Setting the instance is secured by a lock because
+    the call to 'cancel' may happen any time - also during construction and assignment of FullTextIndex
+    """
     def __init__(self):
         self.fti = None
         self.lock = threading.Lock()
@@ -99,10 +99,12 @@ def directSearchAsync(searchData, indexConf, cancelEvent=None):
     matches = removeDupsAndSort(matches)
     return ResultSet(matches, searchData)
 
-# Executes a custom search script from disk. The script receives a locals dictionary with all neccessary
-# search parameters and returns its result in the variable "result". The variable "highlight" must be set
-# to a regular expression which is used to highlight the matches in the result.
 def customSearch(parent, script, params, indexConf, commonKeywordMap={}):
+    """
+    Executes a custom search script from disk. The script receives a locals dictionary with all neccessary
+    search parameters and returns its result in the variable "result". The variable "highlight" must be set
+    to a regular expression which is used to highlight the matches in the result.
+    """
     strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
     return AsynchronousTask.execute(parent, customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
 
@@ -170,8 +172,8 @@ def customSearchAsync(script, params, commonKeywordMap, indexConf):
 
     return ResultSet(matches, searchData, label=label)
 
-# Remove duplicates and sort
 def removeDupsAndSort(matches):
+    """Remove duplicates and sort"""
     uniqueMatches = set()
     for match in matches:
         uniqueMatches.add(match)

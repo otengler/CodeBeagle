@@ -17,27 +17,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
+from PyQt5.QtWidgets import QDialog, QApplication
+from PyQt5 import QtCore
 from Ui_AboutDialog import Ui_AboutDialog
 import AppConfig
 
-class AboutDialog (QDialog):
-    def __init__ (self, parent):
+class AboutDialog(QDialog):
+    def __init__(self, parent):
         super(AboutDialog, self).__init__(parent)
         self.ui = Ui_AboutDialog()
         self.ui.setupUi(self)
         version = sys.version_info
-        pythonAndQt = " (Python %u.%u.%u, Qt %s)" % (version.major, version.minor, version.micro, qVersion())
-        self.ui.labelVersion.setText(self.trUtf8("Version") + " " + AppConfig.appVersion + pythonAndQt)
+        pythonAndQt = " (Python %u.%u.%u, Qt %s)" % (version.major, version.minor, version.micro, QtCore.qVersion())
+        self.ui.labelVersion.setText(self.tr("Version") + " " + AppConfig.appVersion + pythonAndQt)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
-        
-def main():    
-    import sys
-    app = QApplication(sys.argv) 
-    w = AboutDialog(None) 
-    w.show() 
-    sys.exit(app.exec_()) 
+
+def main():
+    app = QApplication(sys.argv)
+    wnd = AboutDialog(None)
+    wnd.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()

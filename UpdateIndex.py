@@ -190,7 +190,7 @@ def main():
         if args.jobmode:
             runGuardDir = os.path.join(FileTools.getTempPath(), "UpdateIndex_running")
             while True:
-                with FileTools.lockDir(runGuardDir):
+                with FileTools.LockDir(runGuardDir):
                     setupLogging(conf)
                     logging.info("UpdateIndex watches directory '" + args.jobmode + "'")
                     handleUpdateJobs(indexes, args.jobmode)

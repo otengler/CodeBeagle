@@ -27,26 +27,30 @@ class ExtensionMapping:
         # A pattern which matches the extension
         self.extPattern = extPattern
         self.configFile = configFile
-       
-    # Returns the significance if the configuration matches the pattern , -1 otherwise
+
     def match (self, ext):
+        """Returns the significance if the configuration matches the pattern , -1 otherwise"""
         if ext.startswith("."):
             ext = ext[1:]
         if fnmatch (ext,  self.extPattern):
             return self.significance
         return -1
-    
-# Contains a list of ExtensionMapping objects. Its main function is to lookup the right ExtensionMapping for 
-#  a given extension.
-class Highlighter:    
+
+class Highlighter:
+    """
+    Contains a list of ExtensionMapping objects. Its main function is to lookup the right ExtensionMapping for
+    a given extension.
+    """
     def __init__(self, conf):
         self.mappings = self.readConfig (conf)
-        
-    #Highlighter_Default {
-    #    config = C++.txt
-    #    extensions = *
-    #}
+
     def readConfig (self,  conf):
+        """
+        Highlighter_Default {
+            config = C++.txt
+            extensions = *
+        }
+        """
         mappings = []
         for c in conf:
             if c.startswith("highlighter"):
@@ -56,9 +60,9 @@ class Highlighter:
                 for pattern in extensions.split(","):
                     mappings.append(ExtensionMapping(pattern,  configFile))
         return mappings
-        
-    # Lookup highlighter by extension
+
     def lookup (self, ext):
+        """Lookup highlighter by extension"""
         matches = []
         for mapping in self.mappings:
             significance = mapping.match(ext)
@@ -104,5 +108,5 @@ class TestHighlighterConfig(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    
-    
+
+

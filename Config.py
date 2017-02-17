@@ -52,16 +52,16 @@ def boolPersist (value):
         return "False"
     raise RuntimeError("Cannot interpret '" + str(value) + "' as bool")
 
-def plainTypeMapper(type):
-    if bool == type:
-        return (boolParse, lambda: None,  boolPersist) 
-    if int == type:
+def plainTypeMapper(t):
+    if bool == t:
+        return (boolParse, lambda: None, boolPersist)
+    if int == t:
         return (int, lambda: None, str)
     return (identity,  lambda: None,  str)
 
 # A object which holds configuration data. The data is accessed like a property. It can contain objects of itself
 # which allows to build deeper stacked configs.
-# E.g.:   
+# E.g.:
 # c = Config()
 # c.sub = Config()
 # c.sub.a = "Text"
@@ -78,10 +78,10 @@ class Config:
         elif configLines:
             self.parseLines(configLines)
 
-    def setPlainType(self,  attr,  type):
+    def setPlainType(self, attr, type):
         self.__typeMapper[attr.lower()] = plainTypeMapper(type)
 
-    def setType (self, attr,  typeFuncs):
+    def setType (self, attr, typeFuncs):
         self.__typeMapper[attr.lower()] = typeFuncs
 
     def __typeParse (self, attr):
@@ -113,7 +113,7 @@ class Config:
     def __getitem__(self, attr):
         attr = attr.lower()
         return self.__data[attr]
-        
+
     def __contains__(self,  attr):
         return attr.lower() in self.__data
 
@@ -129,7 +129,7 @@ class Config:
 
     def __iter__(self):
         return self.__data.__iter__()
-        
+
     def values(self):
         return self.__data.values()
 
@@ -150,7 +150,7 @@ class Config:
                 s = s + " = " + self.__typePersist(k)(v)
         return s
 
-    def remove (self,  key):
+    def remove (self, key):
         key = key.lower()
         if key in self.__data:
             del self.__data[key]
@@ -160,7 +160,7 @@ class Config:
             self.parseLines ((line for line in file.readlines()))
 
     def parseLines(self, lines):
-        if not type(lines) is types.GeneratorType:
+        if type(lines) is not types.GeneratorType:
             raise TypeError("lines must be a generator type")
         for line in lines:
             line = line.strip()
@@ -197,12 +197,12 @@ class Config:
         if importTokens:
             groupname = importTokens.group(2).lower()
             filename = importTokens.group(1)
-                    
+
             try:
                 group = getattr(self, groupname) # This allows to apply type information from __typeNotFound funcs
             except AttributeError:
                 group = Config()
-                
+
             try:
                 group.loadFile (filename)
                 setattr (self,  groupname,  group)
@@ -210,7 +210,7 @@ class Config:
                 pass
         else:
             # syntax: import file
-            # This imports all properties of the file into the current config. 
+            # This imports all properties of the file into the current config.
             importTokens = re.match("import\\W+([\\w\\\\/\\.]+)", line)
             if not importTokens:
                 raise RuntimeError("wrong import line")
@@ -220,16 +220,16 @@ class Config:
                 pass
 
 def typeDefaultBool (bDefault):
-    return (boolParse, lambda: bDefault, boolPersist)  
-    
+    return (boolParse, lambda: bDefault, boolPersist)
+
 def typeDefaultInt (iDefault):
-    return (int, lambda: iDefault, str) 
-    
+    return (int, lambda: iDefault, str)
+
 def typeDefaultString (strDefault):
-    return (identity, lambda: strDefault, str) 
-    
+    return (identity, lambda: strDefault, str)
+
 def typeDefaultConfig ():
-    return (identity, lambda: Config(), identity) 
+    return (identity, lambda: Config(), identity)
 
 class TestConfig(unittest.TestCase):
     def test(self):

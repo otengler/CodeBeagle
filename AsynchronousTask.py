@@ -16,13 +16,12 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
+from PyQt4.QtCore import QObject, QThread
 import ProgressBar
 import threading
 
 class AsynchronousTask (QThread):
-    def __init__(self,  function , *args,  bEnableCancel=False,  cancelAction=None):
+    def __init__(self, function , *args, bEnableCancel=False, cancelAction=None):
         super(AsynchronousTask, self).__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.function = function
         self.args = args
@@ -32,48 +31,48 @@ class AsynchronousTask (QThread):
         self.cancelEvent = None
         if self.bEnableCancel:
             self.cancelEvent = threading.Event()
-        
+
     def run(self):
         try:
             if self.cancelEvent:
-                self.result = self.function (*self.args, cancelEvent=self.cancelEvent)
+                self.result = self.function(*self.args, cancelEvent=self.cancelEvent)
             else:
-                self.result = self.function (*self.args)
+                self.result = self.function(*self.args)
         except Exception as e:
             self.result = e
-            
+
     @pyqtSlot()
-    def cancel (self):
+    def cancel(self):
         if self.cancelEvent:
             self.cancelEvent.set()
         if self.cancelAction:
             self.cancelAction()
 
-# Executes the action performed by the callable 'func' called with *args in a seperate thread. 
-# During the action a progress bar is shown. If 'bEnableCancel' is true the callable is 
+# Executes the action performed by the callable 'func' called with *args in a seperate thread.
+# During the action a progress bar is shown. If 'bEnableCancel' is true the callable is
 # passed the named parameter 'cancelEvent'. It contains an event object whose 'is_set' function
 # can be used to test if it is signalled.
-def execute (parent,  func,  *args,  bEnableCancel=False, cancelAction=None):
+def execute(parent, func, *args, bEnableCancel=False, cancelAction=None):
     progress = None
     try:
-        progress = ProgressBar.ProgressBar(parent,  bEnableCancel)
-        
-        searchTask = AsynchronousTask (func,  *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction)
-        QObject.connect(searchTask,  SIGNAL("finished()"),  progress.close)
-        QObject.connect(searchTask,  SIGNAL("terminated()"),  progress.close)
-        
-        progress.onCancelClicked.connect (searchTask.cancel)
+        progress = ProgressBar.ProgressBar(parent, bEnableCancel)
+
+        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction)
+        QObject.connect(searchTask, SIGNAL("finished()"), progress.close)
+        QObject.connect(searchTask, SIGNAL("terminated()"), progress.close)
+
+        progress.onCancelClicked.connect(searchTask.cancel)
         progress.show()
-        
+
         searchTask.start()
         progress.exec()
         searchTask.wait()
-        
+
         # If the thread raised an exception re-raise it in the main thread
-        if isinstance(searchTask.result,Exception):
+        if isinstance(searchTask.result, Exception):
             raise searchTask.result
         return searchTask.result
     finally:
         if progress:
             progress.close()
-            
+
