@@ -17,10 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from PyQt5.QtCore import Qt, QRect, QSize
-from PYQt5.QtGui import QFont, QPen, QColor, QFontMetrics, QStyleOption, QStyle, QModelIndex
-from PyQt5.QtWidgets import QStyledItemDelegate, QApplication
-from PYQt5 import QtWidgets
+from PyQt5.QtCore import Qt, QRect, QSize, QModelIndex
+from PyQt5.QtGui import QFont, QPen, QColor, QFontMetrics
+from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle
+from PyQt5 import QtWidgets
 
 class PathVisualizerDelegate (QStyledItemDelegate):
     """Parent must be the view (otherwise the focus drawing doesn't work)"""

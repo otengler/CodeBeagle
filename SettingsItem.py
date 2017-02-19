@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtWidgets import QWidget, QFileDialog
 from Ui_SettingsItem import Ui_SettingsItem
 import AppConfig
 import FileTools
@@ -59,9 +59,9 @@ class SettingsItem (QWidget):
     def focusInEvent (self, event):
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
 
-    # Suggest a name for the index db
     @pyqtSlot('QString')
     def nameEdited(self, text):
+        """Suggest a name for the index db."""
         if self.buildDBName and self.indexGenerationEnabled():
             self.__updateDBName(text)
 
@@ -90,7 +90,7 @@ class SettingsItem (QWidget):
     def browseForDirectory(self):
         directory = QFileDialog.getExistingDirectory (
             self,
-            self.trUtf8("Choose directory to search or index"),
+            self.tr("Choose directory to search or index"),
             "",
             QFileDialog.Options(QFileDialog.ShowDirsOnly))
 
@@ -100,11 +100,11 @@ class SettingsItem (QWidget):
 
     @pyqtSlot()
     def browseForIndexDB(self):
-        indexDB = QFileDialog.getSaveFileNameAndFilter(
+        indexDB = QFileDialog.getSaveFileName(
             None,
-            self.trUtf8("Choose file for index DB"),
+            self.tr("Choose file for index DB"),
             "",
-            self.trUtf8("*.dat"),
+            self.tr("*.dat"),
             None,
             QFileDialog.Options(QFileDialog.DontConfirmOverwrite))
 

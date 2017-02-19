@@ -65,8 +65,8 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         if AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
-                                       self.trUtf8("Really close?"),
-                                       self.trUtf8(
+                                       self.tr("Really close?"),
+                                       self.tr(
                                            "Do you really want to close the application?"),
                                        QMessageBox.StandardButtons(
                                            QMessageBox.No | QMessageBox.Yes),
@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
 
     def newerVersionFound(self, version):
         text = userHintNewVersionAvailable % {"version": version}
-        result = UserHintDialog.showUserHint(self, "newVersion" + version, self.trUtf8("New version available"), text,
+        result = UserHintDialog.showUserHint(self, "newVersion" + version, self.tr("New version available"), text,
                                              UserHintDialog.Yes, True, UserHintDialog.No, False, bShowHintAgain=True)
         if result == UserHintDialog.Yes:
             url = QUrl("http://sourceforge.net/projects/codebeagle/files/")

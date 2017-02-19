@@ -16,8 +16,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
+from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QDialog
 from Ui_StackTraceMessageBox import Ui_StackTraceMessageBox
 import HighlightingTextEdit
 import ExceptionTools
@@ -40,10 +41,10 @@ class StackTraceMessageBox (QDialog):
         self.setTitle(title)
         self.setText(text)
         self.showDetails(False)
-        
+
     def setTitle(self, title):
         self.setWindowTitle(title)
-        
+
     def setText(self, text):
         self.ui.labelText.setText (text)
 
@@ -61,7 +62,8 @@ def show (parent, title, text):
 
 def main():
     import sys
-    app = QApplication(sys.argv) 
+    from PyQt5.QtWidgets import QApplication
+    app = QApplication(sys.argv)
     try:
         1/0
     except:

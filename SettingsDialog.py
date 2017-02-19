@@ -16,8 +16,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt5.QtCore import Qt, QRect, QSize, pyqtSlot
+from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem
+from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyle , QDialog, QMessageBox
 from Ui_SettingsDialog import Ui_SettingsDialog
 from IndexConfiguration import IndexConfiguration
 
@@ -57,17 +58,17 @@ class SettingsEditorDelegate(QStyledItemDelegate):
         location = index.data(Qt.UserRole+1)
 
         if len(location.directories) > 0:
-            dirs = self.trUtf8("Directories: ") + ",".join(location.directories)
+            dirs = self.tr("Directories: ") + ",".join(location.directories)
             if len(location.extensions) > 0:
                 dirs += " ("
-                dirs += self.trUtf8("Extensions: ") + ",".join(location.extensions)
+                dirs += self.tr("Extensions: ") + ",".join(location.extensions)
                 dirs += ")"
             painter.drawText(rect2, Qt.AlignVCenter + Qt.TextWordWrap, dirs)
 
         painter.setFont(self.boldFont)
         locationName = location.displayName()
         if index.row() == self.defaultLocationRow:
-            locationName = locationName + self.trUtf8(" (Default)")
+            locationName = locationName + self.tr(" (Default)")
             painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize/2, self.defaultPixmapSize, self.defaultPixmapSize, self.defaultPixmap)
         painter.drawText(rect1, Qt.AlignVCenter + Qt.TextWordWrap, locationName)
 
@@ -219,7 +220,7 @@ class SettingsDialog (QDialog):
 
     @pyqtSlot()
     def addLocation (self):
-        location = IndexConfiguration(self.trUtf8("New location"))
+        location = IndexConfiguration(self.tr("New location"))
         self.addExistingLocation(location, True)
 
     @pyqtSlot()
@@ -253,12 +254,12 @@ class SettingsDialog (QDialog):
         index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
             location = index.data(Qt.UserRole+1)
-            duplicated = IndexConfiguration (self.trUtf8("Duplicated ") + location.displayName(),
-                                                            location.extensionsAsString(),
-                                                            location.directoriesAsString(),
-                                                            location.dirExcludesAsString(),
-                                                            "",
-                                                            location.indexUpdateMode)
+            duplicated = IndexConfiguration (self.tr("Duplicated ") + location.displayName(),
+                                             location.extensionsAsString(),
+                                             location.directoriesAsString(),
+                                             location.dirExcludesAsString(),
+                                             "",
+                                             location.indexUpdateMode)
             self.myLocations.addLocation(duplicated, True)
 
     @pyqtSlot()
@@ -279,9 +280,9 @@ class SettingsDialog (QDialog):
             name = location.displayName().lower()
             if name in names:
                 QMessageBox.warning(self,
-                    self.trUtf8("Duplicate search location names"),
-                    self.trUtf8("Please choose a unique name for each search location.") + " '" + location.displayName() + "' " +   self.trUtf8("is used more than once."),
-                    QMessageBox.StandardButtons(QMessageBox.Ok))
+                                    self.tr("Duplicate search location names"),
+                                    self.tr("Please choose a unique name for each search location.") + " '" + location.displayName() + "' " +   self.tr("is used more than once."),
+                                    QMessageBox.StandardButtons(QMessageBox.Ok))
                 return
             names.add(name)
         self.accept()

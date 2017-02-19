@@ -16,26 +16,26 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtWidgets import QApplication
 import HighlightingTextEdit
 
 class SourceHighlightingTextEdit (HighlightingTextEdit.HighlightingTextEdit):
     # Triggered if a selection was finished while holding a modifier key down
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
-    
+
     def __init__(self, parent=None):
         super(SourceHighlightingTextEdit, self).__init__(parent)
         self.selectionChanged.connect (self.highlightSelection)
-    
-    @pyqtSlot()    
+
+    @pyqtSlot()
     def highlightSelection(self):
         if QApplication.mouseButtons() != Qt.NoButton: # only react on a finished selection. otherwise we update the highlight too often
             return
         text = self.textCursor().selectedText().strip()
         if not text or len(text)>64:
             return
-        
+
         # Allow other components to react on selection of tokens with keyboard modifiers
         modifiers = int(QApplication.keyboardModifiers())
         if modifiers & int(Qt.ShiftModifier)==0:
@@ -43,7 +43,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit.HighlightingTextEdit):
                 self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
             else:
                 self.setDynamicHighlight(text)
-    
-    
-    
-    
+
+
+
+

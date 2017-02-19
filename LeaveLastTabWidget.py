@@ -47,7 +47,7 @@ class LeaveLastTabWidget (QTabWidget):
 
     def addWidgetsToCornerWidget (self, hbox):
         """Derived classes can implement this to add additional buttons to the corner widget."""
-        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.trUtf8("New tab"),  "NewTab.png",  self.addNewTab)
+        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.tr("New tab"),  "NewTab.png",  self.addNewTab)
 
     def addButtonToCornerWidget (self, hbox, name, iconFile, handler):
         button = QPushButton(name, self)

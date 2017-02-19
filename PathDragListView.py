@@ -16,7 +16,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt, QUrl, QMimeData, QDrag
+from PyQt5.QtCore import Qt, QUrl, QMimeData
+from PyQt5.QtGui import QDrag
 from PyQt5.QtWidgets import QListView, QApplication
 
 class PathDragListView (QListView):

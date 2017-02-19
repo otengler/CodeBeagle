@@ -34,7 +34,7 @@ class HelpViewerDialog (QDialog):
             with fopen(name) as file:
                 text = file.read()
         except:
-            text = self.trUtf8("Failed to open file")
+            text = self.tr("Failed to open file")
 
         self.ui.textBrowserHelp.setHtml (text)
 

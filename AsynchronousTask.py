@@ -16,7 +16,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import QObject, QThread
+from PyQt5.QtCore import QObject, QThread, pyqtSlot
 import ProgressBar
 import threading
 
@@ -48,19 +48,19 @@ class AsynchronousTask (QThread):
         if self.cancelAction:
             self.cancelAction()
 
-# Executes the action performed by the callable 'func' called with *args in a seperate thread.
-# During the action a progress bar is shown. If 'bEnableCancel' is true the callable is
-# passed the named parameter 'cancelEvent'. It contains an event object whose 'is_set' function
-# can be used to test if it is signalled.
 def execute(parent, func, *args, bEnableCancel=False, cancelAction=None):
+    """
+    Executes the action performed by the callable 'func' called with *args in a seperate thread.
+    During the action a progress bar is shown. If 'bEnableCancel' is true the callable is
+    passed the named parameter 'cancelEvent'. It contains an event object whose 'is_set' function
+    can be used to test if it is signalled.
+    """
     progress = None
     try:
         progress = ProgressBar.ProgressBar(parent, bEnableCancel)
 
         searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction)
-        QObject.connect(searchTask, SIGNAL("finished()"), progress.close)
-        QObject.connect(searchTask, SIGNAL("terminated()"), progress.close)
-
+        searchTask.finished.connect(progress.close)
         progress.onCancelClicked.connect(searchTask.cancel)
         progress.show()
 

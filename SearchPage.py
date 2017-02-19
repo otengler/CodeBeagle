@@ -17,9 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from PyQt4.QtCore import * 
-from PyQt4.QtGui import *
-from Ui_SearchPage import Ui_SearchPage 
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QFileInfo, QPoint, QUrl, QAbstractListModel, QModelIndex
+from PyQt5.QtGui import QFont, QDesktopServices
+from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
+from Ui_SearchPage import Ui_SearchPage
 import AsynchronousTask
 import PathVisualizerDelegate
 import FullTextIndex
@@ -28,10 +29,9 @@ import CustomContextMenu
 import UserHintDialog
 import AppConfig
 import StackTraceMessageBox
-from AppConfig import appConfig
 
 userHintUseWildcards = """
-<p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard. 
+<p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard.
 E.g. <b>part*</b> matches also <b>partial</b>. See the help for more information about the search syntax.</p>
 """
 
@@ -45,30 +45,30 @@ def firstDifference(s1,s2):
 def getCustomScriptsFromDisk():
     return [s for s in os.listdir("scripts") if os.path.splitext(s)[1].lower() == ".script"]
 
-class StringListModel(QAbstractListModel): 
-    def __init__(self, filelist,  parent=None): 
+class StringListModel(QAbstractListModel):
+    def __init__(self, filelist,  parent=None):
         super(StringListModel, self).__init__(parent)
         self.filelist = filelist
         self.editorState = {} # maps from file index to an editor state object
         self.sizeHint = None
         self.cutLeft = self.__computeCutLeft()
         self.selectedFileIndex = None
-        
+
     def getEditorState(self, row):
         return self.editorState.get(row)
-        
+
     def setEditorState(self, row, state):
         self.editorState[row] = state
-        
+
     def getSelectedFileIndex (self):
         return self.selectedFileIndex
-        
+
     def setSelectedFileIndex (self,  index):
         self.selectedFileIndex = index
-        
+
     def setSizeHint(self, sizeHint):
         self.sizeHint = sizeHint
-        
+
     # If all entries in the list start with the same directory we don't need to display this prefix.
     def __computeCutLeft (self):
         if len(self.filelist)<2:
@@ -84,13 +84,13 @@ class StringListModel(QAbstractListModel):
                 return lastSep+1
             return firstDiff
         return len(first) # The whole string is equal
- 
-    def rowCount(self, parent=QModelIndex()): 
-        return len(self.filelist) 
- 
-    def data(self, index, role): 
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self.filelist)
+
+    def data(self, index, role):
         if not index.isValid():
-            return None 
+            return None
         if role == Qt.DisplayRole:
             if self.cutLeft:
                 return "..."+self.filelist[index.row()][self.cutLeft:]
@@ -101,11 +101,11 @@ class StringListModel(QAbstractListModel):
         if role == Qt.SizeHintRole:
             return self.sizeHint
         if role == Qt.ToolTipRole and self.cutLeft:
-            name = self.filelist[index.row()] 
-            fileinfo =QFileInfo(name)
+            name = self.filelist[index.row()]
+            fileinfo = QFileInfo(name)
             lastmodified = fileinfo.lastModified().toString()
             # replace with slahses as this will not break the tooltip after the drive letter
-            return name.replace("\\", "/") + "<br/>" + lastmodified 
+            return name.replace("\\", "/") + "<br/>" + lastmodified
         return None
 
 class SearchPage (QWidget):
@@ -114,7 +114,7 @@ class SearchPage (QWidget):
     newSearchRequested = pyqtSignal('QString', 'QString')
     # Triggered when a search has finished
     searchFinished = pyqtSignal('QWidget', 'QString')
-    
+
     def __init__ (self, parent):
         super (SearchPage, self).__init__(parent)
         self.ui = Ui_SearchPage()
@@ -122,9 +122,9 @@ class SearchPage (QWidget):
         self.ui.frameSearch.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.frameResult.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.listView.setItemDelegate(PathVisualizerDelegate.PathVisualizerDelegate(self.ui.listView))
-        QObject.connect(self.ui.comboSearch.lineEdit(), SIGNAL("returnPressed()"), self.performSearch)
-        QObject.connect(self.ui.comboFolderFilter.lineEdit(), SIGNAL("returnPressed()"), self.performSearch)
-        QObject.connect(self.ui.comboExtensionFilter.lineEdit(), SIGNAL("returnPressed()"), self.performSearch)
+        self.ui.comboSearch.lineEdit().returnPressed.connect(self.performSearch)
+        self.ui.comboFolderFilter.lineEdit().returnPressed.connect(self.performSearch)
+        self.ui.comboExtensionFilter.lineEdit().returnPressed.connect(self.performSearch)
         self.ui.sourceViewer.selectionFinishedWithKeyboardModifier.connect(self.newSearchBasedOnSelection)
         self.ui.matchesOverview.selectionFinishedWithKeyboardModifier.connect(self.newSearchBasedOnSelection)
         self.ui.sourceViewer.noPreviousMatch.connect(self.previousFile)
@@ -144,13 +144,13 @@ class SearchPage (QWidget):
         # Hide the performance info button if showPerformanceButton is false
         if not AppConfig.appConfig().showPerformanceButton:
             self.ui.buttonInfo.hide()
-            
+
         # Move some elements of the search bar to a second row if the screen width is too small. This avoid
         # clipping errors if the widget has to paint below minimum size.
         screenGeometry = QApplication.desktop().screenGeometry()
         if screenGeometry.width() < 1200:
             self.__layoutForLowScreenWidth()
-            
+
     # Return the display name of the initial config. This is either the configured default location or if there is no default location
     # the last used location.
     def __chooseInitialLocation (self):
@@ -158,16 +158,16 @@ class SearchPage (QWidget):
         if not configName:
             configName = AppConfig.lastUsedConfigName()
         return configName
-            
+
     def __loadCommonKeywordMap(self):
         try:
             return FullTextIndex.buildMapFromCommonKeywordFile (AppConfig.appConfig().commonKeywords)
         except:
             return {}
-            
+
     def focusInEvent (self, event):
         self.ui.comboSearch.setFocus(Qt.ActiveWindowFocusReason)
-        
+
     @pyqtSlot(bool)
     def switchView(self, bChecked):
         if bChecked:
@@ -175,24 +175,24 @@ class SearchPage (QWidget):
             self.ui.matchesOverview.activate()
         else:
             self.ui.stackedWidget.setCurrentIndex(0)
-        
+
     def __updateSourceFont (self):
         if not self.sourceFont:
             self.sourceFont = QFont()
-        
+
         config = AppConfig.appConfig().SourceViewer
-        
+
         # Apply font and tab changes (if any)
         if self.sourceFont.family().lower() != config.FontFamily.lower() or self.sourceFont.pointSize() != config.FontSize:
             self.sourceFont.setFamily(config.FontFamily)
             self.sourceFont.setPointSize(config.FontSize)
-            
+
         return self.sourceFont
-          
+
     @pyqtSlot(list)
     def reloadConfig (self,searchLocationList):
         # updateSearchLocationList rebuilds the list which modifies self.currentConfigName so the current config must be preserved
-        backupCurrentConfigName = self.currentConfigName 
+        backupCurrentConfigName = self.currentConfigName
         self.__updateSearchLocationList (searchLocationList)
         if self.unavailableConfigName and self.setCurrentSearchLocation (self.unavailableConfigName):
             # Successfully switched backed to previous config
@@ -203,7 +203,7 @@ class SearchPage (QWidget):
             self.unavailableConfigName = backupCurrentConfigName
         self.ui.sourceViewer.reloadConfig(self.__updateSourceFont())
         self.ui.matchesOverview.reloadConfig(self.__updateSourceFont())
-        
+
     def __updateSearchLocationList(self,  searchLocationList):
         self.searchLocationList = searchLocationList
         self.ui.comboLocation.clear()
@@ -214,15 +214,15 @@ class SearchPage (QWidget):
             self.ui.comboLocation.show()
             self.ui.labelLocation.show()
         for config in self.searchLocationList:
-            self.ui.comboLocation.addItem(config.displayName(), config) 
-            
+            self.ui.comboLocation.addItem(config.displayName(), config)
+
     def setCurrentSearchLocation(self, searchLocationName):
         for i, config in enumerate (self.searchLocationList):
             if searchLocationName == config.displayName():
                 self.ui.comboLocation.setCurrentIndex(i)
                 self.currentConfigName = searchLocationName
                 return True
-        # Nothing found, select first one 
+        # Nothing found, select first one
         if len(self.searchLocationList) > 0:
             self.ui.comboLocation.setCurrentIndex (0)
             self.currentConfigName = self.searchLocationList[0].displayName()
@@ -230,11 +230,11 @@ class SearchPage (QWidget):
             self.ui.comboLocation.setCurrentIndex(-1)
             self.currentConfigName = ""
         return False
-            
+
     @pyqtSlot('QString')
     def currentLocationChanged(self, currentConfigName):
         self.currentConfigName = currentConfigName
-     
+
     @pyqtSlot(QModelIndex)
     def fileSelected (self,  index):
         model = self.ui.listView.model()
@@ -247,19 +247,19 @@ class SearchPage (QWidget):
         editorState = self.ui.listView.model().getEditorState(index.row())
         if editorState:
             self.ui.sourceViewer.restoreEditorState(editorState)
-        
+
     def showFile (self, name):
         if self.ui.sourceViewer.currentFile != name:
             self.ui.sourceViewer.showFile(name)
-        
+
     @pyqtSlot()
     def nextFile (self):
         self.__changeSelectedFile (1)
-        
+
     @pyqtSlot()
     def previousFile (self):
         self.__changeSelectedFile (-1)
-                
+
     def __changeSelectedFile (self, increment):
         index = self.ui.listView.currentIndex()
         if index.isValid():
@@ -267,7 +267,7 @@ class SearchPage (QWidget):
             if nextIndex.isValid():
                 self.ui.listView.setCurrentIndex(nextIndex)
                 self.ui.listView.activated.emit(nextIndex)
-        
+
     @pyqtSlot('QString', int)
     def newSearchBasedOnSelection (self, text, modifiers):
         if modifiers & Qt.ControlModifier:
@@ -277,24 +277,24 @@ class SearchPage (QWidget):
             else:
                 # Search in a new tab
                 self.newSearchRequested.emit(text,  self.ui.comboLocation.currentText())
-        
+
     def getSearchParameterFromUI (self):
         strSearch = self.ui.comboSearch.currentText().strip()
         strFolderFilter = self.ui.comboFolderFilter.currentText().strip()
         strExtensionFilter = self.ui.comboExtensionFilter.currentText().strip()
         bCaseSensitive = self.ui.checkCaseSensitive.checkState() == Qt.Checked
         return (strSearch, strFolderFilter,  strExtensionFilter,  bCaseSensitive)
-        
+
     # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
     def __prepareSearch (self):
         self.__updateSearchResult(SearchMethods.ResultSet()) # clear current results
-        
+
         self.currentConfigName = self.ui.comboLocation.currentText()
         i = self.ui.comboLocation.currentIndex()
         indexConf = self.ui.comboLocation.model().index(i, 0).data(Qt.UserRole)
         params = self.getSearchParameterFromUI()
         return (params,  indexConf)
-        
+
     @pyqtSlot()
     def execCustomScripts (self):
         scripts = getCustomScriptsFromDisk()
@@ -303,31 +303,31 @@ class SearchPage (QWidget):
         for script in scripts:
             actions.append(menu.addAction(os.path.splitext(script)[0]))
         pos = self.mapToGlobal(self.ui.buttonCustomScripts.pos())
-        pos += QPoint(0,  self.ui.buttonCustomScripts.height())
+        pos += QPoint(0, self.ui.buttonCustomScripts.height())
         result = menu.exec(pos)
         if not result:
             return
-            
+
         try:
             script = scripts[actions.index(result)]
         except ValueError:
             return
-        
+
         params, indexConf = self.__prepareSearch ()
         if not indexConf:
             return
-        
+
         try:
             result = SearchMethods.customSearch (self, script,  params, indexConf,  self.commonKeywordMap)
         except:
             self.reportCustomSearchFailed ()
         else:
             self.__updateSearchResult(result)
-        
+
     def searchForText (self,  text):
         self.ui.comboSearch.setEditText(text)
         self.performSearch()
-        
+
     @pyqtSlot()
     def performSearch (self):
         params, indexConf = self.__prepareSearch ()
@@ -335,7 +335,7 @@ class SearchPage (QWidget):
             return
 
         AppConfig.setLastUsedConfigName(indexConf.displayName())
-        
+
         try:
             result = SearchMethods.search (self, params, indexConf,  self.commonKeywordMap)
         except FullTextIndex.QueryError as error:
@@ -344,9 +344,9 @@ class SearchPage (QWidget):
             self.reportFailedSearch(indexConf)
         else:
             self.__updateSearchResult(result)
-            text = self.trUtf8(userHintUseWildcards)
-            UserHintDialog.showUserHint (self, "useWildcards",  self.trUtf8("Try using wildcards"), text,  UserHintDialog.OK)
-        
+            text = self.tr(userHintUseWildcards)
+            UserHintDialog.showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  UserHintDialog.OK)
+
     def __updateSearchResult (self, result):
         if result.label:
             self.searchFinished.emit(self, result.label)
@@ -359,26 +359,26 @@ class SearchPage (QWidget):
         self.matches = matches
         self.ui.sourceViewer.setSearchData (result.searchData)
         self.ui.matchesOverview.setSearchResult(self.matches, result.searchData)
-        self.ui.labelMatches.setText("%u " % (len(matches), ) + self.trUtf8("matches"))
+        self.ui.labelMatches.setText("%u " % (len(matches), ) + self.tr("matches"))
         model = StringListModel(matches)
         sizeHint = self.ui.listView.itemDelegate().computeSizeHint(matches,  model.cutLeft)
         model.setSizeHint(sizeHint)
         self.ui.listView.setModel(model)
         # Activate first match if enabled in config
-        if appConfig().activateFirstMatch:
+        if AppConfig.appConfig().activateFirstMatch:
             if model.rowCount() > 0:
                 index = self.ui.listView.model().index(0, 0)
                 if index.isValid():
                     self.ui.listView.setCurrentIndex(index)
                     self.ui.listView.activated.emit(index)
-            
+
     @pyqtSlot()
     def lockResultSet (self,  bChecked):
         if bChecked:
             self.lockedResultSet = self.matches[:] # copy the matches, a reference is not enough
         else:
             self.lockedResultSet = None
-        
+
     @pyqtSlot(QModelIndex)
     def openFileWithSystem(self, index):
         name = index.data(Qt.UserRole)
@@ -389,9 +389,9 @@ class SearchPage (QWidget):
     def performanceInfo (self):
         if not self.perfReport:
             return
-        QMessageBox.information(self, self.trUtf8("Performance info"), str(self.perfReport),
-            QMessageBox.StandardButtons(QMessageBox.Ok), QMessageBox.Ok)
-            
+        QMessageBox.information(self, self.tr("Performance info"), str(self.perfReport),
+                                QMessageBox.StandardButtons(QMessageBox.Ok), QMessageBox.Ok)
+
     @pyqtSlot()
     def exportMatches(self):
         model = self.ui.listView.model()
@@ -403,18 +403,18 @@ class SearchPage (QWidget):
             if result:
                 result += os.linesep
             result += model.data(index, Qt.UserRole)
-            
+
         exportFile = QFileDialog.getSaveFileName(
             self,
-            self.trUtf8("Export matches"),
-            self.trUtf8("export.txt"),
-            self.trUtf8("txt"))
+            self.tr("Export matches"),
+            self.tr("export.txt"),
+            self.tr("txt"))
         if not exportFile:
             return
-            
+
         with open (exportFile, "w",  -1,  "utf_8_sig") as output:
             output.write(result)
-            
+
     @pyqtSlot(QPoint)
     def contextMenuRequested(self, pos):
         files = self.__getSelectedFiles()
@@ -423,14 +423,14 @@ class SearchPage (QWidget):
         fullpath = files[0]
         name = os.path.split(fullpath)[1]
         menu = QMenu()
-        menu.addAction(self.trUtf8("Copy &full path"),  lambda: self.__copyFullPaths(files))
+        menu.addAction(self.tr("Copy &full path"),  lambda: self.__copyFullPaths(files))
         if len(files)==1:
-            menu.addAction(self.trUtf8("Copy &path of containing folder"),  lambda: self.__copyPathOfContainingFolder(fullpath))
-        menu.addAction(self.trUtf8("Copy file &name"),  lambda: self.__copyFileNames(files))
+            menu.addAction(self.tr("Copy &path of containing folder"),  lambda: self.__copyPathOfContainingFolder(fullpath))
+        menu.addAction(self.tr("Copy file &name"),  lambda: self.__copyFileNames(files))
         if len(files)==1:
-            menu.addAction(self.trUtf8("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))
-            menu.addAction(self.trUtf8("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))
-        
+            menu.addAction(self.tr("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))
+            menu.addAction(self.tr("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))
+
         entries = CustomContextMenu.customMenuEntries (AppConfig.appConfig())
         for entry in entries:
             try:
@@ -441,22 +441,22 @@ class SearchPage (QWidget):
             # The default lambda argument is used to preserve the value of entry for each lambda. Otherwise all lambdas would call the last entry.execute
             # See http://stackoverflow.com/questions/2295290/what-do-lambda-function-closures-capture-in-python
             menu.addAction(entry.title,  lambda entry=entry: AsynchronousTask.execute (self, entry.execute,  self.__getSelectedFiles()))
-        
+
         menu.exec(self.ui.listView.mapToGlobal(pos))
-            
+
     def __copyFullPaths(self,  names):
-        clipboard = QApplication.clipboard()  
+        clipboard = QApplication.clipboard()
         clipboard.setText(os.linesep.join(names))
-        
+
     def __copyPathOfContainingFolder(self,  name):
         clipboard = QApplication.clipboard()
         clipboard.setText(os.path.split(name)[0])
-     
+
     def __copyFileNames(self,  names):
         clipboard = QApplication.clipboard()
         text = os.linesep.join(os.path.split(name)[1] for name in names)
-        clipboard.setText(text)   
-        
+        clipboard.setText(text)
+
     def __browseToFolder (self,  name):
         url = QUrl.fromLocalFile (os.path.split(name)[0])
         if os.name != "nt":
@@ -464,10 +464,10 @@ class SearchPage (QWidget):
         else:
             import subprocess
             subprocess.Popen (["explorer.exe", "/select," + name])
-    
+
     def __searchForFileName (self,  name):
         self.newSearchRequested.emit(name,  self.ui.comboLocation.currentText())
-        
+
     def __getSelectedFiles (self):
         filenames = []
         indexes = self.ui.listView.selectedIndexes ()
@@ -475,7 +475,7 @@ class SearchPage (QWidget):
             if index.isValid():
                 filenames.append (index.data(Qt.UserRole))
         return filenames
-        
+
     def __layoutForLowScreenWidth (self):
         self.ui.frameSearch2 = QFrame(self)
         self.ui.frameSearch2.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
@@ -496,37 +496,37 @@ class SearchPage (QWidget):
         self.layout().insertWidget(1, self.ui.frameSearch2)
 
     @pyqtSlot(CustomContextMenu.CustomContextMenu)
-    def reportCustomContextMenuFailed (self,  contextMenuError):
+    def reportCustomContextMenuFailed (self, contextMenuError):
         if not contextMenuError.exception:
             QMessageBox.warning(self,
-                self.trUtf8("Custom context menu failed"),
-                self.trUtf8("Failed to start '") + contextMenuError.program + self.trUtf8("' for:\n") + "\n".join(contextMenuError.failedFiles),
-                QMessageBox.StandardButtons(QMessageBox.Ok))
+                                self.tr("Custom context menu failed"),
+                                self.tr("Failed to start '") + contextMenuError.program + self.tr("' for:\n") + "\n".join(contextMenuError.failedFiles),
+                                QMessageBox.StandardButtons(QMessageBox.Ok))
         else:
             QMessageBox.warning(self,
-                self.trUtf8("Custom context menu failed"),
-                self.trUtf8("The custom context menu script '") + contextMenuError.program + self.trUtf8("' failed to execute:\n") + contextMenuError.exception,
-                QMessageBox.StandardButtons(QMessageBox.Ok))
+                                self.tr("Custom context menu failed"),
+                                self.tr("The custom context menu script '") + contextMenuError.program + self.tr("' failed to execute:\n") + contextMenuError.exception,
+                                QMessageBox.StandardButtons(QMessageBox.Ok))
 
     def reportQueryError(self,  error):
         StackTraceMessageBox.show(self,
-                self.trUtf8("Search not possible"),
-                str(error))
+                                  self.tr("Search not possible"),
+                                  str(error))
 
-    # Show the user possible reason why the search threw an exception
     def reportFailedSearch(self, indexConf):
+        """Show the user possible reason why the search threw an exception."""
         if indexConf.generatesIndex():
             StackTraceMessageBox.show(self,
-                self.trUtf8("Search failed"),
-                self.trUtf8("""Maybe the index has not been generated yet or is not accessible?"""))
+                                      self.tr("Search failed"),
+                                      self.tr("""Maybe the index has not been generated yet or is not accessible?"""))
         else:
             StackTraceMessageBox.show(self,
-                self.trUtf8("Search failed"),
-                self.trUtf8("""Please check that the search location exists and is accessible."""))
-            
+                                      self.tr("Search failed"),
+                                      self.tr("""Please check that the search location exists and is accessible."""))
+
     def reportCustomSearchFailed (self):
         StackTraceMessageBox.show(self,
-                self.trUtf8("Custom search failed"),
-                self.trUtf8("Custom search scripts are written in Python. Click on 'Show details' to display the stack trace."))
+                                  self.tr("Custom search failed"),
+                                  self.tr("Custom search scripts are written in Python. Click on 'Show details' to display the stack trace."))
 
 
