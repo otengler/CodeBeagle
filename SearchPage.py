@@ -408,7 +408,8 @@ class SearchPage (QWidget):
             self,
             self.tr("Export matches"),
             self.tr("export.txt"),
-            self.tr("txt"))
+            self.tr("txt"))[0] # tuple returned, selection and used filter
+
         if not exportFile:
             return
 

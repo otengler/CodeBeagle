@@ -106,7 +106,7 @@ class SettingsItem (QWidget):
             "",
             self.tr("*.dat"),
             None,
-            QFileDialog.Options(QFileDialog.DontConfirmOverwrite))
+            QFileDialog.Options(QFileDialog.DontConfirmOverwrite))[0] # tuple returned, selection and used filter
 
         if len(indexDB[0]): # indexDB is a touple: file,filter
             self.ui.editIndexDB.setText (indexDB[0])
