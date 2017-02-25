@@ -1,20 +1,33 @@
 call buildvars.bat
 call build.bat
 
-set BUILDDIR=build\exe.win32-3.3
+set BUILDDIR=build\exe.win32-3.6
 if exist build rmdir /s /q build
-%PYTHON% setup.py build
-del /q %BUILDDIR%\_hashlib.pyd
-del /q %BUILDDIR%\_ssl.pyd
-del /q %BUILDDIR%\select.pyd
-del /q %BUILDDIR%\win32api.pyd
-del /q %BUILDDIR%\pyexpat.pyd
-del /q %BUILDDIR%\_bz2.pyd
-del /q %BUILDDIR%\_lzma.pyd
+python.exe setup.py build_exe
+copy %PYDIR%\DLLS\sqlite3.dll %BUILDDIR%
 
-xcopy qt.conf %BUILDDIR%
-mkdir %BUILDDIR%\plugins\imageformats
-xcopy %PYDIR%\lib\site-packages\PyQt4\plugins\imageformats\qgif4.dll %BUILDDIR%\plugins\imageformats\
+rmdir /q /s %BUILDDIR%\html 
+rmdir /q /s %BUILDDIR%\importlib 
+rmdir /q /s %BUILDDIR%\pydoc_data 
+rmdir /q /s %BUILDDIR%\xml 
+del /q %BUILDDIR%\_bz2.pyd
+del /q %BUILDDIR%\_hashlib.pyd
+del /q %BUILDDIR%\_lzma.pyd
+del /q %BUILDDIR%\pyexpat.pyd
+
+rmdir /q /s %BUILDDIR%\imageformats
+del /q %BUILDDIR%\platforms\qoffscreen.dll
+del /q %BUILDDIR%\platforms\qminimal.dll
+del /q %BUILDDIR%\Qt5Svg.dll
+
+mkdir %BUILDDIR%\PyQt5.new
+copy %BUILDDIR%\PyQt5\__init__.pyc %BUILDDIR%\PyQt5.new 
+copy %BUILDDIR%\PyQt5\QtCore.pyd %BUILDDIR%\PyQt5.new
+copy %BUILDDIR%\PyQt5\QtWidgets.pyd %BUILDDIR%\PyQt5.new
+copy %BUILDDIR%\PyQt5\QtGui.pyd %BUILDDIR%\PyQt5.new
+rmdir /q /s %BUILDDIR%\PyQt5
+move %BUILDDIR%\PyQt5.new %BUILDDIR%\PyQt5
+
 xcopy config.txt %BUILDDIR%
 xcopy help.html %BUILDDIR%
 xcopy gpl.txt %BUILDDIR%

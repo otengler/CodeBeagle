@@ -59,7 +59,7 @@ class SettingsItem (QWidget):
     def focusInEvent (self, event):
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
 
-    @pyqtSlot('QString')
+    @pyqtSlot(str)
     def nameEdited(self, text):
         """Suggest a name for the index db."""
         if self.buildDBName and self.indexGenerationEnabled():
@@ -70,14 +70,14 @@ class SettingsItem (QWidget):
         location = os.path.join (location,  FileTools.removeInvalidFileChars(text)+".dat")
         self.ui.editIndexDB.setText(location)
 
-    @pyqtSlot('QString')
+    @pyqtSlot(str)
     def indexDBEdited(self, text):
         if text:
             self.buildDBName = False
         else:
             self.buildDBName = True
 
-    @pyqtSlot('int')
+    @pyqtSlot(int)
     def updateIndexModeChanged (self,  index):
         indexWanted = (index != IndexConfiguration.NoIndexWanted)
         self.ui.editIndexDB.setEnabled(indexWanted)
