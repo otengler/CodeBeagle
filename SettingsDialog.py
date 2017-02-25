@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import Qt, QRect, QSize, pyqtSlot, QModelIndex, QObject
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyle , QDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyle, QDialog, QMessageBox
 from Ui_SettingsDialog import Ui_SettingsDialog
 from IndexConfiguration import IndexConfiguration
 
@@ -107,13 +107,13 @@ class LocationControl (QObject):
         else:
             self.settingsItem.resetAndDisable()
 
-    @pyqtSlot() 
+    @pyqtSlot()
     def updateDisplayRole(self):
         index = self.listView.currentIndex()
         if index.isValid():
             self.saveDataForItem(index)
 
-    @pyqtSlot(QModelIndex, QModelIndex) 
+    @pyqtSlot(QModelIndex, QModelIndex)
     def selectionChanged(self, current: QModelIndex, previous: QModelIndex):
         self.saveDataForItem(previous)
         self.loadDataFromItem(current)
