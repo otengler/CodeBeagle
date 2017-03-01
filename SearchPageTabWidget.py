@@ -250,7 +250,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.userConfigFailedToLoadMessage()
         else:
             searchLocations = IndexConfiguration.readConfig(config)
-            displayNames = [conf.displayName() for conf in searchLocations if config.generatesIndex()]
+            displayNames = [conf.displayName() for conf in searchLocations if conf.generatesIndex()]
             from CheckableItemsDialog import CheckableItemsDialog
             updateDialog = CheckableItemsDialog(self.tr("Choose indexes to update"),  True, self)
             for name in displayNames:
