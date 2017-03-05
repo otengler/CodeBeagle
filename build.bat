@@ -1,7 +1,7 @@
 call buildvars.bat
 
 set PYUIC=%PYDIR%\scripts\pyuic5.exe
-set PYRCC4=%PYDIR%\scripts\pyrcc5.exe
+set PYRCC5=%PYDIR%\scripts\pyrcc5.exe
 
 %PYTHON% %PYUIC% -o Ui_MainWindow.py -x MainWindow.ui 
 %PYTHON% %PYUIC% -o Ui_LeaveLastTabWidget.py -x LeaveLastTabWidget.ui 
@@ -20,10 +20,10 @@ set PYRCC4=%PYDIR%\scripts\pyrcc5.exe
 
 copy /Y resources\Crystal\*.* resources\
 
-%PYRCC4% -o LeaveLastTabWidget_rc.py LeaveLastTabWidget.qrc
-%PYRCC4% -o MainWindow_rc.py MainWindow.qrc
-%PYRCC4% -o SearchPage_rc.py SearchPage.qrc
-%PYRCC4% -o SettingsDialog_rc.py SettingsDialog.qrc
-%PYRCC4% -o StackTraceMessageBox_rc.py StackTraceMessageBox.qrc
-
+%PYRCC5% -o LeaveLastTabWidget_rc.py LeaveLastTabWidget.qrc
+%PYRCC5% -o MainWindow_rc.py MainWindow.qrc
+%PYRCC5% -o SearchPage_rc.py SearchPage.qrc
+%PYRCC5% -o SettingsDialog_rc.py SettingsDialog.qrc
+%PYRCC5% -o StackTraceMessageBox_rc.py StackTraceMessageBox.qrc
+%PYRCC5% -o darkorange_resources_rc.py style/darkorange/resources.qrc
  
