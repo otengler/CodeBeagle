@@ -30,8 +30,6 @@ class SourceHighlightingTextEdit (HighlightingTextEdit.HighlightingTextEdit):
 
     @pyqtSlot()
     def highlightSelection(self):
-        if QApplication.mouseButtons() != Qt.NoButton: # only react on a finished selection. otherwise we update the highlight too often
-            return
         text = self.textCursor().selectedText().strip()
         if not text or len(text)>64:
             return
