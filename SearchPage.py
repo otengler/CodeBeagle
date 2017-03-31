@@ -496,7 +496,7 @@ class SearchPage (QWidget):
         layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.layout().insertWidget(1, self.ui.frameSearch2)
 
-    @pyqtSlot(CustomContextMenu.CustomContextMenu)
+    @pyqtSlot(CustomContextMenu.ContextMenuError)
     def reportCustomContextMenuFailed (self, contextMenuError):
         if not contextMenuError.exception:
             QMessageBox.warning(self,
