@@ -1,3 +1,9 @@
+1.2.3 (5//2017):
+- Allow to configure which indexes are updated by UpdateIndex.exe and which need be updated manually from the UI
+- Add option to open first match automatically after searching
+- Allow to process files without extension by using a dot as extension
+- Update to Qt 5.8 and Python 3.6
+
 1.2.2 (5/24/2014):
 - Show matches in a single file in a list box to allow quick navigation
 - Save state of source viewer when switching between files (current match, current line)

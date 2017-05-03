@@ -15,7 +15,16 @@ del /q %BUILDDIR%\_hashlib.pyd
 del /q %BUILDDIR%\_lzma.pyd
 del /q %BUILDDIR%\pyexpat.pyd
 
-rmdir /q /s %BUILDDIR%\imageformats
+del /q %BUILDDIR%\imageformats\qicns.dll
+del /q %BUILDDIR%\imageformats\qico.dll
+del /q %BUILDDIR%\imageformats\qicns.dll
+del /q %BUILDDIR%\imageformats\qjpeg.dll
+del /q %BUILDDIR%\imageformats\qsvg.dll
+del /q %BUILDDIR%\imageformats\qtga.dll
+del /q %BUILDDIR%\imageformats\qtiff.dll
+del /q %BUILDDIR%\imageformats\qwbmp.dll
+del /q %BUILDDIR%\imageformats\qwebp.dll
+
 del /q %BUILDDIR%\platforms\qoffscreen.dll
 del /q %BUILDDIR%\platforms\qminimal.dll
 del /q %BUILDDIR%\Qt5Svg.dll
