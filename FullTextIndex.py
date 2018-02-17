@@ -27,8 +27,9 @@ import logging
 from FileTools import fopen
 
 reTokenize = re.compile(r"[\w#]+")
-reQueryToken = re.compile(r"[\w#*]+")
+reQueryToken = re.compile(r"[\w#*]+|<!.*!>")
 reMatchWords = re.compile(r"(\*\*)([0-9]+)")
+reMatchRegEx = re.compile(r"<!(.*)!>")
 
 strSetup = """
 CREATE TABLE IF NOT EXISTS keywords(
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS indexInfo(
 IndexPart = 1
 ScanPart = 2
 MatchWordsPart = 3
+RegExPart = 4
 
 def genFind(filepat, strRootDir, dirExcludes=[]):
     def fixExtension(ext):
@@ -162,6 +164,11 @@ def splitSearchParts(str):
         if result and int(result.group(2)) > 0:
             matchWordsPart = (MatchWordsPart, int(result.group(2)))
             parts.append(matchWordsPart)
+        elif token.startswith("<!"):
+            r =  reMatchRegEx.match(token)
+            if r:
+                regExPart = (RegExPart, r.group(1))
+            parts.append(regExPart)
         else:
             partIndexPart = (IndexPart, token)
             parts.append(partIndexPart)
@@ -217,6 +224,7 @@ class TestSearchParts(unittest.TestCase):
         self.assertEqual(splitSearchParts("#if a"), [(IndexPart, "#if"), (ScanPart, ""), (IndexPart, "a")])
         self.assertEqual(splitSearchParts("a **2"), [(IndexPart, "a"), (ScanPart, ""), (MatchWordsPart, 2)])
         self.assertEqual(splitSearchParts("a ***"), [(IndexPart, "a"), (ScanPart, "***")])
+        self.assertEqual(splitSearchParts("a <!abc!>"), [(IndexPart, "a"), (ScanPart, ""), (RegExPart, "abc")])
 
 class QueryError(RuntimeError):
     def __init__(self, strReason):
@@ -242,6 +250,14 @@ class Query(metaclass = abc.ABCMeta):
     # All indexed parts
     def indexedPartsLower(self):
         return (part[1].lower() for part in self.parts if part[0] == IndexPart)
+
+    def requiresRegex(self):
+        """True if the query relies on a regex. That is e.g. true if you search for more than one keyword or case sensitive."""
+        if self.partCount() > 1 and self.hasPartTypeUnequalTo(IndexPart):
+            return True
+        if self.bCaseSensitive:
+            return True
+        return False
 
     def hasPartTypeEqualTo(self, partType):
         for part in self.parts:
@@ -327,8 +343,10 @@ class SearchQuery(Query):
                         regParts.append("\\" + c)
                     else:
                         regParts.append(c)
-            elif MatchWordsPart:
+            elif MatchWordsPart == t:
                 regParts.append(r"(?:(?:\s+)?\S+){1,%u}?" % s)
+            elif RegExPart == t:
+                regParts.append("("+s+")")
         reExpr = re.compile(r"\s*".join(regParts), self.reFlags)
         return reExpr
 
@@ -510,7 +528,7 @@ class FullTextIndex:
             if not result:
                 return []
 
-        if (query.partCount() > 1 and query.hasPartTypeUnequalTo(IndexPart)) or query.bCaseSensitive:
+        if query.requiresRegex():
             with perfReport.newAction("Filtering results"):
                 return self.__filterDocsBySearchPhrase((r[0] for r in result), query, cancelEvent)
         else:
@@ -599,7 +617,9 @@ class FullTextIndex:
                 # In the common keyword map
                 badKeywordsTemp.append((quality, keywords))
         badKeywords = [keywords for unusedQuality, keywords in sorted(badKeywordsTemp, reverse=True)]
-        return goodKeywords, badKeywords
+        
+        # Sort good keywords by length descending, the hope is that longer keywords are more unique
+        return sorted(goodKeywords,reverse=True,key=len), badKeywords
 
     # Receives a list of keywords which might contain wildcards. For every passed keyword a list of Keyword objects
     # is returned. If a keyword is not found an empty list is returned.
