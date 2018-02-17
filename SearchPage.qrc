@@ -15,5 +15,6 @@
     <file>resources/Find.png</file>
     <file>resources/PerfInfo.png</file>
     <file>resources/Find.png</file>
+    <file>resources/regex.png</file>
   </qresource>
 </RCC>

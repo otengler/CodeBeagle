@@ -29,6 +29,7 @@ import CustomContextMenu
 import UserHintDialog
 import AppConfig
 import StackTraceMessageBox
+import RegExTesterDlg
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard.
@@ -131,6 +132,7 @@ class SearchPage (QWidget):
         self.ui.matchesOverview.selectionFinishedWithKeyboardModifier.connect(self.newSearchBasedOnSelection)
         self.ui.sourceViewer.noPreviousMatch.connect(self.previousFile)
         self.ui.sourceViewer.noNextMatch.connect(self.nextFile)
+        self.ui.buttonRegEx.clicked.connect(self.showRegExTester)
         self.ui.splitter.setSizes((1, 2)) # distribute splitter space 1:2
         self.perfReport = None
         self.indexConfig = []
@@ -450,6 +452,12 @@ class SearchPage (QWidget):
             menu.addAction(entry.title,  lambda entry=entry: AsynchronousTask.execute (self, entry.execute,  self.__getSelectedFiles()))
 
         menu.exec(self.ui.listView.mapToGlobal(pos))
+
+    @pyqtSlot()
+    def showRegExTester(self):
+        tester = RegExTesterDlg.RegExTesterDlg(self)
+        tester.setAttribute(Qt.WA_DeleteOnClose)
+        tester.show()
 
     def __copyFullPaths(self,  names):
         clipboard = QApplication.clipboard()

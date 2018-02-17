@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RegExTesterDlg</class>
+ <widget class="QDialog" name="RegExTesterDlg">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>473</width>
+    <height>394</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Regular expression tester</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="labelExpr">
+       <property name="text">
+        <string>Regular expression:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTextEdit" name="textEditExpr"/>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Per line:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioButtonSearch">
+       <property name="text">
+        <string>Search first</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioButtonSearchAll">
+       <property name="text">
+        <string>Search all</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioButtonMatch">
+       <property name="text">
+        <string>Match</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <widget class="QCheckBox" name="checkBoxColorizeGroups">
+       <property name="text">
+        <string>Colorize expression groups</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_5">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QLabel" name="labelText">
+       <property name="text">
+        <string>Text:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTextEdit" name="textEditText">
+     <property name="lineWrapMode">
+      <enum>QTextEdit::NoWrap</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>208</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonOK">
+       <property name="text">
+        <string>OK</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>textEditExpr</sender>
+   <signal>textChanged()</signal>
+   <receiver>RegExTesterDlg</receiver>
+   <slot>exprTextChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>271</x>
+     <y>85</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>265</x>
+     <y>248</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonOK</sender>
+   <signal>clicked()</signal>
+   <receiver>RegExTesterDlg</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>484</x>
+     <y>491</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>271</x>
+     <y>258</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonMatch</sender>
+   <signal>clicked()</signal>
+   <receiver>RegExTesterDlg</receiver>
+   <slot>setModeMatch()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>388</x>
+     <y>144</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>236</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonSearch</sender>
+   <signal>clicked()</signal>
+   <receiver>RegExTesterDlg</receiver>
+   <slot>setModeSearchFirst()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>84</x>
+     <y>144</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>236</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonSearchAll</sender>
+   <signal>clicked()</signal>
+   <receiver>RegExTesterDlg</receiver>
+   <slot>setModeSearchAll()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>236</x>
+     <y>144</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>236</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxColorizeGroups</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>RegExTesterDlg</receiver>
+   <slot>checkColorizeGroups(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>102</x>
+     <y>192</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>236</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>exprTextChanged()</slot>
+  <slot>setModeSearchFirst()</slot>
+  <slot>setModeSearchAll()</slot>
+  <slot>setModeMatch()</slot>
+  <slot>checkColorizeGroups(bool)</slot>
+ </slots>
+</ui>

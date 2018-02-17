@@ -17,6 +17,7 @@ set PYRCC5=%PYDIR%\scripts\pyrcc5.exe
 %PYTHON% %PYUIC% -o Ui_MatchesOverview.py -x MatchesOverview.ui 
 %PYTHON% %PYUIC% -o Ui_GotoLineDialog.py -x GotoLineDialog.ui
 %PYTHON% %PYUIC% -o Ui_StackTraceMessageBox.py -x StackTraceMessageBox.ui
+%PYTHON% %PYUIC% -o Ui_RegExTesterDlg.py -x RegExTesterDlg.ui
 
 copy /Y resources\Crystal\*.* resources\
 
@@ -25,5 +26,4 @@ copy /Y resources\Crystal\*.* resources\
 %PYRCC5% -o SearchPage_rc.py SearchPage.qrc
 %PYRCC5% -o SettingsDialog_rc.py SettingsDialog.qrc
 %PYRCC5% -o StackTraceMessageBox_rc.py StackTraceMessageBox.qrc
-%PYRCC5% -o darkorange_resources_rc.py style/darkorange/resources.qrc
  
