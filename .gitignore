@@ -4,3 +4,6 @@ resources/*.*
 Ui_*.py
 *_rc.py
 _eric5project/
+ManagedConfig.txt
+UserConfig.txt
+*.dat

@@ -372,7 +372,7 @@ class SearchPage (QWidget):
                     self.ui.listView.setCurrentIndex(index)
                     self.ui.listView.activated.emit(index)
 
-    @pyqtSlot()
+    @pyqtSlot(bool)
     def lockResultSet (self,  bChecked):
         if bChecked:
             self.lockedResultSet = self.matches[:] # copy the matches, a reference is not enough

@@ -712,7 +712,7 @@ p, li { white-space: pre-wrap; }
    <sender>buttonLockResultSet</sender>
    <signal>clicked(bool)</signal>
    <receiver>SearchPage</receiver>
-   <slot>lockResultSet()</slot>
+   <slot>lockResultSet(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>390</x>

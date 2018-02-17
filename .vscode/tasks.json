@@ -5,7 +5,7 @@
     "tasks": [
         {
             "taskName": "Qt Designer",
-            "command": "C:\\Qt\\qtcreator-3.6.0\\bin\\qtcreator.exe",
+            "command": "D:\\Qt\\qtcreator-3.6.0\\bin\\qtcreator.exe",
             "args": ["${file}"],
             "isShellCommand": false,
             "showOutput": "never"
