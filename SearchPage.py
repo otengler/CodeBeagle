@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QFileInfo, QPoint, QUrl, QAbstractListModel, QModelIndex
-from PyQt5.QtGui import QFont, QDesktopServices
+from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
 from Ui_SearchPage import Ui_SearchPage
 import AsynchronousTask
@@ -111,9 +111,11 @@ class StringListModel(QAbstractListModel):
 class SearchPage (QWidget):
     # Triggered when a new search tab is requested which should be opened using a given search string
     # First parameter is the search string, the second the display name of the search configuration (IndexConfiguration)
-    newSearchRequested = pyqtSignal('QString', 'QString')
+    newSearchRequested = pyqtSignal(str, str)
     # Triggered when a search has finished
-    searchFinished = pyqtSignal('QWidget', 'QString')
+    searchFinished = pyqtSignal(QWidget, str)
+    # Triggered whenever the view becomes visible and whenever the current file changes
+    documentShown = pyqtSignal(str)
 
     def __init__ (self, parent):
         super (SearchPage, self).__init__(parent)
@@ -150,6 +152,9 @@ class SearchPage (QWidget):
         screenGeometry = QApplication.desktop().screenGeometry()
         if screenGeometry.width() < 1200:
             self.__layoutForLowScreenWidth()
+
+    def showEvent(self, event: QShowEvent):
+        self.documentShown.emit(self.ui.sourceViewer.currentFile)
 
     # Return the display name of the initial config. This is either the configured default location or if there is no default location
     # the last used location.
@@ -251,6 +256,7 @@ class SearchPage (QWidget):
     def showFile (self, name):
         if self.ui.sourceViewer.currentFile != name:
             self.ui.sourceViewer.showFile(name)
+            self.documentShown.emit(name)
 
     @pyqtSlot()
     def nextFile (self):

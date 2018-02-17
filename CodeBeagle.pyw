@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from PyQt5.QtCore import QSettings, QUrl
+from PyQt5.QtCore import QSettings, QUrl, pyqtSlot
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from Ui_MainWindow import Ui_MainWindow
@@ -53,6 +53,8 @@ class MainWindow(QMainWindow):
         # Now setup UI. This already uses the restored search location name
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.initialWindowTitle = self.windowTitle()
+        self.ui.tabWidget.requestWindowTitleChange.connect(self.changeWindowTitle)
         self.__restoreGeometryAndState()
         # Finally prepare and launch the update check
         self.updateCheck = UpdateCheck(self)
@@ -102,6 +104,13 @@ class MainWindow(QMainWindow):
     def __saveGeometryAndState(self):
         self.appSettings.setValue("geometry", self.saveGeometry())
         self.appSettings.setValue("windowState", self.saveState())
+
+    @pyqtSlot(str)
+    def changeWindowTitle(self, name):
+        if name:
+            self.setWindowTitle(self.initialWindowTitle + "  -  " + name)
+        else:
+            self.setWindowTitle(self.initialWindowTitle)
 
 if __name__ == "__main__":
     main()

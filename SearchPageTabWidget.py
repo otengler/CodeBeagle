@@ -72,6 +72,7 @@ class AnimatedUpdateWidget(QWidget):
 
 class SearchPageTabWidget (LeaveLastTabWidget):
     configChanged = pyqtSignal(list)
+    requestWindowTitleChange = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super(SearchPageTabWidget, self).__init__(parent)
@@ -377,18 +378,20 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         """
         searchPage.newSearchRequested.connect (self.searchInNewTab)
         searchPage.searchFinished.connect (self.changeTabName)
+        searchPage.documentShown.connect (self.requestWindowTitleChange)
+        self.requestWindowTitleChange.emit("")
         searchPage.ui.sourceViewer.directoryDropped.connect(self.addSearchLocationFromPath)
         self.configChanged.connect (searchPage.reloadConfig)
         # Initially reload the config to pass the current search locations to the search page
         searchPage.reloadConfig(IndexConfiguration.readConfig(AppConfig.appConfig()))
 
-    @pyqtSlot('QString', 'QString')
+    @pyqtSlot(str, str)
     def searchInNewTab (self,  text, searchLocationName):
         searchPage = self.addNewTab ()
         searchPage.setCurrentSearchLocation(searchLocationName)
         searchPage.searchForText(text)
 
-    @pyqtSlot('QWidget', 'QString')
+    @pyqtSlot(QWidget, str)
     def changeTabName (self,  searchPage,  text):
         index = self.indexOf(searchPage)
         if -1 != index:
