@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from fnmatch  import fnmatch
-import Config
+import tools.Config as Config
 import unittest
 
 class ExtensionMapping:

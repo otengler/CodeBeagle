@@ -18,9 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import threading
-import AsynchronousTask
+import tools.AsynchronousTask as AsynchronousTask
+from tools.FileTools import fopen
 import FullTextIndex
-from FileTools import fopen
+
 
 class ResultSet:
     def __init__(self, matches=[], searchData=None, perfReport=None, label=None):
@@ -77,7 +78,9 @@ class FullTextIndexSearch:
             with self.lock:
                 self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
             result = ResultSet(self.fti.search(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
-        self.fti = None
+        with self.lock:
+            del self.fti
+            self.fti = None
         return result
 
     def cancel(self):

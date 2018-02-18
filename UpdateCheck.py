@@ -34,8 +34,8 @@ class UpdateCheckThread (QThread):
         try:
             self.__runInternal()
         except Exception:
-            import ExceptionTools
-            print(ExceptionTools.exceptionAsString())
+            from tools.ExceptionTools import exceptionAsString
+            print(exceptionAsString())
 
     def __runInternal(self):
         html = str (urlopen("http://sourceforge.net/projects/codebeagle/files").read(), "latin_1")

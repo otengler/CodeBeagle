@@ -21,8 +21,8 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from FileTools import fopen
-import HighlightingTextEdit
+from tools.FileTools import fopen
+from widgets.HighlightingTextEdit import HighlightingRules
 import HighlighterConfiguration
 from AppConfig import appConfig
 
@@ -55,7 +55,7 @@ class RulesCache:
         return highlightingRules
 
     def rulesFromFile (self, rulesFile,  font):
-        rules = HighlightingTextEdit.HighlightingRules(font)
+        rules = HighlightingRules(font)
 
         localsDict = { "Light" : QFont.Light,
                        "Normal" : QFont.Normal,

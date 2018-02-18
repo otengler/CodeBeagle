@@ -24,7 +24,7 @@ import sqlite3
 import time
 import unittest
 import logging
-from FileTools import fopen
+from tools.FileTools import fopen
 
 reTokenize = re.compile(r"[\w#]+")
 reQueryToken = re.compile(r"[\w#*]+|<!.*!>")

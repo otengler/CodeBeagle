@@ -21,14 +21,14 @@ import sys
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QSize, QTimer
 from PyQt5.QtGui import QMovie, QKeySequence
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip
-from  LeaveLastTabWidget import LeaveLastTabWidget
+import tools.FileTools as FileTools
+from tools.Config import Config
+from widgets.LeaveLastTabWidget import LeaveLastTabWidget
+import dialogs.UserHintDialog as UserHintDialog
+import dialogs.StackTraceMessageBox as StackTraceMessageBox
 from SearchPage import SearchPage
-from Config import Config
 import AppConfig
-import FileTools
 import IndexConfiguration
-import UserHintDialog
-import StackTraceMessageBox
 import UpdateIndex
 
 userHintUpdateIndex = """
@@ -165,7 +165,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         else:
             searchLocations = IndexConfiguration.readConfig(config)
             globalSearchLocations = IndexConfiguration.readConfig(globalConfig)
-            from SettingsDialog import SettingsDialog
+            from dialogs.SettingsDialog import SettingsDialog
             settingsDlg = SettingsDialog(self, searchLocations,  globalSearchLocations, config)
             if createInitialLocation:
                 settingsDlg.addLocation()
@@ -252,7 +252,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         else:
             searchLocations = IndexConfiguration.readConfig(config)
             displayNames = [conf.displayName() for conf in searchLocations if conf.generatesIndex()]
-            from CheckableItemsDialog import CheckableItemsDialog
+            from dialogs.CheckableItemsDialog import CheckableItemsDialog
             updateDialog = CheckableItemsDialog(self.tr("Choose indexes to update"),  True, self)
             for name in displayNames:
                 updateDialog.addItem(name)
@@ -267,7 +267,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     @pyqtSlot()
     def openHelp(self):
-        from HelpViewerDialog import HelpViewerDialog
+        from dialogs.HelpViewerDialog import HelpViewerDialog
         helpDialog = HelpViewerDialog(self)
         helpDialog.setAttribute(Qt.WA_DeleteOnClose)
         helpDialog.showFile("help.html")
@@ -275,7 +275,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     @pyqtSlot()
     def openAbout(self):
-        from AboutDialog import AboutDialog
+        from dialogs.AboutDialog import AboutDialog
         aboutDialog = AboutDialog(self)
         aboutDialog.exec()
 

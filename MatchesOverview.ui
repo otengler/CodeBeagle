@@ -57,7 +57,7 @@
   <customwidget>
    <class>RecyclingVerticalScrollArea</class>
    <extends>QScrollArea</extends>
-   <header>RecyclingVerticalScrollArea</header>
+   <header>widgets.RecyclingVerticalScrollArea</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

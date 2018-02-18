@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-import Config
-import FileTools
+import tools.Config as Config
+import tools.FileTools as FileTools
 
 appName = "CodeBeagle"
 appCompany = "OTE"

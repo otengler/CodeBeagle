@@ -20,10 +20,10 @@ import os
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QTextDocument, QTextFormat, QColor, QTextCursor
 from PyQt5.QtWidgets import QWidget, QAction, QListWidgetItem, QDialog, QTextEdit
-from Ui_SourceViewer import Ui_SourceViewer
-from FileTools import fopen
+from tools.FileTools import fopen
 from AppConfig import appConfig
 import HighlightingRulesCache
+from Ui_SourceViewer import Ui_SourceViewer
 
 class SourceViewer (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
@@ -144,7 +144,7 @@ class SourceViewer (QWidget):
 
     @pyqtSlot()
     def gotoLine(self):
-        from GotoLineDialog import GotoLineDialog
+        from dialogs.GotoLineDialog import GotoLineDialog
         gotoDialog = GotoLineDialog(self)
         if gotoDialog.exec() == QDialog.Accepted:
             line = gotoDialog.getLine()-1

@@ -23,8 +23,8 @@ import argparse
 import time
 import logging
 import cProfile
-import FileTools
-import ExceptionTools
+import tools.FileTools as FileTools
+from tools.ExceptionTools import exceptionAsString
 import IndexConfiguration
 import AppConfig
 import FullTextIndex
@@ -69,7 +69,7 @@ def updateIndex(config):
         taketime("Updating index took ", fti.updateIndex, config.directories, config.extensions, config.dirExcludes, statistics)
         logging.info(statistics)
     except:
-        logging.error("Exception caught while updating index:\n%s", ExceptionTools.exceptionAsString(None))
+        logging.error("Exception caught while updating index:\n%s", exceptionAsString(None))
 
 def updateIndexes(indexes):
     for config in indexes:
@@ -209,7 +209,7 @@ if __name__ == "__main__":
         main()
         sys.exit(0)
     except:
-        print("Exception caught while updating index:\n%s" % ExceptionTools.exceptionAsString(None))
+        print("Exception caught while updating index:\n%s" % exceptionAsString(None))
         sys.exit(1)
 
 # Synchronization in slave mode between UI and UpdateIndex:

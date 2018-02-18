@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import AppConfig
-import FileTools
+import tools.FileTools as FileTools
 import FullTextIndex
 import IndexConfiguration
 

@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="default">
-    <file>resources/Critical.png</file>
-    <file>resources/Expand.png</file>
-  </qresource>
-</RCC>

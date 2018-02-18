@@ -22,14 +22,13 @@ import re
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QWidget
-from Ui_MatchesOverview import Ui_MatchesOverview
-import HighlightingRulesCache
-import SourceHighlightingTextEdit
-import AsynchronousTask
-from FileTools import fopen
+from tools.FileTools import fopen
+import tools.AsynchronousTask as AsynchronousTask
+from widgets.SourceHighlightingTextEdit import SourceHighlightingTextEdit
+import widgets.RecyclingVerticalScrollArea as RecyclingVerticalScrollArea
 from AppConfig import appConfig
-import RecyclingVerticalScrollArea
-
+import HighlightingRulesCache
+from Ui_MatchesOverview import Ui_MatchesOverview
 
 # Accepts a list of touples each containing a start and end index. After calling the function
 # consecutive touples which overlapped or adjoin are collapsed into one touple. This is done in place.
@@ -63,7 +62,7 @@ class TestCollapseOverlappingRanges(unittest.TestCase):
         collapseAdjoiningRanges(ranges)
         self.assertEqual(ranges, [(1, 9)])
 
-class FixedSizeSourcePreview(SourceHighlightingTextEdit.SourceHighlightingTextEdit):
+class FixedSizeSourcePreview(SourceHighlightingTextEdit):
     def __init__(self, parent=None):
         super(FixedSizeSourcePreview, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)

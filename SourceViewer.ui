@@ -409,7 +409,7 @@ p, li { white-space: pre-wrap; }
   <customwidget>
    <class>SourceHighlightingTextEdit</class>
    <extends>QPlainTextEdit</extends>
-   <header>SourceHighlightingTextEdit</header>
+   <header>widgets.SourceHighlightingTextEdit</header>
   </customwidget>
  </customwidgets>
  <resources>

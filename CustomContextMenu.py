@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from PyQt5.QtCore import QObject, pyqtSignal
-import Config
-from FileTools import fopen
-from ExceptionTools import exceptionAsString
+import tools.Config as Config
+from tools.FileTools import fopen
+from tools.ExceptionTools import exceptionAsString
 
 class ExecuteProgramTask:
     """Launches an executable for each of the files passed via context menu"""

@@ -21,11 +21,12 @@ import sys
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-from Ui_MainWindow import Ui_MainWindow
+import tools.FileTools as FileTools
+import dialogs.UserHintDialog as UserHintDialog
 import AppConfig
-import FileTools
 from UpdateCheck import UpdateCheck
-import UserHintDialog
+from Ui_MainWindow import Ui_MainWindow
+
 
 userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>

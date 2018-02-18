@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-import Config
+import tools.Config as Config
 
 # No index wanted
 NoIndexWanted = 0

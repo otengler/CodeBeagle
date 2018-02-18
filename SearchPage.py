@@ -20,16 +20,17 @@ import os
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QFileInfo, QPoint, QUrl, QAbstractListModel, QModelIndex
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
-from Ui_SearchPage import Ui_SearchPage
-import AsynchronousTask
+import tools.AsynchronousTask as AsynchronousTask
+import dialogs.UserHintDialog as UserHintDialog
+from dialogs.RegExTesterDlg import RegExTesterDlg
+import dialogs.StackTraceMessageBox as StackTraceMessageBox
 import PathVisualizerDelegate
 import FullTextIndex
 import SearchMethods
 import CustomContextMenu
-import UserHintDialog
 import AppConfig
-import StackTraceMessageBox
-import RegExTesterDlg
+from Ui_SearchPage import Ui_SearchPage
+
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard.
@@ -455,7 +456,7 @@ class SearchPage (QWidget):
 
     @pyqtSlot()
     def showRegExTester(self):
-        tester = RegExTesterDlg.RegExTesterDlg(self)
+        tester = RegExTesterDlg(self)
         tester.setAttribute(Qt.WA_DeleteOnClose)
         tester.show()
 
