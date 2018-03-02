@@ -535,7 +535,7 @@ class SearchPage (QWidget):
         if not model or model.rowCount()==0:
             return
         terms=[]
-        for row in range(min(10,model.rowCount())):
+        for row in range(min(20,model.rowCount())):
             index = model.index(row, 0)
             terms.append(model.data(index, Qt.DisplayRole))
         settings = QSettings(AppConfig.appCompany, AppConfig.appName)
