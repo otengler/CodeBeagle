@@ -34,7 +34,7 @@
    </property>
    <item>
     <widget class="QFrame" name="frameSearch">
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,2,0,0,0,0,0,0,0,0,0,0,0,0">
       <property name="leftMargin">
        <number>22</number>
       </property>
@@ -126,23 +126,6 @@ p, li { white-space: pre-wrap; }
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonRegEx">
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Shows the RegEx tester. Use the syntax &lt;span style=&quot; font-weight:600;&quot;&gt;&amp;lt;!expr!&amp;gt;&lt;/span&gt; to embed a regex directly in your search query. E.g. &lt;span style=&quot; font-weight:600;&quot;&gt;Error&amp;lt;!.*!&amp;gt;/myfile.txt&lt;/span&gt; searches for &lt;span style=&quot; font-weight:600;&quot;&gt;Error&lt;/span&gt; followed by any number of characters and then &lt;span style=&quot; font-weight:600;&quot;&gt;/myfile.txt&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="SearchPage.qrc">
-          <normaloff>:/default/resources/regex.png</normaloff>:/default/resources/regex.png</iconset>
-        </property>
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="buttonLockResultSet">
         <property name="toolTip">
          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -157,6 +140,23 @@ p, li { white-space: pre-wrap; }
         </property>
         <property name="checkable">
          <bool>true</bool>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonRegEx">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Shows the RegEx tester. Use the syntax &lt;span style=&quot; font-weight:600;&quot;&gt;&amp;lt;!expr!&amp;gt;&lt;/span&gt; to embed a regex directly in your search query. E.g. &lt;span style=&quot; font-weight:600;&quot;&gt;Error&amp;lt;!.*!&amp;gt;/myfile.txt&lt;/span&gt; searches for &lt;span style=&quot; font-weight:600;&quot;&gt;Error&lt;/span&gt; followed by any number of characters and then &lt;span style=&quot; font-weight:600;&quot;&gt;/myfile.txt&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="SearchPage.qrc">
+          <normaloff>:/default/resources/regex.png</normaloff>:/default/resources/regex.png</iconset>
         </property>
         <property name="flat">
          <bool>true</bool>
