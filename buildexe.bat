@@ -14,6 +14,9 @@ del /q %BUILDDIR%\_bz2.pyd
 del /q %BUILDDIR%\_hashlib.pyd
 del /q %BUILDDIR%\_lzma.pyd
 del /q %BUILDDIR%\pyexpat.pyd
+del /q %BUILDDIR%\dialogs\*.ui
+del /q %BUILDDIR%\widgets\*.ui
+del /q %BUILDDIR%\tools\*.ui
 
 del /q %BUILDDIR%\imageformats\qicns.dll
 del /q %BUILDDIR%\imageformats\qico.dll
