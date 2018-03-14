@@ -7,3 +7,4 @@ _eric5project/
 ManagedConfig.txt
 UserConfig.txt
 *.dat
+.vscode/tags
