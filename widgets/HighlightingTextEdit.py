@@ -31,7 +31,7 @@ class HighlightingRules:
         self.font = font
 
     def addKeywords (self, keywords, fontWeight, foreground):
-        """Adds a list of comma seperated keywords."""
+        """Adds a list of comma separated keywords."""
         keywords = keywords.strip()
         kwList = keywords.split(",")
         # We build a single expression which matches all keywords

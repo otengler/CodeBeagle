@@ -75,15 +75,15 @@ class StringListModel(QAbstractListModel):
     def __computeCutLeft (self):
         if len(self.filelist)<2:
             return None
-        first = os.path.split(self.filelist[0])[0]
-        last = os.path.split(self.filelist[-1])[0]
+        first = os.path.split(self.filelist[0])[0] + os.path.sep
+        last = os.path.split(self.filelist[-1])[0] + os.path.sep
         firstDiff = firstDifference(first, last)
         if firstDiff != None:
             # Only cut full directories - go back to the last path seperator
             common = first[:firstDiff]
             lastSep = common.rfind(os.path.sep)
             if lastSep != -1:
-                return lastSep+1
+                return lastSep
             return firstDiff
         return len(first) # The whole string is equal
 

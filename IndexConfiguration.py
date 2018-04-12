@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import tools.Config as Config
+from tools.FileTools import correctPath
 
 # No index wanted
 NoIndexWanted = 0
@@ -43,14 +44,14 @@ class IndexConfiguration:
     def __init__(self, indexName="", extensions="", directories="", dirExcludes="", indexdb="", indexUpdateMode=TriggeredIndexUpdate):
         self.indexName = indexName
         self.indexUpdateMode = indexUpdateMode
-        self.indexdb = indexdb
+        self.indexdb = correctPath(indexdb)
         # Add the extensions into a set. This makes the lookup if an extension matches faster.
         self.extensions = set()
         for ext in (self.__makeExt(e) for e in extensions.split(",") if len(e) > 0):
             self.extensions.add(ext)
         # These list comprehensions split a string into a list making sure that an empty string returns an empty list
-        self.directories = [d for d in (d.strip() for d in directories.split(",")) if len(d) > 0]
-        self.dirExcludes = [d for d in (d.strip() for d in dirExcludes.split(",")) if len(d) > 0]
+        self.directories = [correctPath(d) for d in (d.strip() for d in directories.split(",")) if len(d) > 0]
+        self.dirExcludes = [correctPath(d) for d in (d.strip() for d in dirExcludes.split(",")) if len(d) > 0]
 
     def generatesIndex(self):
         return self.indexUpdateMode != NoIndexWanted
@@ -73,8 +74,11 @@ class IndexConfiguration:
 
     def __makeExt(self, ext):
         ext = ext.strip()
-        if ext and not ext.startswith("."):
-            ext = "." + ext
+        if ext:
+            if ext.startswith("*."):
+                ext = ext[2:]
+            elif not ext.startswith("."):
+                ext = "." + ext
         return ext.lower()
 
     def __str__(self):

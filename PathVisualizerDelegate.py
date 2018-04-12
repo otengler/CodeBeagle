@@ -20,12 +20,11 @@ import os
 from PyQt5.QtCore import Qt, QRect, QSize, QModelIndex
 from PyQt5.QtGui import QFont, QPen, QColor, QFontMetrics
 from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle
-from PyQt5 import QtWidgets
 
 class PathVisualizerDelegate (QStyledItemDelegate):
     """Parent must be the view (otherwise the focus drawing doesn't work)"""
     def __init__ (self, parent):
-        super (QStyledItemDelegate, self).__init__(parent)
+        super().__init__(parent)
         self.pathDarkGrayColor = QPen(QColor(50, 50, 50))
         self.pathGrayColor = QPen(QColor(150, 150, 150))
         self.fileColor = QPen(QColor(0, 0,  50))

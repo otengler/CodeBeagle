@@ -177,3 +177,8 @@ def isProcessAlive(pid):
         return True
     except:
         return False
+
+def correctPath(name: str):
+    if os.path.sep == "/":
+        return name
+    return name.replace("/", os.path.sep)

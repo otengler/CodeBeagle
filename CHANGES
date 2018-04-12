@@ -1,4 +1,8 @@
-1.2.4
+1.2.6
+- Fix crash when browsing for index location and canceling dialog
+- Fix inconsistency in path separator
+
+1.2.5
 - Fix crash when clicking on "lock" icon
 - Add syntax <!regex!> to query to allow to directly inject a regex into the query execution
 - Show current document's name in main window title

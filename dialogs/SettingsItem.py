@@ -95,7 +95,7 @@ class SettingsItem (QWidget):
             QFileDialog.Options(QFileDialog.ShowDirsOnly))
 
         if directory:
-            self.ui.editDirectories.setText (directory)
+            self.ui.editDirectories.setText (FileTools.correctPath(directory))
             self.dataChanged.emit()
 
     @pyqtSlot()
@@ -108,8 +108,8 @@ class SettingsItem (QWidget):
             None,
             QFileDialog.Options(QFileDialog.DontConfirmOverwrite))[0] # tuple returned, selection and used filter
 
-        if len(indexDB[0]): # indexDB is a touple: file,filter
-            self.ui.editIndexDB.setText (indexDB[0])
+        if indexDB:
+            self.ui.editIndexDB.setText (FileTools.correctPath(indexDB))
 
     def nameSelectAll (self):
         self.ui.editName.selectAll()

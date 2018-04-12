@@ -40,7 +40,7 @@
    <item row="1" column="1">
     <widget class="QLineEdit" name="editDirectories">
      <property name="toolTip">
-      <string/>
+      <string>Comma separated list of directories to index.</string>
      </property>
     </widget>
    </item>
@@ -77,7 +77,7 @@
    <item row="3" column="1">
     <widget class="QLineEdit" name="editExcludeDirectories">
      <property name="toolTip">
-      <string>Comma seperated list of strings. If a string is part of the directory being indexed it is exluded</string>
+      <string>Comma separated list of strings. If a string is part of the directory being indexed it is exluded.</string>
      </property>
     </widget>
    </item>
@@ -109,6 +109,9 @@
    </item>
    <item row="2" column="1">
     <widget class="QComboBox" name="comboExtensions">
+     <property name="toolTip">
+      <string>Comma separated list of extensions. Each extension needs to start with a dot. Use a single dot to select files without extension.</string>
+     </property>
      <property name="editable">
       <bool>true</bool>
      </property>
