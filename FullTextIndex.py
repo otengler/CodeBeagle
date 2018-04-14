@@ -192,7 +192,7 @@ def createFolderFilter(strFilter):
                 filter.append((item, True))
     return filter
 
-# Transform the comma seperated list so that every extension looks like ".ext".
+# Transform the comma separated list so that every extension looks like ".ext".
 # Also remove '*' to support *.ext
 def createExtensionFilter(strFilter):
     strFilter = strFilter.strip().lower()
