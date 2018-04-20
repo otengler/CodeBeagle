@@ -136,7 +136,7 @@ class SearchPage (QWidget):
         self.ui.buttonRegEx.clicked.connect(self.showRegExTester)
         self.ui.splitter.setSizes((1, 2)) # distribute splitter space 1:2
         self.perfReport = None
-        self.indexConfig = []
+        self.searchLocationList = []
         self.currentConfigName = self.__chooseInitialLocation ()
         self.unavailableConfigName = None
         self.commonKeywordMap = self.__loadCommonKeywordMap()
@@ -232,17 +232,19 @@ class SearchPage (QWidget):
                 self.ui.comboLocation.setCurrentIndex(i)
                 foundLocation=True
                 configName=searchLocationName
-        # Nothing found, select first one
-        if len(self.searchLocationList) > 0:
-            self.ui.comboLocation.setCurrentIndex (0)
-            configName = self.searchLocationList[0].displayName()
-        else:
-            self.ui.comboLocation.setCurrentIndex(-1)
-            configName = ""
+
+        # Nothing found, select first one or nothing if the list is empty
+        if not foundLocation:
+            if self.searchLocationList:
+                self.ui.comboLocation.setCurrentIndex (0)
+                configName = self.searchLocationList[0].displayName()
+            else:
+                self.ui.comboLocation.setCurrentIndex(-1)
+                configName = ""
 
         self.currentConfigName = configName
         self.__restoreSearchTerms()
-                
+
         return foundLocation
 
     @pyqtSlot('QString')
@@ -304,7 +306,7 @@ class SearchPage (QWidget):
     def __currentIndexConf(self):
         i = self.ui.comboLocation.currentIndex()
         return self.ui.comboLocation.model().index(i, 0).data(Qt.UserRole)
-        
+
     # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
     def __prepareSearch (self):
         self.__updateSearchResult(SearchMethods.ResultSet()) # clear current results
@@ -523,11 +525,12 @@ class SearchPage (QWidget):
 
     def __restoreSearchTerms(self):
         self.ui.comboSearch.clear()
-        settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-        key = "SearchTerms_"+self.currentConfigName
-        if settings.value(key):
-            strList = settings.value(key)
-            self.ui.comboSearch.addItems(strList)
+        if self.currentConfigName:
+            settings = QSettings(AppConfig.appCompany, AppConfig.appName)
+            key = "SearchTerms_"+self.currentConfigName
+            if settings.value(key):
+                strList = settings.value(key)
+                self.ui.comboSearch.addItems(strList)
         self.ui.comboSearch.clearEditText()
 
     def __rememberSearchTerms(self):
