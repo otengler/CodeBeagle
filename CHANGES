@@ -1,3 +1,6 @@
+1.2.7
+- Fix regression from 1.2.5: The correct search index is used by default. In 1.2.5 always the first index was selected
+
 1.2.6
 - Fix crash when browsing for index location and canceling dialog
 - Fix inconsistency in path separator
