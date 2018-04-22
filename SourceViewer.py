@@ -187,12 +187,14 @@ class SourceViewer (QWidget):
     def nextSearch(self):
         search = self.ui.editSearch.text()
         if search:
+            self.ui.textEdit.setFocus(Qt.OtherFocusReason)
             self.ui.textEdit.find(search)
 
     @pyqtSlot()
     def previousSearch(self):
         search = self.ui.editSearch.text()
         if search:
+            self.ui.textEdit.setFocus(Qt.OtherFocusReason)
             self.ui.textEdit.find(search, QTextDocument.FindBackward)
 
     @pyqtSlot()
