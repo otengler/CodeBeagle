@@ -17,6 +17,9 @@ del /q %BUILDDIR%\pyexpat.pyd
 del /q %BUILDDIR%\dialogs\*.ui
 del /q %BUILDDIR%\widgets\*.ui
 del /q %BUILDDIR%\tools\*.ui
+del /q %BUILDDIR%\api-ms-*.dll
+del /q %BUILDDIR%\vcruntime140.dll
+del /q %BUILDDIR%\MSVCP140.dll
 
 del /q %BUILDDIR%\imageformats\qicns.dll
 del /q %BUILDDIR%\imageformats\qico.dll
