@@ -486,12 +486,12 @@ class SearchPage (QWidget):
         clipboard.setText(text)
 
     def __browseToFolder (self,  name):
-        url = QUrl.fromLocalFile (os.path.split(name)[0])
         if os.name != "nt":
+            url = QUrl.fromLocalFile (os.path.split(name)[0])
             QDesktopServices.openUrl (url)
         else:
             import subprocess
-            subprocess.Popen (["explorer.exe", "/select," + name])
+            subprocess.Popen (["explorer.exe", "/select,", name])
 
     def __searchForFileName (self,  name):
         self.newSearchRequested.emit(name,  self.ui.comboLocation.currentText())
