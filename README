@@ -2,7 +2,7 @@ Binary distribution
 ===================
 
 There is no installation as such. Just unzip to a location you like and launch "CodeBeagle.exe" to start up the UI. If CodeBeagle fails to launch your system probably misses the correct Microsoft Visual C++ runtime. To fix this download and install the "Microsoft Visual C++ 2015 Redistributable Package (x86)" from Microsoft:
-https://www.microsoft.com/de-de/download/details.aspx?id=48145
+https://www.microsoft.com/en-us/download/details.aspx?id=48145
 
 Running from source
 ===================
