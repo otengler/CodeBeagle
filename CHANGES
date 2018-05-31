@@ -1,3 +1,8 @@
+1.2.8
+- Fix context menu action "open containing folder" if path contains a blank
+- Parse config values containing an equal sign properly. This caused an issue for a custom context menu action which started an application 
+  that needed an equal sign in its command line.
+
 1.2.7
 - Fix regression from 1.2.5: The correct search index is used by default. In 1.2.5 always the first index was selected
 
