@@ -166,12 +166,14 @@ class Config:
             line = line.strip()
             try:
                 if not line or line.startswith("#"): # ignore empty lines and comments
-                    pass
+                    continue
+                equalSign = line.find("=")
+                if equalSign != -1:
+                    key = line[:equalSign]
+                    value = line[equalSign+1:]
+                    setattr(self, key.strip(),  value.strip())
                 elif line.startswith("import"):
                     self.__handleImport(line)
-                elif line.find("=") != -1:
-                    key, value = line.split("=")
-                    setattr(self, key.strip(),  value.strip())
                 elif line.startswith("}"):
                     return
                 elif line.endswith("{"):
