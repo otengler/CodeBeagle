@@ -102,22 +102,17 @@ class LeaveLastTabWidget (QTabWidget):
 
     def mousePressEvent(self, event: QMouseEvent):
         """Show context menu which offers the possibility to close multiple tabs at once"""
-        if event.button() != Qt.RightButton:
+        if event.button() != Qt.RightButton or self.count() == 1:
             return
         tabIndex = self.tabBar().tabAt(event.pos())
         if tabIndex == -1:
             return
-        if self.count() == 1:
-            return
         menu = QMenu()
-        menu.addAction(self.tr("Close all &but this tab"),
-                       lambda: self.__closeAllTabsExceptThis(tabIndex))
+        menu.addAction(self.tr("Close &others tabs"), lambda: self.__closeAllTabsExceptThis(tabIndex))
         if tabIndex > 0:
-            menu.addAction(self.tr("Close all to the &left"),
-                           lambda: self.__closeAllToTheLeft(tabIndex))
+            menu.addAction(self.tr("Close all to the &left"), lambda: self.__closeAllToTheLeft(tabIndex))
         if tabIndex < self.count()-1:
-            menu.addAction(self.tr("Close all to the &right"),
-                           lambda: self.__closeAllToTheRight(tabIndex))
+            menu.addAction(self.tr("Close all to the &right"), lambda: self.__closeAllToTheRight(tabIndex))
 
         menu.exec(self.ui.tab.mapToGlobal(event.pos()))
 
