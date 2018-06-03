@@ -1,3 +1,7 @@
+1.2.9
+- When opening a new search tab the search location of the current tab is used
+- Tab button now has a context menu to close all other tabs, all tabs to the left, all tabs to the right
+
 1.2.8
 - Fix context menu action "open containing folder" if path contains a blank
 - Parse config values containing an equal sign properly. This caused an issue for a custom context menu action which started an application 
