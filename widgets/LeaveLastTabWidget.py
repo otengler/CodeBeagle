@@ -16,8 +16,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtWidgets import QTabWidget, QWidget, QHBoxLayout, QPushButton
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtWidgets import QTabWidget, QWidget, QHBoxLayout, QPushButton, QMenu
+from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent
 from PyQt5.QtCore import Qt, QObject, pyqtSlot
 from .Ui_LeaveLastTabWidget import Ui_LeaveLastTabWidget
 
@@ -99,6 +99,48 @@ class LeaveLastTabWidget (QTabWidget):
         widget = self.widget(index)
         if widget:
             widget.setFocus(Qt.ActiveWindowFocusReason)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        """Show context menu which offers the possibility to close multiple tabs at once"""
+        if event.button() != Qt.RightButton:
+            return
+        tabIndex = self.tabBar().tabAt(event.pos())
+        if tabIndex == -1:
+            return
+        if self.count() == 1:
+            return
+        menu = QMenu()
+        menu.addAction(self.tr("Close all &but this tab"),
+                       lambda: self.__closeAllTabsExceptThis(tabIndex))
+        if tabIndex > 0:
+            menu.addAction(self.tr("Close all to the &left"),
+                           lambda: self.__closeAllToTheLeft(tabIndex))
+        if tabIndex < self.count()-1:
+            menu.addAction(self.tr("Close all to the &right"),
+                           lambda: self.__closeAllToTheRight(tabIndex))
+
+        menu.exec(self.ui.tab.mapToGlobal(event.pos()))
+
+    @pyqtSlot(int)
+    def __closeAllTabsExceptThis(self, tabIndex: int):
+        self.__closeTabs(lambda index : index != tabIndex)
+
+    @pyqtSlot(int)
+    def __closeAllToTheLeft(self, tabIndex: int):
+        self.__closeTabs(lambda index: index < tabIndex)
+
+    @pyqtSlot(int)
+    def __closeAllToTheRight(self, tabIndex: int):
+        self.__closeTabs(lambda index: index > tabIndex)
+
+    def __closeTabs(self, filterPred):
+        closeIndexes = []
+        for i in range(self.count()):
+            if filterPred(i):
+                closeIndexes.append(i)
+        closeIndexes.sort(reverse=True)
+        for index in closeIndexes:
+            self.removeTab(index)
 
 
 # The following code removes the close box if only one tab is left. The problem is that the size of the TabBar jumps
