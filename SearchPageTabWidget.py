@@ -371,19 +371,23 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.labelUpdate.hide()
             self.buttonSettings.setEnabled(True)
 
-    def newTabAdded(self,  searchPage):
+    def newTabAdded(self,  prevTabWidget:SearchPage, newTabWidget:SearchPage):
         """
         This is called by the base class when a new tab is added. We use this to connect the request for a new search
         to open up in a new tab.
         """
-        searchPage.newSearchRequested.connect (self.searchInNewTab)
-        searchPage.searchFinished.connect (self.changeTabName)
-        searchPage.documentShown.connect (self.requestWindowTitleChange)
+        newTabWidget.newSearchRequested.connect (self.searchInNewTab)
+        newTabWidget.searchFinished.connect (self.changeTabName)
+        newTabWidget.documentShown.connect (self.requestWindowTitleChange)
         self.requestWindowTitleChange.emit("")
-        searchPage.ui.sourceViewer.directoryDropped.connect(self.addSearchLocationFromPath)
-        self.configChanged.connect (searchPage.reloadConfig)
+        newTabWidget.ui.sourceViewer.directoryDropped.connect(self.addSearchLocationFromPath)
+        self.configChanged.connect (newTabWidget.reloadConfig)
         # Initially reload the config to pass the current search locations to the search page
-        searchPage.reloadConfig(IndexConfiguration.readConfig(AppConfig.appConfig()))
+        newTabWidget.reloadConfig(IndexConfiguration.readConfig(AppConfig.appConfig()))
+
+        # Copy search location from previous search page
+        if prevTabWidget:
+            newTabWidget.setCurrentSearchLocation(prevTabWidget.currentConfigName)
 
     @pyqtSlot(str, str)
     def searchInNewTab (self,  text, searchLocationName):

@@ -24,6 +24,7 @@ from .Ui_LeaveLastTabWidget import Ui_LeaveLastTabWidget
 class LeaveLastTabWidget (QTabWidget):
     def __init__(self, parent=None):
         super(LeaveLastTabWidget, self).__init__(parent)
+        self.buttonNewTab = None
         self.ui = Ui_LeaveLastTabWidget()
         self.ui.setupUi(self)
         self.setupUi()
@@ -68,7 +69,8 @@ class LeaveLastTabWidget (QTabWidget):
         widget.close()
 
     def setNewTabButtonText (self, strText):
-        self.buttonNewTab.setText(strText)
+        if self.buttonNewTab:
+            self.buttonNewTab.setText(strText)
 
     def setPrototypeForNewTab (self, objType,  strTabName):
         self.objType = objType
@@ -76,14 +78,15 @@ class LeaveLastTabWidget (QTabWidget):
 
     @pyqtSlot()
     def addNewTab(self):
-        widget = self.objType(self)
-        widget.setAttribute(Qt.WA_DeleteOnClose)
-        self.addTab(widget, self.strTabName)
-        self.setCurrentWidget(widget)
-        self.newTabAdded(widget)
-        return widget
+        prevTabWidget = self.currentWidget()
+        newTabWidget = self.objType(self)
+        newTabWidget.setAttribute(Qt.WA_DeleteOnClose)
+        self.addTab(newTabWidget, self.strTabName)
+        self.setCurrentWidget(newTabWidget)
+        self.newTabAdded(prevTabWidget, newTabWidget)
+        return newTabWidget
 
-    def newTabAdded(self,  widget):
+    def newTabAdded(self,  prevTabWidget, newTabWidget):
         pass
 
     def removeCurrentTab(self):
