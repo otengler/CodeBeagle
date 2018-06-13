@@ -524,6 +524,7 @@ class SearchPage (QWidget):
         self.layout().insertWidget(1, self.ui.frameSearch2)
 
     def __restoreSearchTerms(self):
+        currentText = self.ui.comboSearch.currentText()
         self.ui.comboSearch.clear()
         if self.currentConfigName:
             settings = QSettings(AppConfig.appCompany, AppConfig.appName)
@@ -531,7 +532,7 @@ class SearchPage (QWidget):
             if settings.value(key):
                 strList = settings.value(key)
                 self.ui.comboSearch.addItems(strList)
-        self.ui.comboSearch.clearEditText()
+        self.ui.comboSearch.setEditText(currentText)
 
     def __rememberSearchTerms(self):
         model = self.ui.comboSearch.model()
