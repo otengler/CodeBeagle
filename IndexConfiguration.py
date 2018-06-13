@@ -57,7 +57,7 @@ class IndexConfiguration:
         return self.indexUpdateMode != NoIndexWanted
 
     def extensionsAsString(self):
-        return ",".join(self.extensions)
+        return ",".join(sorted([ext for ext in self.extensions]))
 
     def directoriesAsString(self):
         return ",".join(self.directories)

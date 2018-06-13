@@ -57,11 +57,11 @@ class SettingsEditorDelegate(QStyledItemDelegate):
 
         location = index.data(Qt.UserRole+1)
 
-        if len(location.directories) > 0:
-            dirs = self.tr("Directories: ") + ",".join(location.directories)
-            if len(location.extensions) > 0:
+        if location.directories:
+            dirs = self.tr("Directories: ") + location.directoriesAsString()
+            if location.extensions:
                 dirs += " ("
-                dirs += self.tr("Extensions: ") + ",".join(location.extensions)
+                dirs += self.tr("Extensions: ") + location.extensionsAsString()
                 dirs += ")"
             painter.drawText(rect2, Qt.AlignVCenter + Qt.TextWordWrap, dirs)
 
