@@ -23,7 +23,7 @@ from .Ui_CheckableItemsDialog import Ui_CheckableItemsDialog
 
 class CheckableItemsDialog(QDialog):
     def __init__(self, title, bCheckAllState, parent):
-        super(CheckableItemsDialog, self).__init__(parent)
+        super().__init__(parent)
         self.ui = Ui_CheckableItemsDialog()
         self.ui.setupUi(self)
         self.ui.buttonOK.clicked.connect(self.accept)

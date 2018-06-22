@@ -119,7 +119,7 @@ class Config:
 
     def __setattr__(self, attr,  value):
         if attr.startswith("_Config__"):
-            return super(Config, self).__setattr__(attr, value)
+            return super().__setattr__(attr, value)
         attr = attr.lower()
         if isinstance(value, Config):
             self.__data[attr] = value

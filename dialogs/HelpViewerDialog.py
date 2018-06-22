@@ -23,7 +23,7 @@ from .Ui_HelpViewerDialog import Ui_HelpViewerDialog
 
 class HelpViewerDialog (QDialog):
     def __init__ (self, parent):
-        super(HelpViewerDialog, self).__init__(parent,  Qt.Dialog | Qt.WindowMinMaxButtonsHint)
+        super().__init__(parent,  Qt.Dialog | Qt.WindowMinMaxButtonsHint)
         self.ui = Ui_HelpViewerDialog()
         self.ui.setupUi(self)
         self.ui.okButton.clicked.connect(self.accept)

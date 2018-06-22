@@ -24,7 +24,7 @@ class ProgressBar (QDialog):
     onCancelClicked = pyqtSignal()
 
     def __init__ (self, parent, bEnableCancel=False):
-        super(ProgressBar, self).__init__(parent,  Qt.SplashScreen)
+        super().__init__(parent,  Qt.SplashScreen)
         self.ui = Ui_ProgressBar()
         self.ui.setupUi(self)
         self.ui.frame.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
@@ -34,7 +34,7 @@ class ProgressBar (QDialog):
     def keyPressEvent(self,  e):
         """Disable closing the dialog with Esc and emit onCancelClicked instead."""
         if e.key() != Qt.Key_Escape:
-            super (ProgressBar,  self).keyPressEvent(e)
+            super ().keyPressEvent(e)
         else:
             self.onCancelClicked.emit()
 

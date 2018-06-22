@@ -180,7 +180,7 @@ class HighlightingTextEdit (QPlainTextEdit):
     updateNeeded = pyqtSignal()
 
     def __init__ (self, parent):
-        super(HighlightingTextEdit, self).__init__(parent)
+        super().__init__(parent)
         self.highlighter = SyntaxHighlighter()
         self.dynamicHighlight = None
         self.setUndoRedoEnabled(False)
@@ -189,7 +189,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.setTextInteractionFlags(Qt.TextSelectableByKeyboard|Qt.TextSelectableByMouse)
 
     def setPlainText(self,  text):
-        super(HighlightingTextEdit, self).setPlainText(text)
+        super().setPlainText(text)
         # For whatever reasons some lines are not highlighted properly without another 'update'
         QTimer.singleShot (10, self.viewport().update)
 
@@ -199,7 +199,7 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.viewport().update()
 
     def setFont(self,  font):
-        super(HighlightingTextEdit, self).setFont (font)
+        super().setFont (font)
         self.viewport().setFont(font)
         self.highlighter.setFont(font)
 
@@ -207,7 +207,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         firstVisibleBlock = self.firstVisibleBlock()
         bColorizedBlocks = self.colorizeVisibleBlocks(firstVisibleBlock)
 
-        super(HighlightingTextEdit, self).paintEvent(event)
+        super().paintEvent(event)
 
         if self.dynamicHighlight:
             painter = QPainter(self.viewport())

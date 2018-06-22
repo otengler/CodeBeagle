@@ -23,7 +23,7 @@ from .Ui_LeaveLastTabWidget import Ui_LeaveLastTabWidget
 
 class LeaveLastTabWidget (QTabWidget):
     def __init__(self, parent=None):
-        super(LeaveLastTabWidget, self).__init__(parent)
+        super().__init__(parent)
         self.buttonNewTab = None
         self.ui = Ui_LeaveLastTabWidget()
         self.ui.setupUi(self)
@@ -65,7 +65,7 @@ class LeaveLastTabWidget (QTabWidget):
         if self.count() <= 1:
             return
         widget = self.widget(index)
-        super(LeaveLastTabWidget, self).removeTab(index)
+        super().removeTab(index)
         widget.close()
 
     def setNewTabButtonText (self, strText):

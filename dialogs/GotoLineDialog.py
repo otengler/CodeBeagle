@@ -22,7 +22,7 @@ from .Ui_GotoLineDialog import Ui_GotoLineDialog
 
 class GotoLineDialog (QDialog):
     def __init__(self, parent):
-        super(QDialog, self).__init__(parent)
+        super().__init__(parent)
         self.ui = Ui_GotoLineDialog()
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet

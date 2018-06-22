@@ -75,7 +75,7 @@ class SettingsEditorDelegate(QStyledItemDelegate):
         painter.restore()
 
     def sizeHint(self, option, index):
-        baseHint = super(SettingsEditorDelegate, self).sizeHint(option, index)
+        baseHint = super().sizeHint(option, index)
         return QSize(baseHint.width(), self.itemHeight)
 
 def setCheckBox(check, value):
@@ -86,7 +86,7 @@ def setCheckBox(check, value):
 
 class LocationControl (QObject):
     def __init__(self, settingsItem, listView, searchLocations, readOnly):
-        super(LocationControl, self).__init__(None)
+        super().__init__(None)
         self.settingsItem = settingsItem
         self.listView = listView
         self.readOnly = readOnly
@@ -164,7 +164,7 @@ class LocationControl (QObject):
 
 class SettingsDialog (QDialog):
     def __init__ (self, parent,  searchLocations,  globalSearchLocations,  config):
-        super (SettingsDialog, self).__init__(parent)
+        super ().__init__(parent)
         self.ui = Ui_SettingsDialog()
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet

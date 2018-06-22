@@ -28,7 +28,7 @@ No = 8
 
 class UserHintDialog (QDialog):
     def __init__ (self,  parent):
-        super(UserHintDialog, self).__init__(parent,  Qt.Tool)
+        super().__init__(parent,  Qt.Tool)
         self.ui = Ui_UserHintDialog()
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet

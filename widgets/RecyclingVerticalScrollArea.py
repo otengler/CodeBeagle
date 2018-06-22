@@ -46,7 +46,7 @@ class ScrollAreaItem (metaclass = abc.ABCMeta):
 
 class Labeltem (ScrollAreaItem):
     def __init__(self, text, bIsBold, height):
-        super (Labeltem,  self).__init__( height)
+        super ().__init__( height)
         self.text = text
         self.bIsBold = bIsBold
         self.id = None
@@ -123,9 +123,6 @@ class EmptyLayout(QLayout):
     This layout works around the problem that child wigets of the scrollarea widget are invisible if the scrollarea widget
     has no layout. If this is a bug or as designed - I don't know.
     """
-    def __init__(self,  parent):
-        super(EmptyLayout, self).__init__(parent)
-
     def itemAt(self, index):
         return None
 
@@ -140,7 +137,7 @@ class EmptyLayout(QLayout):
 
 class RecyclingVerticalScrollArea(QScrollArea):
     def __init__(self, parent=None):
-        super(RecyclingVerticalScrollArea, self).__init__(parent)
+        super().__init__(parent)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.items = None
         self.activeWidgets = {} # id to widget
@@ -154,11 +151,11 @@ class RecyclingVerticalScrollArea(QScrollArea):
             self.ensureVisible (0, self.items.itemYPos(index),  0,  int(self.height()/2))
 
     def resizeEvent(self, event):
-        super(RecyclingVerticalScrollArea, self).resizeEvent(event)
+        super().resizeEvent(event)
         self.__refreshItems()
 
     def scrollContentsBy (self,  dx, dy):
-        super(RecyclingVerticalScrollArea, self).scrollContentsBy(dx, dy)
+        super().scrollContentsBy(dx, dy)
         self.__refreshItems()
 
     def setItems (self,  items):

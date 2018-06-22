@@ -24,7 +24,7 @@ from .Ui_AboutDialog import Ui_AboutDialog
 
 class AboutDialog(QDialog):
     def __init__(self, parent):
-        super(AboutDialog, self).__init__(parent)
+        super().__init__(parent)
         self.ui = Ui_AboutDialog()
         self.ui.setupUi(self)
         version = sys.version_info

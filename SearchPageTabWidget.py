@@ -58,7 +58,7 @@ class AnimatedUpdateWidget(QWidget):
     work in progress.
     """
     def __init__(self, text, parent):
-        super(AnimatedUpdateWidget, self).__init__(parent)
+        super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 4, 0)
         layout.setSpacing(4)
@@ -75,7 +75,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     requestWindowTitleChange = pyqtSignal(str)
 
     def __init__(self, parent=None):
-        super(SearchPageTabWidget, self).__init__(parent)
+        super().__init__(parent)
         self.setNewTabButtonText(self.tr("New search"))
         self.setPrototypeForNewTab(SearchPage, self.tr("Search"))
         self.addNewTab()
@@ -146,7 +146,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     # Register a button in the corner widget to open the settings dialog. This function is called by the base class.
     def addWidgetsToCornerWidget (self,  hbox):
-        super (SearchPageTabWidget,  self).addWidgetsToCornerWidget(hbox)
+        super ().addWidgetsToCornerWidget(hbox)
         self.buttonSettings = self.addButtonToCornerWidget (hbox,  self.tr("Settings"),  "Settings.png",  self.openSettings)
         self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.tr("Update index"),  "Update.png",  self.updateIndex)
         self.indexOfUpdateButton = hbox.count()-1

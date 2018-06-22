@@ -22,7 +22,7 @@ import threading
 
 class AsynchronousTask (QThread):
     def __init__(self, function , *args, bEnableCancel=False, cancelAction=None):
-        super(AsynchronousTask, self).__init__(None) # Called with None to get rid of the thread once the python object is destroyed
+        super().__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.function = function
         self.args = args
         self.bEnableCancel = bEnableCancel

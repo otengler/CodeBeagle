@@ -25,7 +25,7 @@ from tools.ExceptionTools import exceptionAsString
 class ExecuteProgramTask:
     """Launches an executable for each of the files passed via context menu"""
     def __init__(self, program,  args,  bShowWindow):
-        super(ExecuteProgramTask, self).__init__()
+        super().__init__()
         self.program = os.path.expandvars(program)
         self.args =args
         self.bShowWindow = bShowWindow
@@ -92,7 +92,7 @@ class CustomContextMenu (QObject):
     executionFailed = pyqtSignal(ContextMenuError)
 
     def __init__(self, title, task):
-        super(CustomContextMenu, self).__init__()
+        super().__init__()
         self.title = title
         self.task = task
 

@@ -27,7 +27,7 @@ def formatVersion (version):
 
 class UpdateCheckThread (QThread):
     def __init__(self):
-        super(QThread, self).__init__(None) # Called with None to get rid of the thread once the python object is destroyed
+        super().__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.latestVersion = ""
 
     def run(self):
@@ -60,7 +60,7 @@ class UpdateCheck (QObject):
     newerVersionFound = pyqtSignal('QString')
 
     def __init__ (self,  parent=None):
-        super(UpdateCheck, self).__init__(parent)
+        super().__init__(parent)
         self.lastUpdateCheck = None
         self.updateThread = None
 

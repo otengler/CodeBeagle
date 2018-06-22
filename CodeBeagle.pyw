@@ -45,7 +45,7 @@ def main():
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super().__init__()
         # Restore last used search location name
         self.appSettings = QSettings(AppConfig.appCompany, AppConfig.appName)
         if self.appSettings.value("lastUsedSearchLocation"):

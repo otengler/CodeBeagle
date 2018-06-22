@@ -227,8 +227,7 @@ class TestSearchParts(unittest.TestCase):
         self.assertEqual(splitSearchParts("a <!abc!>"), [(IndexPart, "a"), (ScanPart, ""), (RegExPart, "abc")])
 
 class QueryError(RuntimeError):
-    def __init__(self, strReason):
-        super(QueryError, self).__init__(strReason)
+    pass
 
 class Query(metaclass = abc.ABCMeta):
     def __init__(self, strSearch, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False):
@@ -327,9 +326,6 @@ class Query(metaclass = abc.ABCMeta):
         pass
 
 class SearchQuery(Query):
-    def __init__(self, strSearch, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False):
-        super(SearchQuery, self).__init__(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
-
     # Returns a list of regular expressions which match all found occurances in a document
     def regExForMatches(self):
         regParts = []
@@ -352,7 +348,7 @@ class SearchQuery(Query):
 
 class FindAllQuery(Query):
     def __init__(self, strSearch, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False):
-        super(FindAllQuery, self).__init__(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+        super().__init__(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
 
         parts = []
         for i, s in self.parts:

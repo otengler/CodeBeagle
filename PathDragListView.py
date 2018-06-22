@@ -22,20 +22,20 @@ from PyQt5.QtWidgets import QListView, QApplication
 
 class PathDragListView (QListView):
     def __init__ (self, parent):
-        super(PathDragListView, self).__init__(parent)
+        super().__init__(parent)
         self.startPos = None
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.startPos = event.pos()
-        super (PathDragListView,  self).mousePressEvent(event)
+        super ().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         if self.startPos and event.buttons() and Qt.LeftButton:
             distance = (event.pos() - self.startPos).manhattanLength()
             if distance >= QApplication.startDragDistance():
                 self.performDrag()
-        super (PathDragListView,  self).mouseMoveEvent(event)
+        super ().mouseMoveEvent(event)
 
     def performDrag(self):
         if self.model():

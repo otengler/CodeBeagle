@@ -25,7 +25,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
 
     def __init__(self, parent=None):
-        super(SourceHighlightingTextEdit, self).__init__(parent)
+        super().__init__(parent)
         self.selectionChanged.connect (self.highlightSelection)
 
     @pyqtSlot()

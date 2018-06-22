@@ -64,13 +64,13 @@ class TestCollapseOverlappingRanges(unittest.TestCase):
 
 class FixedSizeSourcePreview(SourceHighlightingTextEdit):
     def __init__(self, parent=None):
-        super(FixedSizeSourcePreview, self).__init__(parent)
+        super().__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
 class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
     def __init__(self, matchesOverview,  text,  name,  height):
-        super (FixedSizeSourcePreviewItem,  self).__init__(height)
+        super ().__init__(height)
         self.matchesOverview = matchesOverview
         self.text = text
         self.name = name
@@ -212,7 +212,7 @@ class MatchesOverview (QWidget):
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
 
     def __init__ (self, parent):
-        super(MatchesOverview, self).__init__(parent)
+        super().__init__(parent)
         self.ui = Ui_MatchesOverview()
         self.ui.setupUi(self)
         self.matches = None

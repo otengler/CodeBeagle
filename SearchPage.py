@@ -49,7 +49,7 @@ def getCustomScriptsFromDisk():
 
 class StringListModel(QAbstractListModel):
     def __init__(self, filelist,  parent=None):
-        super(StringListModel, self).__init__(parent)
+        super().__init__(parent)
         self.filelist = filelist
         self.editorState = {} # maps from file index to an editor state object
         self.sizeHint = None
@@ -120,7 +120,7 @@ class SearchPage (QWidget):
     documentShown = pyqtSignal(str)
 
     def __init__ (self, parent):
-        super (SearchPage, self).__init__(parent)
+        super ().__init__(parent)
         self.ui = Ui_SearchPage()
         self.ui.setupUi(self)
         self.ui.frameSearch.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet

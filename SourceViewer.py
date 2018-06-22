@@ -34,7 +34,7 @@ class SourceViewer (QWidget):
     currentMatchChanged = pyqtSignal(int)
 
     def __init__ (self, parent):
-        super (SourceViewer, self).__init__(parent)
+        super ().__init__(parent)
         self.ui = Ui_SourceViewer()
         self.ui.setupUi(self)
         self.ui.frameSearch.hide()
