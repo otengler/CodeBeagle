@@ -69,14 +69,15 @@ ScanPart = 2
 MatchWordsPart = 3
 RegExPart = 4
 
-def genFind(filepat, strRootDir, dirExcludes=[]):
+def genFind(filepat, strRootDir, dirExcludes=None):
+    dirExcludes = dirExcludes or []
     def fixExtension(ext):
         if ext != ".":
             return ext
         return ""
     filepat = [fixExtension(pat) for pat in filepat]
     dirExcludes = [dir.lower() for dir in dirExcludes]
-    for path, dirlist, filelist in os.walk(strRootDir):
+    for path, _, filelist in os.walk(strRootDir):
         if dirExcludes:
             pathLower = path.lower()
             found = False
@@ -145,21 +146,18 @@ def kwExpr(kw):
     else:
         return kw.replace("*", r"\w*")
 
-def splitFilterTokens(filter):
-    pass
-
 def trimScanPart(s):
     return s.replace(" ", "")
 
-def splitSearchParts(str):
-    tokens = getTokens(str)
+def splitSearchParts(strSearch: str):
+    tokens = getTokens(strSearch)
     parts = []
     pos = 0
     for begin, end in tokens:
         if begin > pos:
-            partScanPart = (ScanPart, trimScanPart(str[pos:begin]))
+            partScanPart = (ScanPart, trimScanPart(strSearch[pos:begin]))
             parts.append(partScanPart)
-        token = str[begin:end]
+        token = strSearch[begin:end]
         result = reMatchWords.match(token) # special handling for **X syntax. It means to search for X unknown words
         if result and int(result.group(2)) > 0:
             matchWordsPart = (MatchWordsPart, int(result.group(2)))
@@ -173,32 +171,32 @@ def splitSearchParts(str):
             partIndexPart = (IndexPart, token)
             parts.append(partIndexPart)
         pos = end
-    if pos < len(str):
-        end = len(str)
-        partScanPart = (ScanPart, trimScanPart(str[pos:end]))
+    if pos < len(strSearch):
+        end = len(strSearch)
+        partScanPart = (ScanPart, trimScanPart(strSearch[pos:end]))
         parts.append(partScanPart)
     return parts
 
 def createFolderFilter(strFilter):
     strFilter = strFilter.strip().lower()
-    filter = []
+    filterParts = []
     if not strFilter:
         return filter
     for item in (item.strip() for item in strFilter.split(",")):
         if item:
             if item.startswith("-"):
-                filter.append((item[1:], False))
+                filterParts.append((item[1:], False))
             else:
-                filter.append((item, True))
-    return filter
+                filterParts.append((item, True))
+    return filterParts
 
 # Transform the comma separated list so that every extension looks like ".ext".
 # Also remove '*' to support *.ext
 def createExtensionFilter(strFilter):
     strFilter = strFilter.strip().lower()
-    filter = []
+    filterParts = []
     if not strFilter:
-        return filter
+        return filterParts
     for item in (item.strip().replace("*", "") for item in strFilter.split(",")):
         if item:
             bPositiveFilter = True
@@ -209,8 +207,8 @@ def createExtensionFilter(strFilter):
                 item = "." + item
             if item == ".": # os.path.splitext returns an empty string if there is no extension
                 item = ""
-            filter.append((item, bPositiveFilter))
-    return filter
+            filterParts.append((item, bPositiveFilter))
+    return filterParts
 
 class TestSearchParts(unittest.TestCase):
     def test(self):
@@ -446,8 +444,8 @@ class UpdateStatistics:
         return s
 
 class Keyword:
-    def __init__(self, id, name):
-        self.id = id
+    def __init__(self, identifier, name):
+        self.id = identifier
         self.name = name
 
     def __repr__(self):
@@ -581,8 +579,8 @@ class FullTextIndex:
                 if not query.matchFolderAndExtensionFilter(fullpath):
                     continue
             try:
-                with fopen(fullpath) as input:
-                    if reExpr.search(input.read()):
+                with fopen(fullpath) as inputFile:
+                    if reExpr.search(inputFile.read()):
                         finalResults.append(fullpath)
             except:
                 pass
@@ -651,7 +649,7 @@ class FullTextIndex:
             nextIndexID = self.__getNextIndexRun(c)
 
             for strRootDir in directories:
-                logging.info("Updating index in " + strRootDir)
+                logging.info("Updating index in %s", strRootDir)
                 for strFullPath in genFind(extensions, strRootDir, dirExcludes):
                     print(strFullPath)
                     mTime = os.stat(strFullPath)[8]
@@ -667,7 +665,7 @@ class FullTextIndex:
 
                     try:
                         if timestamp != mTime:
-                            self.__updateFile(c, q, docID, strFullPath, mTime)
+                            self.__updateFile(c, q, docID, strFullPath)
                             c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
                             if statistics:
                                 if timestamp != 0:
@@ -698,13 +696,13 @@ class FullTextIndex:
             c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
         logging.info("Done")
 
-    def __updateFile(self, c, q, docID, strFullPath, mTime):
+    def __updateFile(self, c, q, docID, strFullPath):
         # Delete old associations
         c.execute("DELETE FROM kw2doc WHERE docID=?", (docID,))
         # Associate document with all tokens
         lower = str.lower
-        with fopen(strFullPath) as input:
-            for token in genTokens(input):
+        with fopen(strFullPath) as inputFile:
+            for token in genTokens(inputFile):
                 keyword = lower(token)
 
                 c.execute("INSERT OR IGNORE INTO keywords (id,keyword) VALUES (NULL,?)", (keyword,))
@@ -728,8 +726,8 @@ class FullTextIndex:
 def buildMapFromCommonKeywordFile(name):
     mapCommonKeywords = {}
     if name:
-        with fopen(name, "r") as input:
-            for number, keyword in ((number, keyword.strip().lower()) for number, keyword in enumerate(input)):
+        with fopen(name, "r") as inputFile:
+            for number, keyword in ((number, keyword.strip().lower()) for number, keyword in enumerate(inputFile)):
                 if keyword:
                     mapCommonKeywords[keyword] = number
     return mapCommonKeywords
