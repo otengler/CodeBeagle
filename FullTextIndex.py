@@ -723,29 +723,6 @@ class FullTextIndex:
         c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
         return c.lastrowid
 
-def buildMapFromCommonKeywordFile(name):
-    mapCommonKeywords = {}
-    if name:
-        with fopen(name, "r") as inputFile:
-            for number, keyword in ((number, keyword.strip().lower()) for number, keyword in enumerate(inputFile)):
-                if keyword:
-                    mapCommonKeywords[keyword] = number
-    return mapCommonKeywords
-
-def resolveKeywordId(q, i):
-    q.execute("SELECT keyword FROM keywords WHERE id=:kw", {"kw":i})
-    return q.fetchone()[0]
-
-def getDocumentId(q, fullpath):
-    q.execute("SELECT id FROM documents WHERE fullpath=:fp", {"fp":fullpath})
-    return q.fetchone()[0]
-
-def hasDocumentKeyword(q, docID, kwID):
-    q.execute("SELECT docID from kw2doc where docID=:d and kwID=:k", {"d":docID, "k":kwID})
-    if q.fetchone():
-        return True
-    return False
-
 if __name__ == "__main__":
     unittest.main()
 
