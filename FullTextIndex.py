@@ -484,7 +484,7 @@ class FullTextIndex:
 
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
     def search(self, query, perfReport=None, commonKeywordMap=None, manualIntersect=True, cancelEvent=None):
-        if not commonKeywordMap: commonKeywordMap = {}
+        commonKeywordMap = commonKeywordMap or {}
         try:
             return self.__search(query, perfReport, commonKeywordMap, manualIntersect, cancelEvent)
         except sqlite3.OperationalError as e:
