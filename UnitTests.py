@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 
 testmodules = [
-    'fulltextindex.FullTextIndex',
     'HighlighterConfiguration',
-    'MatchesOverview'
+    'MatchesOverview',
+    'tools.Config',
+    'fulltextindex.FullTextIndex',
+    'fulltextindex.testsuite'
     ]
 
 if __name__ == "__main__":

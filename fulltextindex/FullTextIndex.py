@@ -122,7 +122,7 @@ def createFolderFilter(strFilter):
     strFilter = strFilter.strip().lower()
     filterParts = []
     if not strFilter:
-        return filter
+        return filterParts
     for item in (item.strip() for item in strFilter.split(",")):
         if item:
             if item.startswith("-"):
@@ -376,6 +376,15 @@ class Keyword:
     def __eq__(self, other):
         return self.id == other.id and self.name == other.name
 
+def buildMapFromCommonKeywordFile(name):
+    mapCommonKeywords = {}
+    if name:
+        with fopen(name, "r") as inputFile:
+            for number, keyword in ((number, keyword.strip().lower()) for number, keyword in enumerate(inputFile)):
+                if keyword:
+                    mapCommonKeywords[keyword] = number
+    return mapCommonKeywords
+
 class FullTextIndex (IndexDatabase):
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
     def search(self, query, perfReport=None, commonKeywordMap=None, manualIntersect=True, cancelEvent=None):
@@ -530,6 +539,4 @@ class FullTextIndex (IndexDatabase):
                 reportAction.addData("String '%s' results in %u keyword matches", kw, len(result))
             keys.append([Keyword(r[0], r[1]) for r in result])
         return keys
-
-
 

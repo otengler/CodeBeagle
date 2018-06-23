@@ -17,11 +17,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from fulltextindex.FullTextIndex import *
-from fulltextindex.IndexUpdater import *
 import unittest
 import shutil
 import stat
+from .FullTextIndex import FullTextIndex, SearchQuery, Keyword, buildMapFromCommonKeywordFile
+from .IndexUpdater import IndexUpdater, UpdateStatistics
 
 def delFile (name):
     try:

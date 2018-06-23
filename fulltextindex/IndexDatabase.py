@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS fileName2doc(
   fileNameID INTEGER,
   docID INTEGER,
   UNIQUE(fileNameID, docID)
-)
+);
 CREATE INDEX IF NOT EXISTS i_fileName2doc_fileNameID ON fileName2doc (fileNameID);
 CREATE INDEX IF NOT EXISTS i_fileName2doc_docID ON fileName2doc (docID);
 
