@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtWidgets import QTabWidget, QWidget, QHBoxLayout, QPushButton, QMenu
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent
-from PyQt5.QtCore import Qt, QObject, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot
 from .Ui_LeaveLastTabWidget import Ui_LeaveLastTabWidget
 
 class LeaveLastTabWidget (QTabWidget):

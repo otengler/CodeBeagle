@@ -17,7 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from FullTextIndex import *
+from fulltextindex.FullTextIndex import *
+from fulltextindex.IndexUpdater import *
 import unittest
 import shutil
 import stat
@@ -63,7 +64,7 @@ class TestFullTextIndex(unittest.TestCase):
         os.chdir(testPath)
         delFile ("test.dat")
 
-        fti = FullTextIndex("test.dat")
+        updater = IndexUpdater("test.dat")
 
         # Copy initial data
         # Data1
@@ -77,13 +78,15 @@ class TestFullTextIndex(unittest.TestCase):
         delDir("data")
         shutil.copytree ("data1", "data")
         updateStats = UpdateStatistics()
-        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"], [], updateStats)
+        updater.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"], [], updateStats)
         self.assertEqual(updateStats.nNew,  6)
         self.assertEqual(updateStats.nUpdated,  0)
         self.assertEqual(updateStats.nUnchanged,  0)
-        stats = fti.queryStats()
+        stats = updater.queryStats()
         self.assertEqual (stats[0], 6)
         self.assertEqual (stats[1], 6)
+
+        fti = FullTextIndex("test.dat")
 
         q = SearchQuery ("conversion table")
         result = fti.search(q)
@@ -129,7 +132,7 @@ class TestFullTextIndex(unittest.TestCase):
         modifyTimestamp ("data\\test2.c")
 
         updateStats = UpdateStatistics()
-        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  [], updateStats)
+        updater.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  [], updateStats)
         self.assertEqual(updateStats.nNew,  2)
         self.assertEqual(updateStats.nUpdated,  3)
         self.assertEqual(updateStats.nUnchanged,  2)
@@ -192,7 +195,7 @@ class TestFullTextIndex(unittest.TestCase):
 
         # Update index again to check that no updated file will be found
         updateStats = UpdateStatistics()
-        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  [],  updateStats)
+        updater.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  [],  updateStats)
         self.assertEqual(updateStats.nNew,  0)
         self.assertEqual(updateStats.nUpdated,  0)
         self.assertEqual(updateStats.nUnchanged,  7)
@@ -203,7 +206,7 @@ class TestFullTextIndex(unittest.TestCase):
         # Now remove everything, documents and keyword associations must be empty
         delDir("data")
         os.mkdir("data")
-        fti.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"])
+        updater.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"])
 
         stats = fti.queryStats()
         self.assertEqual (stats[0], 0)
