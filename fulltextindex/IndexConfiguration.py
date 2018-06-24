@@ -30,13 +30,13 @@ TriggeredIndexUpdate = 2
 AutomaticIndexUpdate = 3
 
 def indexUpdateModeToString(mode):
-    if mode == 1:
+    if mode == NoIndexWanted:
         return "NoIndexWanted"
-    elif mode == 2:
+    elif mode == ManualIndexUpdate:
         return "ManualIndexUpdate"
-    elif mode == 3:
+    elif mode == TriggeredIndexUpdate:
         return "TriggeredIndexUpdate"
-    elif mode == 4:
+    elif mode == AutomaticIndexUpdate:
         return "AutomaticIndexUpdate"
     return "Unknown"
 

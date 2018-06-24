@@ -25,9 +25,9 @@ import logging
 import cProfile
 import tools.FileTools as FileTools
 from tools.ExceptionTools import exceptionAsString
-import IndexConfiguration
+import fulltextindex.IndexConfiguration as IndexConfiguration
+from fulltextindex.IndexUpdater import IndexUpdater, UpdateStatistics
 import AppConfig
-import FullTextIndex
 
 codebeagleLicense = """
 CodeBeagle Copyright (C) 2011-2017 Oliver Tengler;
@@ -64,8 +64,8 @@ def updateIndex(config):
     logging.info("-"*80)
     logging.info("Updating index '%s'", config.indexName)
     try:
-        fti = FullTextIndex.FullTextIndex(config.indexdb)
-        statistics = FullTextIndex.UpdateStatistics()
+        fti = IndexUpdater(config.indexdb)
+        statistics = UpdateStatistics()
         taketime("Updating index took ", fti.updateIndex, config.directories, config.extensions, config.dirExcludes, statistics)
         logging.info(statistics)
     except:

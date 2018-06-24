@@ -20,7 +20,7 @@ import os
 import threading
 import tools.AsynchronousTask as AsynchronousTask
 from tools.FileTools import fopen
-import FullTextIndex
+import fulltextindex.FullTextIndex as FullTextIndex
 
 
 class ResultSet:

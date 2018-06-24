@@ -25,7 +25,7 @@ import dialogs.UserHintDialog as UserHintDialog
 from dialogs.RegExTesterDlg import RegExTesterDlg
 import dialogs.StackTraceMessageBox as StackTraceMessageBox
 import PathVisualizerDelegate
-import FullTextIndex
+import fulltextindex.FullTextIndex as FullTextIndex 
 import SearchMethods
 import CustomContextMenu
 import AppConfig

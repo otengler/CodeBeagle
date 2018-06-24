@@ -21,7 +21,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QFileDialog
 import tools.FileTools as FileTools
 import AppConfig
-import IndexConfiguration
+import fulltextindex.IndexConfiguration as IndexConfiguration
 from .Ui_SettingsItem import Ui_SettingsItem
 
 class SettingsItem (QWidget):

@@ -4,7 +4,7 @@ Performance test for composite search phrases
 
 import time
 import random
-import FullTextIndex
+import fulltextindex.FullTextIndex as FullTextIndex
 
 def taketime (func, *args):
     t1 = time.clock()

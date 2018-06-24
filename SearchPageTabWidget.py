@@ -28,7 +28,7 @@ import dialogs.UserHintDialog as UserHintDialog
 import dialogs.StackTraceMessageBox as StackTraceMessageBox
 from SearchPage import SearchPage
 import AppConfig
-import IndexConfiguration
+import fulltextindex.IndexConfiguration as IndexConfiguration
 import UpdateIndex
 
 userHintUpdateIndex = """

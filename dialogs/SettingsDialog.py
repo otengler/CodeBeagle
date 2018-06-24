@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtCore import Qt, QRect, QSize, pyqtSlot, QModelIndex, QObject
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyle, QDialog, QMessageBox
-from IndexConfiguration import IndexConfiguration
+from fulltextindex.IndexConfiguration import IndexConfiguration
 from .Ui_SettingsDialog import Ui_SettingsDialog
 
 class SettingsEditorDelegate(QStyledItemDelegate):

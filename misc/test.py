@@ -1,8 +1,8 @@
-from FullTextIndex import *
+from fulltextindex.FullTextIndex import *
 
 fti = FullTextIndex("D:\\qt473.dat.new")
 
-fti.reorganizeKeywords()
+reorganizeKeywords()
 
 del fti
 
