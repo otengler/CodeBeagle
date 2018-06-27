@@ -181,7 +181,7 @@ def createFolderFilter(strFilter):
     strFilter = strFilter.strip().lower()
     filterParts = []
     if not strFilter:
-        return filter
+        return strFilter
     for item in (item.strip() for item in strFilter.split(",")):
         if item:
             if item.startswith("-"):
