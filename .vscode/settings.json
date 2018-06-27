@@ -3,5 +3,7 @@
         "**/*_rc.py": true,
         "**/Ui_*.py": true,
         "__pycache__": true
-    }
+    },
+
+    "python.linting.mypyEnabled": true,
 }

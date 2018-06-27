@@ -16,9 +16,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import QObject, QThread, pyqtSlot
-from dialogs.ProgressBar import ProgressBar
 import threading
+from PyQt5.QtCore import QThread, pyqtSlot
+from dialogs.ProgressBar import ProgressBar
 
 class AsynchronousTask (QThread):
     def __init__(self, function , *args, bEnableCancel=False, cancelAction=None):

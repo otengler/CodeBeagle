@@ -191,7 +191,7 @@ class SettingsDialog (QDialog):
                 self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations,  row)
 
         # If there are no search locations from the global config.txt then remove the corresponding tab
-        if len(globalSearchLocations) == 0:
+        if not globalSearchLocations:
             self.ui.tabWidget.removeTab(1)
             del self.ui.tabGlobalSearchLocations
 
