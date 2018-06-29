@@ -19,12 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import re
 import types
 import unittest
+from typing import TypeVar, Any
 from tools.FileTools import fopen
 
-def identity (a):
+T = TypeVar('T')
+
+def identity (a: T) -> T:
     return a
 
-def boolParse (value):
+def boolParse (value: Any) -> bool:
     if type(value) == bool:
         return value
     if type(value) == str:
@@ -37,7 +40,7 @@ def boolParse (value):
         return bool(value)
     raise RuntimeError("Unknown boolean value '" + value + "'")
 
-def boolPersist (value):
+def boolPersist (value: Any) -> str:
     if type(value) == bool:
         return str(value)
     if type(value) == str:
@@ -78,8 +81,8 @@ class Config:
         elif configLines:
             self.parseLines(configLines)
 
-    def setPlainType(self, attr, type):
-        self.__typeMapper[attr.lower()] = plainTypeMapper(type)
+    def setPlainType(self, attr, attrType):
+        self.__typeMapper[attr.lower()] = plainTypeMapper(attrType)
 
     def setType (self, attr, typeFuncs):
         self.__typeMapper[attr.lower()] = typeFuncs

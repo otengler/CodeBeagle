@@ -21,8 +21,9 @@ import os
 import codecs
 import time
 import collections
+from typing import IO, DefaultDict
 
-def fopen (name, mode='r'):
+def fopen (name:str, mode: str='r') -> IO:
     f = open(name, mode, -1, "latin_1")
     try:
         start = f.read(3)
@@ -40,7 +41,7 @@ def fopen (name, mode='r'):
         f.close()
         raise
 
-def getAppDataPath (appName):
+def getAppDataPath (appName: str) -> str:
     """
     Return a path where the application may store data. For Windows this is where APPDATA points to.
     For Linux HOME should work.
@@ -59,7 +60,7 @@ def getAppDataPath (appName):
     location += os.path.sep
     return location
 
-def getTempPath ():
+def getTempPath () -> str:
     """Return a path which can be used to store temporary data"""
     if "TEMP" in os.environ:
         return os.path.expandvars("$TEMP")
@@ -68,7 +69,7 @@ def getTempPath ():
     else:
         return ""
 
-def switchToAppDir ():
+def switchToAppDir () -> None:
     """Switch to application directory. This helps to locate files by a relative path."""
     try:
         dirName = os.path.dirname(sys.argv[0])
@@ -83,13 +84,13 @@ class LockDir:
     with LockDir("C:\\dir"):
         pass
     """
-    def __init__(self,  name, retries=5, delay=200):
+    def __init__(self,  name: str, retries: int=5, delay: int=200) -> None:
         self.name = name
         self.retries = retries
         self.delay = delay
 
     def __enter__(self):
-        for i in range(self.retries):
+        for _ in range(self.retries):
             try:
                 os.mkdir (self.name)
             except Exception as e:
@@ -103,18 +104,18 @@ class LockDir:
         os.rmdir (self.name)
         return False # do not suppress exception
 
-def removeInvalidFileChars (text):
+def removeInvalidFileChars (text: str) -> str:
     """Removes all character which are invalid for files."""
     for c in "\\/:*?\"<>|":
         text = text.replace(c, "")
     return text
 
-def getMostCommonExtensionInDirectory (directory):
+def getMostCommonExtensionInDirectory (directory: str) -> str:
     try:
         entries = os.listdir(directory)
     except:
         return ""
-    m = collections.defaultdict(lambda:0)
+    m:DefaultDict[str,int] = collections.defaultdict(lambda:0)
     count = 0
     mostCommon = ""
     for entry in entries:
@@ -131,11 +132,11 @@ def getMostCommonExtensionInDirectory (directory):
 
 class PidFile:
     """Pass full path to file where current process ID is stored."""
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.pidfile = None
 
-    def exists(self):
+    def exists(self) -> bool:
         """Reads the PID from a pid file or returns 0 if there is no PID file."""
         return os.path.isfile(self.name)
 
@@ -147,7 +148,7 @@ class PidFile:
             return 0
         return pid
 
-    def remove(self):
+    def remove(self) -> None:
         if os.path.isfile(self.name):
             try:
                 os.unlink(self.name)
@@ -171,14 +172,14 @@ class PidFile:
         self.remove()
         return False # do not suppress exception
 
-def isProcessAlive(pid):
+def isProcessAlive(pid: int) -> bool:
     try:
         os.kill(pid, 0)
         return True
     except:
         return False
 
-def correctPath(name: str):
+def correctPath(name: str) -> str:
     if os.path.sep == "/":
         return name
     return name.replace("/", os.path.sep)

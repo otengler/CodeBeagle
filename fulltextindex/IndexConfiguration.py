@@ -84,7 +84,7 @@ class IndexConfiguration:
                 ext = "." + ext
         return ext.lower()
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = "Name       : " + self.indexName + "\n"
         result += "Index mode : " + indexUpdateModeToString(self.indexUpdateMode) + "\n"
         result += "IndexDB    : " + self.indexdb + "\n"
@@ -102,7 +102,7 @@ class IndexConfiguration:
             self.extensions == other.extensions
 
 # Configurates the type information for the index configuration
-def indexTypeInfo(config: Config.Config):
+def indexTypeInfo(config: Config.Config) -> None:
     config.setType("indexName", Config.typeDefaultString(""))
     config.setType("generateIndex", Config.typeDefaultBool(True)) # kept for compatibility
     config.setType("indexUpdateMode", Config.typeDefaultInt(IndexMode.TriggeredIndexUpdate))

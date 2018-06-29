@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS indexInfo(
 """
 
 class IndexDatabase:
-    def __init__(self, strDbLocation):
+    def __init__(self, strDbLocation: str) -> None:
         self.strDbLocation = strDbLocation
         self.conn = sqlite3.connect(strDbLocation)
         self.__setupDatabase()
@@ -89,10 +89,10 @@ class IndexDatabase:
         print("Associations: " + str(associations))
         return (documents, documentsInIndex, keywords, associations)
 
-    def interrupt(self):
+    def interrupt(self) -> None:
         self.conn.interrupt()
 
-    def __setupDatabase(self):
+    def __setupDatabase(self) -> None:
         with self.conn:
             c = self.conn.cursor()
             c.executescript(strSetup)

@@ -21,14 +21,16 @@ import os.path
 import re
 import time
 import logging
+import sqlite3
+from typing import List, Iterator, IO
 from tools.FileTools import fopen
 from .IndexDatabase import IndexDatabase
 
 reTokenize = re.compile(r"[\w#]+")
 
-def genFind(filepat, strRootDir, dirExcludes=None):
+def genFind(filepat: List[str], strRootDir: str, dirExcludes: List[str]=None) -> Iterator[str]:
     dirExcludes = dirExcludes or []
-    def fixExtension(ext):
+    def fixExtension(ext: str) -> str:
         if ext != ".":
             return ext
         return ""
@@ -47,31 +49,31 @@ def genFind(filepat, strRootDir, dirExcludes=None):
         for name in (name for name in filelist if os.path.splitext(name)[1].lower() in filepat):
             yield os.path.join(path, name)
 
-def genTokens(file):
+def genTokens(file: IO) -> Iterator[str]:
     for token in reTokenize.findall(file.read()):
         yield token
 
 class UpdateStatistics:
-    def __init__(self):
-        self.nNew = 0
-        self.nUpdated = 0
-        self.nUnchanged = 0
+    def __init__(self) -> None:
+        self.nNew: int = 0
+        self.nUpdated: int = 0
+        self.nUnchanged: int = 0
 
-    def incNew(self):
+    def incNew(self) -> None:
         self.nNew += 1
 
-    def incUpdated(self):
+    def incUpdated(self) -> None:
         self.nUpdated += 1
 
-    def incUnchanged(self):
+    def incUnchanged(self) -> None:
         self.nUnchanged += 1
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = "New docs: %u, Updated docs: %u, Unchanged: %u"  % (self.nNew, self.nUpdated, self.nUnchanged)
         return s
 
 class IndexUpdater (IndexDatabase):
-    def updateIndex(self, directories, extensions, dirExcludes=None, statistics=None):
+    def updateIndex(self, directories: List[str], extensions: List[str], dirExcludes: List[str]=None, statistics: UpdateStatistics=None) -> None:
         dirExcludes = dirExcludes or []
         c = self.conn.cursor()
         q = self.conn.cursor()
@@ -86,8 +88,7 @@ class IndexUpdater (IndexDatabase):
             for strRootDir in directories:
                 logging.info("Updating index in %s", strRootDir)
                 for strFullPath in genFind(extensions, strRootDir, dirExcludes):
-                    print(strFullPath)
-                    mTime = os.stat(strFullPath)[8]
+                    mTime = os.stat(strFullPath).st_mtime
 
                     c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
                     if c.rowcount == 1 and c.lastrowid != 0:
@@ -108,10 +109,11 @@ class IndexUpdater (IndexDatabase):
                                 else:
                                     statistics.incNew()
                         else:
-                            if statistics: statistics.incUnchanged()
+                            if statistics:
+                                statistics.incUnchanged()
                     except Exception as e:
-                        print("Failed to process file '%s'" % (strFullPath, ))
-                        print(e)
+                        logging.error("Failed to process file '%s'", strFullPath)
+                        logging.error(str(e))
                         # Write an nextIndexID of -1 which makes sure the document in removed in the cleanup phase
                         c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, -1))
                     else:
@@ -131,7 +133,7 @@ class IndexUpdater (IndexDatabase):
             c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
         logging.info("Done")
 
-    def __updateFile(self, c, q, docID, strFullPath):
+    def __updateFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, strFullPath: str) -> None:
         # Delete old associations
         c.execute("DELETE FROM kw2doc WHERE docID=?", (docID,))
         # Associate document with all tokens
@@ -149,7 +151,7 @@ class IndexUpdater (IndexDatabase):
 
                 c.execute("INSERT OR IGNORE INTO kw2doc (kwID,docID) values (?,?)", (kwID, docID))
 
-    def __getNextIndexRun(self, c):
+    def __getNextIndexRun(self, c: sqlite3.Cursor) -> int:
         c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
         return c.lastrowid
 
