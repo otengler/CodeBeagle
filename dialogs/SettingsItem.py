@@ -21,7 +21,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QFileDialog
 import tools.FileTools as FileTools
 import AppConfig
-import fulltextindex.IndexConfiguration as IndexConfiguration
+from fulltextindex.IndexConfiguration import IndexMode
 from .Ui_SettingsItem import Ui_SettingsItem
 
 class SettingsItem (QWidget):
@@ -79,7 +79,7 @@ class SettingsItem (QWidget):
 
     @pyqtSlot(int)
     def updateIndexModeChanged (self,  index):
-        indexWanted = (index != IndexConfiguration.NoIndexWanted)
+        indexWanted = (index != IndexMode.NoIndexWanted)
         self.ui.editIndexDB.setEnabled(indexWanted)
         self.ui.buttonBrowseIndexLocation.setEnabled(indexWanted)
         if indexWanted and not self.indexDB():
@@ -124,7 +124,7 @@ class SettingsItem (QWidget):
         if indexDB:
             self.ui.editIndexDB.setText (indexDB)
         else:
-            if indexUpdateMode != IndexConfiguration.NoIndexWanted:
+            if indexUpdateMode != IndexMode.NoIndexWanted:
                 self.buildDBName = True
                 self.__updateDBName (name)
             else:
@@ -148,7 +148,7 @@ class SettingsItem (QWidget):
         return self.ui.editIndexDB.text()
 
     def indexGenerationEnabled (self):
-        return self.ui.comboIndexUpdateMode.currentIndex != IndexConfiguration.NoIndexWanted
+        return self.ui.comboIndexUpdateMode.currentIndex != IndexMode.NoIndexWanted
 
     def indexUpdateMode(self):
         return self.ui.comboIndexUpdateMode.currentIndex()

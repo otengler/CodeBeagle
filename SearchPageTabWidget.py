@@ -225,7 +225,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         """Returns a list of display names of added or changed indexed search locations."""
         changedLocations = []
         for location in newSearchLocations:
-            if location.indexUpdateMode == IndexConfiguration.ManualIndexUpdate or location.indexUpdateMode == IndexConfiguration.TriggeredIndexUpdate:
+            if location.indexUpdateMode == IndexConfiguration.IndexMode.ManualIndexUpdate or location.indexUpdateMode == IndexConfiguration.IndexMode.TriggeredIndexUpdate:
                 bFound = False
                 for oldLocation in currentSearchLocations:
                     if location == oldLocation:

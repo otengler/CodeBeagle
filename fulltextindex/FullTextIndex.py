@@ -416,8 +416,6 @@ class FullTextIndex (IndexDatabase):
 
         commonKeywordMap = commonKeywordMap or {}
 
-        query.parts = query.parts or [] # TODO should not be needed
-
         q = self.conn.cursor()
 
         # The result is a list of lists of Keyword objects

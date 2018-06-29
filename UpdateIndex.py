@@ -73,7 +73,7 @@ def updateIndex(config):
 
 def updateIndexes(indexes):
     for config in indexes:
-        if config.indexUpdateMode == IndexConfiguration.TriggeredIndexUpdate:
+        if config.indexUpdateMode == IndexConfiguration.IndexMode.TriggeredIndexUpdate:
             updateIndex(config)
 
 def loadConfigFiles(args):
