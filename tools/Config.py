@@ -137,20 +137,6 @@ class Config:
     def __repr__ (self) -> str:
         return self.__dumpRec (self, 0)
 
-    def __dumpRec (self,  config: Config,  level: int) -> str:
-        s = ""
-        for k,v in config.__data.items():
-            if s:
-                s += "\n"
-            s = s + " " *2*level + k
-            if type(v) is Config:
-                s += " {\n"
-                s = s + self.__dumpRec (v,  level+1)
-                s = s + "\n" + " " *2*level + "}"
-            else:
-                s = s + " = " + self.__typePersist(k)(v)
-        return s
-
     def remove (self, key: str) -> None:
         key = key.lower()
         if key in self.__data:
@@ -233,6 +219,20 @@ def typeDefaultString (strDefault) -> Tuple[Callable, Callable, Callable]:
 
 def typeDefaultConfig () -> Tuple[Callable, Callable, Callable]:
     return (identity, lambda: Config(), identity)
+
+def __dumpRec (config: Config,  level: int) -> str:
+    s = ""
+    for k,v in config.__data.items():
+        if s:
+            s += "\n"
+        s = s + " " *2*level + k
+        if type(v) is Config:
+            s += " {\n"
+            s = s + __dumpRec (v,  level+1)
+            s = s + "\n" + " " *2*level + "}"
+        else:
+            s = s + " = " + config.__typePersist(k)(v)
+    return s
 
 class TestConfig(unittest.TestCase):
     def test(self):
