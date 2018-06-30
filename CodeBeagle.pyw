@@ -32,7 +32,7 @@ userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
 """
 
-def main():
+def main() -> None:
     app = QApplication(sys.argv)
 
     # Switch to application directory to be able to load the configuration and search scripts even if we are
@@ -44,7 +44,7 @@ def main():
     sys.exit(app.exec_())
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # Restore last used search location name
         self.appSettings = QSettings(AppConfig.appCompany, AppConfig.appName)

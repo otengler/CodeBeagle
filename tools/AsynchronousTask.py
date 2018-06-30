@@ -28,6 +28,7 @@ class AsynchronousTask (QThread):
         self.bEnableCancel = bEnableCancel
         self.cancelAction = cancelAction
         self.result = None
+        self.exception: Exception = None
         self.cancelEvent = None
         if self.bEnableCancel:
             self.cancelEvent = threading.Event()
@@ -39,7 +40,7 @@ class AsynchronousTask (QThread):
             else:
                 self.result = self.function(*self.args)
         except Exception as e:
-            self.result = e
+            self.exception = e
 
     @pyqtSlot()
     def cancel(self):
@@ -69,8 +70,8 @@ def execute(parent, func, *args, bEnableCancel=False, cancelAction=None):
         searchTask.wait()
 
         # If the thread raised an exception re-raise it in the main thread
-        if isinstance(searchTask.result, Exception):
-            raise searchTask.result
+        if searchTask.exception:
+            raise searchTask.exception
         return searchTask.result
     finally:
         if progress:

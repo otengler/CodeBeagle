@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from typing import Optional, Tuple, Callable
 import tools.Config as Config
 import tools.FileTools as FileTools
 
@@ -24,31 +25,31 @@ appName = "CodeBeagle"
 appCompany = "OTE"
 appVersion = "1.2.10.0"
 configName = "config.txt"
-_config = None
-_lastUsedConfigName =  ""
 
-def appConfig():
+class ConfigCache:
+    config: Optional[Config.Config] = None
+    lastUsedConfigName: str = ""
+
+def appConfig() -> Config.Config:
     """Read the global config.txt merged with a per user config.txt."""
-    global _config
-    if not _config:
-        _config = globalConfig()
-        __loadUserConfig (_config)
-    return _config
+    if not ConfigCache.config:
+        ConfigCache.config = globalConfig()
+        __loadUserConfig (ConfigCache.config)
+    return ConfigCache.config
 
-def refreshConfig():
+def refreshConfig() -> None:
     """The next call to "appConfig" will read a fresh config."""
-    global _config
-    _config = None
+    ConfigCache.config = None
 
-def configFromFile (filename):
+def configFromFile (filename: str) -> Config.Config:
     """Reads the config from a file."""
     return Config.Config(filename, typeInfoFunc=configTypeInfo)
 
-def globalConfig():
+def globalConfig() -> Config.Config:
     """Returns the global config."""
     return configFromFile (configName)
 
-def userConfig():
+def userConfig() -> Config.Config:
     """
     Returns the user config. The global config is loaded first to retrieve a possible override
     of the user config file location. The default is to use the user profile.
@@ -56,28 +57,28 @@ def userConfig():
     config = Config.Config(typeInfoFunc=configTypeInfo)
     return __loadUserConfig(config)
 
-def userDataPath():
+def userDataPath() -> str:
     """Points to the user profile."""
     return FileTools.getAppDataPath(appName)
 
-def userConfigPath():
+def userConfigPath() -> str:
     if appConfig().managedConfig:
         name = appConfig().managedConfig
         return os.path.split(name)[0]
     else:
         return userDataPath()
 
-def userConfigFileName():
+def userConfigFileName() -> str:
     if appConfig().managedConfig:
         return appConfig().managedConfig
     else:
         return os.path.join(userDataPath(), configName)
 
-def saveUserConfig (config):
+def saveUserConfig (config: Config.Config) -> None:
     configPath = userConfigPath()
     name = userConfigFileName()
 
-    for i in range(2):
+    for _ in range(2):
         try:
             with open (name, "w",  -1,  "utf_8_sig") as output:
                 output.write(str(config))
@@ -88,7 +89,7 @@ def saveUserConfig (config):
             else:
                 raise e
 
-def __loadUserConfig (config):
+def __loadUserConfig (config: Config.Config):
     try:
         config.loadFile(userConfigFileName())
         return config
@@ -97,17 +98,17 @@ def __loadUserConfig (config):
             return config
         raise e
 
-def sourceViewerConfig():
+def sourceViewerConfig() -> Config.Config:
     sourceviewer = Config.Config()
     sourceviewer.setType ("FontFamily",  Config.typeDefaultString("Consolas"))
     sourceviewer.setType ("FontSize",  Config.typeDefaultInt(10))
     sourceviewer.setType ("TabWidth",  Config.typeDefaultInt(4))
     return sourceviewer
 
-def typeSourceViewerDefaults ():
+def typeSourceViewerDefaults () -> Tuple[Callable, Callable, Callable]:
     return (Config.identity, sourceViewerConfig, Config.identity)
 
-def configTypeInfo (config):
+def configTypeInfo (config: Config.Config) -> None:
     """Configurates the default values and types."""
     config.setType("profileUpdate",  Config.typeDefaultBool(False))
     config.setType("showCloseConfirmation",  Config.typeDefaultBool(False))
@@ -122,12 +123,11 @@ def configTypeInfo (config):
     config.setType("SourceViewer",  typeSourceViewerDefaults())
     config.setType("managedConfig", Config.typeDefaultString(""))
 
-def lastUsedConfigName ():
-    return _lastUsedConfigName
+def lastUsedConfigName () -> str:
+    return ConfigCache.lastUsedConfigName
 
-def setLastUsedConfigName (name):
-    global _lastUsedConfigName
-    _lastUsedConfigName = name
+def setLastUsedConfigName (name: str) -> None:
+    ConfigCache.lastUsedConfigName = name
 
 
 
