@@ -17,11 +17,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from typing import Optional, List, Tuple
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QTextDocument, QTextFormat, QColor, QTextCursor
+from PyQt5.QtGui import QTextDocument, QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent
 from PyQt5.QtWidgets import QWidget, QAction, QListWidgetItem, QDialog, QTextEdit
 from tools.FileTools import fopen
 from AppConfig import appConfig
+import fulltextindex.FullTextIndex as FullTextIndex
 import HighlightingRulesCache
 from Ui_SourceViewer import Ui_SourceViewer
 
@@ -33,14 +35,18 @@ class SourceViewer (QWidget):
     directoryDropped = pyqtSignal('QString')
     currentMatchChanged = pyqtSignal(int)
 
-    def __init__ (self, parent):
+    def __init__ (self, parent: QWidget) -> None:
+        self.matches: List[Tuple[int,int]]
+        self.curMatch: int
+        self.currentFile: str
+
         super ().__init__(parent)
         self.ui = Ui_SourceViewer()
         self.ui.setupUi(self)
         self.ui.frameSearch.hide()
 
-        self.sourceFont = self.font()
-        self.searchData = None
+        self.sourceFont: QFont = self.font()
+        self.searchData: Optional[FullTextIndex.Query] = None
         self.__reset()
         self.__processConfig(None)
 
@@ -63,25 +69,25 @@ class SourceViewer (QWidget):
         self.ui.frameMatchList.setVisible(self.ui.buttonMatchList.isChecked())
 
     @pyqtSlot(int)
-    def matchListRowChanged(self, row):
+    def matchListRowChanged(self, row: int) -> None:
         if row != -1:
             self.setCurrentMatch(row)
 
     @pyqtSlot(QListWidgetItem)
-    def matchListItemDoubleClicked(self, item):
+    def matchListItemDoubleClicked(self, _: QListWidgetItem) -> None:
         """Force jumping to a match. Useful to jump to the same match again."""
         row = self.ui.listMatchesWidget.currentRow()
         if row != -1:
             self.setCurrentMatch(row, True)
 
     @pyqtSlot()
-    def textEditUpdateNeeded (self):
+    def textEditUpdateNeeded (self) -> None:
         self.ui.textEdit.viewport().update ()
 
-    def reloadConfig (self, font):
+    def reloadConfig (self, font: QFont) -> None:
         self.__processConfig(font)
 
-    def __processConfig (self, font):
+    def __processConfig (self, font: QFont) -> None:
         if font:
             self.sourceFont = font
             self.ui.textEdit.setFont(self.sourceFont)
@@ -92,9 +98,9 @@ class SourceViewer (QWidget):
         if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
             self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
 
-    def __reset (self):
-        self.currentFile = None
-        self.matches = [] # touples with position and length
+    def __reset (self) -> None:
+        self.currentFile = ""
+        self.matches: List[Tuple[int,int]] = [] # touples with position and length
         self.__setMatchIndex(-1)
         self.ui.labelCursor.setText("")
         self.ui.labelFile.setText(self.tr("No document loaded"))
@@ -104,17 +110,17 @@ class SourceViewer (QWidget):
         self.ui.textEdit.setDynamicHighlight(None)
         self.ui.listMatchesWidget.clear()
 
-    def __setMatchIndex(self, index):
+    def __setMatchIndex(self, index: int) -> None:
         self.curMatch = index
         self.currentMatchChanged.emit(self.curMatch)
         self.ui.listMatchesWidget.setCurrentRow(index)
 
-    def setSearchData (self,  searchData):
+    def setSearchData (self, searchData: FullTextIndex.Query) -> None:
         self.__reset()
         self.searchData = searchData
         self.ui.textEdit.highlighter.setSearchData (searchData)
 
-    def showFile (self,  name):
+    def showFile (self, name: str) -> None:
         self.__reset()
         self.ui.labelFile.setText(name)
         self.currentFile = name
@@ -138,12 +144,12 @@ class SourceViewer (QWidget):
             self.nextMatch ()
 
     @pyqtSlot()
-    def reloadFile(self):
+    def reloadFile(self) -> None:
         if self.currentFile:
             self.showFile(self.currentFile)
 
     @pyqtSlot()
-    def gotoLine(self):
+    def gotoLine(self) -> None:
         from dialogs.GotoLineDialog import GotoLineDialog
         gotoDialog = GotoLineDialog(self)
         if gotoDialog.exec() == QDialog.Accepted:
@@ -160,7 +166,7 @@ class SourceViewer (QWidget):
                 self.ui.textEdit.setFocus(Qt.ActiveWindowFocusReason)
 
     @pyqtSlot()
-    def nextMatch (self):
+    def nextMatch (self) -> None:
         if self.curMatch < len(self.matches)-1:
             self.setCurrentMatch(self.curMatch + 1)
         else:
@@ -168,14 +174,14 @@ class SourceViewer (QWidget):
                 self.noNextMatch.emit()
 
     @pyqtSlot()
-    def previousMatch (self):
+    def previousMatch (self) -> None:
         if self.curMatch > 0:
             self.setCurrentMatch(self.curMatch - 1)
         else:
             if self.bMatchOverFiles:
                 self.noPreviousMatch.emit()
 
-    def setCurrentMatch(self, index, forceSet=False):
+    def setCurrentMatch(self, index: int, forceSet=False) -> None:
         if index>=0 and index<len(self.matches) and (index != self.curMatch or forceSet):
             self.__setMatchIndex(index)
             self.__scrollToMatch (self.curMatch)
@@ -184,26 +190,26 @@ class SourceViewer (QWidget):
                 self.__enableNextPrevious()
 
     @pyqtSlot()
-    def nextSearch(self):
+    def nextSearch(self) -> None:
         search = self.ui.editSearch.text()
         if search:
             self.ui.textEdit.setFocus(Qt.OtherFocusReason)
             self.ui.textEdit.find(search)
 
     @pyqtSlot()
-    def previousSearch(self):
+    def previousSearch(self) -> None:
         search = self.ui.editSearch.text()
         if search:
             self.ui.textEdit.setFocus(Qt.OtherFocusReason)
             self.ui.textEdit.find(search, QTextDocument.FindBackward)
 
     @pyqtSlot()
-    def updateCurrentLine (self):
+    def updateCurrentLine (self) -> None:
         line = self.ui.textEdit.textCursor().blockNumber()+1
         self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))
 
     @pyqtSlot()
-    def showSearchFrame(self):
+    def showSearchFrame(self) -> None:
         self.ui.frameSearch.show()
         self.ui.editSearch.setFocus(Qt.MouseFocusReason)
         text = self.ui.textEdit.textCursor().selectedText().strip()
@@ -211,7 +217,7 @@ class SourceViewer (QWidget):
             self.ui.editSearch.setText(text)
         self.ui.editSearch.selectAll()
 
-    def __enableNextPrevious (self):
+    def __enableNextPrevious (self) -> None:
         """Disable next/previous buttons if they don't make sense."""
         bEnablePrevious = self.curMatch > 0
         if self.ui.buttonMatchPrevious.isEnabled() != bEnablePrevious:
@@ -220,7 +226,7 @@ class SourceViewer (QWidget):
         if self.ui.buttonMatchNext.isEnabled() != bEnableNext:
             self.ui.buttonMatchNext.setEnabled(bEnableNext)
 
-    def __resetTextCursor (self):
+    def __resetTextCursor (self) -> None:
         cursor = self.ui.textEdit.textCursor()
         cursor.setPosition(0)
         self.ui.textEdit.setTextCursor(cursor)
@@ -228,13 +234,13 @@ class SourceViewer (QWidget):
         extra.cursor = cursor
         self.ui.textEdit.setExtraSelections((extra,))
 
-    def __setInfoLabel (self):
+    def __setInfoLabel (self) -> None:
         text = ""
-        if len(self.matches) and self.curMatch != -1:
+        if self.matches and self.curMatch != -1:
             text = text + "%u/%u " % (self.curMatch+1, len(self.matches))
         self.ui.labelInfo.setText (text)
 
-    def __scrollToMatch (self, num):
+    def __scrollToMatch (self, num:int) -> None:
         if num < 0 or num >= len(self.matches):
             return
         index, length = self.matches[num]
@@ -270,12 +276,12 @@ class SourceViewer (QWidget):
         cursor.setPosition(index)
         self.ui.textEdit.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
 
-    def dragEnterEvent(self, event):
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         # check if the data contains urls
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 
-    def dropEvent(self, event):
+    def dropEvent(self, event: QDropEvent) -> None:
         # check if the data contains urls
         if event.mimeData().hasUrls():
             name = event.mimeData().urls()[0].toLocalFile()
@@ -285,16 +291,16 @@ class SourceViewer (QWidget):
                 self.directoryDropped.emit(name)
 
     class EditorState:
-        def __init__(self, scrollPosition, currentMatch):
+        def __init__(self, scrollPosition: int, currentMatch: int) -> None:
             self.scrollPosition = scrollPosition
             self.currentMatch = currentMatch
 
-    def saveEditorState(self):
+    def saveEditorState(self) -> SourceViewer.EditorState:
         currentMatch = self.curMatch
         scrollPosition = self.ui.textEdit.verticalScrollBar ().sliderPosition ()
         return SourceViewer.EditorState(scrollPosition, currentMatch)
 
-    def restoreEditorState(self, state):
+    def restoreEditorState(self, state: SourceViewer.EditorState) -> None:
         self.setCurrentMatch(state.currentMatch)
         self.ui.textEdit.verticalScrollBar ().setSliderPosition (state.scrollPosition)
 

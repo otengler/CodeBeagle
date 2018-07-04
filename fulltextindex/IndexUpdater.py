@@ -22,19 +22,24 @@ import re
 import time
 import logging
 import sqlite3
-from typing import List, Iterator, IO
+from typing import List, Iterator, IO, Set
 from tools.FileTools import fopen
 from .IndexDatabase import IndexDatabase
 
 reTokenize = re.compile(r"[\w#]+")
 
-def genFind(filepat: List[str], strRootDir: str, dirExcludes: List[str]=None) -> Iterator[str]:
+def __fixExtension(ext: str) -> str:
+    if ext != ".":
+        return ext
+    return ""
+
+def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None) -> Iterator[str]:
     dirExcludes = dirExcludes or []
-    def fixExtension(ext: str) -> str:
-        if ext != ".":
-            return ext
-        return ""
-    filepat = [fixExtension(pat) for pat in filepat]
+
+    filepatFixed: Set[str] = set()
+    for pat in (__fixExtension(pat) for pat in filepat):
+        filepatFixed.add(pat)
+
     dirExcludes = [dir.lower() for dir in dirExcludes]
     for path, _, filelist in os.walk(strRootDir):
         if dirExcludes:
@@ -46,7 +51,7 @@ def genFind(filepat: List[str], strRootDir: str, dirExcludes: List[str]=None) ->
                     break
             if found:
                 continue
-        for name in (name for name in filelist if os.path.splitext(name)[1].lower() in filepat):
+        for name in (name for name in filelist if os.path.splitext(name)[1].lower() in filepatFixed):
             yield os.path.join(path, name)
 
 def genTokens(file: IO) -> Iterator[str]:
@@ -73,7 +78,7 @@ class UpdateStatistics:
         return s
 
 class IndexUpdater (IndexDatabase):
-    def updateIndex(self, directories: List[str], extensions: List[str], dirExcludes: List[str]=None, statistics: UpdateStatistics=None) -> None:
+    def updateIndex(self, directories: List[str], extensions: Set[str], dirExcludes: List[str]=None, statistics: UpdateStatistics=None) -> None:
         dirExcludes = dirExcludes or []
         c = self.conn.cursor()
         q = self.conn.cursor()

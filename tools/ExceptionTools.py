@@ -16,7 +16,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-def exceptionAsString (limit: int=5) -> str:
+from typing import Optional
+
+def exceptionAsString (limit: Optional[int]=5) -> str:
     """Prints the current exception into a string"""
     import sys
     import io

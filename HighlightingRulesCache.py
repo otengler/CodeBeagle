@@ -17,8 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from PyQt5 import QtCore
-from PyQt5 import QtGui
+from typing import Optional, Dict
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from tools.FileTools import fopen
@@ -28,13 +27,13 @@ from AppConfig import appConfig
 
 class RulesCache:
     """Provides a cache for HighlightingRules objects. It provides fast lookup by file name extension."""
-    def __init__ (self):
+    def __init__ (self) -> None:
         self.highlighterConfig = HighlighterConfiguration.highlighter(appConfig().SourceViewer)
         # A dict mapping a file extension to a HighlightingRules object
-        self.highlightingRulesCache = {}
-        self.extensionsToRulesFile = {}
+        self.highlightingRulesCache: Dict[str, HighlightingRules] = {}
+        self.extensionsToRulesFile: Dict[str, str] = {}
 
-    def getRulesByFileName(self,  name,  font):
+    def getRulesByFileName(self,  name: str,  font: QFont) -> Optional[HighlightingRules]:
         """Choose a set of highlighting rules depending on the file extension."""
         ext = os.path.splitext(name)[1].lower()
         if ext.startswith("."):
@@ -43,19 +42,22 @@ class RulesCache:
         if ext in self.extensionsToRulesFile:
             rulesFile = self.extensionsToRulesFile[ext]
         else:
-            rulesFile = self.highlighterConfig.lookup(ext)
+            possibleRulesFile = self.highlighterConfig.lookup(ext)
+            if not possibleRulesFile:
+                return None
+            rulesFile = possibleRulesFile
             self.extensionsToRulesFile[ext] = rulesFile
 
         if rulesFile in self.highlightingRulesCache:
             highlightingRules = self.highlightingRulesCache[rulesFile]
         else:
-            highlightingRules = self.rulesFromFile(rulesFile,  font)
+            highlightingRules = self.__rulesFromFile(rulesFile,  font)
             self.highlightingRulesCache[rulesFile] = highlightingRules
 
         return highlightingRules
 
-    def rulesFromFile (self, rulesFile,  font):
-        rules = HighlightingRules(font)
+    def __rulesFromFile (self, rulesFile: str,  font: QFont) -> HighlightingRules:
+        newRules = HighlightingRules(font)
 
         localsDict = { "Light" : QFont.Light,
                        "Normal" : QFont.Normal,
@@ -81,20 +83,20 @@ class RulesCache:
                        "darkGray" : Qt.darkGray,
                        "lightGray" : Qt.lightGray,
 
-                       "addKeywords" : rules.addKeywords,
-                       "addCommentRule" : rules.addCommentRule,
-                       "addRule" : rules.addRule}
+                       "addKeywords" : newRules.addKeywords,
+                       "addCommentRule" : newRules.addCommentRule,
+                       "addRule" : newRules.addRule}
 
         with fopen(os.path.join("config", rulesFile)) as script:
             code = compile(script.read(), rulesFile, 'exec')
         exec(code,  globals(),  localsDict)
 
-        return rules
+        return newRules
 
-_rulesCache = None
+class RulesCacheStorage:
+    rulesCache: Optional[RulesCache] = None
 
-def rules():
-    global _rulesCache
-    if not _rulesCache:
-        _rulesCache = RulesCache()
-    return _rulesCache
+def rules() -> RulesCache:
+    if not RulesCacheStorage.rulesCache:
+        RulesCacheStorage.rulesCache = RulesCache()
+    return RulesCacheStorage.rulesCache

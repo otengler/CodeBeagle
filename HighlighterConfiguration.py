@@ -16,19 +16,21 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from typing import Optional, List, Tuple
 from fnmatch  import fnmatch
-import tools.Config as Config
 import unittest
+import tools.Config as Config
+
 
 class ExtensionMapping:
-    def __init__(self,  extPattern,  configFile):
+    def __init__(self,  extPattern: str,  configFile: str) -> None:
         # The significance is the number of none wildcard chars. E.g. CPP has a significance of 3, C* has only 1.
         self.significance = sum ((lambda c: c!="*" and c!="?")(c) for c in extPattern)
         # A pattern which matches the extension
         self.extPattern = extPattern
         self.configFile = configFile
 
-    def match (self, ext):
+    def match (self, ext: str) -> int:
         """Returns the significance if the configuration matches the pattern , -1 otherwise"""
         if ext.startswith("."):
             ext = ext[1:]
@@ -41,17 +43,17 @@ class Highlighter:
     Contains a list of ExtensionMapping objects. Its main function is to lookup the right ExtensionMapping for
     a given extension.
     """
-    def __init__(self, conf):
+    def __init__(self, conf: Config.Config) -> None:
         self.mappings = self.readConfig (conf)
 
-    def readConfig (self,  conf):
+    def readConfig (self,  conf: Config.Config) -> List[ExtensionMapping]:
         """
         Highlighter_Default {
             config = C++.txt
             extensions = *
         }
         """
-        mappings = []
+        mappings: List[ExtensionMapping] = []
         for c in conf:
             if c.startswith("highlighter"):
                 settings = conf[c]
@@ -61,26 +63,26 @@ class Highlighter:
                     mappings.append(ExtensionMapping(pattern,  configFile))
         return mappings
 
-    def lookup (self, ext):
-        """Lookup highlighter by extension"""
-        matches = []
+    def lookup (self, ext: str) -> Optional[str]:
+        """Lookup highlighter config file by extension"""
+        matches: List[Tuple[int, ExtensionMapping]] = []
         for mapping in self.mappings:
             significance = mapping.match(ext)
             if significance != -1:
                 matches.append((significance, mapping))
         # Sort by significance
         matches.sort(key=lambda i: i[0], reverse=True)
-        if len(matches):
+        if matches:
             return matches[0][1].configFile
         return None
 
-_highlighter = None
+class HighlighterCache:
+    highlighter: Optional[Highlighter] = None
 
-def highlighter(conf):
-    global _highlighter
-    if not _highlighter:
-        _highlighter = Highlighter(conf)
-    return _highlighter
+def highlighter(conf: Config.Config) -> Highlighter:
+    if not HighlighterCache.highlighter:
+        HighlighterCache.highlighter = Highlighter(conf)
+    return HighlighterCache.highlighter
 
 #Highlighter_Default {
 #    config = default.txt

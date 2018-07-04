@@ -17,27 +17,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import Qt, QUrl, QMimeData
-from PyQt5.QtGui import QDrag
-from PyQt5.QtWidgets import QListView, QApplication
+from PyQt5.QtGui import QDrag, QMouseEvent
+from PyQt5.QtWidgets import QListView, QApplication, QWidget
 
 class PathDragListView (QListView):
-    def __init__ (self, parent):
+    def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent)
         self.startPos = None
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.LeftButton:
             self.startPos = event.pos()
         super ().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if self.startPos and event.buttons() and Qt.LeftButton:
             distance = (event.pos() - self.startPos).manhattanLength()
             if distance >= QApplication.startDragDistance():
                 self.performDrag()
         super ().mouseMoveEvent(event)
 
-    def performDrag(self):
+    def performDrag(self) -> None:
         if self.model():
             paths = (self.model().data(index,  Qt.UserRole) for index in self.selectedIndexes())
             urls = [QUrl.fromLocalFile(path) for path in paths]

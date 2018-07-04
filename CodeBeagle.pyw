@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot
-from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtGui import QDesktopServices, QCloseEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 import tools.FileTools as FileTools
 import dialogs.UserHintDialog as UserHintDialog
@@ -65,7 +65,7 @@ class MainWindow(QMainWindow):
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QCloseEvent) -> None:
         if AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
                                        self.tr("Really close?"),
@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
         self.__saveGeometryAndState()
         event.accept()
 
-    def newerVersionFound(self, version):
+    def newerVersionFound(self, version: str):
         text = userHintNewVersionAvailable % {"version": version}
         result = UserHintDialog.showUserHint(self, "newVersion" + version, self.tr("New version available"), text,
                                              UserHintDialog.Yes, True, UserHintDialog.No, False, bShowHintAgain=True)
@@ -96,18 +96,18 @@ class MainWindow(QMainWindow):
             url = QUrl("http://sourceforge.net/projects/codebeagle/files/")
             QDesktopServices.openUrl(url)
 
-    def __restoreGeometryAndState(self):
+    def __restoreGeometryAndState(self) -> None:
         if self.appSettings.value("geometry"):
             self.restoreGeometry(self.appSettings.value("geometry"))
         if self.appSettings.value("windowState"):
             self.restoreState(self.appSettings.value("windowState"))
 
-    def __saveGeometryAndState(self):
+    def __saveGeometryAndState(self) -> None:
         self.appSettings.setValue("geometry", self.saveGeometry())
         self.appSettings.setValue("windowState", self.saveState())
 
     @pyqtSlot(str)
-    def changeWindowTitle(self, name):
+    def changeWindowTitle(self, name: str) -> None:
         if name:
             self.setWindowTitle(self.initialWindowTitle + "  -  " + name)
         else:

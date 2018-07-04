@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import os.path
-import abc
+from abc import ABC,abstractmethod
 import re
 import sqlite3
 import time
@@ -175,8 +175,8 @@ class TestSearchParts(unittest.TestCase):
 class QueryError(RuntimeError):
     pass
 
-class Query(metaclass = abc.ABCMeta):
-    def __init__(self, strSearch: str, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False) -> None:
+class Query(ABC):
+    def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
         self.folderFilter = createFolderFilter(strFolderFilter)
         self.extensionFilter = createExtensionFilter(strExtensionFilter)
         self.hasFilters = False
@@ -267,7 +267,7 @@ class Query(metaclass = abc.ABCMeta):
 
         return True
 
-    @abc.abstractmethod
+    @abstractmethod
     def regExForMatches(self) -> Pattern:
         pass
 

@@ -16,32 +16,32 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import abc
+from abc import ABC,abstractmethod
 import bisect
 import collections
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QLayout, QScrollArea, QWidget
 
-def doLinesIntersect (y1, length1, y2, length2):
+def doLinesIntersect (y1: int, length1: int, y2: int, length2: int) -> bool:
     if y1 < y2:
         return  y1+length1 > y2
     else:
         return y2+length2 >  y1
 
-class ScrollAreaItem (metaclass = abc.ABCMeta):
-    def __init__ (self,  height):
+class ScrollAreaItem (ABC):
+    def __init__ (self,  height: int) -> None:
         self.height = height
 
-    @abc.abstractmethod
-    def generateItem (self, parent):
+    @abstractmethod
+    def generateItem (self, parent: QWidget) -> QWidget:
         pass
 
-    @abc.abstractmethod
-    def configureItem(self, item):
+    @abstractmethod
+    def configureItem(self, item: QWidget) -> None:
         pass
 
-    @abc.abstractmethod
-    def getType(self):
+    @abstractmethod
+    def getType(self) -> str:
         pass
 
 class Labeltem (ScrollAreaItem):
@@ -54,13 +54,13 @@ class Labeltem (ScrollAreaItem):
     def generateItem (self, parent):
         return QLabel("", parent)
 
-    def configureItem(self, label):
-        label.setFixedHeight(self.height)
+    def configureItem(self, item):
+        item.setFixedHeight(self.height)
         if self.bIsBold:
             text = "<b>" + self.text + "</b>"
         else:
             text = self.text
-        label.setText(text)
+        item.setText(text)
 
     def getType(self):
         return QLabel
@@ -123,10 +123,10 @@ class EmptyLayout(QLayout):
     This layout works around the problem that child wigets of the scrollarea widget are invisible if the scrollarea widget
     has no layout. If this is a bug or as designed - I don't know.
     """
-    def itemAt(self, index):
+    def itemAt(self, _):
         return None
 
-    def takeAt(self, index):
+    def takeAt(self, _):
         return None
 
     def count(self):
