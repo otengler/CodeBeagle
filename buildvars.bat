@@ -1,4 +1,4 @@
-set PYDIR=C:\Python36
+set PYDIR=C:\Python37
 
 if exist "C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe" (
     set mt="C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe"

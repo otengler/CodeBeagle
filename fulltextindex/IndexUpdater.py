@@ -159,6 +159,3 @@ class IndexUpdater (IndexDatabase):
     def __getNextIndexRun(self, c: sqlite3.Cursor) -> int:
         c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
         return c.lastrowid
-
-
-

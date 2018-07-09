@@ -16,29 +16,31 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from typing import Tuple, List, Optional, Any, Iterator
 import bisect
-from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QTimer, QRect
-from PyQt5.QtGui import QTextCharFormat, QFont, QTextLayout, QPainter
-from PyQt5.QtWidgets import QPlainTextEdit
+from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QTimer, QRect, QRectF
+from PyQt5.QtGui import QTextCharFormat, QFont, QTextLayout, QPainter, QBrush, QPaintEvent, QTextBlock
+from PyQt5.QtWidgets import QPlainTextEdit, QWidget
+from fulltextindex.FullTextIndex import Query
 
 class HighlightingRules:
-    def __init__(self,  font):
-        self.rules = []
-        self.lineComment = None
-        self.multiCommentStart = None
-        self.multiCommentStop = None
-        self.commentFormat = None
+    def __init__(self, font: QFont) -> None:
+        self.rules: List[Tuple[QRegExp, QTextCharFormat]] = []
+        self.lineComment: Optional[QRegExp] = None
+        self.multiCommentStart: Optional[QRegExp] = None
+        self.multiCommentStop: Optional[QRegExp] = None
+        self.commentFormat: Optional[QTextCharFormat] = None
         self.font = font
 
-    def addKeywords (self, keywords, fontWeight, foreground):
+    def addKeywords (self, keywords: str, fontWeight: int, foreground: QBrush) -> None:
         """Adds a list of comma separated keywords."""
         keywords = keywords.strip()
         kwList = keywords.split(",")
         # We build a single expression which matches all keywords
         expr = "|".join(("\\b" + kw + "\\b" for kw in kwList))
-        self.addRule (expr,  fontWeight,  foreground)
+        self.addRule (expr, fontWeight, foreground)
 
-    def addCommentRule (self, singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground):
+    def addCommentRule (self, singleLine: str, multiLineStart: str, multiLineEnd: str, fontWeight: int, foreground: QBrush) -> None:
         """Adds comment rules. Each parameter is a regular expression  string. The multi line parameter are optional and can be empty."""
         self.commentFormat = self.__createFormat(fontWeight,  foreground)
         self.lineComment = QRegExp(singleLine)
@@ -46,59 +48,60 @@ class HighlightingRules:
             self.multiCommentStart = QRegExp(multiLineStart)
             self.multiCommentStop = QRegExp(multiLineEnd)
 
-    def addRule (self, expr,  fontWeight,  foreground):
+    def addRule (self, expr: QRegExp, fontWeight: int, foreground: QBrush) -> None:
         """Adds an arbitrary highlighting rule."""
         fmt = self.__createFormat(fontWeight, foreground)
         self.__addRule (expr, fmt)
 
-    def setFont (self, font):
+    def setFont (self, font: QFont) -> None:
         """Needed to change the font after the HighlightingRules object has been created."""
         for rule in self.rules:
             rule[1].setFont(font)
-        self.commentFormat.setFont(font)
+        if self.commentFormat:
+            self.commentFormat.setFont(font)
 
-    def __addRule (self, expr, fmt):
+    def __addRule (self, expr: QRegExp, fmt: QTextCharFormat) -> None:
         self.rules.append((QRegExp(expr), fmt))
 
-    def __createFormat (self,  fontWeight, foreground):
+    def __createFormat (self, fontWeight:int, foreground: QBrush) -> QTextCharFormat:
         fmt = QTextCharFormat()
         fmt.setFont(self.font)
         fmt.setFontWeight(fontWeight)
         fmt.setForeground(foreground)
         return fmt
 
+class CommentRange:
+    def __init__(self, index: int, length: int=0) -> None:
+        self.index = index
+        self.length = length
+
+    def __lt__ (self, other: Any) -> bool:
+        return self.index < other.index
+
 class SyntaxHighlighter:
-    def __init__(self):
+    def __init__(self) -> None:
         # The current rules
-        self.highlightingRules = None
+        self.highlightingRules: Optional[HighlightingRules] = None
 
         self.searchStringFormat = QTextCharFormat()
         self.searchStringFormat.setBackground(Qt.yellow)
         self.searchStringFormat.setForeground(Qt.black)
 
-        self.comments = []
-        self.searchData = None
+        self.comments: List[CommentRange]  = []
+        self.searchData: Optional[Query] = None
 
-    def setFont (self, font):
+    def setFont (self, font: QFont) -> None:
         if self.highlightingRules:
             self.highlightingRules.setFont (font)
 
-    def setHighlightingRules (self, rules, text):
+    def setHighlightingRules (self, rules: HighlightingRules, text: str) -> None:
         self.highlightingRules = rules
         self.searchStringFormat.setFont(rules.font)
         self.searchStringFormat.setFontWeight(QFont.Bold)
         # Text is needed to compute the syntax highlighting for multiline comments
         self.__setText(text)
 
-    class CommentRange:
-        def __init__(self, index, length=0):
-            self.index = index
-            self.length = length
-
-        def __lt__ (self, other):
-            return self.index < other.index
-
-    def __textLineBefore(self,  text,  index):
+    def __textLineBefore(self, text: str, index: int) -> str:
         pos = index
         while pos > 0:
             pos -= 1
@@ -107,10 +110,11 @@ class SyntaxHighlighter:
         return text[0:index]
 
     # Find all multiline comments in the document and store them as CommentRange objects in self.comments
-    def __setText(self, text):
-        comments = []
+    def __setText(self, text: str) -> None:
+        comments: List[CommentRange] = []
         if self.highlightingRules:
             if self.highlightingRules.multiCommentStart and self.highlightingRules.multiCommentStop:
+                regLine = self.highlightingRules.lineComment
                 regStart = self.highlightingRules.multiCommentStart
                 regEnd = self.highlightingRules.multiCommentStop
                 startIndex = regStart.indexIn(text)
@@ -118,25 +122,25 @@ class SyntaxHighlighter:
                     matchedLenStart = regStart.matchedLength()
                     line = self.__textLineBefore (text, startIndex+matchedLenStart) # +matchedLenStart too catch things like "//*"
                     # Check if the multi line comment is commented out
-                    if self.highlightingRules.lineComment.indexIn (line) == -1:
+                    if regLine and regLine.indexIn (line) == -1:
                         endIndex = regEnd.indexIn(text, startIndex+matchedLenStart)
                         if endIndex == -1: # comment opened but not closed
-                            comments.append (self.CommentRange(startIndex,  len(text)-startIndex))
+                            comments.append (CommentRange(startIndex,  len(text)-startIndex))
                             break
                         matchedLenEnd = regEnd.matchedLength()
-                        comments.append (self.CommentRange(startIndex,  endIndex+matchedLenEnd-startIndex))
+                        comments.append (CommentRange(startIndex,  endIndex+matchedLenEnd-startIndex))
                     else:
                         endIndex = startIndex
                         matchedLenEnd = matchedLenStart
                     startIndex = regStart.indexIn(text,  endIndex+matchedLenEnd)
         self.comments = comments
 
-    def setSearchData (self, searchData):
+    def setSearchData (self, searchData: Query) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""
         self.searchData = searchData
 
-    def highlightBlock(self, position, text):
-        formats = []
+    def highlightBlock(self, position: int, text: str) -> List[Tuple[QTextCharFormat, int, int]]:
+        formats: List[Tuple[QTextCharFormat, int, int]] = []
         if not self.highlightingRules:
             return formats
 
@@ -149,7 +153,7 @@ class SyntaxHighlighter:
                 index = expression.indexIn(text, index + length)
 
         # Colorize multiline comments
-        pos = bisect.bisect_right (self.comments,  self.CommentRange(position))
+        pos = bisect.bisect_right (self.comments,  CommentRange(position))
         if pos > 0:
             pos -= 1
         while pos < len(self.comments):
@@ -179,32 +183,32 @@ class SyntaxHighlighter:
 class HighlightingTextEdit (QPlainTextEdit):
     updateNeeded = pyqtSignal()
 
-    def __init__ (self, parent):
+    def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent)
         self.highlighter = SyntaxHighlighter()
-        self.dynamicHighlight = None
+        self.dynamicHighlight: Optional[str] = None
         self.setUndoRedoEnabled(False)
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.setReadOnly(True)
         self.setTextInteractionFlags(Qt.TextSelectableByKeyboard|Qt.TextSelectableByMouse)
 
-    def setPlainText(self,  text):
+    def setPlainText(self, text: str) -> None:
         super().setPlainText(text)
         # For whatever reasons some lines are not highlighted properly without another 'update'
         QTimer.singleShot (10, self.viewport().update)
 
-    def setDynamicHighlight(self,  text):
+    def setDynamicHighlight(self, text: str) -> None:
         if self.dynamicHighlight != text:
             self.dynamicHighlight = text
             self.viewport().update()
 
-    def setFont(self,  font):
+    def setFont(self, font: QFont) -> None:
         super().setFont (font)
         self.viewport().setFont(font)
         self.highlighter.setFont(font)
 
-    def paintEvent(self, event):
-        firstVisibleBlock = self.firstVisibleBlock()
+    def paintEvent(self, event: QPaintEvent) -> None:
+        firstVisibleBlock: QTextBlock = self.firstVisibleBlock()
         bColorizedBlocks = self.colorizeVisibleBlocks(firstVisibleBlock)
 
         super().paintEvent(event)
@@ -212,7 +216,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         if self.dynamicHighlight:
             painter = QPainter(self.viewport())
             metrics = painter.fontMetrics()
-            for block, bound in self.visibleBlocks(firstVisibleBlock,  True):
+            for block, bound in self.visibleBlocks(firstVisibleBlock):
                 bound = QRect(bound.left(), bound.top(), bound.width(), bound.height())
                 startIndex = 0
                 while startIndex != -1:
@@ -233,9 +237,9 @@ class HighlightingTextEdit (QPlainTextEdit):
         if bColorizedBlocks:
             self.updateNeeded.emit()
 
-    def colorizeVisibleBlocks(self, firstVisibleBlock):
+    def colorizeVisibleBlocks(self, firstVisibleBlock: QTextBlock) -> bool:
         bColorizedBlocks = False
-        for block in self.visibleBlocks(firstVisibleBlock):
+        for block, _ in self.visibleBlocks(firstVisibleBlock):
             # -1 means the block has not been highlighted yet
             if block.userState() == -1:
                 bColorizedBlocks = True
@@ -261,17 +265,12 @@ class HighlightingTextEdit (QPlainTextEdit):
                 block.setUserState(1)
         return bColorizedBlocks
 
-    def visibleBlocks (self, firstVisibleBlock, bIncludeBound=False):
+    def visibleBlocks (self, firstVisibleBlock: QTextBlock) -> Iterator[Tuple[QTextBlock, QRectF]]:
         size = self.viewport().size()
         block = firstVisibleBlock
         while block.isValid():
             bound = self.blockBoundingGeometry(block).translated(self.contentOffset())
             if bound.top() > size.height():
                 break
-            if bIncludeBound:
-                yield block, bound
-            else:
-                yield block
+            yield block, bound
             block = block.next()
-
-

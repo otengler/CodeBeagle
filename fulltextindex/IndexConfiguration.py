@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from enum import IntEnum
 from typing import Set,List
-import tools.Config as Config
+from tools import Config
 from tools.FileTools import correctPath
 
 class IndexMode(IntEnum):
@@ -136,5 +136,3 @@ def readConfig(conf: Config.Config) -> List[IndexConfiguration]:
         dirExceptions = indexConf.dirExcludes
         result.append(IndexConfiguration(indexName, extensions, directories, dirExceptions, indexdb, indexUpdateMode))
     return result
-
-

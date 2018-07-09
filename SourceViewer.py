@@ -23,7 +23,7 @@ from PyQt5.QtGui import QTextDocument, QTextFormat, QColor, QTextCursor, QFont, 
 from PyQt5.QtWidgets import QWidget, QAction, QListWidgetItem, QDialog, QTextEdit
 from tools.FileTools import fopen
 from AppConfig import appConfig
-import fulltextindex.FullTextIndex as FullTextIndex
+from fulltextindex import FullTextIndex
 import HighlightingRulesCache
 from Ui_SourceViewer import Ui_SourceViewer
 
@@ -300,7 +300,7 @@ class SourceViewer (QWidget):
         scrollPosition = self.ui.textEdit.verticalScrollBar ().sliderPosition ()
         return SourceViewer.EditorState(scrollPosition, currentMatch)
 
-    def restoreEditorState(self, state: SourceViewer.EditorState) -> None:
+    def restoreEditorState(self, state: EditorState) -> None:
         self.setCurrentMatch(state.currentMatch)
         self.ui.textEdit.verticalScrollBar ().setSliderPosition (state.scrollPosition)
 
@@ -316,6 +316,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

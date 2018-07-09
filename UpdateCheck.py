@@ -102,4 +102,3 @@ if __name__ == "__main__":
     checker = UpdateCheck()
     checker.checkForUpdates()
     sys.exit(app.exec_())
-

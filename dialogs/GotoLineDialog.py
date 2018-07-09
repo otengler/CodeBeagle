@@ -16,23 +16,23 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from PyQt5.QtGui import QFocusEvent
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QWidget
 from .Ui_GotoLineDialog import Ui_GotoLineDialog
 
 class GotoLineDialog (QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.ui = Ui_GotoLineDialog()
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
-    def focusInEvent (self, event):
+    def focusInEvent (self, _: QFocusEvent):
         self.ui.editLine.setFocus(Qt.ActiveWindowFocusReason)
 
-    def getLine(self):
+    def getLine(self) -> int:
         try:
             return int(self.ui.editLine.text())
         except ValueError:
             return 0
-

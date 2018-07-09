@@ -21,8 +21,8 @@ import sys
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot
 from PyQt5.QtGui import QDesktopServices, QCloseEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-import tools.FileTools as FileTools
-import dialogs.UserHintDialog as UserHintDialog
+from tools import FileTools
+from dialogs import UserHintDialog
 import AppConfig
 from UpdateCheck import UpdateCheck
 from Ui_MainWindow import Ui_MainWindow
@@ -34,7 +34,6 @@ userHintNewVersionAvailable = """
 
 def main() -> None:
     app = QApplication(sys.argv)
-
     # Switch to application directory to be able to load the configuration and search scripts even if we are
     # executed from a different working directory.
     FileTools.switchToAppDir()

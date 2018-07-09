@@ -17,13 +17,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from PyQt5.QtWidgets import QDialog, QApplication
+from PyQt5.QtWidgets import QDialog, QApplication, QWidget
 from PyQt5 import QtCore
 import AppConfig
 from .Ui_AboutDialog import Ui_AboutDialog
 
 class AboutDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.ui = Ui_AboutDialog()
         self.ui.setupUi(self)

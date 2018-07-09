@@ -16,13 +16,14 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from typing import List,Tuple
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import QApplication, QDialog
+from PyQt5.QtWidgets import QApplication, QDialog, QWidget
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from .Ui_CheckableItemsDialog import Ui_CheckableItemsDialog
 
 class CheckableItemsDialog(QDialog):
-    def __init__(self, title, bCheckAllState, parent):
+    def __init__(self, title: str, bCheckAllState: bool, parent: QWidget) -> None:
         super().__init__(parent)
         self.ui = Ui_CheckableItemsDialog()
         self.ui.setupUi(self)
@@ -40,7 +41,7 @@ class CheckableItemsDialog(QDialog):
         else:
             self.ui.checkToggleAll.setCheckState(Qt.Unchecked)
 
-    def addItem(self, name, bCheck=True):
+    def addItem(self, name: str, bCheck: bool=True) -> None:
         item = QStandardItem(name)
         item.setFlags(Qt.ItemIsUserCheckable | item.flags())
         if bCheck:
@@ -49,7 +50,7 @@ class CheckableItemsDialog(QDialog):
             item.setData(Qt.Unchecked, Qt.CheckStateRole)
         self.model.appendRow(item)
 
-    def checkedItems(self):
+    def checkedItems(self) -> List[Tuple[int,str]]:
         items = []
         for i in range(self.model.rowCount()):
             index = self.model.index(i, 0)
@@ -58,7 +59,7 @@ class CheckableItemsDialog(QDialog):
         return items
 
     @pyqtSlot(bool)
-    def checkAll(self, bCheckAll):
+    def checkAll(self, bCheckAll: bool) -> None:
         if bCheckAll:
             flag = Qt.Checked
         else:
@@ -69,7 +70,7 @@ class CheckableItemsDialog(QDialog):
 
 def main():
     import sys
-    app = QApplication(sys.argv)
+    QApplication(sys.argv)
     w = CheckableItemsDialog("Choose indexes to update", True, None)
     w.addItem("Amber")
     w.addItem("Silver")
@@ -82,4 +83,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

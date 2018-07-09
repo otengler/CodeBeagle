@@ -21,12 +21,12 @@ from typing import List, Tuple, Dict, Optional, Any
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QFileInfo, QPoint, QUrl, QAbstractListModel, QModelIndex, QSettings, QSize
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
-import tools.AsynchronousTask as AsynchronousTask
-import dialogs.UserHintDialog as UserHintDialog
+from tools import AsynchronousTask
+from dialogs.UserHintDialog import showUserHint, ButtonType
 from dialogs.RegExTesterDlg import RegExTesterDlg
-import dialogs.StackTraceMessageBox as StackTraceMessageBox
+from dialogs import StackTraceMessageBox
 import PathVisualizerDelegate
-import fulltextindex.FullTextIndex as FullTextIndex
+from fulltextindex import FullTextIndex
 from fulltextindex.IndexConfiguration import IndexConfiguration
 import SearchMethods
 import CustomContextMenu
@@ -81,7 +81,7 @@ class StringListModel(QAbstractListModel):
         first = os.path.split(self.filelist[0])[0] + os.path.sep
         last = os.path.split(self.filelist[-1])[0] + os.path.sep
         firstDiff = firstDifference(first, last)
-        if firstDiff != None:
+        if firstDiff is not None:
             # Only cut full directories - go back to the last path seperator
             common = first[:firstDiff]
             lastSep = common.rfind(os.path.sep)
@@ -372,7 +372,7 @@ class SearchPage (QWidget):
             self.__updateSearchResult(result)
             self.__rememberSearchTerms()
             text = self.tr(userHintUseWildcards)
-            UserHintDialog.showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  UserHintDialog.OK)
+            showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  ButtonType.OK)
 
     def __updateSearchResult (self, result: SearchMethods.ResultSet):
         if result.label:
@@ -584,5 +584,3 @@ class SearchPage (QWidget):
         StackTraceMessageBox.show(self,
                                   self.tr("Custom search failed"),
                                   self.tr("Custom search scripts are written in Python. Click on 'Show details' to display the stack trace."))
-
-

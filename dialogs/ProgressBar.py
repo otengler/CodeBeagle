@@ -16,22 +16,23 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QWidget
 from .Ui_ProgressBar import Ui_ProgressBar
 
 class ProgressBar (QDialog):
     onCancelClicked = pyqtSignal()
 
-    def __init__ (self, parent, bEnableCancel=False):
-        super().__init__(parent,  Qt.SplashScreen)
+    def __init__ (self, parent: QWidget, bEnableCancel: bool=False) -> None:
+        super().__init__(parent, Qt.SplashScreen)
         self.ui = Ui_ProgressBar()
         self.ui.setupUi(self)
         self.ui.frame.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         if not bEnableCancel:
             self.ui.buttonCancel.setEnabled(False)
 
-    def keyPressEvent(self,  e):
+    def keyPressEvent(self, e: QKeyEvent):
         """Disable closing the dialog with Esc and emit onCancelClicked instead."""
         if e.key() != Qt.Key_Escape:
             super ().keyPressEvent(e)

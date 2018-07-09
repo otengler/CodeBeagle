@@ -20,7 +20,7 @@ import os
 from typing import List, Pattern, Iterator, Tuple, Optional, cast
 import threading
 from PyQt5.QtCore import QObject
-import tools.AsynchronousTask as AsynchronousTask
+from tools import AsynchronousTask
 from tools.FileTools import fopen
 from fulltextindex import FullTextIndex, IndexUpdater, IndexConfiguration
 
@@ -198,4 +198,3 @@ def removeDupsAndSort(matches: FullTextIndex.SearchResult) -> FullTextIndex.Sear
     matches = [match for match in uniqueMatches]
     matches.sort()
     return matches
-

@@ -27,4 +27,3 @@ def exceptionAsString (limit: Optional[int]=5) -> str:
     memFile = io.StringIO()
     traceback.print_exception(exc_type, exc_value, exc_traceback, limit=limit, file=memFile)
     return memFile.getvalue()
-

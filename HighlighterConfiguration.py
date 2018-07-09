@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Optional, List, Tuple
 from fnmatch  import fnmatch
 import unittest
-import tools.Config as Config
+from tools import Config
 
 
 class ExtensionMapping:
@@ -110,5 +110,3 @@ class TestHighlighterConfig(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-

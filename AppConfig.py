@@ -18,8 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from typing import Optional, Tuple, Callable
-import tools.Config as Config
-import tools.FileTools as FileTools
+from tools import Config, FileTools
 
 appName = "CodeBeagle"
 appCompany = "OTE"
@@ -128,7 +127,3 @@ def lastUsedConfigName () -> str:
 
 def setLastUsedConfigName (name: str) -> None:
     ConfigCache.lastUsedConfigName = name
-
-
-
-

@@ -6,4 +6,5 @@
     },
 
     "python.linting.mypyEnabled": true,
+    "python.pythonPath": "C:\\Python37\\python.exe",
 }

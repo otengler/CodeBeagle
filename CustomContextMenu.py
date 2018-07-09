@@ -20,7 +20,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from PyQt5.QtCore import QObject, pyqtSignal
-import tools.Config as Config
+from tools import Config
 from tools.FileTools import fopen
 from tools.ExceptionTools import exceptionAsString
 
@@ -158,5 +158,3 @@ def __readConfig (conf: Config.Config) -> List[CustomContextMenu]:
             entries.append(CustomContextMenu(title,  CustomScriptTask(script)))
 
     return entries
-
-

@@ -78,4 +78,3 @@ def execute(parent: QObject, func:Callable, *args, bEnableCancel=False, cancelAc
     finally:
         if progress:
             progress.close()
-

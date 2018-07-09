@@ -41,7 +41,3 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
                 self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
             else:
                 self.setDynamicHighlight(text)
-
-
-
-

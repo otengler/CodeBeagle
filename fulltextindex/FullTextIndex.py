@@ -293,7 +293,7 @@ class SearchQuery(Query):
         return reExpr
 
 class FindAllQuery(Query):
-    def __init__(self, strSearch:str, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False) -> None:
+    def __init__(self, strSearch:str, strFolderFilter:str="", strExtensionFilter:str="", bCaseSensitive:bool=False) -> None:
         super().__init__(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
 
         parts = []
@@ -551,4 +551,3 @@ class FullTextIndex (IndexDatabase):
                 reportAction.addData("String '%s' results in %u keyword matches", kw, len(result))
             keys.append([Keyword(r[0], r[1]) for r in result])
         return keys
-

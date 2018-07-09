@@ -1,7 +1,7 @@
 call buildvars.bat
 call build.bat
 
-set BUILDDIR=build\exe.win32-3.6
+set BUILDDIR=build\exe.win32-3.7
 if exist build rmdir /s /q build
 python.exe setup.py build_exe
 copy %PYDIR%\DLLS\sqlite3.dll %BUILDDIR%

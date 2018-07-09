@@ -25,10 +25,10 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QWidget
 from tools.FileTools import fopen
-import tools.AsynchronousTask as AsynchronousTask
-import fulltextindex.FullTextIndex as FullTextIndex
+from tools import AsynchronousTask
+from  fulltextindex import FullTextIndex
 from widgets.SourceHighlightingTextEdit import SourceHighlightingTextEdit
-import widgets.RecyclingVerticalScrollArea as RecyclingVerticalScrollArea
+from widgets import RecyclingVerticalScrollArea
 from AppConfig import appConfig
 import HighlightingRulesCache
 from Ui_MatchesOverview import Ui_MatchesOverview

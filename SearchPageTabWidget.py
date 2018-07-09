@@ -22,15 +22,14 @@ from typing import List
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QSize, QTimer
 from PyQt5.QtGui import QMovie, QKeySequence
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPushButton
-import tools.FileTools as FileTools
 from tools.Config import Config
+from tools import FileTools
 from widgets.LeaveLastTabWidget import LeaveLastTabWidget
-import dialogs.UserHintDialog as UserHintDialog
-import dialogs.StackTraceMessageBox as StackTraceMessageBox
+from dialogs import UserHintDialog, StackTraceMessageBox
 from dialogs.SettingsDialog import SettingsDialog
 from SearchPage import SearchPage
 import AppConfig
-import fulltextindex.IndexConfiguration as IndexConfiguration
+from fulltextindex import IndexConfiguration
 import UpdateIndex
 
 
@@ -432,7 +431,3 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         StackTraceMessageBox.show(self,
                                   self.tr("Error during index update"),
                                   self.tr("The update process failed to update the desired indexes"))
-
-
-
-

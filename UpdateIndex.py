@@ -24,10 +24,10 @@ import argparse
 import time
 import logging
 import cProfile
-import tools.FileTools as FileTools
+from tools import FileTools
 from tools.Config import Config
 from tools.ExceptionTools import exceptionAsString
-import fulltextindex.IndexConfiguration as IndexConfiguration
+from fulltextindex import IndexConfiguration
 from fulltextindex.IndexUpdater import IndexUpdater, UpdateStatistics
 import AppConfig
 
@@ -231,6 +231,6 @@ if __name__ == "__main__":
 # New jobs available?
 #    If yes jump to (1)
 #
-# This should guarantee that every job is processed by UpdateIndex without the UI caring much if there is already an UpdateIndex running and
-# in which state it currently is.
-
+# This should guarantee that every job is processed by UpdateIndex without the
+# UI caring much if there is already an UpdateIndex running and in which state
+# it currently is.

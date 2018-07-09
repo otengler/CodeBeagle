@@ -105,7 +105,7 @@ class Config:
         if attr in self.__data:
             return self.__typeParse(attr)(self.__data[attr])
         result = self.__typeNotFound(attr)()
-        if result != None:
+        if result is not None:
             if isinstance(result, Config):
                 self.__data[attr] = result
             return result
@@ -257,5 +257,3 @@ class TestConfig(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-

@@ -108,4 +108,3 @@ class PathVisualizerDelegate (QStyledItemDelegate):
             return QSize(0, 0)
         rect = self.pathBoldFontMetrics.boundingRect(longestMatch)
         return QSize(rect.width(), rect.height()+4)
-
