@@ -131,7 +131,7 @@ class LeaveLastTabWidget (QTabWidget):
     def __closeAllToTheRight(self, tabIndex: int) -> None:
         self.__closeTabs(lambda index: index > tabIndex)
 
-    def __closeTabs(self, filterPred: Callable[[int],bool]):
+    def __closeTabs(self, filterPred: Callable[[int],bool]) -> None:
         closeIndexes = []
         for i in range(self.count()):
             if filterPred(i):

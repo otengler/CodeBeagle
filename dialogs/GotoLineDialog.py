@@ -28,7 +28,7 @@ class GotoLineDialog (QDialog):
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
-    def focusInEvent (self, _: QFocusEvent):
+    def focusInEvent (self, _: QFocusEvent) -> None:
         self.ui.editLine.setFocus(Qt.ActiveWindowFocusReason)
 
     def getLine(self) -> int:

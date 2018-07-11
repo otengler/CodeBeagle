@@ -22,7 +22,7 @@ import re
 import time
 import logging
 import sqlite3
-from typing import List, Iterator, IO, Set
+from typing import List, Iterator, IO, Set, cast
 from tools.FileTools import fopen
 from .IndexDatabase import IndexDatabase
 
@@ -158,4 +158,4 @@ class IndexUpdater (IndexDatabase):
 
     def __getNextIndexRun(self, c: sqlite3.Cursor) -> int:
         c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
-        return c.lastrowid
+        return cast(int,c.lastrowid)

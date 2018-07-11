@@ -60,6 +60,7 @@ def search(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.
     if not strSearch:
         return ResultSet()
     searchData = FullTextIndex.SearchQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+    result: ResultSet
     if indexConf.generatesIndex():
         ftiSearch = FullTextIndexSearch()
         result = AsynchronousTask.execute(parent, ftiSearch, searchData, commonKeywordMap, indexConf, bEnableCancel=True, cancelAction=ftiSearch.cancel)
@@ -119,7 +120,8 @@ def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: 
     to a regular expression which is used to highlight the matches in the result.
     """
     commonKeywordMap = commonKeywordMap or {}
-    return AsynchronousTask.execute(parent, customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
+    result: ResultSet = AsynchronousTask.execute(parent, customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
+    return result
 
 def customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullTextIndex.CommonKeywordMap,
                       indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
@@ -127,7 +129,7 @@ def customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullT
     import re
     query, folders, extensions, caseSensitive = params
 
-    def performSearch(strSearch, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False):
+    def performSearch(strSearch: str, strFolderFilter: str="", strExtensionFilter:str="", bCaseSensitive: bool=False) -> FullTextIndex.SearchResult:
         if not strSearch:
             return []
         searchData = FullTextIndex.SearchQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)

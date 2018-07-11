@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import List, Tuple, Dict, Optional, Any
+from typing import List, Tuple, Dict, Optional, Any, cast
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QFileInfo, QPoint, QUrl, QAbstractListModel, QModelIndex, QSettings, QSize
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
@@ -30,7 +30,7 @@ from fulltextindex import FullTextIndex
 from fulltextindex.IndexConfiguration import IndexConfiguration
 import SearchMethods
 import CustomContextMenu
-from SourceViewer import SourceViewer
+import SourceViewer
 import AppConfig
 from Ui_SearchPage import Ui_SearchPage
 
@@ -90,7 +90,7 @@ class StringListModel(QAbstractListModel):
             return firstDiff
         return len(first) # The whole string is equal
 
-    def rowCount(self, _ = QModelIndex()) -> int:
+    def rowCount(self, _:QModelIndex = QModelIndex()) -> int:
         return len(self.filelist)
 
     def data(self, index: QModelIndex, role: int) -> Any:
@@ -168,9 +168,9 @@ class SearchPage (QWidget):
     # Return the display name of the initial config. This is either the configured default location or if there is no default location
     # the last used location.
     def __chooseInitialLocation (self) -> str:
-        configName = AppConfig.appConfig().defaultLocation # Display name of current config
+        configName = cast(str,AppConfig.appConfig().defaultLocation) # Display name of current config
         if not configName:
-            configName = AppConfig.lastUsedConfigName()
+            configName = cast(str,AppConfig.lastUsedConfigName())
         return configName
 
     def __loadCommonKeywordMap(self) -> FullTextIndex.CommonKeywordMap:
@@ -179,7 +179,7 @@ class SearchPage (QWidget):
         except:
             return {}
 
-    def focusInEvent (self, _: QFocusEvent):
+    def focusInEvent (self, _: QFocusEvent) -> None:
         self.ui.comboSearch.setFocus(Qt.ActiveWindowFocusReason)
 
     @pyqtSlot(bool)
@@ -311,7 +311,8 @@ class SearchPage (QWidget):
 
     def __currentIndexConf(self) -> IndexConfiguration:
         i = self.ui.comboLocation.currentIndex()
-        return self.ui.comboLocation.model().index(i, 0).data(Qt.UserRole)
+        config: IndexConfiguration = self.ui.comboLocation.model().index(i, 0).data(Qt.UserRole)
+        return config
 
     # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
     def __prepareSearch (self) -> Tuple[SearchParams, IndexConfiguration]:
@@ -374,7 +375,7 @@ class SearchPage (QWidget):
             text = self.tr(userHintUseWildcards)
             showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  ButtonType.OK)
 
-    def __updateSearchResult (self, result: SearchMethods.ResultSet):
+    def __updateSearchResult (self, result: SearchMethods.ResultSet) -> None:
         if result.label:
             self.searchFinished.emit(self, result.label)
         self.perfReport = result.perfReport
@@ -510,12 +511,12 @@ class SearchPage (QWidget):
                 filenames.append (index.data(Qt.UserRole))
         return filenames
 
-    def __layoutForLowScreenWidth (self):
-        self.ui.frameSearch2 = QFrame(self)
-        self.ui.frameSearch2.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
-        self.ui.horizontalLayout2 = QHBoxLayout(self.ui.frameSearch2)
-        self.ui.horizontalLayout2.setContentsMargins(22, 0, 22, -1)
-        layout = self.ui.horizontalLayout2
+    def __layoutForLowScreenWidth (self) -> None:
+        self.ui.frameSearch2 = QFrame(self) # type: ignore
+        self.ui.frameSearch2.setProperty("shadeBackground", True) # type: ignore
+        self.ui.horizontalLayout2 = QHBoxLayout(self.ui.frameSearch2) # type: ignore
+        self.ui.horizontalLayout2.setContentsMargins(22, 0, 22, -1) # type: ignore
+        layout = self.ui.horizontalLayout2 # type: ignore
         layout.removeWidget(self.ui.labelFolderFilter)
         layout.removeWidget(self.ui.comboFolderFilter)
         layout.removeWidget(self.ui.labelExtensionFilter)
@@ -527,7 +528,7 @@ class SearchPage (QWidget):
         layout.addWidget(self.ui.comboExtensionFilter)
         layout.addWidget(self.ui.checkCaseSensitive)
         layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
-        self.layout().insertWidget(1, self.ui.frameSearch2)
+        self.layout().insertWidget(1, self.ui.frameSearch2) # type: ignore
 
     def __restoreSearchTerms(self) -> None:
         currentText = self.ui.comboSearch.currentText()

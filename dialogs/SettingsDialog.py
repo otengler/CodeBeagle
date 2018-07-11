@@ -212,7 +212,7 @@ class SettingsDialog (QDialog):
             index = model.index(row, 0)
 
         if index and index.isValid():
-            location = index.data(Qt.UserRole+1)
+            location: IndexConfiguration = index.data(Qt.UserRole+1)
             return location.displayName()
         return ""
 
@@ -243,7 +243,7 @@ class SettingsDialog (QDialog):
         else:
             self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations,  -1)
 
-    def __defaultLocationChanged(self, listviewCurrent: QListView, listviewOther: QListView, newDefaultRow: int):
+    def __defaultLocationChanged(self, listviewCurrent: QListView, listviewOther: QListView, newDefaultRow: int) -> None:
         listviewCurrent.itemDelegate().setDefaultLocationRow(newDefaultRow)
         listviewOther.itemDelegate().setDefaultLocationRow(-1)
         # Refresh the listview
@@ -291,10 +291,10 @@ class SettingsDialog (QDialog):
             names.add(name)
         self.accept()
 
-def main():
+def main() -> None:
     import sys
     app = QApplication(sys.argv)
-    locations = [IndexConfiguration("Qt Source",  "h,cpp", "D:\\qt", "","D:\\index.dat"), IndexConfiguration("Linux", "", "", "", "", False)]
+    locations = [IndexConfiguration("Qt Source",  "h,cpp", "D:\\qt", "","D:\\index.dat"), IndexConfiguration("Linux", "", "", "", "")]
     conf = Config()
     conf.sourceViewer = Config()
     conf.sourceViewer.tabwidth = 4

@@ -23,13 +23,13 @@ import stat
 from .FullTextIndex import FullTextIndex, SearchQuery, Keyword, buildMapFromCommonKeywordFile
 from .IndexUpdater import IndexUpdater, UpdateStatistics
 
-def delFile (name):
+def delFile (name: str) -> None:
     try:
         os.unlink (name)
     except Exception as e:
         print (str(e))
 
-def delDir (name):
+def delDir (name: str) -> None:
     try:
         removeReadOnly (name)
         shutil.rmtree(name)
@@ -37,29 +37,29 @@ def delDir (name):
         if e.winerror != 3:
             raise
 
-def removeReadOnly (path):
-    for path, dirlist, filelist in os.walk (path):
+def removeReadOnly (path: str) -> None:
+    for path, _, filelist in os.walk (path):
         for name in filelist:
             fullpath = os.path.join(path, name)
-            fileAtt = os.stat(fullpath)[0]
+            fileAtt = os.stat(fullpath).st_mode
             if not fileAtt & stat.S_IWRITE:
                 # File is read-only, so make it writeable
                 os.chmod(fullpath, stat.S_IWRITE)
 
 # Change modified timestamp of a file one year back in time
-def modifyTimestamp (name):
+def modifyTimestamp (name: str) -> None:
     st = os.stat(name)
-    atime = st[stat.ST_ATIME] #access time
-    mtime = st[stat.ST_MTIME] #modification time
+    atime = st.st_atime #access time
+    mtime = st.st_mtime #modification time
     new_mtime = mtime - (365*24*3600) # one year in the past
     os.utime(name,(atime,new_mtime))
 
-def getModulePath ():
+def getModulePath () -> str:
     import __main__
     return os.path.split(__main__.__file__)[0]
 
 class TestFullTextIndex(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         testPath = os.path.join(getModulePath (), "tests")
         os.chdir(testPath)
         delFile ("test.dat")
@@ -78,7 +78,7 @@ class TestFullTextIndex(unittest.TestCase):
         delDir("data")
         shutil.copytree ("data1", "data")
         updateStats = UpdateStatistics()
-        updater.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"], [], updateStats)
+        updater.updateIndex ([os.path.join(testPath,"data")], {".c",".txt"}, [], updateStats)
         self.assertEqual(updateStats.nNew,  6)
         self.assertEqual(updateStats.nUpdated,  0)
         self.assertEqual(updateStats.nUnchanged,  0)
@@ -132,7 +132,7 @@ class TestFullTextIndex(unittest.TestCase):
         modifyTimestamp ("data\\test2.c")
 
         updateStats = UpdateStatistics()
-        updater.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  [], updateStats)
+        updater.updateIndex ([os.path.join(testPath,"data")], {".c",".txt"},  [], updateStats)
         self.assertEqual(updateStats.nNew,  2)
         self.assertEqual(updateStats.nUpdated,  3)
         self.assertEqual(updateStats.nUnchanged,  2)
@@ -195,7 +195,7 @@ class TestFullTextIndex(unittest.TestCase):
 
         # Update index again to check that no updated file will be found
         updateStats = UpdateStatistics()
-        updater.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"],  [],  updateStats)
+        updater.updateIndex ([os.path.join(testPath,"data")], {".c",".txt"},  [],  updateStats)
         self.assertEqual(updateStats.nNew,  0)
         self.assertEqual(updateStats.nUpdated,  0)
         self.assertEqual(updateStats.nUnchanged,  7)
@@ -206,7 +206,7 @@ class TestFullTextIndex(unittest.TestCase):
         # Now remove everything, documents and keyword associations must be empty
         delDir("data")
         os.mkdir("data")
-        updater.updateIndex ([os.path.join(testPath,"data")], [".c",".txt"])
+        updater.updateIndex ([os.path.join(testPath,"data")], {".c",".txt"})
 
         stats = fti.queryStats()
         self.assertEqual (stats[0], 0)
@@ -214,7 +214,7 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual (stats[2], 0)
         self.assertEqual (stats[3], 0)
 
-    def testCommonKeywords(self):
+    def testCommonKeywords(self) -> None:
         testPath = os.path.join(getModulePath (), "tests")
         os.chdir(testPath)
         delFile ("test.dat")
@@ -226,21 +226,21 @@ class TestFullTextIndex(unittest.TestCase):
         # for
         # while
 
-        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(100, "wichtiger")], [Keyword(101, "hinweis")]], commonKeywords)
+        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(100, "wichtiger")], [Keyword(101, "hinweis")]], commonKeywords) # type: ignore
         print (good, bad)
         self.assertEqual(len(good), 2)
         self.assertEqual(len(bad), 0)
         self.assertEqual(good[0], [Keyword(100, "wichtiger")])
         self.assertEqual(good[1], [Keyword(101, "hinweis")])
 
-        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(100, "iostream")], [Keyword(101, "h")]], commonKeywords)
+        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(100, "iostream")], [Keyword(101, "h")]], commonKeywords) # type: ignore
         print (good, bad)
         self.assertEqual(len(good), 1)
         self.assertEqual(len(bad), 1)
         self.assertEqual(good[0], [Keyword(100, "iostream")])
         self.assertEqual(bad[0], [Keyword(101, "h")])
 
-        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(50, "func")], [Keyword(100, "whi"), Keyword(101, "while")], [Keyword(102, "true")]], commonKeywords)
+        good, bad = fti._FullTextIndex__qualifyKeywords ([[Keyword(50, "func")], [Keyword(100, "whi"), Keyword(101, "while")], [Keyword(102, "true")]], commonKeywords) # type: ignore
         print (good, bad)
         self.assertEqual(len(good), 2)
         self.assertEqual(len(bad), 1)

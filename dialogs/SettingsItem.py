@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from typing import cast
 from PyQt5.QtGui import QFocusEvent
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QFileDialog
@@ -57,7 +58,7 @@ class SettingsItem (QWidget):
         self.ui.comboIndexUpdateMode.addItem("Update index when UpdateIndex.exe is run")
         #self.ui.comboIndexUpdateMode.addItem("Keep index permanently up to date")
 
-    def focusInEvent (self, _: QFocusEvent):
+    def focusInEvent (self, _: QFocusEvent) -> None:
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
 
     @pyqtSlot(str)
@@ -134,25 +135,25 @@ class SettingsItem (QWidget):
         self.ui.comboIndexUpdateMode.setCurrentIndex(indexUpdateMode)
 
     def name (self) -> str:
-        return self.ui.editName.text()
+        return cast(str,self.ui.editName.text())
 
     def directories (self) -> str:
-        return self.ui.editDirectories.text()
+        return cast(str,self.ui.editDirectories.text())
 
     def dirExcludes (self) -> str:
-        return self.ui.editExcludeDirectories.text()
+        return cast(str,self.ui.editExcludeDirectories.text())
 
     def extensions (self) -> str:
-        return self.ui.comboExtensions.currentText()
+        return cast(str,self.ui.comboExtensions.currentText())
 
     def indexDB (self) -> str:
-        return self.ui.editIndexDB.text()
+        return cast(str,self.ui.editIndexDB.text())
 
     def indexGenerationEnabled (self) -> bool:
-        return self.ui.comboIndexUpdateMode.currentIndex != IndexMode.NoIndexWanted
+        return cast(bool,self.ui.comboIndexUpdateMode.currentIndex != IndexMode.NoIndexWanted)
 
     def indexUpdateMode(self) -> IndexMode:
-        return self.ui.comboIndexUpdateMode.currentIndex()
+        return cast(IndexMode,self.ui.comboIndexUpdateMode.currentIndex())
 
     def resetAndDisable(self) -> None:
         self.ui.editName.setText("")

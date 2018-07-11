@@ -68,7 +68,7 @@ class CheckableItemsDialog(QDialog):
             index = self.model.index(i, 0)
             self.model.setData(index, flag, Qt.CheckStateRole)
 
-def main():
+def main() -> None:
     import sys
     QApplication(sys.argv)
     w = CheckableItemsDialog("Choose indexes to update", True, None)

@@ -106,15 +106,16 @@ class TextHighlighter(QSyntaxHighlighter):
                     break
 
     def highlightMatch(self, reMatch: Match) -> None:
-        regs = reMatch.regs
-        start, end = regs[0]
+        start, end = reMatch.span()
         self.setFormat(start,  end-start,  self.matchFormat)
 
         if self.bColorizeGroups:
             groupFormatIndex = 0
-            for start, end in regs[1:]:
-                self.setFormat(start,  end-start,  self.groupFormats[groupFormatIndex])
-                groupFormatIndex = (groupFormatIndex+1)%len(self.groupFormats)
+            for i in range(reMatch.lastindex):
+                start, end = reMatch.span(i+1)
+                if start != -1 and end != -1:
+                    self.setFormat(start,  end-start,  self.groupFormats[groupFormatIndex])
+                    groupFormatIndex = (groupFormatIndex+1)%len(self.groupFormats)
 
 class RegExTesterDlg (QDialog):
     def __init__ (self, parent: QWidget=None) -> None:

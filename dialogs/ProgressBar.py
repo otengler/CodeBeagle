@@ -32,7 +32,7 @@ class ProgressBar (QDialog):
         if not bEnableCancel:
             self.ui.buttonCancel.setEnabled(False)
 
-    def keyPressEvent(self, e: QKeyEvent):
+    def keyPressEvent(self, e: QKeyEvent) -> None:
         """Disable closing the dialog with Esc and emit onCancelClicked instead."""
         if e.key() != Qt.Key_Escape:
             super ().keyPressEvent(e)
@@ -40,6 +40,6 @@ class ProgressBar (QDialog):
             self.onCancelClicked.emit()
 
     @pyqtSlot()
-    def cancelClicked(self):
+    def cancelClicked(self) -> None:
         self.ui.buttonCancel.setEnabled(False)
         self.onCancelClicked.emit()

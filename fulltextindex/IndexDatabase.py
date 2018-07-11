@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sqlite3
+from typing import Tuple
 
 strSetup = """
 CREATE TABLE IF NOT EXISTS keywords(
@@ -24,11 +25,6 @@ CREATE TABLE IF NOT EXISTS keywords(
   keyword TEXT UNIQUE
 );
 CREATE INDEX IF NOT EXISTS i_keywords_keyword ON keywords (keyword);
-
-CREATE TABLE IF NOT EXISTS fileName(
-  id INTEGER PRIMARY KEY,
-  name TEXT UNIQUE
-);
 
 CREATE TABLE IF NOT EXISTS documents(
   id INTEGER PRIMARY KEY,
@@ -50,6 +46,18 @@ CREATE TABLE IF NOT EXISTS kw2doc(
 CREATE INDEX IF NOT EXISTS i_kw2doc_kwID ON kw2doc (kwID);
 CREATE INDEX IF NOT EXISTS i_kw2doc_docID ON kw2doc (docID);
 
+CREATE TABLE IF NOT EXISTS indexInfo(
+  id INTEGER PRIMARY KEY,
+  timestamp INTEGER
+);
+"""
+
+strTablesForFileNames = """
+CREATE TABLE IF NOT EXISTS fileName(
+  id INTEGER PRIMARY KEY,
+  name TEXT UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS fileName2doc(
   fileNameID INTEGER,
   docID INTEGER,
@@ -57,11 +65,6 @@ CREATE TABLE IF NOT EXISTS fileName2doc(
 );
 CREATE INDEX IF NOT EXISTS i_fileName2doc_fileNameID ON fileName2doc (fileNameID);
 CREATE INDEX IF NOT EXISTS i_fileName2doc_docID ON fileName2doc (docID);
-
-CREATE TABLE IF NOT EXISTS indexInfo(
-  id INTEGER PRIMARY KEY,
-  timestamp INTEGER
-);
 """
 
 class IndexDatabase:
@@ -70,10 +73,10 @@ class IndexDatabase:
         self.conn = sqlite3.connect(strDbLocation)
         self.__setupDatabase()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.conn.close()
 
-    def queryStats(self):
+    def queryStats(self) -> Tuple[int,int,int,int]:
         q = self.conn.cursor()
         q.execute("SELECT COUNT(*) FROM documents")
         documents = int(q.fetchone()[0])

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import re
 import types
 import unittest
-from typing import TypeVar, Any, Dict, Callable, Tuple, Iterator
+from typing import TypeVar, Any, Dict, Callable, Tuple, Iterator, cast
 from tools.FileTools import fopen
 
 T = TypeVar('T')
@@ -29,7 +29,7 @@ def identity (a: T) -> T:
 
 def boolParse (value: Any) -> bool:
     if type(value) == bool:
-        return value
+        return cast(bool, value)
     if type(value) == str:
         value = value.lower()
         if value == "true" or value == "1" or value == "yes":
@@ -55,7 +55,7 @@ def boolPersist (value: Any) -> str:
         return "False"
     raise RuntimeError("Cannot interpret '" + str(value) + "' as bool")
 
-def plainTypeMapper(t) -> Tuple[Callable, Callable, Callable]:
+def plainTypeMapper(t: Any) -> Tuple[Callable, Callable, Callable]:
     if bool == t:
         return (boolParse, lambda: None, boolPersist)
     if int == t:
@@ -71,7 +71,7 @@ def plainTypeMapper(t) -> Tuple[Callable, Callable, Callable]:
 class Config:
     def __init__ (self, name: str="", dataMap: Dict[str,Any]=None,  configLines:Iterator[str]=None,  typeInfoFunc: Callable=None) -> None:
         self.__data = dataMap or {}
-        self.__typeMapper: Dict[str,Tuple[Callable,Any,Callable]] = {}
+        self.__typeMapper: Dict[str,Tuple[Callable,Callable,Callable]] = {}
         if typeInfoFunc:
             typeInfoFunc(self)
         if name:
@@ -79,7 +79,7 @@ class Config:
         elif configLines:
             self.parseLines(configLines)
 
-    def setPlainType(self, attr: str, attrType) -> None:
+    def setPlainType(self, attr: str, attrType: Any) -> None:
         self.__typeMapper[attr.lower()] = plainTypeMapper(attrType)
 
     def setType (self, attr: str, typeFuncs: Tuple[Callable, Callable, Callable]) -> None:
@@ -128,14 +128,14 @@ class Config:
             v = self.__typeParse(attr)(value)
             self.__data[attr] = v
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return self.__data.__iter__()
 
-    def values(self):
+    def values(self) -> Any:
         return self.__data.values()
 
     def __repr__ (self) -> str:
-        return self.__dumpRec (self, 0)
+        return __dumpRec (self, 0)
 
     def remove (self, key: str) -> None:
         key = key.lower()
@@ -208,13 +208,13 @@ class Config:
             except IOError:
                 pass
 
-def typeDefaultBool (bDefault) -> Tuple[Callable, Callable, Callable]:
+def typeDefaultBool (bDefault: bool) -> Tuple[Callable, Callable, Callable]:
     return (boolParse, lambda: bDefault, boolPersist)
 
-def typeDefaultInt (iDefault) -> Tuple[Callable, Callable, Callable]:
+def typeDefaultInt (iDefault: int) -> Tuple[Callable, Callable, Callable]:
     return (int, lambda: iDefault, str)
 
-def typeDefaultString (strDefault) -> Tuple[Callable, Callable, Callable]:
+def typeDefaultString (strDefault: str) -> Tuple[Callable, Callable, Callable]:
     return (identity, lambda: strDefault, str)
 
 def typeDefaultConfig () -> Tuple[Callable, Callable, Callable]:
@@ -235,7 +235,7 @@ def __dumpRec (config: Config,  level: int) -> str:
     return s
 
 class TestConfig(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         c = Config()
         c.setPlainType ("b1", bool)
         c.setType("b2",  typeDefaultBool(True))

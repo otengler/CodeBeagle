@@ -27,6 +27,11 @@ from fulltextindex import FullTextIndex
 import HighlightingRulesCache
 from Ui_SourceViewer import Ui_SourceViewer
 
+class EditorState:
+    def __init__(self, scrollPosition: int, currentMatch: int) -> None:
+        self.scrollPosition = scrollPosition
+        self.currentMatch = currentMatch
+
 class SourceViewer (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
@@ -181,7 +186,7 @@ class SourceViewer (QWidget):
             if self.bMatchOverFiles:
                 self.noPreviousMatch.emit()
 
-    def setCurrentMatch(self, index: int, forceSet=False) -> None:
+    def setCurrentMatch(self, index: int, forceSet: bool=False) -> None:
         if index>=0 and index<len(self.matches) and (index != self.curMatch or forceSet):
             self.__setMatchIndex(index)
             self.__scrollToMatch (self.curMatch)
@@ -290,21 +295,16 @@ class SourceViewer (QWidget):
             elif os.path.isdir(name):
                 self.directoryDropped.emit(name)
 
-    class EditorState:
-        def __init__(self, scrollPosition: int, currentMatch: int) -> None:
-            self.scrollPosition = scrollPosition
-            self.currentMatch = currentMatch
-
-    def saveEditorState(self) -> SourceViewer.EditorState:
+    def saveEditorState(self) -> EditorState:
         currentMatch = self.curMatch
         scrollPosition = self.ui.textEdit.verticalScrollBar ().sliderPosition ()
-        return SourceViewer.EditorState(scrollPosition, currentMatch)
+        return EditorState(scrollPosition, currentMatch)
 
     def restoreEditorState(self, state: EditorState) -> None:
         self.setCurrentMatch(state.currentMatch)
         self.ui.textEdit.verticalScrollBar ().setSliderPosition (state.scrollPosition)
 
-def main():
+def main() -> None:
     import sys
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)

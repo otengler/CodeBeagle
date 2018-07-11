@@ -75,7 +75,7 @@ class CommentRange:
         self.index = index
         self.length = length
 
-    def __lt__ (self, other: Any) -> bool:
+    def __lt__ (self, other: 'CommentRange') -> bool:
         return self.index < other.index
 
 class SyntaxHighlighter:

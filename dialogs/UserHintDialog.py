@@ -16,6 +16,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from typing import cast
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, QSettings
 from PyQt5.QtWidgets import QDialog, QWidget, QPushButton
@@ -53,8 +54,8 @@ class UserHintDialog (QDialog):
         else:
             self.ui.checkShowHint.setCheckState(Qt.Unchecked)
 
-    def showHintAgain(self):
-        return self.ui.checkShowHint.checkState() == Qt.Checked
+    def showHintAgain(self) -> bool:
+        return cast(bool, self.ui.checkShowHint.checkState() == Qt.Checked)
 
     def addButton (self, buttonID: ButtonType, bIsDefault:bool=False) -> None:
         if not self.button1:
@@ -121,7 +122,7 @@ def showUserHint (parent: QWidget, hintID: str, title: str, htmlText: str, butto
             return dialog.closeButton
     return ButtonType.NoResult
 
-def main():
+def main() -> None:
     import sys
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)

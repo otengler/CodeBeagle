@@ -51,8 +51,8 @@ def collapseAdjoiningRanges(ranges: List[Tuple[int,int]]) -> None:
             i+= 1
 
 class TestCollapseOverlappingRanges(unittest.TestCase):
-    def test(self):
-        ranges = []
+    def test(self) -> None:
+        ranges: List[Tuple[int,int]] = []
         collapseAdjoiningRanges(ranges)
         self.assertEqual(ranges, [])
         ranges = [(1, 3), (5, 7)]
@@ -76,7 +76,7 @@ class Line:
         self.charPos = charPos
         self.lineNumber = lineNumber
 
-    def __lt__ (self, other) -> bool:
+    def __lt__ (self, other: 'Line') -> bool:
         return self.charPos < other.charPos
 
 # Detects quickly which character position corresponds to which line number.
@@ -123,7 +123,7 @@ class LineMapping:
         return len(self.numberMap)
 
 class TestLineMapping(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         m = LineMapping("")
         self.assertEqual(m.lineCount(), 1)
         self.assertEqual(m.findLineNumber(0), 0)
@@ -262,7 +262,7 @@ class MatchesOverview (QWidget):
     def __addHeader(self, text: str) -> int:
         return self.__addLine(text,  True)
 
-    def __addLine(self, text: str,  bIsBold = False) -> int:
+    def __addLine(self, text: str,  bIsBold:bool = False) -> int:
         labelItem = RecyclingVerticalScrollArea.Labeltem(text,  bIsBold,  20)
         return self.scrollItems.addItem(labelItem)
 
@@ -297,7 +297,7 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
     def getType(self) -> str:
         return "FixedSizeSourcePreview"
 
-def main():
+def main() -> None:
     import sys
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)

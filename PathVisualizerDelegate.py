@@ -38,7 +38,7 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         self.selectedPathColor = self.pathDarkGrayColor
         self.seletedFileColor = self.fileColor
 
-    def paint (self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+    def paint (self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         if option.type != QStyleOption.SO_ViewItem:
             return
 

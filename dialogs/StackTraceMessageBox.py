@@ -60,7 +60,7 @@ def show (parent: QWidget, title: str, text: str) -> None:
     dlg = StackTraceMessageBox(parent, title, text, stackTrace)
     dlg.exec()
 
-def main():
+def main() -> None:
     import sys
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)

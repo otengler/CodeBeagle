@@ -38,7 +38,7 @@ class HelpViewerDialog (QDialog):
 
         self.ui.textBrowserHelp.setHtml (text)
 
-def main():
+def main() -> None:
     import sys
     app = QApplication(sys.argv)
     w = HelpViewerDialog(None)

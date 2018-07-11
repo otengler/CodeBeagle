@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from enum import IntEnum
-from typing import Set,List
+from typing import Set,List,cast
 from tools import Config
 from tools.FileTools import correctPath
 
@@ -44,7 +44,7 @@ def indexUpdateModeToString(mode: IndexMode) -> str:
     return "Unknown"
 
 class IndexConfiguration:
-    def __init__(self, indexName="", extensions="", directories="", dirExcludes="", indexdb="", indexUpdateMode=IndexMode.TriggeredIndexUpdate) -> None:
+    def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="", indexUpdateMode:IndexMode=IndexMode.TriggeredIndexUpdate) -> None:
         self.indexName = indexName
         self.indexUpdateMode = indexUpdateMode
         self.indexdb = correctPath(indexdb)
@@ -93,13 +93,18 @@ class IndexConfiguration:
         result += "Extensions : " + str(self.extensions) + "\n"
         return result
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if type(other) is IndexConfiguration:
+            return False
+
+        other = cast(IndexConfiguration, other)
+
         return self.indexName == other.indexName and \
-            self.indexUpdateMode == other.indexUpdateMode and \
-            self.indexdb == other.indexdb and \
-            self.directories == other.directories and \
-            self.dirExcludes == other.dirExcludes and \
-            self.extensions == other.extensions
+               self.indexUpdateMode == other.indexUpdateMode and \
+               self.indexdb == other.indexdb and \
+               self.directories == other.directories and \
+               self.dirExcludes == other.dirExcludes and \
+               self.extensions == other.extensions
 
 # Configurates the type information for the index configuration
 def indexTypeInfo(config: Config.Config) -> None:

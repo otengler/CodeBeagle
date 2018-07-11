@@ -25,7 +25,8 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPu
 from tools.Config import Config
 from tools import FileTools
 from widgets.LeaveLastTabWidget import LeaveLastTabWidget
-from dialogs import UserHintDialog, StackTraceMessageBox
+from dialogs import StackTraceMessageBox
+from dialogs.UserHintDialog import ButtonType,hintWouldBeShown,showUserHint
 from dialogs.SettingsDialog import SettingsDialog
 from SearchPage import SearchPage
 import AppConfig
@@ -159,7 +160,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     # The settings allow to configure search locations.
     @pyqtSlot()
-    def openSettings(self, createInitialLocation=False, locationToAdd: IndexConfiguration.IndexConfiguration=None) -> None:
+    def openSettings(self, createInitialLocation: bool=False, locationToAdd: IndexConfiguration.IndexConfiguration=None) -> None:
         try:
             config = AppConfig.userConfig()
             globalConfig = AppConfig.globalConfig()
@@ -210,9 +211,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     locationsHtml += "<li>" + displayName + "</li>"
                 locationsHtml += "</ul>"
                 text = self.tr(userHintUpdateIndex) % {"locations" : locationsHtml}
-                result = UserHintDialog.showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text,
-                                                      UserHintDialog.Yes, False,  UserHintDialog.No,  True,  bShowHintAgain=True)
-                if result == UserHintDialog.Yes:
+                result = showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text, ButtonType.Yes, False, ButtonType.No,  True,  bShowHintAgain=True)
+                if result == ButtonType.Yes:
                     try:
                         self.__triggerIndexUpdate (updateDisplayNames)
                     except:
@@ -242,7 +242,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def addSearchLocationFromPath (self, directory: str) -> None:
         """This is called when a directory is dropped on the application. This is a shortcut to create a search location."""
         ext = FileTools.getMostCommonExtensionInDirectory (directory)
-        location = IndexConfiguration.IndexConfiguration(self.tr("Search") + " '" + directory + "'", ext,  directory, "", "", False)
+        location = IndexConfiguration.IndexConfiguration(self.tr("Search") + " '" + directory + "'", ext,  directory, "", "", IndexConfiguration.IndexMode.NoIndexWanted)
 
         self.openSettings (locationToAdd=location)
 
@@ -336,7 +336,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         except:
             return []
 
-    def __maintainRunningIndexUpdates(self,  running: List[str]):
+    def __maintainRunningIndexUpdates(self,  running: List[str]) -> None:
         """Informs all search pages which search locations are currently not available."""
         if len(running) != len(self.disabledIndexes):
             self.disabledIndexes = running
@@ -393,7 +393,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             newTabWidget.setCurrentSearchLocation(prevTabWidget.currentConfigName)
 
     @pyqtSlot(str, str)
-    def searchInNewTab (self, text: str, searchLocationName: str):
+    def searchInNewTab (self, text: str, searchLocationName: str) -> None:
         searchPage = self.addNewTab ()
         searchPage.setCurrentSearchLocation(searchLocationName)
         searchPage.searchForText(text)
@@ -409,12 +409,12 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     @pyqtSlot()
     def initialSetup(self) -> None:
-        if UserHintDialog.hintWouldBeShown("noLocations"):
+        if hintWouldBeShown("noLocations"):
             locations = IndexConfiguration.readConfig(AppConfig.appConfig())
             if not locations:
                 text = self.tr(userHintInitialSetup)
-                res = UserHintDialog.showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  UserHintDialog.Yes,  True,  UserHintDialog.No)
-                if res == UserHintDialog.Yes:
+                res = showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  ButtonType.Yes,  True,  ButtonType.No)
+                if res == ButtonType.Yes:
                     self.openSettings(createInitialLocation=True)
 
     def failedToSaveUserConfigMessage(self) -> None:

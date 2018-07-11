@@ -21,8 +21,10 @@ from typing import Callable, Any
 from PyQt5.QtCore import QThread, pyqtSlot, QObject
 from dialogs.ProgressBar import ProgressBar
 
+CancelFunction = Callable[[],None]
+
 class AsynchronousTask (QThread):
-    def __init__(self, function: Callable, *args, bEnableCancel=False, cancelAction=None) -> None:
+    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: CancelFunction=None) -> None:
         super().__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.function = function
         self.args = args
@@ -52,7 +54,7 @@ class AsynchronousTask (QThread):
         if self.cancelAction:
             self.cancelAction()
 
-def execute(parent: QObject, func:Callable, *args, bEnableCancel=False, cancelAction=None) -> Any:
+def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: CancelFunction=None) -> Any:
     """
     Executes the action performed by the callable 'func' called with *args in a seperate thread.
     During the action a progress bar is shown. If 'bEnableCancel' is true the callable is

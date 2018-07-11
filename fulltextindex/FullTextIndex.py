@@ -25,7 +25,7 @@ import time
 import unittest
 import threading
 from enum import Enum
-from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Dict
+from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Dict, Sized, cast, Optional
 from tools.FileTools import fopen
 from .IndexDatabase import IndexDatabase
 
@@ -39,7 +39,7 @@ class TokenType (Enum):
     MatchWordsPart = 3
     RegExPart = 4
 
-def safeLen(obj) -> int:
+def safeLen(obj: Sized) -> int:
     try:
         return len(obj)
     except:
@@ -70,7 +70,7 @@ def intersectSortedLists(l1: List[str], l2: List[str]) -> List[str]:
     return l3
 
 # Return tokens which are in the index
-def getTokens(text) -> List[Tuple[int,int]]:
+def getTokens(text: str) -> List[Tuple[int,int]]:
     parts = []
     pos = 0
     while True:
@@ -159,7 +159,7 @@ def createExtensionFilter(strFilter: str) -> List[Tuple[str,bool]]:
     return filterParts
 
 class TestSearchParts(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         self.assertEqual(splitSearchParts(""), [])
         self.assertEqual(splitSearchParts("hallo"), [(TokenType.IndexPart, "hallo")])
         self.assertEqual(splitSearchParts("hallo welt"), [(TokenType.IndexPart, "hallo"), (TokenType.ScanPart, ""), (TokenType.IndexPart, "welt")])
@@ -273,7 +273,7 @@ class Query(ABC):
 
 class SearchQuery(Query):
     # Returns a list of regular expressions which match all found occurances in a document
-    def regExForMatches(self):
+    def regExForMatches(self) -> Pattern:
         regParts = []
         for t, s in self.parts:
             if TokenType.IndexPart == t:
@@ -313,7 +313,7 @@ class FindAllQuery(Query):
         return reExpr
 
 class TestQuery(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         self.assertRaises(RuntimeError, SearchQuery, "!")
         self.assertRaises(RuntimeError, FindAllQuery, "a < b", "", "", False) # cannot search for < if we are not searching for full phrase
         s1 = SearchQuery("a < b")
@@ -334,14 +334,14 @@ class ReportAction:
         self.startTime: float = 0
         self.duration: float = 0
 
-    def addData(self, text: str, *args: Any):
+    def addData(self, text: str, *args: Any) -> None:
         self.data.append(text % args)
 
-    def __enter__(self):
+    def __enter__(self) -> 'ReportAction':
         self.startTime = time.clock()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         self.duration = time.clock() - self.startTime
         return False
 
@@ -355,16 +355,16 @@ class ReportAction:
         return s
 
 class PerformanceReport:
-    def __init__(self):
-        self.actions = []
-        self.current = None
+    def __init__(self) -> None:
+        self.actions: List[ReportAction] = []
+        self.current: Optional[ReportAction] = None
 
-    def newAction(self, name: str):
+    def newAction(self, name: str) -> ReportAction:
         self.current = ReportAction(name)
         self.actions.append(self.current)
         return self.current
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = ""
         for a in self.actions:
             if s:
@@ -377,10 +377,14 @@ class Keyword:
         self.id = identifier
         self.name = name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "%s (%u)" % (self.name, self.id)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not type(other) is Keyword:
+            return False
+
+        other = cast(Keyword, other)
         return self.id == other.id and self.name == other.name
 
 KeywordList = List[List[Keyword]]
@@ -400,7 +404,8 @@ SearchResult = List[str]
 
 class FullTextIndex (IndexDatabase):
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
-    def search(self, query: Query, perfReport: PerformanceReport=None, commonKeywordMap:CommonKeywordMap=None, manualIntersect=True, cancelEvent:threading.Event=None) -> SearchResult:
+    def search(self, query: Query, perfReport: PerformanceReport=None, commonKeywordMap: CommonKeywordMap=None, 
+               manualIntersect: bool=True, cancelEvent:threading.Event=None) -> SearchResult:
         try:
             return self.__search(query, perfReport, commonKeywordMap, manualIntersect, cancelEvent)
         except sqlite3.OperationalError as e:

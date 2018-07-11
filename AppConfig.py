@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Optional, Tuple, Callable
+from typing import Optional, Tuple, Callable, cast
 from tools import Config, FileTools
 
 appName = "CodeBeagle"
@@ -62,14 +62,14 @@ def userDataPath() -> str:
 
 def userConfigPath() -> str:
     if appConfig().managedConfig:
-        name = appConfig().managedConfig
+        name = cast(str,appConfig().managedConfig)
         return os.path.split(name)[0]
     else:
         return userDataPath()
 
 def userConfigFileName() -> str:
     if appConfig().managedConfig:
-        return appConfig().managedConfig
+        return cast(str,appConfig().managedConfig)
     else:
         return os.path.join(userDataPath(), configName)
 
@@ -88,7 +88,7 @@ def saveUserConfig (config: Config.Config) -> None:
             else:
                 raise e
 
-def __loadUserConfig (config: Config.Config):
+def __loadUserConfig (config: Config.Config) -> Config.Config:
     try:
         config.loadFile(userConfigFileName())
         return config

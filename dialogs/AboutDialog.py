@@ -32,7 +32,7 @@ class AboutDialog(QDialog):
         self.ui.labelVersion.setText(self.tr("Version") + " " + AppConfig.appVersion + pythonAndQt)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
-def main():
+def main() -> None:
     app = QApplication(sys.argv)
     wnd = AboutDialog(None)
     wnd.show()

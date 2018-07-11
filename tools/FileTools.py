@@ -21,7 +21,7 @@ import os
 import codecs
 import time
 import collections
-from typing import IO, DefaultDict
+from typing import IO, DefaultDict, Any, Optional
 
 def fopen (name:str, mode: str='r') -> IO:
     f = open(name, mode, -1, "latin_1")
@@ -89,7 +89,7 @@ class LockDir:
         self.retries = retries
         self.delay = delay
 
-    def __enter__(self):
+    def __enter__(self) -> object:
         for _ in range(self.retries):
             try:
                 os.mkdir (self.name)
@@ -100,7 +100,7 @@ class LockDir:
                 return self
         raise RuntimeError("Failed to create lock directory")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         os.rmdir (self.name)
         return False # do not suppress exception
 
@@ -134,7 +134,7 @@ class PidFile:
     """Pass full path to file where current process ID is stored."""
     def __init__(self, name: str) -> None:
         self.name = name
-        self.pidfile = None
+        self.pidfile: Optional[IO] = None
 
     def exists(self) -> bool:
         """Reads the PID from a pid file or returns 0 if there is no PID file."""
@@ -155,7 +155,7 @@ class PidFile:
             except:
                 pass
 
-    def __enter__(self):
+    def __enter__(self) -> object:
         pid = os.getpid()
         try:
             self.pidfile = open(self.name, "x")
@@ -166,7 +166,7 @@ class PidFile:
             raise
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: None, exc_val: None, exc_tb: None) -> bool:
         if self.pidfile:
             self.pidfile.close()
         self.remove()

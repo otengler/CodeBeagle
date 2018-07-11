@@ -100,7 +100,7 @@ def highlighter(conf: Config.Config) -> Highlighter:
 #}
 
 class TestHighlighterConfig(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         h = highlighter(Config.Config("tests\\SourceViewer.txt"))
         self.assertEqual (h.lookup("py"),  "default.txt")
         self.assertEqual (h.lookup("cpp"),  "C++.txt")

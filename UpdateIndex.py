@@ -40,15 +40,13 @@ This is free software, and you are welcome to redistribute it under certain cond
 updateIndexDescription = """Utility to update indexes for CodeBeagle. By default those indexes defined in config.txt are updated"""
 helpJobMode = """This mode is used by CodeBeagle to update indexes in the background. It reads job files from the given directory"""
 helpConfig = """Full path to config file. This parameter allows to specify an additional config file beside the default config.txt. Can be specified more than once."""
-helpResidentMode = """Stay resident as a system tray application and maintain all indexes which are configured for automatic updates"""
 
 parser = argparse.ArgumentParser(description=updateIndexDescription, epilog=codebeagleLicense)
 parser.add_argument("-v", "--version", action='version', version="UpdateIndex " + AppConfig.appVersion)
 parser.add_argument("--jobmode", metavar='DIR', type=str, help=helpJobMode)
-parser.add_argument("--resident", action='store_true', help=helpResidentMode)
 parser.add_argument("-c", "--config", action="append", default=[AppConfig.configName], type=str, help=helpConfig)
 
-def taketime(name: str, func: Callable, *args) -> Any:
+def taketime(name: str, func: Callable, *args: Any) -> Any:
     t1 = time.clock()
     result = func(*args)
     t2 = time.clock()
@@ -78,7 +76,7 @@ def updateIndexes(indexes: List[IndexConfiguration.IndexConfiguration]) -> None:
         if config.indexUpdateMode == IndexConfiguration.IndexMode.TriggeredIndexUpdate:
             updateIndex(config)
 
-def loadConfigFiles(args) -> Config:
+def loadConfigFiles(args: Any) -> Config:
     configFiles = args.config
     if not configFiles:
         configFiles = [AppConfig.configName]

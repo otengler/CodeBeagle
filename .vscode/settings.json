@@ -6,5 +6,11 @@
     },
 
     "python.linting.mypyEnabled": true,
+    "python.linting.mypyArgs": [
+        "--ignore-missing-imports",
+        "--follow-imports=silent",
+        "--warn-return-any",
+        "--disallow-untyped-defs"
+      ],
     "python.pythonPath": "C:\\Python37\\python.exe",
 }
