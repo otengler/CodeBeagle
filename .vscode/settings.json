@@ -12,5 +12,5 @@
         "--warn-return-any",
         "--disallow-untyped-defs"
       ],
-    "python.pythonPath": "C:\\Python37\\python.exe",
+    "python.pythonPath": "C:\\Python36\\python.exe",
 }

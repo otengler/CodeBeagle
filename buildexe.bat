@@ -1,47 +1,43 @@
 call buildvars.bat
 call build.bat
 
-set BUILDDIR=build\exe.win32-3.7
+set BUILDDIR=build\exe.win32-3.6
+set LIB=%BUILDDIR%\lib
 if exist build rmdir /s /q build
 python.exe setup.py build_exe
+
 copy %PYDIR%\DLLS\sqlite3.dll %BUILDDIR%
 
-rmdir /q /s %BUILDDIR%\html 
-rmdir /q /s %BUILDDIR%\importlib 
-rmdir /q /s %BUILDDIR%\pydoc_data 
-rmdir /q /s %BUILDDIR%\xml 
-del /q %BUILDDIR%\_bz2.pyd
-del /q %BUILDDIR%\_hashlib.pyd
-del /q %BUILDDIR%\_lzma.pyd
-del /q %BUILDDIR%\pyexpat.pyd
-del /q %BUILDDIR%\dialogs\*.ui
-del /q %BUILDDIR%\widgets\*.ui
-del /q %BUILDDIR%\tools\*.ui
+rmdir /q /s %LIB%\html 
+rmdir /q /s %LIB%\importlib 
+rmdir /q /s %LIB%\pydoc_data 
+rmdir /q /s %LIB%\xml 
+del /q %LIB%\_bz2.pyd
+del /q %LIB%\_hashlib.pyd
+del /q %LIB%\_lzma.pyd
+del /q %LIB%\pyexpat.pyd
+del /q %LIB%\dialogs\*.ui
+del /q %LIB%\widgets\*.ui
 del /q %BUILDDIR%\api-ms-*.dll
-del /q %BUILDDIR%\vcruntime140.dll
-del /q %BUILDDIR%\MSVCP140.dll
 
-del /q %BUILDDIR%\imageformats\qicns.dll
-del /q %BUILDDIR%\imageformats\qico.dll
-del /q %BUILDDIR%\imageformats\qicns.dll
-del /q %BUILDDIR%\imageformats\qjpeg.dll
-del /q %BUILDDIR%\imageformats\qsvg.dll
-del /q %BUILDDIR%\imageformats\qtga.dll
-del /q %BUILDDIR%\imageformats\qtiff.dll
-del /q %BUILDDIR%\imageformats\qwbmp.dll
-del /q %BUILDDIR%\imageformats\qwebp.dll
+mkdir %LIB%\PyQt5.new\Qt\bin
+mkdir %LIB%\PyQt5.new\Qt\plugins\imageformats
+mkdir %LIB%\PyQt5.new\Qt\plugins\platforms
+mkdir %LIB%\PyQt5.new\Qt\plugins\styles
+copy %LIB%\PyQt5\__init__.pyc %LIB%\PyQt5.new 
+copy %LIB%\PyQt5\QtCore.pyd %LIB%\PyQt5.new
+copy %LIB%\PyQt5\QtWidgets.pyd %LIB%\PyQt5.new
+copy %LIB%\PyQt5\QtGui.pyd %LIB%\PyQt5.new
+copy %LIB%\PyQt5\sip.pyd %LIB%\PyQt5.new
+copy %LIB%\PyQt5\Qt\bin\Qt5Core.dll %LIB%\PyQt5.new\Qt\bin\
+copy %LIB%\PyQt5\Qt\bin\Qt5Widgets.dll %LIB%\PyQt5.new\Qt\bin\
+copy %LIB%\PyQt5\Qt\bin\Qt5Gui.dll %LIB%\PyQt5.new\Qt\bin\
+copy %LIB%\PyQt5\Qt\plugins\imageformats\qgif.dll %LIB%\PyQt5.new\Qt\plugins\imageformats\
+copy %LIB%\PyQt5\Qt\plugins\platforms\qwindows.dll %LIB%\PyQt5.new\Qt\plugins\platforms\
+copy %LIB%\PyQt5\Qt\plugins\styles\qwindowsvistastyle.dll %LIB%\PyQt5.new\Qt\plugins\styles\
 
-del /q %BUILDDIR%\platforms\qoffscreen.dll
-del /q %BUILDDIR%\platforms\qminimal.dll
-del /q %BUILDDIR%\Qt5Svg.dll
-
-mkdir %BUILDDIR%\PyQt5.new
-copy %BUILDDIR%\PyQt5\__init__.pyc %BUILDDIR%\PyQt5.new 
-copy %BUILDDIR%\PyQt5\QtCore.pyd %BUILDDIR%\PyQt5.new
-copy %BUILDDIR%\PyQt5\QtWidgets.pyd %BUILDDIR%\PyQt5.new
-copy %BUILDDIR%\PyQt5\QtGui.pyd %BUILDDIR%\PyQt5.new
-rmdir /q /s %BUILDDIR%\PyQt5
-move %BUILDDIR%\PyQt5.new %BUILDDIR%\PyQt5
+rmdir /q /s %LIB%\PyQt5
+move %LIB%\PyQt5.new %LIB%\PyQt5
 
 xcopy config.txt %BUILDDIR%
 xcopy help.html %BUILDDIR%

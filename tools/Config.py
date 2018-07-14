@@ -135,7 +135,21 @@ class Config:
         return self.__data.values()
 
     def __repr__ (self) -> str:
-        return __dumpRec (self, 0)
+        return self.__dumpRec (self, 0)
+
+    def __dumpRec (self, config: Config,  level: int) -> str:
+        s = ""
+        for k,v in config.__data.items(): # access of protected member pylint: disable=W0212
+            if s:
+                s += "\n"
+            s = s + " " *2*level + k
+            if type(v) is Config:
+                s += " {\n"
+                s = s + self.__dumpRec (v,  level+1)
+                s = s + "\n" + " " *2*level + "}"
+            else:
+                s = s + " = " + config.__typePersist(k)(v) # access of protected member pylint: disable=W0212
+        return s
 
     def remove (self, key: str) -> None:
         key = key.lower()
@@ -218,22 +232,7 @@ def typeDefaultString (strDefault: str) -> Tuple[Callable, Callable, Callable]:
     return (identity, lambda: strDefault, str)
 
 def typeDefaultConfig () -> Tuple[Callable, Callable, Callable]:
-    return (identity, lambda: Config(), identity)
-
-def __dumpRec (config: Config,  level: int) -> str:
-    s = ""
-    for k,v in config.__data.items():
-        if s:
-            s += "\n"
-        s = s + " " *2*level + k
-        if type(v) is Config:
-            s += " {\n"
-            s = s + __dumpRec (v,  level+1)
-            s = s + "\n" + " " *2*level + "}"
-        else:
-            s = s + " = " + config.__typePersist(k)(v)
-    return s
-
+    return (identity, lambda: Config(), identity) # Lambda may not be neccessary pylint: disable=W0108
 class TestConfig(unittest.TestCase):
     def test(self) -> None:
         c = Config()
