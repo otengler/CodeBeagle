@@ -111,7 +111,7 @@ class TextHighlighter(QSyntaxHighlighter):
 
         if self.bColorizeGroups:
             groupFormatIndex = 0
-            for i in range(reMatch.lastindex):
+            for i in range(reMatch.lastindex or 0):
                 start, end = reMatch.span(i+1)
                 if start != -1 and end != -1:
                     self.setFormat(start,  end-start,  self.groupFormats[groupFormatIndex])
@@ -132,15 +132,15 @@ class RegExTesterDlg (QDialog):
 
     @pyqtSlot ()
     def setModeSearchFirst(self) -> None:
-        self.textHighlighter.setMode(TextHighlighter.SearchFirst)
+        self.textHighlighter.setMode(SearchModes.SearchFirst)
 
     @pyqtSlot ()
     def setModeSearchAll(self) -> None:
-        self.textHighlighter.setMode(TextHighlighter.SearchAll)
+        self.textHighlighter.setMode(SearchModes.SearchAll)
 
     @pyqtSlot ()
     def setModeMatch(self) -> None:
-        self.textHighlighter.setMode(TextHighlighter.Match)
+        self.textHighlighter.setMode(SearchModes.Match)
 
     @pyqtSlot (bool)
     def checkColorizeGroups(self,  bChecked: bool) -> None:
