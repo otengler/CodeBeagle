@@ -146,7 +146,8 @@ class SourceViewer (QWidget):
             for i in range(len(self.matches)):
                 item = "%u" % (i+1,)
                 self.ui.listMatchesWidget.addItem(item)
-            self.nextMatch ()
+            if self.matches:
+                self.nextMatch ()
 
     @pyqtSlot()
     def reloadFile(self) -> None:
@@ -281,7 +282,7 @@ class SourceViewer (QWidget):
         cursor.setPosition(index)
         self.ui.textEdit.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
 
-    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None: # pylint: disable=no-self-use
         # check if the data contains urls
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
