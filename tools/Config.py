@@ -120,7 +120,8 @@ class Config:
 
     def __setattr__(self, attr: str, value: Any) -> None:
         if attr.startswith("_Config__"):
-            return super().__setattr__(attr, value)
+            super().__setattr__(attr, value)
+            return 
         attr = attr.lower()
         if isinstance(value, Config):
             self.__data[attr] = value
@@ -137,7 +138,7 @@ class Config:
     def __repr__ (self) -> str:
         return self.__dumpRec (self, 0)
 
-    def __dumpRec (self, config: Config,  level: int) -> str:
+    def __dumpRec (self, config: 'Config',  level: int) -> str:
         s = ""
         for k,v in config.__data.items(): # access of protected member pylint: disable=W0212
             if s:
@@ -239,11 +240,11 @@ class TestConfig(unittest.TestCase):
         c.setPlainType ("b1", bool)
         c.setType("b2",  typeDefaultBool(True))
         with self.assertRaises(AttributeError):
-            c.b1
+            c.b1 # pylint: disable=W0104
         self.assertEqual(c.b2, True)
-        c.b1 = False
+        c.b1 = False # pylint: disable=W0201
         self.assertEqual(c.b1, False)
-        c.text = "Hallo"
+        c.text = "Hallo" # pylint: disable=W0201
         self.assertEqual(c.text, "Hallo")
         c.setType("di",  typeDefaultInt(42))
         self.assertEqual(c.di, 42)

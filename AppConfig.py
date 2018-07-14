@@ -64,14 +64,14 @@ def userConfigPath() -> str:
     if appConfig().managedConfig:
         name = cast(str,appConfig().managedConfig)
         return os.path.split(name)[0]
-    else:
-        return userDataPath()
+
+    return userDataPath()
 
 def userConfigFileName() -> str:
     if appConfig().managedConfig:
         return cast(str,appConfig().managedConfig)
-    else:
-        return os.path.join(userDataPath(), configName)
+
+    return os.path.join(userDataPath(), configName)
 
 def saveUserConfig (config: Config.Config) -> None:
     configPath = userConfigPath()
