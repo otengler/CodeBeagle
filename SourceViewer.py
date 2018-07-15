@@ -102,6 +102,8 @@ class SourceViewer (QWidget):
         config = appConfig().SourceViewer
         if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
             self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
+        if self.ui.textEdit.areLineNumbersShown() != config.showLineNumbers:
+            self.ui.textEdit.showLineNumbers(config.showLineNumbers)
 
     def __reset (self) -> None:
         self.currentFile = ""

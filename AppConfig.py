@@ -102,6 +102,7 @@ def sourceViewerConfig() -> Config.Config:
     sourceviewer.setType ("FontFamily",  Config.typeDefaultString("Consolas"))
     sourceviewer.setType ("FontSize",  Config.typeDefaultInt(10))
     sourceviewer.setType ("TabWidth",  Config.typeDefaultInt(4))
+    sourceviewer.setType ("showLineNumbers", Config.typeDefaultBool(True))
     return sourceviewer
 
 def typeSourceViewerDefaults () -> Tuple[Callable, Callable, Callable]:

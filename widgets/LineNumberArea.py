@@ -32,11 +32,19 @@ class LineNumberArea (QWidget):
 
         self.textEdit.blockCountChanged.connect(self.adjustAreaWidth)
         self.textEdit.updateRequest.connect(self.scrollArea)
-        self.adjustAreaWidth(0)
+
+    def show(self) -> None:
+        super().show()
+        self.adjustAreaWidth()
+
+    def hide(self) -> None:
+        super().hide()
+        self.textEdit.setViewportMargins(0, 0, 0, 0)
 
     @pyqtSlot(int)
-    def adjustAreaWidth(self, newBlockCount: int) -> None:
-        self.textEdit.setViewportMargins(self.areaWidth(newBlockCount), 0, 0, 0)
+    def adjustAreaWidth(self, newBlockCount: int = 0) -> None:
+        if self.isVisible():
+            self.textEdit.setViewportMargins(self.areaWidth(newBlockCount), 0, 0, 0)
 
     @pyqtSlot(QRect, int)
     def scrollArea(self, rect: QRect, dy: int) -> None:

@@ -22,6 +22,7 @@ from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QTimer, QRect, QRectF
 from PyQt5.QtGui import QTextCharFormat, QFont, QTextLayout, QPainter, QBrush, QPaintEvent, QTextBlock, QResizeEvent
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 from fulltextindex.FullTextIndex import Query
+from AppConfig import appConfig
 from .LineNumberArea import LineNumberArea
 
 def textLineBefore(text: str, index: int) -> str:
@@ -193,11 +194,22 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.setReadOnly(True)
         self.setTextInteractionFlags(Qt.TextSelectableByKeyboard|Qt.TextSelectableByMouse)
 
-        self.lineNumberArea = LineNumberArea(self)
+        self.lineNumberArea: LineNumberArea = LineNumberArea(self)
+        self.showLineNumbers(appConfig().SourceViewer.showLineNumbers)
+
+    def areLineNumbersShown(self) -> bool:
+        return bool(self.lineNumberArea.isVisible())
+
+    def showLineNumbers(self, show: bool) -> None:
+        if show:
+            self.lineNumberArea.show()
+        else:
+            self.lineNumberArea.hide()
 
     def resizeEvent(self, e: QResizeEvent) -> None:
         super().resizeEvent(e)
-        self.lineNumberArea.reactOnResize(e)
+        if self.lineNumberArea.isVisible():
+            self.lineNumberArea.reactOnResize(e)
 
     def setPlainText(self, text: str) -> None:
         super().setPlainText(text)

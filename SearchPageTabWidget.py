@@ -192,6 +192,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         config.sourceViewer.FontFamily = settingsDlg.ui.fontComboBox.currentFont().family()
         config.sourceViewer.FontSize = settingsDlg.ui.editFontSize.text()
         config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
+        config.sourceViewer.showLineNumbers = settingsDlg.ui.checkShowLineNumbers.checkState() == Qt.Checked
         config.matchOverFiles = settingsDlg.ui.checkMatchOverFiles.checkState() == Qt.Checked
         config.activateFirstMatch = settingsDlg.ui.checkActivateFirstMatch.checkState() == Qt.Checked
         config.showCloseConfirmation = settingsDlg.ui.checkConfirmClose.checkState() == Qt.Checked

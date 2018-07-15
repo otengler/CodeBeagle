@@ -136,7 +136,8 @@ class LocationControl (QObject):
     def loadDataFromItem(self, index: QModelIndex) -> None:
         editor = self.settingsItem
         if not index.isValid():
-            return editor.resetAndDisable()
+            editor.resetAndDisable()
+            return
         location = index.data(Qt.UserRole+1)
         editor.setData(location.displayName(),
                        location.directoriesAsString(),
@@ -180,6 +181,7 @@ class SettingsDialog (QDialog):
         setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
         setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
         setCheckBox (self.ui.checkShowMatchList, config.showMatchList)
+        setCheckBox (self.ui.checkShowLineNumbers, config.SourceViewer.showLineNumbers)
 
         self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
