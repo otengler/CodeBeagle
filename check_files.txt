@@ -33,6 +33,7 @@ tools\Config.py
 tools\ExceptionTools.py
 tools\FileTools.py
 widgets\HighlightingTextEdit.py
+widgets\LineNumberArea.py
 widgets\LeaveLastTabWidget.py
 widgets\RecyclingVerticalScrollArea.py
 widgets\SourceHighlightingTextEdit.py

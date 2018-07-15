@@ -18,10 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Tuple, List, Optional, Iterator
 import bisect
-from PyQt5.QtCore import Qt, QRegExp, pyqtSlot, pyqtSignal, QTimer, QRect, QRectF, QSize
+from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QTimer, QRect, QRectF
 from PyQt5.QtGui import QTextCharFormat, QFont, QTextLayout, QPainter, QBrush, QPaintEvent, QTextBlock, QResizeEvent
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 from fulltextindex.FullTextIndex import Query
+from .LineNumberArea import LineNumberArea
 
 def textLineBefore(text: str, index: int) -> str:
     pos = index
@@ -180,62 +181,6 @@ class SyntaxHighlighter:
 
         return formats
 
-class LineNumberArea (QWidget):
-    def __init__(self, textEdit: 'HighlightingTextEdit') -> None:
-        super().__init__(textEdit)
-        self.textEdit: 'HighlightingTextEdit' = textEdit
-
-        self.textEdit.blockCountChanged.connect(self.updateLineNumberAreaWidth)
-        self.textEdit.updateRequest.connect(self.updateLineNumberArea)
-        self.updateLineNumberAreaWidth(0)
-
-    @pyqtSlot(int)
-    def updateLineNumberAreaWidth(self,__newBlockCount: int) -> None:
-        self.textEdit.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
-
-    @pyqtSlot(QRect, int)
-    def updateLineNumberArea(self, rect: QRect, dy: int) -> None:
-        if dy:
-            self.scroll(0, dy)
-        else:
-            self.update(0, rect.y(), self.width(), rect.height())
-
-        if rect.contains(self.textEdit.viewport().rect()):
-            self.updateLineNumberAreaWidth(0)
-
-    def sizeHint(self) -> QSize:
-        return QSize(self.lineNumbrAreaWidth(), 0)
-
-    def lineNumberAreaWidth(self) -> int:
-        digits = 1
-        m = max(1, self.textEdit.blockCount())
-        while m >= 10:
-            m /= 10
-            digits += 1
-
-        space:int = 6 + self.textEdit.fontMetrics().horizontalAdvance("9") * digits
-        return space
-
-    def paintEvent(self, event: QPaintEvent) -> None:
-        painter = QPainter(self)
-        painter.fillRect(event.rect(), Qt.lightGray)
-
-        block: QTextBlock = self.textEdit.firstVisibleBlock()
-        blockNumber: int = block.blockNumber()
-        top = int(self.textEdit.blockBoundingGeometry(block).translated(self.textEdit.contentOffset()).top())
-        bottom = top + int(self.textEdit.blockBoundingRect(block).height())
-
-        while block.isValid() and top <= event.rect().bottom():
-            if block.isVisible() and bottom >= event.rect().top():
-                number = f"{blockNumber+1}"
-                painter.setPen(Qt.black)
-                painter.drawText(0, top, self.width()-3, self.textEdit.fontMetrics().height(), Qt.AlignRight, number)
-
-            block = block.next()
-            top = bottom
-            bottom = top + int(self.textEdit.blockBoundingRect(block).height())
-            blockNumber += 1
-
 class HighlightingTextEdit (QPlainTextEdit):
     updateNeeded = pyqtSignal()
 
@@ -252,8 +197,7 @@ class HighlightingTextEdit (QPlainTextEdit):
 
     def resizeEvent(self, e: QResizeEvent) -> None:
         super().resizeEvent(e)
-        cr:QRect = self.contentsRect()
-        self.lineNumberArea.setGeometry(QRect(cr.left(), cr.top(), self.lineNumberArea.lineNumberAreaWidth(), cr.height()))
+        self.lineNumberArea.reactOnResize(e)
 
     def setPlainText(self, text: str) -> None:
         super().setPlainText(text)
