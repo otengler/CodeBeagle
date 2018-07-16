@@ -19,14 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import re
 import types
 import unittest
+from typing import TypeVar, Any, Dict, Callable, Tuple, Iterator, cast
 from tools.FileTools import fopen
 
-def identity (a):
+T = TypeVar('T')
+
+def identity (a: T) -> T:
     return a
 
-def boolParse (value):
+def boolParse (value: Any) -> bool:
     if type(value) == bool:
-        return value
+        return cast(bool, value)
     if type(value) == str:
         value = value.lower()
         if value == "true" or value == "1" or value == "yes":
@@ -37,7 +40,7 @@ def boolParse (value):
         return bool(value)
     raise RuntimeError("Unknown boolean value '" + value + "'")
 
-def boolPersist (value):
+def boolPersist (value: Any) -> str:
     if type(value) == bool:
         return str(value)
     if type(value) == str:
@@ -52,7 +55,7 @@ def boolPersist (value):
         return "False"
     raise RuntimeError("Cannot interpret '" + str(value) + "' as bool")
 
-def plainTypeMapper(t):
+def plainTypeMapper(t: Any) -> Tuple[Callable, Callable, Callable]:
     if bool == t:
         return (boolParse, lambda: None, boolPersist)
     if int == t:
@@ -66,11 +69,9 @@ def plainTypeMapper(t):
 # c.sub = Config()
 # c.sub.a = "Text"
 class Config:
-    def __init__ (self, name="", dataMap=None,  configLines=None,  typeInfoFunc=None):
-        self.__data = dataMap
-        if not self.__data:
-            self.__data = {}
-        self.__typeMapper = {}
+    def __init__ (self, name: str="", dataMap: Dict[str,Any]=None,  configLines:Iterator[str]=None,  typeInfoFunc: Callable=None) -> None:
+        self.__data = dataMap or {}
+        self.__typeMapper: Dict[str,Tuple[Callable,Callable,Callable]] = {}
         if typeInfoFunc:
             typeInfoFunc(self)
         if name:
@@ -78,48 +79,49 @@ class Config:
         elif configLines:
             self.parseLines(configLines)
 
-    def setPlainType(self, attr, type):
-        self.__typeMapper[attr.lower()] = plainTypeMapper(type)
+    def setPlainType(self, attr: str, attrType: Any) -> None:
+        self.__typeMapper[attr.lower()] = plainTypeMapper(attrType)
 
-    def setType (self, attr, typeFuncs):
+    def setType (self, attr: str, typeFuncs: Tuple[Callable, Callable, Callable]) -> None:
         self.__typeMapper[attr.lower()] = typeFuncs
 
-    def __typeParse (self, attr):
+    def __typeParse (self, attr: str) -> Callable:
         if attr in self.__typeMapper:
             return self.__typeMapper[attr][0]
         return lambda a: a
 
-    def __typeNotFound (self, attr):
+    def __typeNotFound (self, attr: str) -> Callable:
         if attr in self.__typeMapper:
             return self.__typeMapper[attr][1]
         return lambda:None
 
-    def __typePersist (self, attr):
+    def __typePersist (self, attr: str) -> Callable:
         if attr in self.__typeMapper:
             return self.__typeMapper[attr][2]
         return str
 
-    def __getattr__ (self,  attr):
+    def __getattr__ (self,  attr: str) -> Any:
         attr = attr.lower()
         if attr in self.__data:
             return self.__typeParse(attr)(self.__data[attr])
         result = self.__typeNotFound(attr)()
-        if result != None:
+        if result is not None:
             if isinstance(result, Config):
                 self.__data[attr] = result
             return result
         raise AttributeError(attr + " does not exist in the configuration")
 
-    def __getitem__(self, attr):
+    def __getitem__(self, attr: str) -> Any:
         attr = attr.lower()
         return self.__data[attr]
 
-    def __contains__(self,  attr):
+    def __contains__(self,  attr: str) -> bool:
         return attr.lower() in self.__data
 
-    def __setattr__(self, attr,  value):
+    def __setattr__(self, attr: str, value: Any) -> None:
         if attr.startswith("_Config__"):
-            return super().__setattr__(attr, value)
+            super().__setattr__(attr, value)
+            return 
         attr = attr.lower()
         if isinstance(value, Config):
             self.__data[attr] = value
@@ -127,18 +129,18 @@ class Config:
             v = self.__typeParse(attr)(value)
             self.__data[attr] = v
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return self.__data.__iter__()
 
-    def values(self):
+    def values(self) -> Any:
         return self.__data.values()
 
-    def __repr__ (self):
+    def __repr__ (self) -> str:
         return self.__dumpRec (self, 0)
 
-    def __dumpRec (self,  config,  level):
+    def __dumpRec (self, config: 'Config',  level: int) -> str:
         s = ""
-        for k,v in config.__data.items():
+        for k,v in config.__data.items(): # access of protected member pylint: disable=W0212
             if s:
                 s += "\n"
             s = s + " " *2*level + k
@@ -147,19 +149,19 @@ class Config:
                 s = s + self.__dumpRec (v,  level+1)
                 s = s + "\n" + " " *2*level + "}"
             else:
-                s = s + " = " + self.__typePersist(k)(v)
+                s = s + " = " + config.__typePersist(k)(v) # access of protected member pylint: disable=W0212
         return s
 
-    def remove (self, key):
+    def remove (self, key: str) -> None:
         key = key.lower()
         if key in self.__data:
             del self.__data[key]
 
-    def loadFile (self, name):
+    def loadFile (self, name: str) -> None:
         with fopen(name) as file:
             self.parseLines ((line for line in file.readlines()))
 
-    def parseLines(self, lines):
+    def parseLines(self, lines: Iterator[str]) -> None:
         if type(lines) is not types.GeneratorType:
             raise TypeError("lines must be a generator type")
         for line in lines:
@@ -192,7 +194,7 @@ class Config:
                 print ("Do not understand line: " + line)
                 raise
 
-    def __handleImport (self, line):
+    def __handleImport (self, line: str) -> None:
         # syntax: import file as groupname
         # This imports the file into the group 'groupname'. If the group already exists it is merged
         importTokens = re.match("import\\W+([\\w\\\\/\\.]+)\\W+as\\W+(\\w+)", line)
@@ -221,29 +223,28 @@ class Config:
             except IOError:
                 pass
 
-def typeDefaultBool (bDefault):
+def typeDefaultBool (bDefault: bool) -> Tuple[Callable, Callable, Callable]:
     return (boolParse, lambda: bDefault, boolPersist)
 
-def typeDefaultInt (iDefault):
+def typeDefaultInt (iDefault: int) -> Tuple[Callable, Callable, Callable]:
     return (int, lambda: iDefault, str)
 
-def typeDefaultString (strDefault):
+def typeDefaultString (strDefault: str) -> Tuple[Callable, Callable, Callable]:
     return (identity, lambda: strDefault, str)
 
-def typeDefaultConfig ():
-    return (identity, lambda: Config(), identity)
-
+def typeDefaultConfig () -> Tuple[Callable, Callable, Callable]:
+    return (identity, lambda: Config(), identity) # Lambda may not be neccessary pylint: disable=W0108
 class TestConfig(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         c = Config()
         c.setPlainType ("b1", bool)
         c.setType("b2",  typeDefaultBool(True))
         with self.assertRaises(AttributeError):
-            c.b1
+            c.b1 # pylint: disable=W0104
         self.assertEqual(c.b2, True)
-        c.b1 = False
+        c.b1 = False # pylint: disable=W0201
         self.assertEqual(c.b1, False)
-        c.text = "Hallo"
+        c.text = "Hallo" # pylint: disable=W0201
         self.assertEqual(c.text, "Hallo")
         c.setType("di",  typeDefaultInt(42))
         self.assertEqual(c.di, 42)
@@ -256,5 +257,3 @@ class TestConfig(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-

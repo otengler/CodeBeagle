@@ -18,13 +18,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import re
+from typing import List, Optional, Pattern, Match
+from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont
-from PyQt5.QtWidgets import QDialog, QApplication
+from PyQt5.QtWidgets import QDialog, QApplication, QWidget
 from .Ui_RegExTesterDlg import Ui_RegExTesterDlg
 
 class ExprHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget=None) -> None:
         super().__init__(parent)
 
         self.bracketFormat = QTextCharFormat()
@@ -35,55 +37,56 @@ class ExprHighlighter(QSyntaxHighlighter):
         self.repeatFormat.setFontWeight(QFont.Bold)
         self.repeatFormat.setForeground(Qt.darkRed)
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text: str) -> None:
         for i, c in enumerate(text):
             if c in ("(", ")", "{", "}", "[", "]"):
                 self.setFormat(i, 1,  self.bracketFormat)
             if c in ("*", "+", "?"):
                 self.setFormat(i, 1,  self.repeatFormat)
 
-class TextHighlighter(QSyntaxHighlighter):
+class SearchModes(IntEnum):
     SearchFirst = 1
     SearchAll = 2
     Match = 3
 
-    def __init__(self, parent=None):
+class TextHighlighter(QSyntaxHighlighter):
+    def __init__(self, parent: QWidget=None) -> None:
         super().__init__(parent)
 
         self.matchFormat = QTextCharFormat()
         self.matchFormat.setBackground(Qt.yellow)
         self.matchFormat.setForeground(Qt.darkBlue)
-        self.groupFormats = []
+        self.groupFormats: List[QTextCharFormat] = []
         for color in (Qt.green, Qt.cyan, Qt.gray, Qt.blue,  Qt.magenta):
             groupFormat = QTextCharFormat()
             groupFormat.setBackground(color)
             groupFormat.setForeground(Qt.darkBlue)
             self.groupFormats.append(groupFormat)
 
-        self.expr= None
-        self.iMode = TextHighlighter.SearchFirst
+        self.expr: Optional[Pattern] = None
+        self.iMode = SearchModes.SearchFirst
         self.bColorizeGroups = False
 
-    def setMode(self,  iMode):
+    def setMode(self,  iMode: SearchModes) -> None:
         self.iMode = iMode
         self.rehighlight()
 
-    def setExpr (self, exprText):
+    def setExpr (self, exprText: str) -> None:
         try:
             self.expr = re.compile(exprText, re.IGNORECASE)
         except:
             self.expr = None
         self.rehighlight()
 
-    def setColorizeGroups(self,  bColorizeGroups):
+    def setColorizeGroups(self,  bColorizeGroups: bool) -> None:
         self.bColorizeGroups = bColorizeGroups
         self.rehighlight()
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text: str) -> None:
         if not self.expr:
             return
 
-        if self.iMode == TextHighlighter.Match:
+        if self.iMode == SearchModes.Match:
             result = self.expr.match(text)
             if result:
                 self.highlightMatch (result)
@@ -99,22 +102,23 @@ class TextHighlighter(QSyntaxHighlighter):
                         break
                 else:
                     break
-                if self.iMode == TextHighlighter.SearchFirst:
+                if self.iMode == SearchModes.SearchFirst:
                     break
 
-    def highlightMatch(self, reMatch):
-        regs = reMatch.regs
-        start, end = regs[0]
+    def highlightMatch(self, reMatch: Match) -> None:
+        start, end = reMatch.span()
         self.setFormat(start,  end-start,  self.matchFormat)
 
         if self.bColorizeGroups:
             groupFormatIndex = 0
-            for start, end in regs[1:]:
-                self.setFormat(start,  end-start,  self.groupFormats[groupFormatIndex])
-                groupFormatIndex = (groupFormatIndex+1)%len(self.groupFormats)
+            for i in range(reMatch.lastindex or 0):
+                start, end = reMatch.span(i+1)
+                if start != -1 and end != -1:
+                    self.setFormat(start,  end-start,  self.groupFormats[groupFormatIndex])
+                    groupFormatIndex = (groupFormatIndex+1)%len(self.groupFormats)
 
 class RegExTesterDlg (QDialog):
-    def __init__ (self, parent=None):
+    def __init__ (self, parent: QWidget=None) -> None:
         super().__init__(parent)
         self.ui = Ui_RegExTesterDlg()
         self.ui.setupUi(self)
@@ -123,23 +127,23 @@ class RegExTesterDlg (QDialog):
         self.textHighlighter = TextHighlighter(self.ui.textEditText.document())
 
     @pyqtSlot ()
-    def exprTextChanged(self):
+    def exprTextChanged(self) -> None:
         self.textHighlighter.setExpr(self.ui.textEditExpr.toPlainText())
 
     @pyqtSlot ()
-    def setModeSearchFirst(self):
-        self.textHighlighter.setMode(TextHighlighter.SearchFirst)
+    def setModeSearchFirst(self) -> None:
+        self.textHighlighter.setMode(SearchModes.SearchFirst)
 
     @pyqtSlot ()
-    def setModeSearchAll(self):
-        self.textHighlighter.setMode(TextHighlighter.SearchAll)
+    def setModeSearchAll(self) -> None:
+        self.textHighlighter.setMode(SearchModes.SearchAll)
 
     @pyqtSlot ()
-    def setModeMatch(self):
-        self.textHighlighter.setMode(TextHighlighter.Match)
+    def setModeMatch(self) -> None:
+        self.textHighlighter.setMode(SearchModes.Match)
 
     @pyqtSlot (bool)
-    def checkColorizeGroups(self,  bChecked):
+    def checkColorizeGroups(self,  bChecked: bool) -> None:
         self.textHighlighter.setColorizeGroups(bChecked)
 
 if __name__ == "__main__":

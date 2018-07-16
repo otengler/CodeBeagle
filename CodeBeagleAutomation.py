@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import AppConfig
-import tools.FileTools as FileTools
-import FullTextIndex
-import IndexConfiguration
+from tools import FileTools
+from fulltextindex import IndexConfiguration, FullTextIndex
 
 # TODO: installations pfad aus _reg_clsid_\PythonCOMPath lesen und als Pfad für config.txt verwenden
 #       bei installation pythoncom33.dll ins windows verzeichnis kopieren

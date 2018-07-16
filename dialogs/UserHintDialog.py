@@ -16,44 +16,48 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from typing import cast
+from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, QSettings
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QWidget, QPushButton
 import AppConfig
 from .Ui_UserHintDialog import Ui_UserHintDialog
 
-NoResult = 1 # This is not a button but the result if the hint was not shown at all
-OK = 2
-Yes = 4
-No = 8
+class ButtonType(IntEnum):
+    NoButton = 0
+    NoResult = 1 # This is not a button but the result if the hint was not shown at all
+    OK = 2
+    Yes = 4
+    No = 8
 
 class UserHintDialog (QDialog):
-    def __init__ (self,  parent):
+    def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent,  Qt.Tool)
         self.ui = Ui_UserHintDialog()
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.pushButton1.hide()
         self.ui.pushButton2.hide()
-        self.button1 = None
-        self.button2 = None
-        self.closeButton = NoResult
+        self.button1: ButtonType = ButtonType.NoButton
+        self.button2: ButtonType = ButtonType.NoButton
+        self.closeButton = ButtonType.NoResult
 
-    def setTitle(self, title):
+    def setTitle(self, title: str) -> None:
         self.setWindowTitle(title)
 
-    def setHtmlText(self, text):
+    def setHtmlText(self, text: str) -> None:
         self.ui.textEditHint.setHtml (text)
 
-    def setShowHintAgainCheckbox (self,  bCheck):
+    def setShowHintAgainCheckbox (self, bCheck: bool) -> None:
         if bCheck:
             self.ui.checkShowHint.setCheckState(Qt.Checked)
         else:
             self.ui.checkShowHint.setCheckState(Qt.Unchecked)
 
-    def showHintAgain(self):
-        return self.ui.checkShowHint.checkState() == Qt.Checked
+    def showHintAgain(self) -> bool:
+        return cast(bool, self.ui.checkShowHint.checkState() == Qt.Checked)
 
-    def addButton (self,  buttonID,  bIsDefault=False):
+    def addButton (self, buttonID: ButtonType, bIsDefault:bool=False) -> None:
         if not self.button1:
             self.button1 = buttonID
             self.__configButton(self.ui.pushButton1, buttonID, bIsDefault)
@@ -63,12 +67,12 @@ class UserHintDialog (QDialog):
         else:
             raise RuntimeError("No more buttons available")
 
-    def __configButton(self,  button, buttonID,  bIsDefault):
-        if OK == buttonID:
+    def __configButton(self, button: QPushButton, buttonID: ButtonType, bIsDefault: bool) -> None:
+        if ButtonType.OK == buttonID:
             button.setText(self.tr("OK"))
-        elif Yes == buttonID:
+        elif ButtonType.Yes == buttonID:
             button.setText(self.tr("Yes"))
-        elif No == buttonID:
+        elif ButtonType.No == buttonID:
             button.setText(self.tr("No"))
         else:
             raise RuntimeError("Unknown button")
@@ -77,17 +81,17 @@ class UserHintDialog (QDialog):
         button.show()
 
     @pyqtSlot()
-    def button1clicked(self):
+    def button1clicked(self) -> None:
         self.closeButton = self.button1
         self.accept()
 
     @pyqtSlot()
-    def button2clicked(self):
+    def button2clicked(self) -> None:
         self.closeButton = self.button2
         self.accept()
 
 # Checks if a particular user hint would be shown by calling "showUserHint".
-def hintWouldBeShown(hintID):
+def hintWouldBeShown(hintID: str) -> bool:
     settings = QSettings(AppConfig.appCompany, AppConfig.appName)
     hintStore = "hint_" + hintID
     value = settings.value(hintStore)
@@ -98,7 +102,9 @@ def hintWouldBeShown(hintID):
 # Show the user a hint which can be suppressed with a check box in the future.
 # hintID is an arbitrary string which must be unique for each user hint. The return value is the button which was pressed to
 # close the dialog or NoResult if the hint dialog was not shown or closed by any other mean.
-def showUserHint (parent,  hintID,  title,  htmlText,  button1,  default1=True,  button2=None, default2=False,  bShowHintAgain=False):
+def showUserHint (parent: QWidget, hintID: str, title: str, htmlText: str, button1: ButtonType, default1:bool=True,
+                  button2:ButtonType=None, default2:bool=False, bShowHintAgain:bool=False) -> ButtonType:
+
     settings = QSettings(AppConfig.appCompany, AppConfig.appName)
     hintStore = "hint_" + hintID
     value = settings.value(hintStore)
@@ -114,13 +120,13 @@ def showUserHint (parent,  hintID,  title,  htmlText,  button1,  default1=True, 
         if dialog.exec():
             settings.setValue(hintStore, int(dialog.showHintAgain()))
             return dialog.closeButton
-    return NoResult
+    return ButtonType.NoResult
 
-def main():
+def main() -> None:
     import sys
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
-    showUserHint (None, "test",  "Create location",  "Create an initial search location?",  Yes,  True,  No)
+    showUserHint (None, "test", "Create location", "Create an initial search location?",  ButtonType.Yes, True, ButtonType.No)
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

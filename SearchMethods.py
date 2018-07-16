@@ -17,24 +17,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from typing import List, Pattern, Iterator, Tuple, Optional, cast
 import threading
-import tools.AsynchronousTask as AsynchronousTask
+from PyQt5.QtCore import QObject
+from tools import AsynchronousTask
 from tools.FileTools import fopen
-import FullTextIndex
-
+from fulltextindex import FullTextIndex, IndexUpdater, IndexConfiguration
 
 class ResultSet:
-    def __init__(self, matches=[], searchData=None, perfReport=None, label=None):
-        self.matches = matches
+    def __init__(self, matches: FullTextIndex.SearchResult = None, searchData: FullTextIndex.Query = None,
+                 perfReport: FullTextIndex.PerformanceReport = None, label: str = None) -> None:
+
+        self.matches = matches or []
         self.perfReport = perfReport
         self.searchData = searchData
         self.label = label
 
 class ScriptSearchData:
-    def __init__(self, reExpr):
+    def __init__(self, reExpr: Pattern) -> None:
         self.reExpr = reExpr
 
-    def matches(self, data):
+    def matches(self, data: str) -> Iterator[Tuple[int,int]]:
         """Yields all matches in str. Each match is returned as the touple (position,length)."""
         if not self.reExpr:
             return
@@ -48,12 +51,16 @@ class ScriptSearchData:
             else:
                 return
 
-def search(parent, params, indexConf, commonKeywordMap={}):
+SearchParams = Tuple[str, str, str, bool] # Search query, folders, extensions, case sensitive
+
+def search(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
     """This executes an indexed or a direct search. This depends on the IndexConfiguration setting "indexUpdateMode"."""
+    commonKeywordMap = commonKeywordMap or {}
     strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
-    if not len(strSearch):
+    if not strSearch:
         return ResultSet()
     searchData = FullTextIndex.SearchQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+    result: ResultSet
     if indexConf.generatesIndex():
         ftiSearch = FullTextIndexSearch()
         result = AsynchronousTask.execute(parent, ftiSearch, searchData, commonKeywordMap, indexConf, bEnableCancel=True, cancelAction=ftiSearch.cancel)
@@ -68,11 +75,13 @@ class FullTextIndexSearch:
     Holds an instance of FullTextIndex. Setting the instance is secured by a lock because
     the call to 'cancel' may happen any time - also during construction and assignment of FullTextIndex
     """
-    def __init__(self):
-        self.fti = None
+    def __init__(self) -> None:
+        self.fti: Optional[FullTextIndex.FullTextIndex] = None
         self.lock = threading.Lock()
 
-    def __call__(self, searchData, commonKeywordMap, indexConf, cancelEvent=None):
+    def __call__(self, searchData: FullTextIndex.Query, commonKeywordMap:FullTextIndex.CommonKeywordMap,
+                 indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+
         perfReport = FullTextIndex.PerformanceReport()
         with perfReport.newAction("Init database"):
             with self.lock:
@@ -83,18 +92,18 @@ class FullTextIndexSearch:
             self.fti = None
         return result
 
-    def cancel(self):
+    def cancel(self) -> None:
         with self.lock:
             if self.fti:
                 self.fti.interrupt()
 
-def directSearchAsync(searchData, indexConf, cancelEvent=None):
-    matches = []
+def directSearchAsync(searchData: FullTextIndex.Query, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+    matches: List[str] = []
     for directory in indexConf.directories:
-        for file in FullTextIndex.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
+        for file in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
             if searchData.matchFolderAndExtensionFilter(file):
-                with fopen(file) as input:
-                    for match in searchData.matches(input.read()):
+                with fopen(file) as inputFile:
+                    for _ in searchData.matches(inputFile.read()):
                         matches.append(file)
                         break
             if cancelEvent and cancelEvent.is_set():
@@ -102,19 +111,25 @@ def directSearchAsync(searchData, indexConf, cancelEvent=None):
     matches = removeDupsAndSort(matches)
     return ResultSet(matches, searchData)
 
-def customSearch(parent, script, params, indexConf, commonKeywordMap={}):
+def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration,
+                 commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
+
     """
     Executes a custom search script from disk. The script receives a locals dictionary with all neccessary
     search parameters and returns its result in the variable "result". The variable "highlight" must be set
     to a regular expression which is used to highlight the matches in the result.
     """
-    strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
-    return AsynchronousTask.execute(parent, customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
+    commonKeywordMap = commonKeywordMap or {}
+    result: ResultSet = AsynchronousTask.execute(parent, customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
+    return result
 
-def customSearchAsync(script, params, commonKeywordMap, indexConf):
+def customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullTextIndex.CommonKeywordMap,
+                      indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
+
     import re
     query, folders, extensions, caseSensitive = params
-    def performSearch(strSearch, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False):
+
+    def performSearch(strSearch: str, strFolderFilter: str="", strExtensionFilter:str="", bCaseSensitive: bool=False) -> FullTextIndex.SearchResult:
         if not strSearch:
             return []
         searchData = FullTextIndex.SearchQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
@@ -124,13 +139,13 @@ def customSearchAsync(script, params, commonKeywordMap, indexConf):
         else:
             return directSearchAsync(searchData, indexConf).matches
 
-    def regexFromText(strQuery, bCaseSensitive):
+    def regexFromText(strQuery: str, bCaseSensitive: bool) -> Pattern:
         query = FullTextIndex.FindAllQuery(strQuery, "", "", bCaseSensitive)
         return query.regExForMatches()
 
     class Result:
-        def __init__(self):
-            self.matches = []
+        def __init__(self) -> None:
+            self.matches: FullTextIndex.SearchResult = []
             self.highlight = None
             self.label = "Custom script"
 
@@ -162,9 +177,11 @@ def customSearchAsync(script, params, commonKeywordMap, indexConf):
     code = compile(scriptCode, script, 'exec')
     exec(code, globals(), localsDict)
 
-    matches = localsDict["result"].matches
-    highlight = localsDict["result"].highlight
-    label = localsDict["result"].label
+    result = cast(Result,localsDict["result"])
+
+    matches = result.matches
+    highlight = result.highlight
+    label = result.label
 
     matches = removeDupsAndSort(matches)
     if highlight:
@@ -175,7 +192,7 @@ def customSearchAsync(script, params, commonKeywordMap, indexConf):
 
     return ResultSet(matches, searchData, label=label)
 
-def removeDupsAndSort(matches):
+def removeDupsAndSort(matches: FullTextIndex.SearchResult) -> FullTextIndex.SearchResult:
     """Remove duplicates and sort"""
     uniqueMatches = set()
     for match in matches:
@@ -183,4 +200,3 @@ def removeDupsAndSort(matches):
     matches = [match for match in uniqueMatches]
     matches.sort()
     return matches
-

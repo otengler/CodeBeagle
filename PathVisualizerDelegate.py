@@ -17,13 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from typing import List
 from PyQt5.QtCore import Qt, QRect, QSize, QModelIndex
-from PyQt5.QtGui import QFont, QPen, QColor, QFontMetrics
-from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle
+from PyQt5.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
+from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
 
 class PathVisualizerDelegate (QStyledItemDelegate):
     """Parent must be the view (otherwise the focus drawing doesn't work)"""
-    def __init__ (self, parent):
+    def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent)
         self.pathDarkGrayColor = QPen(QColor(50, 50, 50))
         self.pathGrayColor = QPen(QColor(150, 150, 150))
@@ -37,7 +38,7 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         self.selectedPathColor = self.pathDarkGrayColor
         self.seletedFileColor = self.fileColor
 
-    def paint (self, painter, option, index):
+    def paint (self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         if option.type != QStyleOption.SO_ViewItem:
             return
 
@@ -54,7 +55,7 @@ class PathVisualizerDelegate (QStyledItemDelegate):
             fileColor = self.fileColor
             if index.row() > 0:
                 indexAbove = model.index(index.row()-1, 0, QModelIndex())
-                pathAbove,nameAbove = os.path.split(model.data (indexAbove, Qt.DisplayRole))
+                pathAbove,_ = os.path.split(model.data (indexAbove, Qt.DisplayRole))
                 if pathAbove == path:
                     pathColor = self.pathGrayColor
                 else:
@@ -88,7 +89,7 @@ class PathVisualizerDelegate (QStyledItemDelegate):
 
         painter.restore()
 
-    def computeSizeHint (self, data,  cutLeft):
+    def computeSizeHint (self, data: List[str], cutLeft: int) -> QSize:
         """
         Computes the size of the longest string in data. This is just an assumption because you cannot deduce the length from
         the number of letters. But most of the time this is true and much faster than computing the bounding rect for 20000
@@ -97,9 +98,9 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         maxLen = 0
         longestMatch = None
         for match in data:
-            if cutLeft:
-                match = match[cutLeft:]
             currLen = len(match)
+            if cutLeft:
+                currLen -= cutLeft
             if currLen > maxLen:
                 maxLen = currLen
                 longestMatch = match
@@ -107,4 +108,3 @@ class PathVisualizerDelegate (QStyledItemDelegate):
             return QSize(0, 0)
         rect = self.pathBoldFontMetrics.boundingRect(longestMatch)
         return QSize(rect.width(), rect.height()+4)
-

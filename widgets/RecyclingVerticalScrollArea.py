@@ -16,70 +16,72 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import abc
+from typing import Any, List, Iterator, Tuple, Dict, DefaultDict, Optional
+from abc import ABC,abstractmethod
 import bisect
 import collections
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import QLabel, QLayout, QScrollArea, QWidget
 
-def doLinesIntersect (y1, length1, y2, length2):
+def doLinesIntersect (y1: int, length1: int, y2: int, length2: int) -> bool:
     if y1 < y2:
         return  y1+length1 > y2
     else:
         return y2+length2 >  y1
 
-class ScrollAreaItem (metaclass = abc.ABCMeta):
-    def __init__ (self,  height):
+class ScrollAreaItem (ABC):
+    def __init__ (self,  height: int) -> None:
         self.height = height
+        self.id: int = 0
 
-    @abc.abstractmethod
-    def generateItem (self, parent):
+    @abstractmethod
+    def generateItem (self, parent: QWidget) -> QWidget:
         pass
 
-    @abc.abstractmethod
-    def configureItem(self, item):
+    @abstractmethod
+    def configureItem(self, item: QWidget) -> None:
         pass
 
-    @abc.abstractmethod
-    def getType(self):
+    @abstractmethod
+    def getType(self) -> Any:
         pass
 
 class Labeltem (ScrollAreaItem):
-    def __init__(self, text, bIsBold, height):
-        super ().__init__( height)
+    def __init__(self, text: str, bIsBold: bool, height: int) -> None:
+        super ().__init__(height)
         self.text = text
         self.bIsBold = bIsBold
-        self.id = None
 
-    def generateItem (self, parent):
+    def generateItem (self, parent: QWidget) -> QWidget:
         return QLabel("", parent)
 
-    def configureItem(self, label):
-        label.setFixedHeight(self.height)
+    def configureItem(self, item: QWidget) -> None:
+        item.setFixedHeight(self.height)
         if self.bIsBold:
             text = "<b>" + self.text + "</b>"
         else:
             text = self.text
-        label.setText(text)
+        item.setText(text)
 
-    def getType(self):
+    def getType(self) -> Any:
         return QLabel
 
 class SrollAreaItemList:
-    def __init__(self,  spacing = 7):
+    def __init__(self,  spacing:int = 7) -> None:
         self.spacing = spacing
         self.clear()
 
-    def clear(self):
-        self.items = []
-        self.yStarts = []
+    def clear(self) -> None:
+        self.items: List[ScrollAreaItem] = []
+        self.yStarts: List[int] = []
         self.y = self.spacing
         self.nextId = 1
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.items)
 
-    def addItem (self, item):
+    def addItem (self, item: ScrollAreaItem) -> int:
         """Adds an item to the list and returns its index in the item list."""
         item.id = self.nextId
         self.nextId += 1
@@ -88,18 +90,18 @@ class SrollAreaItemList:
         self.y += (item.height+self.spacing)
         return len(self.items)-1
 
-    def itemYPos (self, index):
+    def itemYPos (self, index: int) -> int:
         if index>=len(self.yStarts):
             return 0
         return self.yStarts[index]
 
-    def height(self):
+    def height(self) -> int:
         if not self.items:
             return 0
         last = len(self.items)-1
         return self.yStarts[last]+self.items[last].height+self.spacing
 
-    def visibleItems (self, y, height):
+    def visibleItems (self, y: int, height: int) -> Iterator[Tuple[int, ScrollAreaItem]]:
         index = self.__indexBeforePos (y)
 
         while index<len(self.items):
@@ -112,7 +114,7 @@ class SrollAreaItemList:
                     break
             index += 1
 
-    def __indexBeforePos(self,  yPos):
+    def __indexBeforePos(self,  yPos: int) -> int:
         index = bisect.bisect_left(self.yStarts,  yPos)
         if index > 0:
             index -= 1
@@ -123,48 +125,48 @@ class EmptyLayout(QLayout):
     This layout works around the problem that child wigets of the scrollarea widget are invisible if the scrollarea widget
     has no layout. If this is a bug or as designed - I don't know.
     """
-    def itemAt(self, index):
+    def itemAt(self, _: int) -> None:
         return None
 
-    def takeAt(self, index):
+    def takeAt(self, _: int) -> None:
         return None
 
-    def count(self):
+    def count(self) -> int:
         return 0
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
         return self.parent().size()
 
 class RecyclingVerticalScrollArea(QScrollArea):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget=None) -> None:
         super().__init__(parent)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.items = None
-        self.activeWidgets = {} # id to widget
-        self.reservedWidgets = collections.defaultdict(list) # type name to widgets
+        self.items: Optional[SrollAreaItemList] = None
+        self.activeWidgets: Dict[int, QWidget] = {} # id to widget
+        self.reservedWidgets: DefaultDict[str, QWidget] = collections.defaultdict(list) # type name to widgets
         w = QWidget(self)
         w.setLayout(EmptyLayout(w))
         self.setWidget(w)
 
-    def scrollToNthItem (self, index):
+    def scrollToNthItem (self, index: int) -> None:
         if self.items:
             self.ensureVisible (0, self.items.itemYPos(index),  0,  int(self.height()/2))
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self.__refreshItems()
 
-    def scrollContentsBy (self,  dx, dy):
+    def scrollContentsBy (self, dx: int, dy: int) -> None:
         super().scrollContentsBy(dx, dy)
         self.__refreshItems()
 
-    def setItems (self,  items):
+    def setItems (self, items: SrollAreaItemList) -> None:
         self.__reset()
         self.items = items
         self.widget().setFixedHeight(self.items.height())
         self.__refreshItems()
 
-    def __reset (self):
+    def __reset (self) -> None:
         for w in self.activeWidgets.values():
             w.close()
         self.activeWidgets.clear()
@@ -173,7 +175,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
                 w.close()
         self.reservedWidgets.clear()
 
-    def __refreshItems (self):
+    def __refreshItems (self) -> None:
         if not self.items:
             return
 
@@ -184,14 +186,14 @@ class RecyclingVerticalScrollArea(QScrollArea):
 
         # Iterate all widgets, those which are no longer visible are returned under their class name to
         # the map self.reservedWidgets for future use.
-        inactive = []
-        for id, w in self.activeWidgets.items():
+        inactive: List[int] = []
+        for ident, w in self.activeWidgets.items():
             wg = w.geometry()
             if  not doLinesIntersect (y, height,  wg.top(),  wg.height()):
                 self.reservedWidgets[w.__class__].append(w)
-                inactive.append(id)
-        for id in inactive:
-            del self.activeWidgets[id]
+                inactive.append(ident)
+        for ident in inactive:
+            del self.activeWidgets[ident]
 
         for itemY,  item in self.items.visibleItems (y, height):
             margin = self.__getScrollViewWidthMargin()
@@ -211,12 +213,15 @@ class RecyclingVerticalScrollArea(QScrollArea):
             else:
                 self.activeWidgets[item.id].setFixedWidth(width-margin)
 
-    def __getScrollViewWidthMargin (self):
+    def __getScrollViewWidthMargin (self) -> int:
         # Again not so nice. Without adding 7 pixels the text edit is too close to the scrollbar
-        width = 2*self.items.spacing+7+self.verticalScrollBar().width()
+        if not self.items:
+            return 0
+
+        width: int = 2*self.items.spacing+7+self.verticalScrollBar().width()
         return width
 
-def main():
+def main() -> None:
     import sys
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)

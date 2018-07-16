@@ -19,13 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 import bisect
 import re
+import threading
+from typing import List,Tuple,Optional
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFontMetrics
+from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QWidget
 from tools.FileTools import fopen
-import tools.AsynchronousTask as AsynchronousTask
+from tools import AsynchronousTask
+from  fulltextindex import FullTextIndex
 from widgets.SourceHighlightingTextEdit import SourceHighlightingTextEdit
-import widgets.RecyclingVerticalScrollArea as RecyclingVerticalScrollArea
+from widgets import RecyclingVerticalScrollArea
 from AppConfig import appConfig
 import HighlightingRulesCache
 from Ui_MatchesOverview import Ui_MatchesOverview
@@ -34,7 +37,7 @@ from Ui_MatchesOverview import Ui_MatchesOverview
 # consecutive touples which overlapped or adjoin are collapsed into one touple. This is done in place.
 # ranges = [(1,3),(2,5),(7,2)]
 # Result is [(1,5),(7,2)]
-def collapseAdjoiningRanges(ranges):
+def collapseAdjoiningRanges(ranges: List[Tuple[int,int]]) -> None:
     i=0
     while i+1 < len(ranges):
         r1 = ranges[i]
@@ -48,8 +51,8 @@ def collapseAdjoiningRanges(ranges):
             i+= 1
 
 class TestCollapseOverlappingRanges(unittest.TestCase):
-    def test(self):
-        ranges = []
+    def test(self) -> None:
+        ranges: List[Tuple[int,int]] = []
         collapseAdjoiningRanges(ranges)
         self.assertEqual(ranges, [])
         ranges = [(1, 3), (5, 7)]
@@ -63,48 +66,24 @@ class TestCollapseOverlappingRanges(unittest.TestCase):
         self.assertEqual(ranges, [(1, 9)])
 
 class FixedSizeSourcePreview(SourceHighlightingTextEdit):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget=None) -> None:
         super().__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
-    def __init__(self, matchesOverview,  text,  name,  height):
-        super ().__init__(height)
-        self.matchesOverview = matchesOverview
-        self.text = text
-        self.name = name
-
-    def generateItem (self, parent):
-        edit = FixedSizeSourcePreview(parent)
-        # Forward the signal to MatchesOverview instance
-        edit.selectionFinishedWithKeyboardModifier.connect (self.matchesOverview.selectionFinishedWithKeyboardModifier)
-        return edit
-
-    def configureItem(self, edit):
-        rules = HighlightingRulesCache.rules().getRulesByFileName(self.name,  self.matchesOverview.sourceFont)
-        edit.setFont(self.matchesOverview.sourceFont)
-        edit.setTabStopWidth(self.matchesOverview.tabWidth*10)
-        edit.highlighter.setHighlightingRules (rules,  self.text)
-        edit.highlighter.setSearchData (self.matchesOverview.searchData)
-        edit.setPlainText(self.text)
-
-    def getType(self):
-        return FixedSizeSourcePreview
-
 class Line:
-    def __init__(self, charPos, lineNumber):
+    def __init__(self, charPos: int, lineNumber: int) -> None:
         self.charPos = charPos
         self.lineNumber = lineNumber
 
-    def __lt__ (self, other):
+    def __lt__ (self, other: 'Line') -> bool:
         return self.charPos < other.charPos
 
 # Detects quickly which character position corresponds to which line number.
 # The first line numer is 1.
 class LineMapping:
-    def __init__(self,text):
-        self.list = []
+    def __init__(self,text: str) -> None:
+        self.list: List[Line] = []
         self.numberMap = {1:0} # line 1 always starts at 0
         self.text = text
 
@@ -122,7 +101,7 @@ class LineMapping:
             else:
                 break
 
-    def findLineNumber (self, charPos):
+    def findLineNumber (self, charPos: int) -> int:
         if not self.list:
             return 0
         pos = bisect.bisect_left (self.list,  Line(charPos,0))
@@ -130,8 +109,8 @@ class LineMapping:
             return self.list[-1].lineNumber+1
         return self.list[pos].lineNumber
 
-    def getLine(self, lineNumber):
-        if 0 == lineNumber or lineNumber > len(self.numberMap):
+    def getLine(self, lineNumber: int) -> str:
+        if lineNumber == 0 or lineNumber > len(self.numberMap):
             return ""
         startPos = self.numberMap[lineNumber]
         if lineNumber == len(self.numberMap):
@@ -140,11 +119,11 @@ class LineMapping:
             endPos = self.numberMap[lineNumber+1]-1
         return self.text [startPos:endPos]
 
-    def lineCount(self):
+    def lineCount(self) -> int:
         return len(self.numberMap)
 
 class TestLineMapping(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         m = LineMapping("")
         self.assertEqual(m.lineCount(), 1)
         self.assertEqual(m.findLineNumber(0), 0)
@@ -165,17 +144,17 @@ class TestLineMapping(unittest.TestCase):
         self.assertEqual(m.getLine(5),  "")
 
 class MatchesInFile:
-    def __init__(self,  name):
+    def __init__(self,  name: str) -> None:
         self.name = name
-        self.matches = []
+        self.matches: List[Tuple[int, List[str]]] = []
 
-    def addMatches (self,  nLineNumberStart,  lines):
+    def addMatches (self,  nLineNumberStart: int,  lines: List[str]) -> None:
         self.matches.append((nLineNumberStart, lines))
 
 # Returns a list of all matches in all files
 # This reads all files and retrieves the matches with some lines surounding them
-def extractMatches (matches, searchData, linesOfContext, cancelEvent=None):
-    results = []
+def extractMatches (matches: List[str], searchData: FullTextIndex.Query, linesOfContext: int, cancelEvent: threading.Event=None) -> List[MatchesInFile]:
+    results: List[MatchesInFile] = []
     for name in matches:
         matchList = MatchesInFile(name)
         try:
@@ -186,7 +165,7 @@ def extractMatches (matches, searchData, linesOfContext, cancelEvent=None):
         else:
             lineIndex = LineMapping(text)
             ranges = []
-            for startPos, length in searchData.matches(text):
+            for startPos, _ in searchData.matches(text):
                 lineNumber = lineIndex.findLineNumber(startPos)
                 startLine = lineNumber-linesOfContext
                 if startLine < 1:
@@ -211,21 +190,21 @@ class MatchesOverview (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
 
-    def __init__ (self, parent):
+    def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent)
         self.ui = Ui_MatchesOverview()
         self.ui.setupUi(self)
-        self.matches = None
-        self.searchData = None
+        self.matches: Optional[List[str]] = None
+        self.searchData: Optional[FullTextIndex.Query] = None
         self.resultHandled = True
         self.sourceFont = None
         self.lineHeight = 0
         self.tabWidth = 4
         self.linesOfContext = 2
         self.scrollItems = RecyclingVerticalScrollArea.SrollAreaItemList()
-        self.matchIndexes = []
+        self.matchIndexes: List[int] = []
 
-    def reloadConfig (self, font):
+    def reloadConfig (self, font: QFont) -> None:
         self.sourceFont = font
         metrics = QFontMetrics(self.sourceFont)
         self.lineHeight = metrics.height()
@@ -244,7 +223,7 @@ class MatchesOverview (QWidget):
 
         # TODO: rebuild self.scrollItems if the font changed or tab width changed...
 
-    def setSearchResult(self,  matches,  searchData):
+    def setSearchResult(self, matches: List[str], searchData: FullTextIndex.Query) -> None:
         self.matches = matches
         self.searchData = searchData
         self.resultHandled = False
@@ -252,16 +231,16 @@ class MatchesOverview (QWidget):
         if self.isVisible():
             self.__handleResult()
 
-    def activate (self):
+    def activate (self) -> None:
         if not self.resultHandled:
             self.__handleResult ()
 
-    def scrollToFile (self, index):
+    def scrollToFile (self, index: int) -> None:
         if index >= len(self.matchIndexes):
             return
         self.ui.scrollArea.scrollToNthItem(self.matchIndexes[index])
 
-    def __handleResult(self):
+    def __handleResult(self) -> None:
         self.resultHandled = True
 
         self.scrollItems.clear()
@@ -280,21 +259,45 @@ class MatchesOverview (QWidget):
 
         self.ui.scrollArea.setItems(self.scrollItems)
 
-    def __addHeader(self, text):
+    def __addHeader(self, text: str) -> int:
         return self.__addLine(text,  True)
 
-    def __addLine(self, text,  bIsBold = False):
+    def __addLine(self, text: str,  bIsBold:bool = False) -> int:
         labelItem = RecyclingVerticalScrollArea.Labeltem(text,  bIsBold,  20)
         return self.scrollItems.addItem(labelItem)
 
-    def __addText(self, name,  lines):
+    def __addText(self, name: str, lines: List[str]) -> int:
         text = "\n".join(lines)
         scrollBarHeight = 24
         height = len(lines)*self.lineHeight+11+scrollBarHeight
         editItem = FixedSizeSourcePreviewItem (self,  text,  name,  height)
         return self.scrollItems.addItem(editItem)
 
-def main():
+class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
+    def __init__(self, matchesOverview: MatchesOverview,  text: str,  name: str,  height: int) -> None:
+        super ().__init__(height)
+        self.matchesOverview = matchesOverview
+        self.text = text
+        self.name = name
+
+    def generateItem (self, parent: QWidget) -> QWidget:
+        item = FixedSizeSourcePreview(parent)
+        # Forward the signal to MatchesOverview instance
+        item.selectionFinishedWithKeyboardModifier.connect (self.matchesOverview.selectionFinishedWithKeyboardModifier)
+        return item
+
+    def configureItem(self, item: QWidget) -> None:
+        rules = HighlightingRulesCache.rules().getRulesByFileName(self.name,  self.matchesOverview.sourceFont)
+        item.setFont(self.matchesOverview.sourceFont)
+        item.setTabStopWidth(self.matchesOverview.tabWidth*10)
+        item.highlighter.setHighlightingRules (rules,  self.text)
+        item.highlighter.setSearchData (self.matchesOverview.searchData)
+        item.setPlainText(self.text)
+
+    def getType(self) -> str:
+        return "FixedSizeSourcePreview"
+
+def main() -> None:
     import sys
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)

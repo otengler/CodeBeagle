@@ -19,15 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
+from typing import List, Callable, Any, Optional, Tuple
 import argparse
 import time
 import logging
 import cProfile
-import tools.FileTools as FileTools
+from tools import FileTools
+from tools.Config import Config
 from tools.ExceptionTools import exceptionAsString
-import IndexConfiguration
+from fulltextindex import IndexConfiguration
+from fulltextindex.IndexUpdater import IndexUpdater, UpdateStatistics
 import AppConfig
-import FullTextIndex
 
 codebeagleLicense = """
 CodeBeagle Copyright (C) 2011-2017 Oliver Tengler;
@@ -38,45 +40,43 @@ This is free software, and you are welcome to redistribute it under certain cond
 updateIndexDescription = """Utility to update indexes for CodeBeagle. By default those indexes defined in config.txt are updated"""
 helpJobMode = """This mode is used by CodeBeagle to update indexes in the background. It reads job files from the given directory"""
 helpConfig = """Full path to config file. This parameter allows to specify an additional config file beside the default config.txt. Can be specified more than once."""
-helpResidentMode = """Stay resident as a system tray application and maintain all indexes which are configured for automatic updates"""
 
 parser = argparse.ArgumentParser(description=updateIndexDescription, epilog=codebeagleLicense)
 parser.add_argument("-v", "--version", action='version', version="UpdateIndex " + AppConfig.appVersion)
 parser.add_argument("--jobmode", metavar='DIR', type=str, help=helpJobMode)
-parser.add_argument("--resident", action='store_true', help=helpResidentMode)
 parser.add_argument("-c", "--config", action="append", default=[AppConfig.configName], type=str, help=helpConfig)
 
-def taketime(name, func, *args):
+def taketime(name: str, func: Callable, *args: Any) -> Any:
     t1 = time.clock()
     result = func(*args)
     t2 = time.clock()
-    logging.info(name + " %3.2f min" % ((t2-t1)/60.0,))
+    logging.info("%s %3.2f min", name, (t2-t1)/60.0)
     return result
 
-def setupLogging(conf):
+def setupLogging(conf: Config) -> None:
     try:
         log = conf.updateIndexLog
         logging.basicConfig(filename=log, format='%(asctime)s %(message)s', level=logging.INFO)
     except AttributeError:
         logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
-def updateIndex(config):
+def updateIndex(config: IndexConfiguration.IndexConfiguration) -> None:
     logging.info("-"*80)
     logging.info("Updating index '%s'", config.indexName)
     try:
-        fti = FullTextIndex.FullTextIndex(config.indexdb)
-        statistics = FullTextIndex.UpdateStatistics()
+        fti = IndexUpdater(config.indexdb)
+        statistics = UpdateStatistics()
         taketime("Updating index took ", fti.updateIndex, config.directories, config.extensions, config.dirExcludes, statistics)
-        logging.info(statistics)
+        logging.info("%s", statistics)
     except:
         logging.error("Exception caught while updating index:\n%s", exceptionAsString(None))
 
-def updateIndexes(indexes):
+def updateIndexes(indexes: List[IndexConfiguration.IndexConfiguration]) -> None:
     for config in indexes:
-        if config.indexUpdateMode == IndexConfiguration.TriggeredIndexUpdate:
+        if config.indexUpdateMode == IndexConfiguration.IndexMode.TriggeredIndexUpdate:
             updateIndex(config)
 
-def loadConfigFiles(args):
+def loadConfigFiles(args: Any) -> Config:
     configFiles = args.config
     if not configFiles:
         configFiles = [AppConfig.configName]
@@ -96,7 +96,7 @@ def loadConfigFiles(args):
         conf.loadFile(conf.managedConfig)
     return conf
 
-def handleUpdateJobs(indexes, jobDir):
+def handleUpdateJobs(indexes: List[IndexConfiguration.IndexConfiguration], jobDir: str) -> None:
     configByName = {}
     for conf in indexes:
         configByName[FileTools.removeInvalidFileChars(conf.displayName().lower())] = conf
@@ -106,7 +106,7 @@ def handleUpdateJobs(indexes, jobDir):
         if not jobData:
             break
         index, jobFile = jobData
-        logging.info("Handle job '" + index + "'")
+        logging.info("Handle job '%d'", index)
         try:
             conf = configByName[index.lower()]
             updateIndex(conf)
@@ -115,19 +115,19 @@ def handleUpdateJobs(indexes, jobDir):
         finally:
             os.unlink(jobFile)
 
-def nextJob(jobDir):
+def nextJob(jobDir: str) -> Optional[Tuple[str, str]]:
     files = os.listdir(jobDir)
     if not files:
         return None
     for file in files:
         if not file.endswith(".running"):
-            jobFile = os.path.join(jobDir, files[0])
+            jobFile = os.path.join(jobDir, file)
             jobFileRunning = jobFile + ".running"
             os.rename(jobFile, jobFileRunning)
             return (file, jobFileRunning)
     return None
 
-def handleUncleanShutdown(jobDir):
+def handleUncleanShutdown(jobDir: str) -> None:
     pidfile, bStaleFileWasRemoved = getPidFile()
     if bStaleFileWasRemoved:
         # This writes the current PID and make sure the file is removed at the end
@@ -135,7 +135,7 @@ def handleUncleanShutdown(jobDir):
             cleanupCrash(jobDir)
 
 # Cleans up stuff left behind from a crash
-def cleanupCrash(jobDir):
+def cleanupCrash(jobDir: str) -> None:
     guarddir = os.path.join(FileTools.getTempPath(), "UpdateIndex_running")
     if os.path.isdir(guarddir):
         try:
@@ -154,7 +154,7 @@ def cleanupCrash(jobDir):
                     pass
 
 # Returns touple (pidfile, bStaleFileWasRemoved)
-def getPidFile():
+def getPidFile() -> Tuple[FileTools.PidFile, bool]:
     pidname = os.path.join(FileTools.getTempPath(), "codebeagle.pid")
     pidfile = FileTools.PidFile(pidname)
     bStaleFileWasRemoved = False
@@ -170,11 +170,11 @@ def getPidFile():
 
     return (pidfile, bStaleFileWasRemoved)
 
-def main():
+def main() -> None:
     # Parse command line
     args = parser.parse_args()
 
-    pidfile, bStaleFileWasRemoved = getPidFile()
+    pidfile, _ = getPidFile()
 
     # This writes the current PID and make sure the file is removed at the end
     with pidfile:
@@ -192,7 +192,7 @@ def main():
             while True:
                 with FileTools.LockDir(runGuardDir):
                     setupLogging(conf)
-                    logging.info("UpdateIndex watches directory '" + args.jobmode + "'")
+                    logging.info("UpdateIndex watches directory '%s'", args.jobmode)
                     handleUpdateJobs(indexes, args.jobmode)
                 if not nextJob(args.jobmode):
                     logging.info("No more jobs found")
@@ -229,6 +229,6 @@ if __name__ == "__main__":
 # New jobs available?
 #    If yes jump to (1)
 #
-# This should guarantee that every job is processed by UpdateIndex without the UI caring much if there is already an UpdateIndex running and
-# in which state it currently is.
-
+# This should guarantee that every job is processed by UpdateIndex without the
+# UI caring much if there is already an UpdateIndex running and in which state
+# it currently is.

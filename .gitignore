@@ -8,3 +8,4 @@ UserConfig.txt
 *.dat
 .vscode/tags
 .mypy_cache/
+.vscode/.ropeproject/objectdb

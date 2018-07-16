@@ -17,46 +17,73 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from abc import ABC, abstractmethod
+from typing import List, Optional
 from PyQt5.QtCore import QObject, pyqtSignal
-import tools.Config as Config
+from tools import Config
 from tools.FileTools import fopen
 from tools.ExceptionTools import exceptionAsString
 
-class ExecuteProgramTask:
+class ContextMenuError:
+    def __init__(self,  program: str,  failedFiles: List[str],  exception: str=None) -> None:
+        self.program = program
+        self.failedFiles = failedFiles
+        self.exception = exception
+
+class ContextMenuTask(ABC):
+    @abstractmethod
+    def execute (self, files: List[str]) -> Optional[ContextMenuError]:
+        pass
+
+class CustomContextMenu (QObject):
+    executionFailed = pyqtSignal(ContextMenuError)
+
+    def __init__(self, title: str, task: ContextMenuTask) -> None:
+        super().__init__()
+        self.title = title
+        self.task = task
+
+    def execute (self, files: List[str]) -> None:
+        error = self.task.execute(files)
+        if error:
+            self.executionFailed.emit (error)
+
+class ExecuteProgramTask (ContextMenuTask):
     """Launches an executable for each of the files passed via context menu"""
-    def __init__(self, program,  args,  bShowWindow):
+    def __init__(self, program: str,  args: str,  bShowWindow: bool) -> None:
         super().__init__()
         self.program = os.path.expandvars(program)
-        self.args =args
+        self.args = args
         self.bShowWindow = bShowWindow
 
-    def execute (self, contextMenu, files):
+    def execute (self, files: List[str]) -> Optional[ContextMenuError]:
         import subprocess
         import shlex
 
-        failedFiles = []
+        failedFiles: List[str] = []
         for file in files:
             os.environ["file"] = file
             args = os.path.expandvars(self.args)
-            args = shlex.split(args)
+            argList = shlex.split(args)
             si = subprocess.STARTUPINFO()
             if not self.bShowWindow:
                 si.dwFlags = subprocess.STARTF_USESHOWWINDOW
                 si.wShowWindow = subprocess.SW_HIDE
             try:
-                subprocess.Popen ([self.program] + args,  startupinfo=si)
+                subprocess.Popen ([self.program] + argList,  startupinfo=si)
             except:
                 failedFiles.append (file)
 
         if failedFiles:
-            contextMenu.executionFailed.emit (ContextMenuError(self.program,  failedFiles))
+            return ContextMenuError(self.program,  failedFiles)
+        return None
 
-class CustomScriptTask:
+class CustomScriptTask (ContextMenuTask):
     """Executes an python script with all of the files passed via context menu"""
-    def __init__(self,  script):
+    def __init__(self,  script: str) -> None:
         self.script = script
 
-    def execute(self, contextMenu, files):
+    def execute (self, files: List[str]) -> Optional[ContextMenuError]:
         """
         The actual script is wrapped in the function "contextMenu". It is needed to
         establish a proper scope which enables access to local variables from sub functions
@@ -80,38 +107,22 @@ class CustomScriptTask:
             code = compile(scriptCode, self.script, 'exec')
             exec(code, globals(), localsDict)
         except:
-            contextMenu.executionFailed.emit (ContextMenuError(self.script,  files,  exceptionAsString()))
+            return ContextMenuError(self.script,  files,  exceptionAsString())
+        return None
 
-class ContextMenuError:
-    def __init__(self,  program,  failedFiles,  exception=None):
-        self.program = program
-        self.failedFiles = failedFiles
-        self.exception = exception
+class CustomContextMenuCache:
+    customMenuEntries: List[CustomContextMenu] = []
 
-class CustomContextMenu (QObject):
-    executionFailed = pyqtSignal(ContextMenuError)
-
-    def __init__(self, title, task):
-        super().__init__()
-        self.title = title
-        self.task = task
-
-    def execute (self, files):
-        self.task.execute(self,  files)
-
-_customMenuEntries = None
-
-def customMenuEntries (conf):
+def customMenuEntries (conf: Config.Config) -> List[CustomContextMenu]:
     """Returns a list of CustomContextMenu objects"""
-    global _customMenuEntries
-    if _customMenuEntries is None:
+    if not CustomContextMenuCache.customMenuEntries:
         try:
-            _customMenuEntries = __readConfig(conf)
+            CustomContextMenuCache.customMenuEntries = __readConfig(conf)
         except:
-            _customMenuEntries = []
-    return _customMenuEntries
+            CustomContextMenuCache.customMenuEntries = []
+    return CustomContextMenuCache.customMenuEntries
 
-def contextMenuTypeInfo (config):
+def contextMenuTypeInfo (config: Config.Config) -> None:
     """Configurates the type information for the context menu configuration"""
     config.setType("title", Config.typeDefaultString("Custom context menu"))
     config.setType("executable", Config.typeDefaultString(""))
@@ -125,7 +136,7 @@ def contextMenuTypeInfo (config):
 # executable = %windir%\notepad.exe %file%
 # script = filename relative to program root
 #}
-def __readConfig (conf):
+def __readConfig (conf: Config.Config) -> List[CustomContextMenu]:
     menus = []
     for group in conf:
         if group.startswith("contextmenu"):
@@ -147,5 +158,3 @@ def __readConfig (conf):
             entries.append(CustomContextMenu(title,  CustomScriptTask(script)))
 
     return entries
-
-

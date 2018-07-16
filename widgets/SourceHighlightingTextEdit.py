@@ -17,19 +17,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QWidget
 from .HighlightingTextEdit import HighlightingTextEdit
 
 class SourceHighlightingTextEdit (HighlightingTextEdit):
     # Triggered if a selection was finished while holding a modifier key down
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget=None) -> None:
         super().__init__(parent)
         self.selectionChanged.connect (self.highlightSelection)
 
     @pyqtSlot()
-    def highlightSelection(self):
+    def highlightSelection(self) -> None:
         text = self.textCursor().selectedText().strip()
         if not text or len(text)>64:
             return
@@ -41,7 +41,3 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
                 self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
             else:
                 self.setDynamicHighlight(text)
-
-
-
-

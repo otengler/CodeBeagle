@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2012 Oliver Tengler
+Copyright (C) 2018 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -16,14 +16,21 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Optional
+import unittest
 
-def exceptionAsString (limit: Optional[int]=5) -> str:
-    """Prints the current exception into a string"""
-    import sys
-    import io
-    import traceback
-    exc_type, exc_value, exc_traceback = sys.exc_info()
-    memFile = io.StringIO()
-    traceback.print_exception(exc_type, exc_value, exc_traceback, limit=limit, file=memFile)
-    return memFile.getvalue()
+testmodules = [
+    'HighlighterConfiguration',
+    'MatchesOverview',
+    'tools.Config',
+    'fulltextindex.FullTextIndex',
+    'fulltextindex.testsuite'
+    ]
+
+if __name__ == "__main__":
+    suite = unittest.TestSuite()
+
+    for t in testmodules:
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
+
+    unittest.TextTestRunner().run(suite)
+

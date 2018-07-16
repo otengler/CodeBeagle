@@ -18,13 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QWidget
 from tools.ExceptionTools import exceptionAsString
 from widgets.HighlightingTextEdit import HighlightingRules
 from .Ui_StackTraceMessageBox import Ui_StackTraceMessageBox
 
 class StackTraceMessageBox (QDialog):
-    def __init__ (self,  parent, title, text, stackTrace):
+    def __init__ (self, parent: QWidget, title:str, text:str, stackTrace:str) -> None:
         super().__init__(parent)
         self.ui = Ui_StackTraceMessageBox()
         self.ui.setupUi(self)
@@ -42,25 +42,25 @@ class StackTraceMessageBox (QDialog):
         self.setText(text)
         self.showDetails(False)
 
-    def setTitle(self, title):
+    def setTitle(self, title: str) -> None:
         self.setWindowTitle(title)
 
-    def setText(self, text):
+    def setText(self, text: str) -> None:
         self.ui.labelText.setText (text)
 
     @pyqtSlot(bool)
-    def showDetails(self, bShow):
+    def showDetails(self, bShow: bool) -> None:
         self.ui.stackTraceTextEdit.setVisible(bShow)
         self.adjustSize()
         if bShow:
             self.resize(self.width(),self.height()+200)
 
-def show (parent, title, text):
+def show (parent: QWidget, title: str, text: str) -> None:
     stackTrace = exceptionAsString(None)
     dlg = StackTraceMessageBox(parent, title, text, stackTrace)
     dlg.exec()
 
-def main():
+def main() -> None:
     import sys
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)

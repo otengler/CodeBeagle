@@ -18,11 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from PyQt5.QtCore import QSettings, QUrl, pyqtSlot
-from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
+from PyQt5.QtGui import QDesktopServices, QCloseEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-import tools.FileTools as FileTools
-import dialogs.UserHintDialog as UserHintDialog
+from tools import FileTools
+from dialogs.UserHintDialog import ButtonType, showUserHint
 import AppConfig
 from UpdateCheck import UpdateCheck
 from Ui_MainWindow import Ui_MainWindow
@@ -32,9 +32,8 @@ userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
 """
 
-def main():
+def main() -> None:
     app = QApplication(sys.argv)
-
     # Switch to application directory to be able to load the configuration and search scripts even if we are
     # executed from a different working directory.
     FileTools.switchToAppDir()
@@ -44,8 +43,9 @@ def main():
     sys.exit(app.exec_())
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
+        self.setAttribute(Qt.WA_DeleteOnClose)
         # Restore last used search location name
         self.appSettings = QSettings(AppConfig.appCompany, AppConfig.appName)
         if self.appSettings.value("lastUsedSearchLocation"):
@@ -65,14 +65,12 @@ class MainWindow(QMainWindow):
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QCloseEvent) -> None:
         if AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
                                        self.tr("Really close?"),
-                                       self.tr(
-                                           "Do you really want to close the application?"),
-                                       QMessageBox.StandardButtons(
-                                           QMessageBox.No | QMessageBox.Yes),
+                                       self.tr("Do you really want to close the application?"),
+                                       QMessageBox.StandardButtons(QMessageBox.No | QMessageBox.Yes),
                                        QMessageBox.Yes)
             if QMessageBox.Yes != res:
                 event.ignore()
@@ -88,26 +86,26 @@ class MainWindow(QMainWindow):
         self.__saveGeometryAndState()
         event.accept()
 
-    def newerVersionFound(self, version):
+    def newerVersionFound(self, version: str) -> None:
         text = userHintNewVersionAvailable % {"version": version}
-        result = UserHintDialog.showUserHint(self, "newVersion" + version, self.tr("New version available"), text,
-                                             UserHintDialog.Yes, True, UserHintDialog.No, False, bShowHintAgain=True)
-        if result == UserHintDialog.Yes:
+        result = showUserHint(self, "newVersion" + version, self.tr("New version available"), text,
+                              ButtonType.Yes, True, ButtonType.No, False, bShowHintAgain=True)
+        if result == ButtonType.Yes:
             url = QUrl("http://sourceforge.net/projects/codebeagle/files/")
             QDesktopServices.openUrl(url)
 
-    def __restoreGeometryAndState(self):
+    def __restoreGeometryAndState(self) -> None:
         if self.appSettings.value("geometry"):
             self.restoreGeometry(self.appSettings.value("geometry"))
         if self.appSettings.value("windowState"):
             self.restoreState(self.appSettings.value("windowState"))
 
-    def __saveGeometryAndState(self):
+    def __saveGeometryAndState(self) -> None:
         self.appSettings.setValue("geometry", self.saveGeometry())
         self.appSettings.setValue("windowState", self.saveState())
 
     @pyqtSlot(str)
-    def changeWindowTitle(self, name):
+    def changeWindowTitle(self, name: str) -> None:
         if name:
             self.setWindowTitle(self.initialWindowTitle + "  -  " + name)
         else:

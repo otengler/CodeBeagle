@@ -17,17 +17,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from typing import cast
+from PyQt5.QtGui import QFocusEvent
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QFileDialog
-import tools.FileTools as FileTools
+from tools import FileTools
 import AppConfig
-import IndexConfiguration
+from fulltextindex.IndexConfiguration import IndexMode
 from .Ui_SettingsItem import Ui_SettingsItem
 
 class SettingsItem (QWidget):
     dataChanged = pyqtSignal()
 
-    def __init__ (self, parent):
+    def __init__ (self, parent: QWidget) -> None:
         super ().__init__(parent)
         self.ui = Ui_SettingsItem()
         self.ui.setupUi(self)
@@ -43,43 +45,43 @@ class SettingsItem (QWidget):
         self.__addEntriesForExtensionsCombo()
         self.__addEntriesForIndexUpdateModeCombo()
 
-    def __addEntriesForExtensionsCombo (self):
+    def __addEntriesForExtensionsCombo (self) -> None:
         try:
             for exts in AppConfig.appConfig().PredefinedExtensions.values():
                 self.ui.comboExtensions.addItem(exts)
         except AttributeError:
             pass
 
-    def __addEntriesForIndexUpdateModeCombo(self):
+    def __addEntriesForIndexUpdateModeCombo(self) -> None:
         self.ui.comboIndexUpdateMode.addItem("Do not generate an index")
         self.ui.comboIndexUpdateMode.addItem("Manual index update with CodeBeagle")
         self.ui.comboIndexUpdateMode.addItem("Update index when UpdateIndex.exe is run")
         #self.ui.comboIndexUpdateMode.addItem("Keep index permanently up to date")
 
-    def focusInEvent (self, event):
+    def focusInEvent (self, _: QFocusEvent) -> None:
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
 
     @pyqtSlot(str)
-    def nameEdited(self, text):
+    def nameEdited(self, text: str) -> None:
         """Suggest a name for the index db."""
         if self.buildDBName and self.indexGenerationEnabled():
             self.__updateDBName(text)
 
-    def __updateDBName(self, text):
+    def __updateDBName(self, text: str) -> None:
         location = AppConfig.userConfigPath()
         location = os.path.join (location,  FileTools.removeInvalidFileChars(text)+".dat")
         self.ui.editIndexDB.setText(location)
 
     @pyqtSlot(str)
-    def indexDBEdited(self, text):
+    def indexDBEdited(self, text: str) -> None:
         if text:
             self.buildDBName = False
         else:
             self.buildDBName = True
 
     @pyqtSlot(int)
-    def updateIndexModeChanged (self,  index):
-        indexWanted = (index != IndexConfiguration.NoIndexWanted)
+    def updateIndexModeChanged (self,  index: IndexMode) -> None:
+        indexWanted = (index != IndexMode.NoIndexWanted)
         self.ui.editIndexDB.setEnabled(indexWanted)
         self.ui.buttonBrowseIndexLocation.setEnabled(indexWanted)
         if indexWanted and not self.indexDB():
@@ -87,7 +89,7 @@ class SettingsItem (QWidget):
         self.dataChanged.emit()
 
     @pyqtSlot()
-    def browseForDirectory(self):
+    def browseForDirectory(self) -> None:
         directory = QFileDialog.getExistingDirectory (
             self,
             self.tr("Choose directory to search or index"),
@@ -99,7 +101,7 @@ class SettingsItem (QWidget):
             self.dataChanged.emit()
 
     @pyqtSlot()
-    def browseForIndexDB(self):
+    def browseForIndexDB(self) -> None:
         indexDB = QFileDialog.getSaveFileName(
             None,
             self.tr("Choose file for index DB"),
@@ -111,10 +113,10 @@ class SettingsItem (QWidget):
         if indexDB:
             self.ui.editIndexDB.setText (FileTools.correctPath(indexDB))
 
-    def nameSelectAll (self):
+    def nameSelectAll (self) -> None:
         self.ui.editName.selectAll()
 
-    def setData (self, name, directories, extensions,  dirExcludes, indexUpdateMode, indexDB):
+    def setData (self, name: str, directories: str, extensions: str,  dirExcludes: str, indexUpdateMode: IndexMode, indexDB: str) -> None:
         self.ui.editName.setText (name)
         self.ui.editDirectories.setText (directories)
         self.ui.editExcludeDirectories.setText (dirExcludes)
@@ -124,7 +126,7 @@ class SettingsItem (QWidget):
         if indexDB:
             self.ui.editIndexDB.setText (indexDB)
         else:
-            if indexUpdateMode != IndexConfiguration.NoIndexWanted:
+            if indexUpdateMode != IndexMode.NoIndexWanted:
                 self.buildDBName = True
                 self.__updateDBName (name)
             else:
@@ -132,28 +134,28 @@ class SettingsItem (QWidget):
 
         self.ui.comboIndexUpdateMode.setCurrentIndex(indexUpdateMode)
 
-    def name (self):
-        return self.ui.editName.text()
+    def name (self) -> str:
+        return cast(str,self.ui.editName.text())
 
-    def directories (self):
-        return self.ui.editDirectories.text()
+    def directories (self) -> str:
+        return cast(str,self.ui.editDirectories.text())
 
-    def dirExcludes (self):
-        return self.ui.editExcludeDirectories.text()
+    def dirExcludes (self) -> str:
+        return cast(str,self.ui.editExcludeDirectories.text())
 
-    def extensions (self):
-        return self.ui.comboExtensions.currentText()
+    def extensions (self) -> str:
+        return cast(str,self.ui.comboExtensions.currentText())
 
-    def indexDB (self):
-        return self.ui.editIndexDB.text()
+    def indexDB (self) -> str:
+        return cast(str,self.ui.editIndexDB.text())
 
-    def indexGenerationEnabled (self):
-        return self.ui.comboIndexUpdateMode.currentIndex != IndexConfiguration.NoIndexWanted
+    def indexGenerationEnabled (self) -> bool:
+        return cast(bool,self.ui.comboIndexUpdateMode.currentIndex != IndexMode.NoIndexWanted)
 
-    def indexUpdateMode(self):
-        return self.ui.comboIndexUpdateMode.currentIndex()
+    def indexUpdateMode(self) -> IndexMode:
+        return cast(IndexMode,self.ui.comboIndexUpdateMode.currentIndex())
 
-    def resetAndDisable(self):
+    def resetAndDisable(self) -> None:
         self.ui.editName.setText("")
         self.ui.editExcludeDirectories.setText("")
         self.ui.comboExtensions.lineEdit().setText("")
@@ -161,7 +163,7 @@ class SettingsItem (QWidget):
         self.ui.editIndexDB.setText("")
         self.enable(False)
 
-    def enable(self, bEnable=True):
+    def enable(self, bEnable:bool=True) -> None:
         self.ui.editName.setEnabled(bEnable)
         self.ui.editExcludeDirectories.setEnabled(bEnable)
         self.ui.comboExtensions.setEnabled(bEnable)

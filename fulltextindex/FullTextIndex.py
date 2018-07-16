@@ -18,89 +18,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import os.path
-import abc
+from abc import ABC,abstractmethod
 import re
 import sqlite3
 import time
 import unittest
-import logging
+import threading
+from enum import Enum
+from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Dict, Sized, cast, Optional
 from tools.FileTools import fopen
+from .IndexDatabase import IndexDatabase
 
-reTokenize = re.compile(r"[\w#]+")
 reQueryToken = re.compile(r"[\w#*]+|<!.*!>")
 reMatchWords = re.compile(r"(\*\*)([0-9]+)")
 reMatchRegEx = re.compile(r"<!(.*)!>")
 
-strSetup = """
-CREATE TABLE IF NOT EXISTS keywords(
-  id INTEGER PRIMARY KEY,
-  keyword TEXT UNIQUE
-);
-CREATE INDEX IF NOT EXISTS i_keywords_keyword ON keywords (keyword);
+class TokenType (Enum):
+    IndexPart = 1
+    ScanPart = 2
+    MatchWordsPart = 3
+    RegExPart = 4
 
-CREATE TABLE IF NOT EXISTS documents(
-  id INTEGER PRIMARY KEY,
-  timestamp INTEGER,
-  fullpath TEXT UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS documentInIndex(
-  docID INTEGER UNIQUE,
-  indexID INTEGER
-);
-CREATE INDEX IF NOT EXISTS i_documentInIndex_indexID ON documentInIndex (indexID);
-
-CREATE TABLE IF NOT EXISTS kw2doc(
-  kwID INTEGER,
-  docID INTEGER,
-  UNIQUE (kwID,docID)
-);
-CREATE INDEX IF NOT EXISTS i_kw2doc_kwID ON kw2doc (kwID);
-CREATE INDEX IF NOT EXISTS i_kw2doc_docID ON kw2doc (docID);
-
-CREATE TABLE IF NOT EXISTS indexInfo(
-  id INTEGER PRIMARY KEY,
-  timestamp INTEGER
-);
-"""
-
-IndexPart = 1
-ScanPart = 2
-MatchWordsPart = 3
-RegExPart = 4
-
-def genFind(filepat, strRootDir, dirExcludes=None):
-    dirExcludes = dirExcludes or []
-    def fixExtension(ext):
-        if ext != ".":
-            return ext
-        return ""
-    filepat = [fixExtension(pat) for pat in filepat]
-    dirExcludes = [dir.lower() for dir in dirExcludes]
-    for path, _, filelist in os.walk(strRootDir):
-        if dirExcludes:
-            pathLower = path.lower()
-            found = False
-            for exclude in dirExcludes:
-                if pathLower.find(exclude) != -1:
-                    found = True
-                    break
-            if found:
-                continue
-        for name in (name for name in filelist if os.path.splitext(name)[1].lower() in filepat):
-            yield os.path.join(path, name)
-
-def genTokens(file):
-    for token in reTokenize.findall(file.read()):
-        yield token
-
-def safeLen(obj):
+def safeLen(obj: Sized) -> int:
     try:
         return len(obj)
     except:
         return 0
 
-def intersectSortedLists(l1, l2):
+def intersectSortedLists(l1: List[str], l2: List[str]) -> List[str]:
     l = 0
     r = 0
     l3 = []
@@ -125,7 +70,7 @@ def intersectSortedLists(l1, l2):
     return l3
 
 # Return tokens which are in the index
-def getTokens(text):
+def getTokens(text: str) -> List[Tuple[int,int]]:
     parts = []
     pos = 0
     while True:
@@ -139,49 +84,52 @@ def getTokens(text):
     return parts
 
 # Returns the regular expression which matches a keyword
-def kwExpr(kw):
+def kwExpr(kw: str) -> str:
     # If the keyword starts with '#' it is not matched if we search for word boundaries (\\b)
     if not kw.startswith("#"):
         return r"\b" + kw.replace("*", r"\w*") + r"\b"
     else:
         return kw.replace("*", r"\w*")
 
-def trimScanPart(s):
+def trimScanPart(s: str) -> str:
     return s.replace(" ", "")
 
-def splitSearchParts(strSearch: str):
+
+SearchPartList = List[Tuple[TokenType,str]]
+
+def splitSearchParts(strSearch: str) -> SearchPartList:
     tokens = getTokens(strSearch)
-    parts = []
+    parts: SearchPartList = []
     pos = 0
     for begin, end in tokens:
         if begin > pos:
-            partScanPart = (ScanPart, trimScanPart(strSearch[pos:begin]))
+            partScanPart = (TokenType.ScanPart, trimScanPart(strSearch[pos:begin]))
             parts.append(partScanPart)
         token = strSearch[begin:end]
         result = reMatchWords.match(token) # special handling for **X syntax. It means to search for X unknown words
         if result and int(result.group(2)) > 0:
-            matchWordsPart = (MatchWordsPart, int(result.group(2)))
+            matchWordsPart = (TokenType.MatchWordsPart, result.group(2))
             parts.append(matchWordsPart)
         elif token.startswith("<!"):
             r =  reMatchRegEx.match(token)
             if r:
-                regExPart = (RegExPart, r.group(1))
+                regExPart = (TokenType.RegExPart, r.group(1))
             parts.append(regExPart)
         else:
-            partIndexPart = (IndexPart, token)
+            partIndexPart = (TokenType.IndexPart, token)
             parts.append(partIndexPart)
         pos = end
     if pos < len(strSearch):
         end = len(strSearch)
-        partScanPart = (ScanPart, trimScanPart(strSearch[pos:end]))
+        partScanPart = (TokenType.ScanPart, trimScanPart(strSearch[pos:end]))
         parts.append(partScanPart)
     return parts
 
-def createFolderFilter(strFilter):
+def createFolderFilter(strFilter: str) -> List[Tuple[str,bool]]:
     strFilter = strFilter.strip().lower()
-    filterParts = []
+    filterParts: List[Tuple[str,bool]] = []
     if not strFilter:
-        return strFilter
+        return filterParts
     for item in (item.strip() for item in strFilter.split(",")):
         if item:
             if item.startswith("-"):
@@ -192,9 +140,9 @@ def createFolderFilter(strFilter):
 
 # Transform the comma separated list so that every extension looks like ".ext".
 # Also remove '*' to support *.ext
-def createExtensionFilter(strFilter):
+def createExtensionFilter(strFilter: str) -> List[Tuple[str,bool]]:
     strFilter = strFilter.strip().lower()
-    filterParts = []
+    filterParts: List[Tuple[str,bool]] = []
     if not strFilter:
         return filterParts
     for item in (item.strip().replace("*", "") for item in strFilter.split(",")):
@@ -211,24 +159,24 @@ def createExtensionFilter(strFilter):
     return filterParts
 
 class TestSearchParts(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         self.assertEqual(splitSearchParts(""), [])
-        self.assertEqual(splitSearchParts("hallo"), [(IndexPart, "hallo")])
-        self.assertEqual(splitSearchParts("hallo welt"), [(IndexPart, "hallo"), (ScanPart, ""), (IndexPart, "welt")])
-        self.assertEqual(splitSearchParts("hallo      welt"), [(IndexPart, "hallo"), (ScanPart, ""), (IndexPart, "welt")])
-        self.assertEqual(splitSearchParts("\"hallo < welt\""), [(ScanPart, '"'), (IndexPart, "hallo"), (ScanPart, "<"), (IndexPart, "welt"), (ScanPart, '"')])
-        self.assertEqual(splitSearchParts("hallo* we*lt"), [(IndexPart, "hallo*"), (ScanPart, ""), (IndexPart, "we*lt")])
-        self.assertEqual(splitSearchParts("linux *"), [(IndexPart, "linux"), (ScanPart, "*")])
-        self.assertEqual(splitSearchParts("#if a"), [(IndexPart, "#if"), (ScanPart, ""), (IndexPart, "a")])
-        self.assertEqual(splitSearchParts("a **2"), [(IndexPart, "a"), (ScanPart, ""), (MatchWordsPart, 2)])
-        self.assertEqual(splitSearchParts("a ***"), [(IndexPart, "a"), (ScanPart, "***")])
-        self.assertEqual(splitSearchParts("a <!abc!>"), [(IndexPart, "a"), (ScanPart, ""), (RegExPart, "abc")])
+        self.assertEqual(splitSearchParts("hallo"), [(TokenType.IndexPart, "hallo")])
+        self.assertEqual(splitSearchParts("hallo welt"), [(TokenType.IndexPart, "hallo"), (TokenType.ScanPart, ""), (TokenType.IndexPart, "welt")])
+        self.assertEqual(splitSearchParts("hallo      welt"), [(TokenType.IndexPart, "hallo"), (TokenType.ScanPart, ""), (TokenType.IndexPart, "welt")])
+        self.assertEqual(splitSearchParts("\"hallo < welt\""), [(TokenType.ScanPart, '"'), (TokenType.IndexPart, "hallo"), (TokenType.ScanPart, "<"), (TokenType.IndexPart, "welt"), (TokenType.ScanPart, '"')])
+        self.assertEqual(splitSearchParts("hallo* we*lt"), [(TokenType.IndexPart, "hallo*"), (TokenType.ScanPart, ""), (TokenType.IndexPart, "we*lt")])
+        self.assertEqual(splitSearchParts("linux *"), [(TokenType.IndexPart, "linux"), (TokenType.ScanPart, "*")])
+        self.assertEqual(splitSearchParts("#if a"), [(TokenType.IndexPart, "#if"), (TokenType.ScanPart, ""), (TokenType.IndexPart, "a")])
+        self.assertEqual(splitSearchParts("a **2"), [(TokenType.IndexPart, "a"), (TokenType.ScanPart, ""), (TokenType.MatchWordsPart, "2")])
+        self.assertEqual(splitSearchParts("a ***"), [(TokenType.IndexPart, "a"), (TokenType.ScanPart, "***")])
+        self.assertEqual(splitSearchParts("a <!abc!>"), [(TokenType.IndexPart, "a"), (TokenType.ScanPart, ""), (TokenType.RegExPart, "abc")])
 
 class QueryError(RuntimeError):
     pass
 
-class Query(metaclass = abc.ABCMeta):
-    def __init__(self, strSearch, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False):
+class Query(ABC):
+    def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
         self.folderFilter = createFolderFilter(strFolderFilter)
         self.extensionFilter = createExtensionFilter(strExtensionFilter)
         self.hasFilters = False
@@ -241,38 +189,38 @@ class Query(metaclass = abc.ABCMeta):
             self.reFlags = re.IGNORECASE
         self.parts = splitSearchParts(strSearch)
         # Check that the search contains at least one indexed part.
-        if not self.hasPartTypeEqualTo(IndexPart):
+        if not self.hasPartTypeEqualTo(TokenType.IndexPart):
             raise QueryError("Sorry, you can't search for that.")
 
     # All indexed parts
-    def indexedPartsLower(self):
-        return (part[1].lower() for part in self.parts if part[0] == IndexPart)
+    def indexedPartsLower(self) -> Iterator[str]:
+        return (part[1].lower() for part in self.parts if part[0] == TokenType.IndexPart)
 
-    def requiresRegex(self):
+    def requiresRegex(self) -> bool:
         """True if the query relies on a regex. That is e.g. true if you search for more than one keyword or case sensitive."""
-        if self.partCount() > 1 and self.hasPartTypeUnequalTo(IndexPart):
+        if self.partCount() > 1 and self.hasPartTypeUnequalTo(TokenType.IndexPart):
             return True
         if self.bCaseSensitive:
             return True
         return False
 
-    def hasPartTypeEqualTo(self, partType):
+    def hasPartTypeEqualTo(self, partType: TokenType) -> bool:
         for part in self.parts:
             if part[0] == partType:
                 return True
         return False
 
-    def hasPartTypeUnequalTo(self, partType):
+    def hasPartTypeUnequalTo(self, partType: TokenType) -> bool:
         for part in self.parts:
             if part[0] != partType:
                 return True
         return False
 
-    def partCount(self):
+    def partCount(self) -> int:
         return len(self.parts)
 
     # Yields all matches in str. Each match is returned as the touple (position,length)
-    def matches(self, data):
+    def matches(self, data: str) -> Iterable[Tuple[int,int]]:
         reExpr = self.regExForMatches()
         if not reExpr:
             return
@@ -286,7 +234,7 @@ class Query(metaclass = abc.ABCMeta):
             else:
                 return
 
-    def matchFolderAndExtensionFilter(self, strFileName):
+    def matchFolderAndExtensionFilter(self, strFileName: str) -> bool:
         if not self.hasFilters:
             return True
         strFileName = strFileName.lower()
@@ -319,38 +267,38 @@ class Query(metaclass = abc.ABCMeta):
 
         return True
 
-    @abc.abstractmethod
-    def regExForMatches(self):
+    @abstractmethod
+    def regExForMatches(self) -> Pattern:
         pass
 
 class SearchQuery(Query):
     # Returns a list of regular expressions which match all found occurances in a document
-    def regExForMatches(self):
+    def regExForMatches(self) -> Pattern:
         regParts = []
         for t, s in self.parts:
-            if IndexPart == t:
+            if TokenType.IndexPart == t:
                 regParts.append(kwExpr(s))
-            elif ScanPart == t:
+            elif TokenType.ScanPart == t:
                 # Regex special characters [\^$.|?*+()
                 for c in s:
                     if c in r"[\^$.|?*+()":
                         regParts.append("\\" + c)
                     else:
                         regParts.append(c)
-            elif MatchWordsPart == t:
-                regParts.append(r"(?:(?:\s+)?\S+){1,%u}?" % s)
-            elif RegExPart == t:
+            elif TokenType.MatchWordsPart == t:
+                regParts.append(r"(?:(?:\s+)?\S+){1,%u}?" % int(s))
+            elif TokenType.RegExPart == t:
                 regParts.append("("+s+")")
         reExpr = re.compile(r"\s*".join(regParts), self.reFlags)
         return reExpr
 
 class FindAllQuery(Query):
-    def __init__(self, strSearch, strFolderFilter="", strExtensionFilter="", bCaseSensitive=False):
+    def __init__(self, strSearch:str, strFolderFilter:str="", strExtensionFilter:str="", bCaseSensitive:bool=False) -> None:
         super().__init__(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
 
         parts = []
         for i, s in self.parts:
-            if i == ScanPart:
+            if i != TokenType.IndexPart:
                 if s != "":
                     raise QueryError("The element '%s' of the search string is not indexed! Remove it or search for the full phrase." % (s,))
             else:
@@ -359,20 +307,20 @@ class FindAllQuery(Query):
         self.parts = parts
 
     # Returns a list of regular expressions which match all found occurances in a document
-    def regExForMatches(self):
+    def regExForMatches(self) -> Pattern:
         expr = "|".join("(" + kwExpr(kw) + ")" for kw in (part[1] for part in self.parts))
         reExpr = re.compile(expr, self.reFlags)
         return reExpr
 
 class TestQuery(unittest.TestCase):
-    def test(self):
+    def test(self) -> None:
         self.assertRaises(RuntimeError, SearchQuery, "!")
         self.assertRaises(RuntimeError, FindAllQuery, "a < b", "", "", False) # cannot search for < if we are not searching for full phrase
         s1 = SearchQuery("a < b")
-        self.assertEqual(s1.parts, [(IndexPart, "a"), (ScanPart, "<"), (IndexPart, "b")])
+        self.assertEqual(s1.parts, [(TokenType.IndexPart, "a"), (TokenType.ScanPart, "<"), (TokenType.IndexPart, "b")])
         self.assertEqual(s1.bCaseSensitive, False)
         s2 = FindAllQuery("a b", "", "", True)
-        self.assertEqual(s2.parts, [(IndexPart, "a"), (IndexPart, "b")])
+        self.assertEqual(s2.parts, [(TokenType.IndexPart, "a"), (TokenType.IndexPart, "b")])
         self.assertEqual(s2.bCaseSensitive, True)
         s3 = SearchQuery("linux *")
         self.assertEqual(s3.regExForMatches().pattern, "\\blinux\\b\\s*\\*")
@@ -380,24 +328,24 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(s4.regExForMatches().pattern, "\\bcreateNode\\b\\s*\\(\\s*\\bCComVariant\\b")
 
 class ReportAction:
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.name = name
-        self.data = []
-        self.startTime = None
-        self.duration = None
+        self.data: List[str] = []
+        self.startTime: float = 0
+        self.duration: float = 0
 
-    def addData(self, text, *args):
+    def addData(self, text: str, *args: Any) -> None:
         self.data.append(text % args)
 
-    def __enter__(self):
+    def __enter__(self) -> 'ReportAction':
         self.startTime = time.clock()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         self.duration = time.clock() - self.startTime
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = self.name
         if self.duration:
             s += " (%3.2f s)" % (self.duration, )
@@ -407,16 +355,16 @@ class ReportAction:
         return s
 
 class PerformanceReport:
-    def __init__(self):
-        self.actions = []
-        self.current = None
+    def __init__(self) -> None:
+        self.actions: List[ReportAction] = []
+        self.current: Optional[ReportAction] = None
 
-    def newAction(self, name):
+    def newAction(self, name: str) -> ReportAction:
         self.current = ReportAction(name)
         self.actions.append(self.current)
         return self.current
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = ""
         for a in self.actions:
             if s:
@@ -424,67 +372,40 @@ class PerformanceReport:
             s += str(a)
         return s
 
-class UpdateStatistics:
-    def __init__(self):
-        self.nNew = 0
-        self.nUpdated = 0
-        self.nUnchanged = 0
-
-    def incNew(self):
-        self.nNew += 1
-
-    def incUpdated(self):
-        self.nUpdated += 1
-
-    def incUnchanged(self):
-        self.nUnchanged += 1
-
-    def __str__(self):
-        s = "New docs: %u, Updated docs: %u, Unchanged: %u"  % (self.nNew, self.nUpdated, self.nUnchanged)
-        return s
-
 class Keyword:
-    def __init__(self, identifier, name):
+    def __init__(self, identifier: int, name: str) -> None:
         self.id = identifier
         self.name = name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "%s (%u)" % (self.name, self.id)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not type(other) is Keyword:
+            return False
+
+        other = cast(Keyword, other)
         return self.id == other.id and self.name == other.name
 
-class FullTextIndex:
-    def __init__(self, strDbLocation):
-        self.strDbLocation = strDbLocation
-        self.conn = sqlite3.connect(strDbLocation)
-        self.__setupDatabase()
+KeywordList = List[List[Keyword]]
 
-    def __del__(self):
-        self.conn.close()
+CommonKeywordMap = Dict[str,int]
 
-    def queryStats(self):
-        q = self.conn.cursor()
-        q.execute("SELECT COUNT(*) FROM documents")
-        documents = int(q.fetchone()[0])
-        print("Documents: " + str(documents))
-        q.execute("SELECT COUNT(*) FROM documentInIndex")
-        documentsInIndex = int(q.fetchone()[0])
-        print("Documents in index: " + str(documentsInIndex))
-        q.execute("SELECT COUNT(*) FROM keywords")
-        keywords = int(q.fetchone()[0])
-        print("Keywords: " + str(keywords))
-        q.execute("SELECT COUNT(*) FROM kw2doc")
-        associations = int(q.fetchone()[0])
-        print("Associations: " + str(associations))
-        return (documents, documentsInIndex, keywords, associations)
+def buildMapFromCommonKeywordFile(name:str) -> CommonKeywordMap:
+    mapCommonKeywords = {}
+    if name:
+        with fopen(name, "r") as inputFile:
+            for number, keyword in ((number, keyword.strip().lower()) for number, keyword in enumerate(inputFile)):
+                if keyword:
+                    mapCommonKeywords[keyword] = number
+    return mapCommonKeywords
 
-    def interrupt(self):
-        self.conn.interrupt()
+SearchResult = List[str]
 
+class FullTextIndex (IndexDatabase):
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
-    def search(self, query, perfReport=None, commonKeywordMap=None, manualIntersect=True, cancelEvent=None):
-        commonKeywordMap = commonKeywordMap or {}
+    def search(self, query: Query, perfReport: PerformanceReport=None, commonKeywordMap: CommonKeywordMap=None, 
+               manualIntersect: bool=True, cancelEvent:threading.Event=None) -> SearchResult:
         try:
             return self.__search(query, perfReport, commonKeywordMap, manualIntersect, cancelEvent)
         except sqlite3.OperationalError as e:
@@ -492,20 +413,18 @@ class FullTextIndex:
                 return []
             raise
 
-    def __search(self, query, perfReport, commonKeywordMap, manualIntersect, cancelEvent):
+    def __search(self, query: Query, perfReport: PerformanceReport=None, commonKeywordMap:CommonKeywordMap=None, manualIntersect:bool=True, cancelEvent:threading.Event=None) -> SearchResult:
         if not isinstance(query, Query):
             raise RuntimeError("query must be a Query derived object")
 
-        if not query.parts:
-            return []
+        perfReport = perfReport or PerformanceReport()
 
-        if not perfReport:
-            perfReport = PerformanceReport()
+        commonKeywordMap = commonKeywordMap or {}
 
         q = self.conn.cursor()
 
         # The result is a list of lists of Keyword objects
-        kwList = []
+        kwList: KeywordList = []
         with perfReport.newAction("Finding keywords") as action:
             kwList = self.__getKeywords(q, query.indexedPartsLower(), reportAction=action)
             if not kwList:
@@ -532,7 +451,7 @@ class FullTextIndex:
                 else:
                     return [r[0] for r in result if query.matchFolderAndExtensionFilter(r[0])]
 
-    def __findDocsByKeywords(self, q, goodKeywords, badKeywords):
+    def __findDocsByKeywords(self, q: sqlite3.Cursor, goodKeywords: KeywordList, badKeywords: KeywordList) -> SearchResult:
         kwList = goodKeywords + badKeywords
         stmt = ""
         for keywords in kwList:
@@ -543,18 +462,18 @@ class FullTextIndex:
         q.execute(stmt + " ORDER BY fullpath")
         return q.fetchall()
 
-    def __findDocsByKeywordsManualIntersect(self, q, goodKeywords, badKeywords, reportAction):
-        result = None
+    def __findDocsByKeywordsManualIntersect(self, q: sqlite3.Cursor, goodKeywords: KeywordList, badKeywords: KeywordList, reportAction: ReportAction) -> SearchResult:
+        result: SearchResult = []
         allKeywords = [(True, keywords) for keywords in goodKeywords] + [(False, keywords) for keywords in badKeywords]
         for isGood, keywords in allKeywords:
             # Stop if all good keywords have been used and the result is stripped down to less than 100 files
             if not isGood:
                 kwNames = ",".join((keyword.name for keyword in keywords))
-                if not result is None and len(result) < 100:
+                if result and len(result) < 100:
                     reportAction.addData("Search stopped with common keyword '%s'" % (kwNames, ))
                     break
                 else:
-                    if not result is None:
+                    if result:
                         reportAction.addData("Common keyword '%s' used because %u matches are too much" % (kwNames, len(result)))
                     else:
                         reportAction.addData("Common keyword '%s' used as first keyword" % (kwNames, ))
@@ -562,7 +481,7 @@ class FullTextIndex:
             stmt = "SELECT DISTINCT fullpath FROM kw2doc,documents WHERE docID=id AND kwID IN (%s) ORDER BY fullpath" % (inString, )
             q.execute(stmt)
             kwMatches = q.fetchall()
-            if result is None:
+            if not result:
                 result = kwMatches
             else:
                 result = intersectSortedLists(result, kwMatches)
@@ -570,7 +489,7 @@ class FullTextIndex:
                 return []
         return result
 
-    def __filterDocsBySearchPhrase(self, results, query, cancelEvent=None):
+    def __filterDocsBySearchPhrase(self, results: Iterable[str], query: Query, cancelEvent: threading.Event=None) -> SearchResult:
         finalResults = []
         reExpr = query.regExForMatches()
         bHasFilters = query.folderFilter or query.extensionFilter
@@ -593,7 +512,7 @@ class FullTextIndex:
     # Receives a list of lists of Keywords and returns as two lists.
     # The first list contains the good keywords in input order. These are keywords which are not found if commonKeywordMap.
     # The second list contains the bad keywords which were found in commonKeywordMap ordered from the less worst to the worst.
-    def __qualifyKeywords(self, kwList, commonKeywordMap):
+    def __qualifyKeywords(self, kwList: KeywordList, commonKeywordMap: CommonKeywordMap) -> Tuple[KeywordList,KeywordList]:
         goodKeywords = []
         badKeywordsTemp = [] # contains touples (quality,keywords) in order to sort by quality
         for keywords in kwList:
@@ -611,13 +530,13 @@ class FullTextIndex:
                 # In the common keyword map
                 badKeywordsTemp.append((quality, keywords))
         badKeywords = [keywords for unusedQuality, keywords in sorted(badKeywordsTemp, reverse=True)]
-        
+
         # Sort good keywords by length descending, the hope is that longer keywords are more unique
         return sorted(goodKeywords,reverse=True,key=len), badKeywords
 
     # Receives a list of keywords which might contain wildcards. For every passed keyword a list of Keyword objects
     # is returned. If a keyword is not found an empty list is returned.
-    def __getKeywords(self, q, keywordList, reportAction=None):
+    def __getKeywords(self, q: sqlite3.Cursor, keywordList: Iterable[str], reportAction: ReportAction=None) -> KeywordList:
         keys = []
         for kw in keywordList:
             query = "SELECT id,keyword FROM keywords WHERE"
@@ -630,99 +549,10 @@ class FullTextIndex:
             q.execute(query, (kw, ))
             result = q.fetchall()
             if not result:
-                if reportAction: reportAction.addData("String '%s' was not found", kw)
+                if reportAction:
+                    reportAction.addData("String '%s' was not found", kw)
                 return []
-            if reportAction: reportAction.addData("String '%s' results in %u keyword matches", kw, len(result))
+            if reportAction:
+                reportAction.addData("String '%s' results in %u keyword matches", kw, len(result))
             keys.append([Keyword(r[0], r[1]) for r in result])
         return keys
-
-    def updateIndex(self, directories, extensions, dirExcludes=None, statistics=None):
-        if not dirExcludes: dirExcludes = []
-        c = self.conn.cursor()
-        q = self.conn.cursor()
-
-        #c.execute("PRAGMA synchronous = OFF")
-        #c.execute("PRAGMA journal_mode = MEMORY")
-
-        with self.conn:
-            # Generate the next index ID, old documents still have a lower number
-            nextIndexID = self.__getNextIndexRun(c)
-
-            for strRootDir in directories:
-                logging.info("Updating index in %s", strRootDir)
-                for strFullPath in genFind(extensions, strRootDir, dirExcludes):
-                    print(strFullPath)
-                    mTime = os.stat(strFullPath)[8]
-
-                    c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
-                    if c.rowcount == 1 and c.lastrowid != 0:
-                        # New document must always be processed
-                        docID = c.lastrowid
-                        timestamp = 0
-                    else:
-                        q.execute("SELECT id,timestamp FROM documents WHERE fullpath=:fp", {"fp":strFullPath})
-                        docID, timestamp = q.fetchone()
-
-                    try:
-                        if timestamp != mTime:
-                            self.__updateFile(c, q, docID, strFullPath)
-                            c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
-                            if statistics:
-                                if timestamp != 0:
-                                    statistics.incUpdated()
-                                else:
-                                    statistics.incNew()
-                        else:
-                            if statistics: statistics.incUnchanged()
-                    except Exception as e:
-                        print("Failed to process file '%s'" % (strFullPath, ))
-                        print(e)
-                        # Write an nextIndexID of -1 which makes sure the document in removed in the cleanup phase
-                        c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, -1))
-                    else:
-                        # We always write the next index ID. This is needed to find old files which still have lower indexID values.
-                        c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, nextIndexID))
-
-            # Now remove all documents with a lower indexID and their keyword associations
-            logging.info("Cleaning associations")
-            c.execute("DELETE FROM kw2doc WHERE docID IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
-            logging.info("Cleaning documents")
-            c.execute("DELETE FROM documents WHERE id IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
-            logging.info("Cleaning document index")
-            c.execute("DELETE FROM documentInIndex WHERE indexID < :index", {"index":nextIndexID})
-            logging.info("Removing orphaned keywords")
-            c.execute("DELETE FROM keywords WHERE id NOT IN (SELECT kwID FROM kw2doc)")
-            logging.info("Removing old indexInfo entry")
-            c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
-        logging.info("Done")
-
-    def __updateFile(self, c, q, docID, strFullPath):
-        # Delete old associations
-        c.execute("DELETE FROM kw2doc WHERE docID=?", (docID,))
-        # Associate document with all tokens
-        lower = str.lower
-        with fopen(strFullPath) as inputFile:
-            for token in genTokens(inputFile):
-                keyword = lower(token)
-
-                c.execute("INSERT OR IGNORE INTO keywords (id,keyword) VALUES (NULL,?)", (keyword,))
-                if c.rowcount == 1 and c.lastrowid != 0:
-                    kwID = c.lastrowid
-                else:
-                    q.execute("SELECT id FROM keywords WHERE keyword=:kw", {"kw":keyword})
-                    kwID = q.fetchone()[0]
-
-                c.execute("INSERT OR IGNORE INTO kw2doc (kwID,docID) values (?,?)", (kwID, docID))
-
-    def __setupDatabase(self):
-        with self.conn:
-            c = self.conn.cursor()
-            c.executescript(strSetup)
-
-    def __getNextIndexRun(self, c):
-        c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
-        return c.lastrowid
-
-if __name__ == "__main__":
-    unittest.main()
-

@@ -17,62 +17,65 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-import tools.Config as Config
+from enum import IntEnum
+from typing import Set,List,cast
+from tools import Config
 from tools.FileTools import correctPath
 
-# No index wanted
-NoIndexWanted = 0
-# Only update index via CodeBeagle UI
-ManualIndexUpdate = 1
-# Update index when UpdateIndex.exe is run
-TriggeredIndexUpdate = 2
-# Keep index permanently up to date by watching the file system for changes
-AutomaticIndexUpdate = 3
+class IndexMode(IntEnum):
+    # No index wanted
+    NoIndexWanted = 0
+    # Only update index via CodeBeagle UI
+    ManualIndexUpdate = 1
+    # Update index when UpdateIndex.exe is run
+    TriggeredIndexUpdate = 2
+    # Keep index permanently up to date by watching the file system for changes
+    AutomaticIndexUpdate = 3
 
-def indexUpdateModeToString(mode):
-    if mode == 1:
+def indexUpdateModeToString(mode: IndexMode) -> str:
+    if mode == IndexMode.NoIndexWanted:
         return "NoIndexWanted"
-    elif mode == 2:
+    elif mode == IndexMode.ManualIndexUpdate:
         return "ManualIndexUpdate"
-    elif mode == 3:
+    elif mode == IndexMode.TriggeredIndexUpdate:
         return "TriggeredIndexUpdate"
-    elif mode == 4:
+    elif mode == IndexMode.AutomaticIndexUpdate:
         return "AutomaticIndexUpdate"
     return "Unknown"
 
 class IndexConfiguration:
-    def __init__(self, indexName="", extensions="", directories="", dirExcludes="", indexdb="", indexUpdateMode=TriggeredIndexUpdate):
+    def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="", indexUpdateMode:IndexMode=IndexMode.TriggeredIndexUpdate) -> None:
         self.indexName = indexName
         self.indexUpdateMode = indexUpdateMode
         self.indexdb = correctPath(indexdb)
         # Add the extensions into a set. This makes the lookup if an extension matches faster.
-        self.extensions = set()
+        self.extensions: Set[str] = set()
         for ext in (self.__makeExt(e) for e in extensions.split(",") if len(e) > 0):
             self.extensions.add(ext)
         # These list comprehensions split a string into a list making sure that an empty string returns an empty list
         self.directories = [correctPath(d) for d in (d.strip() for d in directories.split(",")) if len(d) > 0]
         self.dirExcludes = [correctPath(d) for d in (d.strip() for d in dirExcludes.split(",")) if len(d) > 0]
 
-    def generatesIndex(self):
-        return self.indexUpdateMode != NoIndexWanted
+    def generatesIndex(self) -> bool:
+        return self.indexUpdateMode != IndexMode.NoIndexWanted
 
-    def extensionsAsString(self):
+    def extensionsAsString(self) -> str:
         return ",".join(sorted([ext for ext in self.extensions]))
 
-    def directoriesAsString(self):
+    def directoriesAsString(self) -> str:
         return ",".join(self.directories)
 
-    def dirExcludesAsString(self):
+    def dirExcludesAsString(self) -> str:
         return ",".join(self.dirExcludes)
 
     # Return a display name. Either it is explicitely defined or the file part of the index database is used
-    def displayName(self):
+    def displayName(self) -> str:
         if self.indexName:
             return self.indexName
         filename = os.path.split(self.indexdb)[1]
         return os.path.splitext(filename)[0]
 
-    def __makeExt(self, ext):
+    def __makeExt(self, ext:str) -> str:
         ext = ext.strip()
         if ext:
             if ext.startswith("*."):
@@ -81,7 +84,7 @@ class IndexConfiguration:
                 ext = "." + ext
         return ext.lower()
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = "Name       : " + self.indexName + "\n"
         result += "Index mode : " + indexUpdateModeToString(self.indexUpdateMode) + "\n"
         result += "IndexDB    : " + self.indexdb + "\n"
@@ -90,39 +93,44 @@ class IndexConfiguration:
         result += "Extensions : " + str(self.extensions) + "\n"
         return result
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if type(other) is IndexConfiguration:
+            return False
+
+        other = cast(IndexConfiguration, other)
+
         return self.indexName == other.indexName and \
-            self.indexUpdateMode == other.indexUpdateMode and \
-            self.indexdb == other.indexdb and \
-            self.directories == other.directories and \
-            self.dirExcludes == other.dirExcludes and \
-            self.extensions == other.extensions
+               self.indexUpdateMode == other.indexUpdateMode and \
+               self.indexdb == other.indexdb and \
+               self.directories == other.directories and \
+               self.dirExcludes == other.dirExcludes and \
+               self.extensions == other.extensions
 
 # Configurates the type information for the index configuration
-def indexTypeInfo(config):
+def indexTypeInfo(config: Config.Config) -> None:
     config.setType("indexName", Config.typeDefaultString(""))
     config.setType("generateIndex", Config.typeDefaultBool(True)) # kept for compatibility
-    config.setType("indexUpdateMode", Config.typeDefaultInt(TriggeredIndexUpdate))
+    config.setType("indexUpdateMode", Config.typeDefaultInt(IndexMode.TriggeredIndexUpdate))
     config.setType("dirExcludes", Config.typeDefaultString(""))
 
 # Returns a list of Index objects from the config
-def readConfig(conf):
+def readConfig(conf: Config.Config) -> List[IndexConfiguration]:
     indexes = []
     for group in conf:
         if group.startswith("index"):
             indexes.append(group)
     indexes.sort()
 
-    result = []
+    result: List[IndexConfiguration] = []
     for group in indexes:
         indexConf = conf[group]
         indexTypeInfo(indexConf)
         if "indexUpdateMode" in indexConf: # indexUpdateMode is newer, "generateIndex" was before
             indexUpdateMode = indexConf.indexUpdateMode
         elif indexConf.generateIndex:
-            indexUpdateMode = TriggeredIndexUpdate
+            indexUpdateMode = IndexMode.TriggeredIndexUpdate
         else:
-            indexUpdateMode = NoIndexWanted
+            indexUpdateMode = IndexMode.NoIndexWanted
         indexName = indexConf.indexName
         indexdb = indexConf.indexdb
         extensions = indexConf.extensions
@@ -133,5 +141,3 @@ def readConfig(conf):
         dirExceptions = indexConf.dirExcludes
         result.append(IndexConfiguration(indexName, extensions, directories, dirExceptions, indexdb, indexUpdateMode))
     return result
-
-

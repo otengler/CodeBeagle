@@ -18,18 +18,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
+from typing import List
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QSize, QTimer
 from PyQt5.QtGui import QMovie, QKeySequence
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip
-import tools.FileTools as FileTools
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPushButton
 from tools.Config import Config
+from tools import FileTools
 from widgets.LeaveLastTabWidget import LeaveLastTabWidget
-import dialogs.UserHintDialog as UserHintDialog
-import dialogs.StackTraceMessageBox as StackTraceMessageBox
+from dialogs import StackTraceMessageBox
+from dialogs.UserHintDialog import ButtonType,hintWouldBeShown,showUserHint
+from dialogs.SettingsDialog import SettingsDialog
 from SearchPage import SearchPage
 import AppConfig
-import IndexConfiguration
+from fulltextindex import IndexConfiguration
 import UpdateIndex
+
 
 userHintUpdateIndex = """
 <p align='justify'>You added or changed indexed search locations:
@@ -45,19 +48,12 @@ userHintInitialSetup= """
 <p align='justify'>Would you like to open the settings dialog and create a first search location now?</p>
 """
 
-def setConfigBoolFromCheck (config, check, value):
-    state = check.checkState() == Qt.Checked
-    if Qt.Checked == state:
-        setattr(config, value, True)
-    elif Qt.Unchecked == state:
-        setattr(config, value, False)
-
 class AnimatedUpdateWidget(QWidget):
     """
     This widget attempts to look like a flat QPushButton. It shows a spinning gear icon to indicate
     work in progress.
     """
-    def __init__(self, text, parent):
+    def __init__(self, text: str, parent: QWidget) -> None:
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 4, 0)
@@ -74,8 +70,16 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     configChanged = pyqtSignal(list)
     requestWindowTitleChange = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent:QWidget=None) -> None:
+        self.buttonSettings: QPushButton
+        self.buttonUpdate: QPushButton
+        self.indexOfUpdateButton:int
+        self.buttonHelp: QPushButton
+        self.buttonAbout: QPushButton
+        self.labelUpdate: QLabel
+
         super().__init__(parent)
+
         self.setNewTabButtonText(self.tr("New search"))
         self.setPrototypeForNewTab(SearchPage, self.tr("Search"))
         self.addNewTab()
@@ -104,20 +108,20 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.actionTab6 = QAction(self, shortcut=Qt.ALT + Qt.Key_6, triggered= self.activateTab6)
         self.addAction(self.actionTab6)
 
-        self.indexUpdateTimer = None
+        self.indexUpdateTimer: QTimer = None
         self.indexTriggerPath = os.path.join (AppConfig.userDataPath (),  "TriggerUpdate")
 
         self.handleUncleanShutdown()
 
         # A list of index names which are currently disabled because the update is running
-        self.disabledIndexes = []
+        self.disabledIndexes: List[str] = []
         # If the index update is still running this will start the timer which watches for it to finish
         self.__watchForIndexUpdate()
 
         # Wait a little for the main window to display, then ask user for initial setup
         QTimer.singleShot (500,  self.initialSetup)
 
-    def handleUncleanShutdown(self):
+    def handleUncleanShutdown(self) -> None:
         """
         If UpdateIndex.exe crashes or is terminated by the user some files are
         left behind which cause CodeBeagle to think that there is an update index running.
@@ -126,26 +130,26 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         UpdateIndex.handleUncleanShutdown(self.indexTriggerPath)
 
     @pyqtSlot()
-    def activateTab1(self):
+    def activateTab1(self) -> None:
         self.setCurrentIndex(0)
     @pyqtSlot()
-    def activateTab2(self):
+    def activateTab2(self) -> None:
         self.setCurrentIndex(1)
     @pyqtSlot()
-    def activateTab3(self):
+    def activateTab3(self) -> None:
         self.setCurrentIndex(2)
     @pyqtSlot()
-    def activateTab4(self):
+    def activateTab4(self) -> None:
         self.setCurrentIndex(3)
     @pyqtSlot()
-    def activateTab5(self):
+    def activateTab5(self) -> None:
         self.setCurrentIndex(4)
     @pyqtSlot()
-    def activateTab6(self):
+    def activateTab6(self) -> None:
         self.setCurrentIndex(5)
 
     # Register a button in the corner widget to open the settings dialog. This function is called by the base class.
-    def addWidgetsToCornerWidget (self,  hbox):
+    def addWidgetsToCornerWidget (self,  hbox: QHBoxLayout) -> None:
         super ().addWidgetsToCornerWidget(hbox)
         self.buttonSettings = self.addButtonToCornerWidget (hbox,  self.tr("Settings"),  "Settings.png",  self.openSettings)
         self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.tr("Update index"),  "Update.png",  self.updateIndex)
@@ -156,7 +160,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     # The settings allow to configure search locations.
     @pyqtSlot()
-    def openSettings(self, createInitialLocation=False, locationToAdd=None):
+    def openSettings(self, createInitialLocation: bool=False, locationToAdd: IndexConfiguration.IndexConfiguration=None) -> None:
         try:
             config = AppConfig.userConfig()
             globalConfig = AppConfig.globalConfig()
@@ -165,7 +169,6 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         else:
             searchLocations = IndexConfiguration.readConfig(config)
             globalSearchLocations = IndexConfiguration.readConfig(globalConfig)
-            from dialogs.SettingsDialog import SettingsDialog
             settingsDlg = SettingsDialog(self, searchLocations,  globalSearchLocations, config)
             if createInitialLocation:
                 settingsDlg.addLocation()
@@ -174,7 +177,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             if settingsDlg.exec():
                 self.__saveUserConfig (searchLocations, settingsDlg)
 
-    def __saveUserConfig (self,  currentSearchLocations,  settingsDlg):
+    def __saveUserConfig (self,  currentSearchLocations: List[IndexConfiguration.IndexConfiguration], settingsDlg: SettingsDialog) -> None:
         locations = settingsDlg.locations()
         config = Config (typeInfoFunc=AppConfig.configTypeInfo)
         for location in locations:
@@ -189,6 +192,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         config.sourceViewer.FontFamily = settingsDlg.ui.fontComboBox.currentFont().family()
         config.sourceViewer.FontSize = settingsDlg.ui.editFontSize.text()
         config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
+        config.sourceViewer.showLineNumbers = settingsDlg.ui.checkShowLineNumbers.checkState() == Qt.Checked
         config.matchOverFiles = settingsDlg.ui.checkMatchOverFiles.checkState() == Qt.Checked
         config.activateFirstMatch = settingsDlg.ui.checkActivateFirstMatch.checkState() == Qt.Checked
         config.showCloseConfirmation = settingsDlg.ui.checkConfirmClose.checkState() == Qt.Checked
@@ -208,9 +212,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     locationsHtml += "<li>" + displayName + "</li>"
                 locationsHtml += "</ul>"
                 text = self.tr(userHintUpdateIndex) % {"locations" : locationsHtml}
-                result = UserHintDialog.showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text,
-                                                      UserHintDialog.Yes, False,  UserHintDialog.No,  True,  bShowHintAgain=True)
-                if result == UserHintDialog.Yes:
+                result = showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text, ButtonType.Yes, False, ButtonType.No,  True,  bShowHintAgain=True)
+                if result == ButtonType.Yes:
                     try:
                         self.__triggerIndexUpdate (updateDisplayNames)
                     except:
@@ -221,11 +224,12 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
             self.configChanged.emit(searchLocations)
 
-    def __getAddedOrChangedIndexedSearchLocations (self,  currentSearchLocations,  newSearchLocations):
+    def __getAddedOrChangedIndexedSearchLocations (self,  currentSearchLocations: List[IndexConfiguration.IndexConfiguration],
+                                                   newSearchLocations: List[IndexConfiguration.IndexConfiguration]) -> List[str]:
         """Returns a list of display names of added or changed indexed search locations."""
-        changedLocations = []
+        changedLocations: List[str] = []
         for location in newSearchLocations:
-            if location.indexUpdateMode == IndexConfiguration.ManualIndexUpdate or location.indexUpdateMode == IndexConfiguration.TriggeredIndexUpdate:
+            if location.indexUpdateMode == IndexConfiguration.IndexMode.ManualIndexUpdate or location.indexUpdateMode == IndexConfiguration.IndexMode.TriggeredIndexUpdate:
                 bFound = False
                 for oldLocation in currentSearchLocations:
                     if location == oldLocation:
@@ -236,15 +240,15 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         return changedLocations
 
     @pyqtSlot('QString')
-    def addSearchLocationFromPath (self, directory):
+    def addSearchLocationFromPath (self, directory: str) -> None:
         """This is called when a directory is dropped on the application. This is a shortcut to create a search location."""
         ext = FileTools.getMostCommonExtensionInDirectory (directory)
-        location = IndexConfiguration.IndexConfiguration(self.tr("Search") + " '" + directory + "'", ext,  directory, "", "", False)
+        location = IndexConfiguration.IndexConfiguration(self.tr("Search") + " '" + directory + "'", ext,  directory, "", "", IndexConfiguration.IndexMode.NoIndexWanted)
 
         self.openSettings (locationToAdd=location)
 
     @pyqtSlot()
-    def updateIndex(self):
+    def updateIndex(self) -> None:
         try:
             config = AppConfig.userConfig()
         except:
@@ -266,7 +270,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     self.failedToUpdateIndexesMessage()
 
     @pyqtSlot()
-    def openHelp(self):
+    def openHelp(self) -> None:
         from dialogs.HelpViewerDialog import HelpViewerDialog
         helpDialog = HelpViewerDialog(self)
         helpDialog.setAttribute(Qt.WA_DeleteOnClose)
@@ -274,12 +278,12 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         helpDialog.show()
 
     @pyqtSlot()
-    def openAbout(self):
+    def openAbout(self) -> None:
         from dialogs.AboutDialog import AboutDialog
         aboutDialog = AboutDialog(self)
         aboutDialog.exec()
 
-    def __triggerIndexUpdate (self,  updateDisplayNames):
+    def __triggerIndexUpdate (self,  updateDisplayNames: List[str]) -> None:
         r"""
         Check which indexes should be updated and trigger an asynchronous update
         This works by putting an file with the name of the index config group into %APPDATA%\CodeBeagle\IndexUpdate.
@@ -307,7 +311,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
         self.__watchForIndexUpdate()
 
-    def __watchForIndexUpdate(self):
+    def __watchForIndexUpdate(self) -> None:
         """Check regularily if the update finished."""
         running = self.__indexUpdateRunning()
         self.__maintainRunningIndexUpdates(running)
@@ -318,7 +322,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 self.indexUpdateTimer.timeout.connect(self.__checkIndexUpdateProgress)
             self.indexUpdateTimer.start(2000)
 
-    def __checkIndexUpdateProgress (self):
+    def __checkIndexUpdateProgress (self) -> None:
         running = self.__indexUpdateRunning()
         self.__maintainRunningIndexUpdates(running)
         if not running:
@@ -326,14 +330,14 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.__showIndexUpdateInProgress(False)
             self.__informAboutIndexUpdate("Index update finshed")
 
-    def __indexUpdateRunning (self):
+    def __indexUpdateRunning (self) -> List[str]:
         try:
             files = os.listdir(self.indexTriggerPath)
             return files
         except:
             return []
 
-    def __maintainRunningIndexUpdates(self,  running):
+    def __maintainRunningIndexUpdates(self,  running: List[str]) -> None:
         """Informs all search pages which search locations are currently not available."""
         if len(running) != len(self.disabledIndexes):
             self.disabledIndexes = running
@@ -346,18 +350,18 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         else:
             self.disabledIndexes = running
 
-    def __informAboutIndexUpdate(self,  text):
+    def __informAboutIndexUpdate(self,  text: str) -> None:
         pos = self.labelUpdate.parent().mapToGlobal(self.labelUpdate.pos())
         pos.setX(pos.x())
         QToolTip.showText (pos, text,  self)
 
-    def __addAnimatedUpdateLabel (self,  hbox,  text):
+    def __addAnimatedUpdateLabel (self,  hbox: QHBoxLayout,  text: str) -> QWidget:
         widget = AnimatedUpdateWidget (text, self)
         widget.hide()
         hbox.insertWidget(self.indexOfUpdateButton,  widget)
         return widget
 
-    def __showIndexUpdateInProgress (self, bInProgress):
+    def __showIndexUpdateInProgress (self, bInProgress: bool) -> None:
         if not self.labelUpdate:
             self.labelUpdate = self.__addAnimatedUpdateLabel (self.cornerWidgetLayout(),  self.tr("Update running..."))
         if bInProgress:
@@ -371,7 +375,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.labelUpdate.hide()
             self.buttonSettings.setEnabled(True)
 
-    def newTabAdded(self,  prevTabWidget:SearchPage, newTabWidget:SearchPage):
+    def newTabAdded(self,  prevTabWidget:SearchPage, newTabWidget:SearchPage) -> None:
         """
         This is called by the base class when a new tab is added. We use this to connect the request for a new search
         to open up in a new tab.
@@ -390,13 +394,13 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             newTabWidget.setCurrentSearchLocation(prevTabWidget.currentConfigName)
 
     @pyqtSlot(str, str)
-    def searchInNewTab (self,  text, searchLocationName):
+    def searchInNewTab (self, text: str, searchLocationName: str) -> None:
         searchPage = self.addNewTab ()
         searchPage.setCurrentSearchLocation(searchLocationName)
         searchPage.searchForText(text)
 
     @pyqtSlot(QWidget, str)
-    def changeTabName (self,  searchPage,  text):
+    def changeTabName (self,  searchPage: SearchPage,  text: str) -> None:
         index = self.indexOf(searchPage)
         if -1 != index:
             if text:
@@ -405,30 +409,26 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 self.setTabText(index, self.tr("Search"))
 
     @pyqtSlot()
-    def initialSetup(self):
-        if UserHintDialog.hintWouldBeShown("noLocations"):
+    def initialSetup(self) -> None:
+        if hintWouldBeShown("noLocations"):
             locations = IndexConfiguration.readConfig(AppConfig.appConfig())
-            if len(locations)==0:
+            if not locations:
                 text = self.tr(userHintInitialSetup)
-                res = UserHintDialog.showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  UserHintDialog.Yes,  True,  UserHintDialog.No)
-                if res == UserHintDialog.Yes:
+                res = showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  ButtonType.Yes,  True,  ButtonType.No)
+                if res == ButtonType.Yes:
                     self.openSettings(createInitialLocation=True)
 
-    def failedToSaveUserConfigMessage(self):
+    def failedToSaveUserConfigMessage(self) -> None:
         StackTraceMessageBox.show(self,
                                   self.tr("Failed to save user config"),
                                   self.tr("The user config file could not be saved to the user profile"))
 
-    def userConfigFailedToLoadMessage(self):
+    def userConfigFailedToLoadMessage(self) -> None:
         StackTraceMessageBox.show(self,
                                   self.tr("Failed to load user config"),
                                   self.tr("The user config file could not be loaded from the user profile"))
 
-    def failedToUpdateIndexesMessage(self):
+    def failedToUpdateIndexesMessage(self) -> None:
         StackTraceMessageBox.show(self,
                                   self.tr("Error during index update"),
                                   self.tr("The update process failed to update the desired indexes"))
-
-
-
-
