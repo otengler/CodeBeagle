@@ -16,13 +16,13 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Tuple, List, Optional, Iterator
+from typing import Tuple, List, Optional, Iterator, Pattern
 import bisect
-from PyQt5.QtCore import Qt, QRegExp, pyqtSignal, QTimer, QRect, QRectF
+import re
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QRect, QRectF
 from PyQt5.QtGui import QTextCharFormat, QFont, QTextLayout, QPainter, QBrush, QPaintEvent, QTextBlock, QResizeEvent
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 from fulltextindex.FullTextIndex import Query
-from AppConfig import appConfig
 from .LineNumberArea import LineNumberArea
 
 def textLineBefore(text: str, index: int) -> str:
@@ -35,10 +35,10 @@ def textLineBefore(text: str, index: int) -> str:
 
 class HighlightingRules:
     def __init__(self, font: QFont) -> None:
-        self.rules: List[Tuple[QRegExp, QTextCharFormat]] = []
-        self.lineComment: Optional[QRegExp] = None
-        self.multiCommentStart: Optional[QRegExp] = None
-        self.multiCommentStop: Optional[QRegExp] = None
+        self.rules: List[Tuple[Pattern, QTextCharFormat]] = []
+        self.lineComment: Optional[Pattern] = None
+        self.multiCommentStart: Optional[Pattern] = None
+        self.multiCommentStop: Optional[Pattern] = None
         self.commentFormat: Optional[QTextCharFormat] = None
         self.font = font
 
@@ -53,12 +53,12 @@ class HighlightingRules:
     def addCommentRule (self, singleLine: str, multiLineStart: str, multiLineEnd: str, fontWeight: int, foreground: QBrush) -> None:
         """Adds comment rules. Each parameter is a regular expression  string. The multi line parameter are optional and can be empty."""
         self.commentFormat = self.__createFormat(fontWeight,  foreground)
-        self.lineComment = QRegExp(singleLine)
+        self.lineComment = re.compile(singleLine)
         if multiLineStart and multiLineEnd:
-            self.multiCommentStart = QRegExp(multiLineStart)
-            self.multiCommentStop = QRegExp(multiLineEnd)
+            self.multiCommentStart = re.compile(multiLineStart)
+            self.multiCommentStop = re.compile(multiLineEnd)
 
-    def addRule (self, expr: QRegExp, fontWeight: int, foreground: QBrush) -> None:
+    def addRule (self, expr: str, fontWeight: int, foreground: QBrush) -> None:
         """Adds an arbitrary highlighting rule."""
         fmt = self.__createFormat(fontWeight, foreground)
         self.__addRule (expr, fmt)
@@ -70,8 +70,8 @@ class HighlightingRules:
         if self.commentFormat:
             self.commentFormat.setFont(font)
 
-    def __addRule (self, expr: QRegExp, fmt: QTextCharFormat) -> None:
-        self.rules.append((QRegExp(expr), fmt))
+    def __addRule (self, expr: str, fmt: QTextCharFormat) -> None:
+        self.rules.append((re.compile(expr), fmt))
 
     def __createFormat (self, fontWeight:int, foreground: QBrush) -> QTextCharFormat:
         fmt = QTextCharFormat()
@@ -119,22 +119,22 @@ class SyntaxHighlighter:
                 regLine = self.highlightingRules.lineComment
                 regStart = self.highlightingRules.multiCommentStart
                 regEnd = self.highlightingRules.multiCommentStop
-                startIndex = regStart.indexIn(text)
-                while startIndex>=0:
-                    matchedLenStart = regStart.matchedLength()
-                    line = textLineBefore (text, startIndex+matchedLenStart) # +matchedLenStart too catch things like "//*"
+                end = 0
+                while True:
+                    beginMatch = regStart.search(text, end)
+                    if not beginMatch:
+                        break
+                    start,end = beginMatch.span()
+                    line = textLineBefore (text, end) # 'end' too catch things like "//*"
                     # Check if the multi line comment is commented out
-                    if regLine and regLine.indexIn (line) == -1:
-                        endIndex = regEnd.indexIn(text, startIndex+matchedLenStart)
-                        if endIndex == -1: # comment opened but not closed
-                            comments.append (CommentRange(startIndex,  len(text)-startIndex))
+                    if not regLine or not regLine.search (line):
+                        # Not commented out
+                        endMatch = regEnd.search(text, end)
+                        if not endMatch:
+                            comments.append (CommentRange(start, len(text)-start))
                             break
-                        matchedLenEnd = regEnd.matchedLength()
-                        comments.append (CommentRange(startIndex,  endIndex+matchedLenEnd-startIndex))
-                    else:
-                        endIndex = startIndex
-                        matchedLenEnd = matchedLenStart
-                    startIndex = regStart.indexIn(text,  endIndex+matchedLenEnd)
+                        comments.append (CommentRange(start, endMatch.end() - start))
+
         self.comments = comments
 
     def setSearchData (self, searchData: Query) -> None:
@@ -148,11 +148,11 @@ class SyntaxHighlighter:
 
         # Single line highlighting rules
         for expression, fmt in self.highlightingRules.rules:
-            index = expression.indexIn(text)
-            while index >= 0:
-                length = expression.matchedLength()
-                formats.append((fmt, index, length))
-                index = expression.indexIn(text, index + length)
+            match = expression.search(text)
+            while match:
+                start,end = match.span()
+                formats.append((fmt, start, end-start))
+                match = expression.search(text, end)
 
         # Colorize multiline comments
         pos = bisect.bisect_right (self.comments,  CommentRange(position))
@@ -169,11 +169,11 @@ class SyntaxHighlighter:
 
         # Single line comments
         if self.highlightingRules.lineComment:
-            index = self.highlightingRules.lineComment.indexIn(text)
-            while index >= 0:
-                length = self.highlightingRules.lineComment.matchedLength()
-                formats.append((self.highlightingRules.commentFormat,  index, length))
-                index = self.highlightingRules.lineComment.indexIn(text, index + length)
+            match = self.highlightingRules.lineComment.search(text)
+            while match:
+                start,end = match.span()
+                formats.append((self.highlightingRules.commentFormat, start, end-start))
+                match = self.highlightingRules.lineComment.search(text, end)
 
         # Search match highlight
         if self.searchData:
@@ -194,21 +194,24 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.setReadOnly(True)
         self.setTextInteractionFlags(Qt.TextSelectableByKeyboard|Qt.TextSelectableByMouse)
 
-        self.lineNumberArea: LineNumberArea = LineNumberArea(self)
-        self.showLineNumbers(appConfig().SourceViewer.showLineNumbers)
+        self.lineNumberArea: Optional[LineNumberArea] = None
 
     def areLineNumbersShown(self) -> bool:
-        return bool(self.lineNumberArea.isVisible())
+        return bool(self.lineNumberArea)
 
-    def showLineNumbers(self, show: bool) -> None:
+    def showLineNumbers(self, show: bool, firstLineNumber:int=1) -> None:
         if show:
-            self.lineNumberArea.show()
+            if not self.lineNumberArea:
+                self.lineNumberArea = LineNumberArea(self, firstLineNumber)
+                self.lineNumberArea.show()
         else:
-            self.lineNumberArea.hide()
+            if self.lineNumberArea:
+                self.lineNumberArea.close()
+                self.lineNumberArea = None
 
     def resizeEvent(self, e: QResizeEvent) -> None:
         super().resizeEvent(e)
-        if self.lineNumberArea.isVisible():
+        if self.lineNumberArea:
             self.lineNumberArea.reactOnResize(e)
 
     def setPlainText(self, text: str) -> None:
