@@ -106,7 +106,7 @@ def handleUpdateJobs(indexes: List[IndexConfiguration.IndexConfiguration], jobDi
         if not jobData:
             break
         index, jobFile = jobData
-        logging.info("Handle job '%d'", index)
+        logging.info("Handle job '%s'", index)
         try:
             conf = configByName[index.lower()]
             updateIndex(conf)
