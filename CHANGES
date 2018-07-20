@@ -1,3 +1,7 @@
+1.2.11
+- Show line numbers left of source
+- Huge performance improvements when syntax highlighting large files
+
 1.2.10
 - Keep search term when switching between search indexes
 - Sort extension list in index configuration dialog
