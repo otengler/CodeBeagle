@@ -10,23 +10,25 @@
 #   result.highlight      A regular expression which can be used to search for a match in the files
 #   result.label          The label of the search tab
 # Functions:
-#   performSearch  Call to perform a search in the index
+#   performSearch(strSearch: str, strFolderFilter: str="", strExtensionFilter:str="", bCaseSensitive: bool=False) -> List[str]
+#     Call to perform a search in the index
+#   regexFromText(query:str, caseSensitive:bool) -> Pattern
+#     Generate regex which match all documents that contain all words
 
 reFlags = 0
 if not caseSensitive:
-	reFlags = re.IGNORECASE
+    reFlags = re.IGNORECASE
 
 regex = ""
 # Search all variations of the query containing a '&'
 for i in range(len(query)):
-	if regex:
-		regex += "|"
-	regex = regex + query[:i] + "\\s*&\\s*" + query[i:]
-result.matches.extend (performSearch(regex, folders, extensions, caseSensitive))
+    if regex:
+        regex += "|"
+    part = query[:i] + "&" + query[i:]
+    regex = regex + part
+    result.matches.extend (performSearch(part, folders, extensions, caseSensitive))
 	
 # Compile the regex to highlight the matches
 result.highlight = re.compile(regex, reFlags)
 # Set a text for the tab label
 result.label = "Mnemonic string '" + query + "'"
-
-	
