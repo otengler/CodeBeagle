@@ -23,28 +23,26 @@ from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 class LineNumberArea (QWidget):
     padding = 20
 
-    def __init__(self, textEdit: QPlainTextEdit) -> None:
+    def __init__(self, textEdit: QPlainTextEdit, firstLineNumber:int = 1) -> None:
         super().__init__(textEdit)
+        self.setAttribute(Qt.WA_DeleteOnClose)
         self.textEdit: QPlainTextEdit = textEdit
+        self.firstLineNumber = firstLineNumber
 
         self.areaColor = QColor(235,235,235)
         self.textColor = QColor(130,130,130)
 
         self.textEdit.blockCountChanged.connect(self.adjustAreaWidth)
         self.textEdit.updateRequest.connect(self.scrollArea)
-
-    def show(self) -> None:
-        super().show()
         self.adjustAreaWidth()
 
-    def hide(self) -> None:
-        super().hide()
+    def close(self) -> None:
+        super().close()
         self.textEdit.setViewportMargins(0, 0, 0, 0)
 
     @pyqtSlot(int)
     def adjustAreaWidth(self, newBlockCount: int = 0) -> None:
-        if self.isVisible():
-            self.textEdit.setViewportMargins(self.areaWidth(newBlockCount), 0, 0, 0)
+        self.textEdit.setViewportMargins(self.areaWidth(newBlockCount), 0, 0, 0)
 
     @pyqtSlot(QRect, int)
     def scrollArea(self, rect: QRect, dy: int) -> None:
@@ -80,7 +78,7 @@ class LineNumberArea (QWidget):
         painter.setPen(self.textColor)
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
-                number = f"{blockNumber+1}"
+                number = f"{blockNumber+self.firstLineNumber}"
                 painter.drawText(0, top, self.width()-self.padding//2, self.textEdit.fontMetrics().height(), Qt.AlignRight, number)
 
             block = block.next()
