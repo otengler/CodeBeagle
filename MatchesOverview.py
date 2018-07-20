@@ -254,8 +254,7 @@ class MatchesOverview (QWidget):
                 index = self.__addHeader(result.name)
                 self.matchIndexes.append(index)
                 for startLine, lines in result.matches:
-                    self.__addLine("Lines %u - %u:" % (startLine, startLine+len(lines)-1))
-                    self.__addText(result.name, lines)
+                    self.__addText(result.name, startLine, lines)
 
         self.ui.scrollArea.setItems(self.scrollItems)
 
@@ -266,17 +265,18 @@ class MatchesOverview (QWidget):
         labelItem = RecyclingVerticalScrollArea.Labeltem(text,  bIsBold,  20)
         return self.scrollItems.addItem(labelItem)
 
-    def __addText(self, name: str, lines: List[str]) -> int:
+    def __addText(self, name: str, startLine: int, lines: List[str]) -> int:
         text = "\n".join(lines)
         scrollBarHeight = 24
         height = len(lines)*self.lineHeight+11+scrollBarHeight
-        editItem = FixedSizeSourcePreviewItem (self,  text,  name,  height)
+        editItem = FixedSizeSourcePreviewItem (self, startLine, text, name, height)
         return self.scrollItems.addItem(editItem)
 
 class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
-    def __init__(self, matchesOverview: MatchesOverview,  text: str,  name: str,  height: int) -> None:
+    def __init__(self, matchesOverview: MatchesOverview, startLine: int, text: str, name: str, height: int) -> None:
         super ().__init__(height)
         self.matchesOverview = matchesOverview
+        self.startLine = startLine
         self.text = text
         self.name = name
 
@@ -287,12 +287,13 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         return item
 
     def configureItem(self, item: QWidget) -> None:
-        rules = HighlightingRulesCache.rules().getRulesByFileName(self.name,  self.matchesOverview.sourceFont)
+        rules = HighlightingRulesCache.rules().getRulesByFileName(self.name, self.matchesOverview.sourceFont)
         item.setFont(self.matchesOverview.sourceFont)
         item.setTabStopWidth(self.matchesOverview.tabWidth*10)
-        item.highlighter.setHighlightingRules (rules,  self.text)
+        item.highlighter.setHighlightingRules (rules, self.text)
         item.highlighter.setSearchData (self.matchesOverview.searchData)
         item.setPlainText(self.text)
+        item.showLineNumbers(True, self.startLine)
 
     def getType(self) -> str:
         return "FixedSizeSourcePreview"
