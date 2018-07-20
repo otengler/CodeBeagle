@@ -99,8 +99,7 @@ class StringListModel(QAbstractListModel):
         if role == Qt.DisplayRole:
             if self.cutLeft:
                 return "..."+self.filelist[index.row()][self.cutLeft:]
-            else:
-                return self.filelist[index.row()]
+            return self.filelist[index.row()]
         if role == Qt.UserRole:
             return self.filelist[index.row()]
         if role == Qt.SizeHintRole:
