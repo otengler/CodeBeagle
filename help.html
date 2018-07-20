@@ -45,6 +45,10 @@ in between.
 <pre>hello **3 world</pre> matches <strong>hello</strong> followed by one to three unknown words/tokens followed by <strong>world</strong>. This is useful
 if you know the beginning and end of the search phrase but in the middle there are some unknown parts. 
 </p>
+<p>
+<pre>class &lt;!C|Q!&gt;</pre> allows to directly inject a regex into the query. In the example the query searches for <strong>class</strong> followed by something 
+starting with <strong>C</strong> or <strong>Q</strong>. As you can see the part between <strong>&lt;!</strong> and <strong>!&gt;</strong> contains the regex.
+</p>
 <br/>
 Technical background:<br/>
 The indexing associates the processed documents with their containing keywords. A keyword is an arbitrary 
@@ -462,7 +466,7 @@ which is internally used to construct a <strong>QTextCharFormat</strong>:
 
 <b>License</b>
 <p>
-CodeBeagle Copyright (C) 2011-2013 Oliver Tengler
+CodeBeagle Copyright (C) 2011-2018 Oliver Tengler
 </p>
 <p>
 This program is free software: you can redistribute it and/or modify
