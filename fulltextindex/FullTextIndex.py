@@ -88,8 +88,7 @@ def kwExpr(kw: str) -> str:
     # If the keyword starts with '#' it is not matched if we search for word boundaries (\\b)
     if not kw.startswith("#"):
         return r"\b" + kw.replace("*", r"\w*") + r"\b"
-    else:
-        return kw.replace("*", r"\w*")
+    return kw.replace("*", r"\w*")
 
 def trimScanPart(s: str) -> str:
     return s.replace(" ", "")
@@ -404,7 +403,7 @@ SearchResult = List[str]
 
 class FullTextIndex (IndexDatabase):
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
-    def search(self, query: Query, perfReport: PerformanceReport=None, commonKeywordMap: CommonKeywordMap=None, 
+    def search(self, query: Query, perfReport: PerformanceReport=None, commonKeywordMap: CommonKeywordMap=None,
                manualIntersect: bool=True, cancelEvent:threading.Event=None) -> SearchResult:
         try:
             return self.__search(query, perfReport, commonKeywordMap, manualIntersect, cancelEvent)
@@ -442,14 +441,13 @@ class FullTextIndex (IndexDatabase):
                 return []
 
         if query.requiresRegex():
-            with perfReport.newAction("Filtering results"):
-                return self.__filterDocsBySearchPhrase((r[0] for r in result), query, cancelEvent)
+            with perfReport.newAction("Filtering results") as action:
+                return self.__filterDocsBySearchPhrase(action, (r[0] for r in result), query, cancelEvent)
         else:
             with perfReport.newAction("Returning results"):
                 if not query.folderFilter and not query.extensionFilter:
                     return [r[0] for r in result]
-                else:
-                    return [r[0] for r in result if query.matchFolderAndExtensionFilter(r[0])]
+                return [r[0] for r in result if query.matchFolderAndExtensionFilter(r[0])]
 
     def __findDocsByKeywords(self, q: sqlite3.Cursor, goodKeywords: KeywordList, badKeywords: KeywordList) -> SearchResult:
         kwList = goodKeywords + badKeywords
@@ -489,9 +487,10 @@ class FullTextIndex (IndexDatabase):
                 return []
         return result
 
-    def __filterDocsBySearchPhrase(self, results: Iterable[str], query: Query, cancelEvent: threading.Event=None) -> SearchResult:
+    def __filterDocsBySearchPhrase(self, action: ReportAction, results: Iterable[str], query: Query, cancelEvent: threading.Event=None) -> SearchResult:
         finalResults = []
         reExpr = query.regExForMatches()
+        action.addData("RegEx: " + reExpr.pattern)
         bHasFilters = query.folderFilter or query.extensionFilter
         for fullpath in results:
             if bHasFilters:
