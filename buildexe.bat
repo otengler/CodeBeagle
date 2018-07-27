@@ -7,6 +7,7 @@ if exist build rmdir /s /q build
 python.exe setup.py build_exe
 
 copy %PYDIR%\DLLS\sqlite3.dll %BUILDDIR%
+copy %PYDIR%\python3.dll %BUILDDIR%
 
 rmdir /q /s %LIB%\html 
 rmdir /q /s %LIB%\importlib 
