@@ -22,7 +22,7 @@ from tools import Config, FileTools
 
 appName = "CodeBeagle"
 appCompany = "OTE"
-appVersion = "1.2.11.0"
+appVersion = "1.2.12.0"
 configName = "config.txt"
 
 class ConfigCache:

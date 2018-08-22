@@ -468,13 +468,13 @@ class FullTextIndex (IndexDatabase):
             if not isGood:
                 kwNames = ",".join((keyword.name for keyword in keywords))
                 if result and len(result) < 100:
-                    reportAction.addData("Search stopped with common keyword '%s'" % (kwNames, ))
+                    reportAction.addData("Search stopped with common keyword '%s'", kwNames)
                     break
                 else:
                     if result:
-                        reportAction.addData("Common keyword '%s' used because %u matches are too much" % (kwNames, len(result)))
+                        reportAction.addData("Common keyword '%s' used because %u matches are too much", kwNames, len(result))
                     else:
-                        reportAction.addData("Common keyword '%s' used as first keyword" % (kwNames, ))
+                        reportAction.addData("Common keyword '%s' used as first keyword", kwNames)
             inString = ",".join((str(keyword.id) for keyword in keywords))
             stmt = "SELECT DISTINCT fullpath FROM kw2doc,documents WHERE docID=id AND kwID IN (%s) ORDER BY fullpath" % (inString, )
             q.execute(stmt)
@@ -490,7 +490,7 @@ class FullTextIndex (IndexDatabase):
     def __filterDocsBySearchPhrase(self, action: ReportAction, results: Iterable[str], query: Query, cancelEvent: threading.Event=None) -> SearchResult:
         finalResults = []
         reExpr = query.regExForMatches()
-        action.addData("RegEx: " + reExpr.pattern)
+        action.addData("RegEx: %s", reExpr.pattern)
         bHasFilters = query.folderFilter or query.extensionFilter
         for fullpath in results:
             if bHasFilters:
