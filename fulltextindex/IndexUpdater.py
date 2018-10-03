@@ -33,7 +33,7 @@ def __fixExtension(ext: str) -> str:
         return ext
     return ""
 
-def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None) -> Iterator[str]:
+def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None, ignoredExts: Set[str]=None) -> Iterator[str]:
     dirExcludes = dirExcludes or []
 
     filepatFixed: Set[str] = set()
@@ -51,8 +51,12 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None) -> 
                     break
             if found:
                 continue
-        for name in (name for name in filelist if os.path.splitext(name)[1].lower() in filepatFixed):
-            yield os.path.join(path, name)
+        for name in filelist:
+            ext = os.path.splitext(name)[1].lower()
+            if ext in filepatFixed:
+                yield os.path.join(path, name)
+            elif ignoredExts is not None:
+                ignoredExts.add(ext)
 
 def genTokens(file: IO) -> Iterator[str]:
     for token in reTokenize.findall(file.read()):
@@ -92,7 +96,8 @@ class IndexUpdater (IndexDatabase):
 
             for strRootDir in directories:
                 logging.info("Updating index in %s", strRootDir)
-                for strFullPath in genFind(extensions, strRootDir, dirExcludes):
+                ignoredExt: Set[str] = set()
+                for strFullPath in genFind(extensions, strRootDir, dirExcludes, ignoredExt):
                     mTime = os.stat(strFullPath).st_mtime
 
                     c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
@@ -124,19 +129,22 @@ class IndexUpdater (IndexDatabase):
                     else:
                         # We always write the next index ID. This is needed to find old files which still have lower indexID values.
                         c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, nextIndexID))
-
-            # Now remove all documents with a lower indexID and their keyword associations
-            logging.info("Cleaning associations")
-            c.execute("DELETE FROM kw2doc WHERE docID IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
-            logging.info("Cleaning documents")
-            c.execute("DELETE FROM documents WHERE id IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
-            logging.info("Cleaning document index")
-            c.execute("DELETE FROM documentInIndex WHERE indexID < :index", {"index":nextIndexID})
-            logging.info("Removing orphaned keywords")
-            c.execute("DELETE FROM keywords WHERE id NOT IN (SELECT kwID FROM kw2doc)")
-            logging.info("Removing old indexInfo entry")
-            c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
+                if ignoredExt:
+                    logging.info("Ignored files with these extensions: %s", ignoredExt)
+            self.__cleanup(c, nextIndexID)
         logging.info("Done")
+
+    def __cleanup(self, c: sqlite3.Cursor, nextIndexID:int) -> None:
+        logging.info("Cleaning associations")
+        c.execute("DELETE FROM kw2doc WHERE docID IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
+        logging.info("Cleaning documents")
+        c.execute("DELETE FROM documents WHERE id IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
+        logging.info("Cleaning document index")
+        c.execute("DELETE FROM documentInIndex WHERE indexID < :index", {"index":nextIndexID})
+        logging.info("Removing orphaned keywords")
+        c.execute("DELETE FROM keywords WHERE id NOT IN (SELECT kwID FROM kw2doc)")
+        logging.info("Removing old indexInfo entry")
+        c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
 
     def __updateFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, strFullPath: str) -> None:
         # Delete old associations
