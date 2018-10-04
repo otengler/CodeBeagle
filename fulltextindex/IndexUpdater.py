@@ -130,7 +130,7 @@ class IndexUpdater (IndexDatabase):
                         # We always write the next index ID. This is needed to find old files which still have lower indexID values.
                         c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, nextIndexID))
                 if ignoredExt:
-                    logging.info("Ignored files with these extensions: %s", ignoredExt)
+                    logging.info("Ignored files with these extensions: %s", sorted(ignoredExt))
             self.__cleanup(c, nextIndexID)
         logging.info("Done")
 
