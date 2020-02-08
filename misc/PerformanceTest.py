@@ -7,9 +7,9 @@ import random
 import fulltextindex.FullTextIndex as FullTextIndex
 
 def taketime (func, *args):
-    t1 = time.clock()
+    t1 = time.perf_counter()
     result = func(*args)
-    t2 = time.clock()
+    t2 = time.perf_counter()
     print("%3.2f min" % ((t2-t1)/60.0,))
     return result
 

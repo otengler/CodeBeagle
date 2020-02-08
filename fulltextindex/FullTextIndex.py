@@ -25,7 +25,7 @@ import time
 import unittest
 import threading
 from enum import Enum
-from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Dict, Sized, cast, Optional
+from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Dict, Sized, cast, Optional, Literal
 from tools.FileTools import fopen
 from .IndexDatabase import IndexDatabase
 
@@ -337,11 +337,11 @@ class ReportAction:
         self.data.append(text % args)
 
     def __enter__(self) -> 'ReportAction':
-        self.startTime = time.clock()
+        self.startTime = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
-        self.duration = time.clock() - self.startTime
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> Literal[False]:
+        self.duration = time.perf_counter() - self.startTime
         return False
 
     def __str__(self) -> str:
@@ -448,6 +448,7 @@ class FullTextIndex (IndexDatabase):
                 if not query.folderFilter and not query.extensionFilter:
                     return [r[0] for r in result]
                 return [r[0] for r in result if query.matchFolderAndExtensionFilter(r[0])]
+        return []
 
     def __findDocsByKeywords(self, q: sqlite3.Cursor, goodKeywords: KeywordList, badKeywords: KeywordList) -> SearchResult:
         kwList = goodKeywords + badKeywords

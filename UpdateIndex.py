@@ -47,9 +47,9 @@ parser.add_argument("--jobmode", metavar='DIR', type=str, help=helpJobMode)
 parser.add_argument("-c", "--config", action="append", default=[AppConfig.configName], type=str, help=helpConfig)
 
 def taketime(name: str, func: Callable, *args: Any) -> Any:
-    t1 = time.clock()
+    t1 = time.perf_counter()
     result = func(*args)
-    t2 = time.clock()
+    t2 = time.perf_counter()
     logging.info("%s %3.2f min", name, (t2-t1)/60.0)
     return result
 

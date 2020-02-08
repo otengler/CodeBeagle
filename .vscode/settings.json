@@ -12,5 +12,6 @@
         "--disallow-untyped-defs"
     ],
     // Severity of Pylint message type 'Refactor/R'.
-    "python.linting.pylintCategorySeverity.refactor": "Information"
+    "python.linting.pylintCategorySeverity.refactor": "Information",
+    "python.pythonPath": "C:\\Program Files (x86)\\Python38-32\\python.exe"
 }

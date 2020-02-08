@@ -1,7 +1,7 @@
 call buildvars.bat
 
-set PYUIC=%PYDIR%\scripts\pyuic5.exe
-set PYRCC5=%PYDIR%\scripts\pyrcc5.exe
+set PYUIC=%PYQT_SCRIPTS%\scripts\pyuic5.exe
+set PYRCC5=%PYQT_SCRIPTS%\scripts\pyrcc5.exe
 
 "%PYUIC%" --from-imports -o widgets\Ui_LeaveLastTabWidget.py -x widgets\LeaveLastTabWidget.ui 
 "%PYUIC%" --from-imports -o dialogs\Ui_SettingsItem.py -x dialogs\SettingsItem.ui 

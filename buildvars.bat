@@ -1,4 +1,8 @@
-set PYDIR=C:\Python36
+set PYDIR=C:\Program Files (x86)\Python38-32
+set PYQT_SCRIPTS=%PYDIR%
+if exist "%APPDATA%\Python\Python38" (
+    set PYQT_SCRIPTS=%APPDATA%\Python\Python38
+)
 
 if exist "C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe" (
     set mt="C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe"

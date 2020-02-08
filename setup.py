@@ -15,7 +15,8 @@ UpdateIndex=Executable(
 
 options = {
     "build_exe": {
-        "zip_include_packages": "logging,email,http,collections,encodings,sqlite3,unittest,urllib"
+        "zip_include_packages": "logging,http,collections,encodings,sqlite3,unittest,urllib,asyncio,concurrent,dialogs,email,importlib",
+        "excludes": "ctypes,distutils,html,multiprocessing,lib2to3,xml,test,tkinter,pydoc_data,bz2,queue,lzma,ssl"
     }
 }
 
