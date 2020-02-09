@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, List, Optional, Iterator, Pattern
 import bisect
 import re
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QRect, QRectF
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, pyqtSlot
 from PyQt5.QtGui import QTextCharFormat, QFont, QTextLayout, QPainter, QBrush, QPaintEvent, QTextBlock, QResizeEvent
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 from fulltextindex.FullTextIndex import Query
@@ -104,36 +104,69 @@ class SyntaxHighlighter:
         if self.highlightingRules:
             self.highlightingRules.setFont (font)
 
-    def setHighlightingRules (self, rules: HighlightingRules, text: str) -> None:
+    def setHighlightingRules (self, rules: HighlightingRules) -> None:
         self.highlightingRules = rules
         self.searchStringFormat.setFont(rules.font)
         self.searchStringFormat.setFontWeight(QFont.Bold)
-        # Text is needed to compute the syntax highlighting for multiline comments
-        self.__setText(text)
 
-    # Find all multiline comments in the document and store them as CommentRange objects in self.comments
-    def __setText(self, text: str) -> None:
+    # Find all comments in the document and store them as CommentRange objects in self.comments
+    def setText(self, text: str) -> None:
+        if not self.highlightingRules:
+            self.comments = []
+            return
+
         comments: List[CommentRange] = []
-        if self.highlightingRules:
-            if self.highlightingRules.multiCommentStart and self.highlightingRules.multiCommentStop:
-                regLine = self.highlightingRules.lineComment
-                regStart = self.highlightingRules.multiCommentStart
-                regEnd = self.highlightingRules.multiCommentStop
-                end = 0
-                while True:
-                    beginMatch = regStart.search(text, end)
-                    if not beginMatch:
-                        break
-                    start,end = beginMatch.span()
-                    line = textLineBefore (text, end) # 'end' too catch things like "//*"
-                    # Check if the multi line comment is commented out
-                    if not regLine or not regLine.search (line):
-                        # Not commented out
+
+        # Collect all single line comments
+        if self.highlightingRules.lineComment:
+            regLine = self.highlightingRules.lineComment
+            end = 0
+            while True:
+                beginMatch = regLine.search(text, end)
+                if not beginMatch:
+                    break
+                start,end = beginMatch.span()
+                comments.append (CommentRange(start, end - start))
+
+        self.comments = comments
+
+        multiComments: List[CommentRange] = []
+
+        # Now all multi line comments
+        if self.highlightingRules.multiCommentStart and self.highlightingRules.multiCommentStop:
+            regStart = self.highlightingRules.multiCommentStart
+            regEnd = self.highlightingRules.multiCommentStop
+            end = 0
+            while True:
+                beginMatch = regStart.search(text, end)
+                if not beginMatch:
+                    break
+                beginStart,end = beginMatch.span()
+                if not self.isInsideComment(beginStart):
+                    while True:
                         endMatch = regEnd.search(text, end)
                         if not endMatch:
-                            comments.append (CommentRange(start, len(text)-start))
+                            multiComments.append (CommentRange(beginStart, len(text) - beginStart))
                             break
-                        comments.append (CommentRange(start, endMatch.end() - start))
+                        endStart,end = endMatch.span()
+                        if not self.isInsideComment(endStart):
+                            multiComments.append (CommentRange(beginStart, end - beginStart))
+                            break
+
+        comments.extend(multiComments)
+        comments.sort()
+
+        # Remove comments which are completely included in other comments
+        i = 1
+        while True:
+            if i >= len(comments):
+                break
+            prevComment = comments[i-1]
+            comment = comments[i]
+            if comment.index >= prevComment.index and comment.index + comment.length < prevComment.index + prevComment.length:
+                del comments[i]
+            else:
+                i += 1
 
         self.comments = comments
 
@@ -154,7 +187,7 @@ class SyntaxHighlighter:
                 formats.append((fmt, start, end-start))
                 match = expression.search(text, end)
 
-        # Colorize multiline comments
+        # Colorize comments
         pos = bisect.bisect_right (self.comments,  CommentRange(position))
         if pos > 0:
             pos -= 1
@@ -167,20 +200,23 @@ class SyntaxHighlighter:
                 break
             pos += 1
 
-        # Single line comments
-        if self.highlightingRules.lineComment:
-            match = self.highlightingRules.lineComment.search(text)
-            while match:
-                start,end = match.span()
-                formats.append((self.highlightingRules.commentFormat, start, end-start))
-                match = self.highlightingRules.lineComment.search(text, end)
-
         # Search match highlight
         if self.searchData:
             for index, length in self.searchData.matches (text):
                 formats.append((self.searchStringFormat, index, length))
 
         return formats
+
+    def isInsideComment(self, position: int) -> bool:
+        if not self.comments:
+            return False
+        pos = bisect.bisect_right (self.comments,  CommentRange(position))
+        if pos > 0:
+            pos -= 1
+        comment = self.comments[pos]
+        if comment.index >= position < comment.index + comment.length:
+            return True
+        return False
 
 class HighlightingTextEdit (QPlainTextEdit):
     updateNeeded = pyqtSignal()
@@ -195,6 +231,16 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.setTextInteractionFlags(Qt.TextSelectableByKeyboard|Qt.TextSelectableByMouse)
 
         self.lineNumberArea: Optional[LineNumberArea] = None
+
+        self.cursorPositionChanged.connect (self.cursorChanged)
+
+    @pyqtSlot()
+    def cursorChanged(self) -> None:
+        pos = self.textCursor().position()
+        text = self.document().toPlainText()
+        char = text[pos:pos+1]
+        # if char in ['(','[','{']:
+        #     print("Zeichen" , char)
 
     def areLineNumbersShown(self) -> bool:
         return bool(self.lineNumberArea)
@@ -215,9 +261,8 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.lineNumberArea.reactOnResize(e)
 
     def setPlainText(self, text: str) -> None:
+        self.highlighter.setText(text)
         super().setPlainText(text)
-        # For whatever reasons some lines are not highlighted properly without another 'update'
-        QTimer.singleShot (10, self.viewport().update)
 
     def setDynamicHighlight(self, text: str) -> None:
         if self.dynamicHighlight != text:
@@ -239,7 +284,7 @@ class HighlightingTextEdit (QPlainTextEdit):
             painter = QPainter(self.viewport())
             metrics = painter.fontMetrics()
             for block, bound in self.visibleBlocks(firstVisibleBlock):
-                bound = QRect(bound.left(), bound.top(), bound.width(), bound.height())
+                bound = QRect(bound.left(), bound.top(), bound.width(), bound.height()) 
                 startIndex = 0
                 while startIndex != -1:
                     startIndex = block.text().find(self.dynamicHighlight, startIndex)
@@ -250,6 +295,7 @@ class HighlightingTextEdit (QPlainTextEdit):
                         rectResult = QRect(rectBefore.right()+4,  rectBefore.top()+1,  rectText.width()+2,  rectText.height()-2)
                         painter.setPen(Qt.darkGray)
                         painter.drawRect(rectResult)
+                        painter.drawText(QRectF(rectBefore.right()+5,rectBefore.top(),rectText.width(),rectText.height()), self.dynamicHighlight)
                         startIndex += len(self.dynamicHighlight)
 
         # Sometimes lines which are highlighted for the first time are not updated properly.

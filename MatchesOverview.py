@@ -290,7 +290,7 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         rules = HighlightingRulesCache.rules().getRulesByFileName(self.name, self.matchesOverview.sourceFont)
         item.setFont(self.matchesOverview.sourceFont)
         item.setTabStopWidth(self.matchesOverview.tabWidth*10)
-        item.highlighter.setHighlightingRules (rules, self.text)
+        item.highlighter.setHighlightingRules (rules)
         item.highlighter.setSearchData (self.matchesOverview.searchData)
         item.setPlainText(self.text)
         item.showLineNumbers(True, self.startLine)

@@ -139,7 +139,7 @@ class SourceViewer (QWidget):
             text = self.tr("Failed to open file")
 
         rules = HighlightingRulesCache.rules().getRulesByFileName(name,  self.sourceFont)
-        self.ui.textEdit.highlighter.setHighlightingRules (rules,  text)
+        self.ui.textEdit.highlighter.setHighlightingRules (rules)
         self.ui.textEdit.setPlainText(text)
 
         if self.searchData:
