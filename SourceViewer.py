@@ -61,6 +61,8 @@ class SourceViewer (QWidget):
         self.addAction(self.actionReloadFile)
         self.actionGotoLine = QAction(self, shortcut=Qt.CTRL+Qt.Key_G, triggered=self.gotoLine)
         self.addAction(self.actionGotoLine)
+        self.jumpToMatchingBrace = QAction(self, shortcut=Qt.CTRL+Qt.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace)
+        self.addAction(self.jumpToMatchingBrace)
 
         # Forward the signal
         self.ui.textEdit.selectionFinishedWithKeyboardModifier.connect(self.selectionFinishedWithKeyboardModifier)
@@ -280,18 +282,7 @@ class SourceViewer (QWidget):
         extras.append(extra2)
 
         self.__updateMatchExtraSelections(extras)
-
-        cursor = self.ui.textEdit.textCursor()
-        cursor.setPosition(index)
-        if scrollDir > 0:
-            cursor.movePosition(QTextCursor.Down, QTextCursor.MoveAnchor,  5)
-        elif scrollDir < 0:
-            cursor.movePosition(QTextCursor.Up, QTextCursor.MoveAnchor,  5)
-        self.ui.textEdit.setTextCursor (cursor) # otherwise 'ensureCursorVisible' doesn't work
-        self.ui.textEdit.ensureCursorVisible ()
-
-        cursor.setPosition(index)
-        self.ui.textEdit.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
+        self.ui.textEdit.scrollToPosition(index, scrollDir)
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None: # pylint: disable=no-self-use
         # check if the data contains urls
