@@ -294,7 +294,7 @@ class SearchPage (QWidget):
     @pyqtSlot('QString', int)
     def newSearchBasedOnSelection (self, text: str, modifiers: int) -> None:
         if modifiers & Qt.ControlModifier:
-            if modifiers & Qt.AltModifier:
+            if modifiers & Qt.ShiftModifier:
                 # Search in the same search page
                 self.searchForText(text)
             else:

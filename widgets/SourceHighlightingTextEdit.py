@@ -36,8 +36,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
 
         # Allow other components to react on selection of tokens with keyboard modifiers
         modifiers = int(QApplication.keyboardModifiers())
-        if modifiers & int(Qt.ShiftModifier)==0:
-            if modifiers != Qt.NoModifier:
-                self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
-            else:
-                self.setDynamicHighlight(text)
+        if modifiers != Qt.NoModifier:
+            self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
+        else:
+            self.setDynamicHighlight(text)

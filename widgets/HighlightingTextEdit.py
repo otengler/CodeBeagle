@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, Optional, Iterator
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, pyqtSlot
-from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent
+from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 from .LineNumberArea import LineNumberArea
 from .SyntaxHighlighter import SyntaxHighlighter
@@ -62,6 +62,24 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.setParenthesisPair((pos, closePos))
         else:
             self.setParenthesisPair(None)
+
+    @pyqtSlot()
+    def jumpToMatchingBrace(self) -> None:
+        if self.parenthesisPair:
+            self.scrollToPosition(self.parenthesisPair[1], self.parenthesisPair[1] - self.parenthesisPair[0])
+
+    def scrollToPosition(self, index: int, scrollDir: int) -> None:
+        """scrollHint is positive for scolling down and negative for scrolling up"""
+        cursor = self.textCursor()
+        cursor.setPosition(index)
+        if scrollDir > 0:
+            cursor.movePosition(QTextCursor.Down, QTextCursor.MoveAnchor,  5)
+        elif scrollDir < 0:
+            cursor.movePosition(QTextCursor.Up, QTextCursor.MoveAnchor,  5)
+        self.setTextCursor (cursor) # otherwise 'ensureCursorVisible' doesn't work
+        self.ensureCursorVisible ()
+        cursor.setPosition(index)
+        self.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
 
     def __findMatchingParenthesis(self, char: str, start: int, paren: Tuple[str, str]) -> int:
         text = self.document().toPlainText()
