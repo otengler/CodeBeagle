@@ -21,7 +21,7 @@ from typing import Optional, Dict
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from tools.FileTools import fopen
-from widgets.HighlightingTextEdit import HighlightingRules
+from widgets.SyntaxHighlighter import HighlightingRules
 import HighlighterConfiguration
 from AppConfig import appConfig
 

@@ -44,6 +44,8 @@ class SourceViewer (QWidget):
         self.matches: List[Tuple[int,int]]
         self.curMatch: int
         self.currentFile: str
+        self.currentLineExtras: List[QTextEdit.ExtraSelection] = []
+        self.currentMatchExtras: List[QTextEdit.ExtraSelection] = []
 
         super ().__init__(parent)
         self.ui = Ui_SourceViewer()
@@ -107,7 +109,7 @@ class SourceViewer (QWidget):
 
     def __reset (self) -> None:
         self.currentFile = ""
-        self.matches: List[Tuple[int,int]] = [] # touples with position and length
+        self.matches = [] # touples with position and length
         self.__setMatchIndex(-1)
         self.ui.labelCursor.setText("")
         self.ui.labelFile.setText(self.tr("No document loaded"))
@@ -216,6 +218,13 @@ class SourceViewer (QWidget):
         line = self.ui.textEdit.textCursor().blockNumber()+1
         self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))
 
+        extra = QTextEdit.ExtraSelection ()
+        extra.cursor = self.ui.textEdit.textCursor()
+        extra.cursor.setPosition (self.ui.textEdit.textCursor().position())
+        extra.format.setProperty (QTextFormat.FullWidthSelection, True)
+        extra.format.setBackground (QColor(240,240,240))
+        self.__updateCurrentLineExtraSelections([extra])
+
     @pyqtSlot()
     def showSearchFrame(self) -> None:
         self.ui.frameSearch.show()
@@ -270,7 +279,7 @@ class SourceViewer (QWidget):
         extra2.format.setBackground (Qt.yellow)
         extras.append(extra2)
 
-        self.ui.textEdit.setExtraSelections (extras)
+        self.__updateMatchExtraSelections(extras)
 
         cursor = self.ui.textEdit.textCursor()
         cursor.setPosition(index)
@@ -306,6 +315,15 @@ class SourceViewer (QWidget):
     def restoreEditorState(self, state: EditorState) -> None:
         self.setCurrentMatch(state.currentMatch)
         self.ui.textEdit.verticalScrollBar ().setSliderPosition (state.scrollPosition)
+
+    def __updateMatchExtraSelections(self, extras: List[QTextEdit.ExtraSelection]) -> None:
+        self.currentMatchExtras = extras
+        self.__updateExtraSelections()
+    def __updateCurrentLineExtraSelections(self, extras: List[QTextEdit.ExtraSelection]) -> None:
+        self.currentLineExtras = extras
+        self.__updateExtraSelections()
+    def __updateExtraSelections(self) -> None:
+        self.ui.textEdit.setExtraSelections(self.currentLineExtras + self.currentMatchExtras)
 
 def main() -> None:
     import sys

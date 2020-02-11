@@ -20,7 +20,7 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QWidget
 from tools.ExceptionTools import exceptionAsString
-from widgets.HighlightingTextEdit import HighlightingRules
+from widgets.SyntaxHighlighter import HighlightingRules
 from .Ui_StackTraceMessageBox import Ui_StackTraceMessageBox
 
 class StackTraceMessageBox (QDialog):
