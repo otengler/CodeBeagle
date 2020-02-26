@@ -37,6 +37,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.highlighter = SyntaxHighlighter()
         self.dynamicHighlight: Optional[str] = None
         self.parenthesisPair: Optional[Tuple[int,int]] = None
+        self.highlightParenthesis = True
         self.setUndoRedoEnabled(False)
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.setReadOnly(True)
@@ -45,6 +46,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.lineNumberArea: Optional[LineNumberArea] = None
 
         self.cursorPositionChanged.connect (self.cursorChanged)
+        self.selectionChanged.connect (self.onSelectionChanged)
 
     @pyqtSlot()
     def cursorChanged(self) -> None:
@@ -62,6 +64,13 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.setParenthesisPair((pos, closePos))
         else:
             self.setParenthesisPair(None)
+
+    @pyqtSlot()
+    def onSelectionChanged(self) -> None:
+        highlightParenthesis = not self.textCursor().selectedText()
+        if highlightParenthesis != self.highlightParenthesis:
+            self.highlightParenthesis = highlightParenthesis
+            self.viewport().update()
 
     @pyqtSlot()
     def jumpToMatchingBrace(self) -> None:
@@ -171,7 +180,7 @@ class HighlightingTextEdit (QPlainTextEdit):
                         self.__highlightPartOfLine(painter, metrics, block, bound, startIndex, len(self.dynamicHighlight), HighlightStyle.Outline)
                         startIndex += len(self.dynamicHighlight)
             # Highlight parenthesis pair
-            if self.parenthesisPair:
+            if self.highlightParenthesis and self.parenthesisPair:
                 p1, p2 = self.parenthesisPair
                 if block.position() <= p1 < block.position()+block.length():
                     self.__highlightPartOfLine(painter, metrics, block, bound, p1 - block.position(), 1, HighlightStyle.Solid)
