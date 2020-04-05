@@ -204,6 +204,6 @@ class SyntaxHighlighter:
         if pos > 0:
             pos -= 1
         comment = self.comments[pos]
-        if comment.index >= position < comment.index + comment.length:
+        if comment.index <= position < comment.index + comment.length:
             return True
         return False

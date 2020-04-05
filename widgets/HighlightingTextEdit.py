@@ -205,7 +205,7 @@ class HighlightingTextEdit (QPlainTextEdit):
             painter.setPen(Qt.darkGray)
             painter.drawRect(rectResult)
         elif style == HighlightStyle.Solid:
-            rectResult = QRect(rectBefore.right()+4,  rectBefore.top(),  rectText.width()+3,  rectText.height()+2)
+            rectResult = QRect(rectBefore.right()+4,  rectBefore.top(),  rectText.width()+2,  rectText.height()+2)
             painter.fillRect(rectResult, Qt.lightGray)
             painter.setPen(Qt.black)
             painter.drawText(QRectF(rectBefore.right()+5,rectBefore.top(),rectText.width(),rectText.height()), text)

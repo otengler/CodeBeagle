@@ -21,7 +21,7 @@ import os
 import codecs
 import time
 import collections
-from typing import IO, DefaultDict, Any, Optional
+from typing import IO, DefaultDict, Any, Optional, Literal
 
 def fopen (name:str, mode: str='r') -> IO:
     f = open(name, mode, -1, "latin_1")
@@ -100,7 +100,7 @@ class LockDir:
                 return self
         raise RuntimeError("Failed to create lock directory")
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> Literal[False]:
         os.rmdir (self.name)
         return False # do not suppress exception
 
@@ -166,7 +166,7 @@ class PidFile:
             raise
         return self
 
-    def __exit__(self, exc_type: None, exc_val: None, exc_tb: None) -> bool:
+    def __exit__(self, exc_type: None, exc_val: None, exc_tb: None) -> Literal[False]:
         if self.pidfile:
             self.pidfile.close()
         self.remove()

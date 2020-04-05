@@ -37,3 +37,4 @@ widgets\LineNumberArea.py
 widgets\LeaveLastTabWidget.py
 widgets\RecyclingVerticalScrollArea.py
 widgets\SourceHighlightingTextEdit.py
+widgets\SyntaxHighlighter.py
