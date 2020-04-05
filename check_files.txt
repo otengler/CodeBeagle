@@ -38,3 +38,4 @@ widgets\LeaveLastTabWidget.py
 widgets\RecyclingVerticalScrollArea.py
 widgets\SourceHighlightingTextEdit.py
 widgets\SyntaxHighlighter.py
+widgets\CaseSensitiveComboBox.py

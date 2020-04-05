@@ -55,7 +55,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="comboSearch">
+       <widget class="CaseSensitiveComboBox" name="comboSearch">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
           <horstretch>1</horstretch>
@@ -575,6 +575,11 @@ p, li { white-space: pre-wrap; }
    <extends>QWidget</extends>
    <header>MatchesOverview</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CaseSensitiveComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets.CaseSensitiveComboBox</header>
   </customwidget>
  </customwidgets>
  <resources>
