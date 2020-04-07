@@ -20,7 +20,7 @@ from typing import Tuple, List, Optional, Pattern
 import bisect
 import re
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QTextCharFormat, QFont, QBrush
+from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.FullTextIndex import Query
 
 class HighlightingRules:
@@ -31,6 +31,8 @@ class HighlightingRules:
         self.multiCommentStop: Optional[Pattern] = None
         self.commentFormat: Optional[QTextCharFormat] = None
         self.font = font
+        self.color = None
+        self.defaultFormat = None
 
     def addKeywords (self, keywords: str, fontWeight: int, foreground: QBrush) -> None:
         """Adds a list of comma separated keywords."""
@@ -53,12 +55,21 @@ class HighlightingRules:
         fmt = self.__createFormat(fontWeight, foreground)
         self.__addRule (expr, fmt)
 
+    def setColor(self, color: QColor) -> None:
+        self.color = color
+        fmt = QTextCharFormat() 
+        fmt.setFont(self.font)
+        fmt.setForeground(self.color)
+        self.defaultFormat = fmt
+
     def setFont (self, font: QFont) -> None:
         """Needed to change the font after the HighlightingRules object has been created."""
         for rule in self.rules:
             rule[1].setFont(font)
         if self.commentFormat:
             self.commentFormat.setFont(font)
+        if self.defaultFormat:
+            self.defaultFormat.setFont(font)
 
     def __addRule (self, expr: str, fmt: QTextCharFormat) -> None:
         self.rules.append((re.compile(expr), fmt))
@@ -168,6 +179,9 @@ class SyntaxHighlighter:
         formats: List[Tuple[QTextCharFormat, int, int]] = []
         if not self.highlightingRules:
             return formats
+
+        if self.highlightingRules.defaultFormat:
+            formats.append((self.highlightingRules.defaultFormat, 0, len(text)))
 
         # Single line highlighting rules
         for expression, fmt in self.highlightingRules.rules:

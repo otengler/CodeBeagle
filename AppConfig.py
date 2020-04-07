@@ -28,6 +28,7 @@ configName = "config.txt"
 class ConfigCache:
     config: Optional[Config.Config] = None
     lastUsedConfigName: str = ""
+    theme = "" # default theme
 
 def appConfig() -> Config.Config:
     """Read the global config.txt merged with a per user config.txt."""
@@ -128,3 +129,9 @@ def lastUsedConfigName () -> str:
 
 def setLastUsedConfigName (name: str) -> None:
     ConfigCache.lastUsedConfigName = name
+
+def setTheme(name: str) -> None:
+    ConfigCache.theme = name
+
+def theme() -> str:
+    return ConfigCache.theme 

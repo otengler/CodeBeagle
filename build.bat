@@ -3,6 +3,10 @@ call buildvars.bat
 set PYUIC=%PYQT_SCRIPTS%\scripts\pyuic5.exe
 set PYRCC5=%PYQT_SCRIPTS%\scripts\pyrcc5.exe
 
+python GenerateStylesheet.py
+"%PYRCC5%" -o qdarkstyle/style_rc.py qdarkstyle\style.qrc
+"%PYRCC5%" -o qlightstyle/style_rc.py qlightstyle\style.qrc
+
 "%PYUIC%" --from-imports -o widgets\Ui_LeaveLastTabWidget.py -x widgets\LeaveLastTabWidget.ui 
 "%PYUIC%" --from-imports -o dialogs\Ui_SettingsItem.py -x dialogs\SettingsItem.ui 
 "%PYUIC%" --from-imports -o dialogs\Ui_SettingsDialog.py -x dialogs\SettingsDialog.ui 

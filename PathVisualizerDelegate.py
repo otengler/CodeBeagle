@@ -23,31 +23,42 @@ from PyQt5.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
 from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
 
 class PathVisualizerDelegate (QStyledItemDelegate):
+    newPathColor = QColor(50, 50, 50)
+    samePathColor = QColor(150, 150, 150)
+    fileColor = QColor(0, 0, 50)
+    selectedPathColor = QColor(50, 50, 50)
+    selectedFileColor = QColor(0, 0, 50)
+    selectionBackground = QColor(205, 232, 255)
+
     """Parent must be the view (otherwise the focus drawing doesn't work)"""
     def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.pathDarkGrayColor = QPen(QColor(50, 50, 50))
-        self.pathGrayColor = QPen(QColor(150, 150, 150))
-        self.fileColor = QPen(QColor(0, 0,  50))
+        self.newPathColor = QPen(PathVisualizerDelegate.newPathColor)
+        self.samePathColor = QPen(PathVisualizerDelegate.samePathColor)
+        self.fileColor = QPen(PathVisualizerDelegate.fileColor)
+        self.selectedPathColor = QPen(PathVisualizerDelegate.selectedPathColor)
+        self.seletedFileColor = QPen(PathVisualizerDelegate.selectedFileColor)
+        self.selectionBackground = QColor(PathVisualizerDelegate.selectionBackground)
         if parent:
             self.pathBoldFont = QFont (parent.font())
         else:
             self.pathBoldFont = QFont (QApplication.font())
         self.pathBoldFont.setBold (True)
         self.pathBoldFontMetrics = QFontMetrics(self.pathBoldFont)
-        self.selectedPathColor = self.pathDarkGrayColor
-        self.seletedFileColor = self.fileColor
 
     def paint (self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         if option.type != QStyleOption.SO_ViewItem:
             return
 
-        # Always paint as active otherwise the selection of the current item(s) is very hard to see on Win 7
-        option.state |= QStyle.State_Active
-
-        QApplication.style().drawPrimitive(QStyle.PE_PanelItemViewItem, option, painter,  self.parent())
-
         bSelected = option.state & QStyle.State_Selected
+
+        rect = QRect(option.rect)
+        if bSelected:
+            painter.fillRect(rect,self.selectionBackground)
+
+        rect.setLeft (rect.left()+3)
+
+        painter.save()
 
         model = index.model()
         path, name = os.path.split(model.data(index,  Qt.DisplayRole))
@@ -57,28 +68,22 @@ class PathVisualizerDelegate (QStyledItemDelegate):
                 indexAbove = model.index(index.row()-1, 0, QModelIndex())
                 pathAbove,_ = os.path.split(model.data (indexAbove, Qt.DisplayRole))
                 if pathAbove == path:
-                    pathColor = self.pathGrayColor
+                    pathColor = self.samePathColor
                 else:
-                    pathColor = self.pathDarkGrayColor
+                    pathColor = self.newPathColor
+                    painter.setPen(self.samePathColor)
+                    painter.drawLine(option.rect.left(),  option.rect.top(),  option.rect.right(),  option.rect.top())
+
             else:
-                pathColor = self.pathDarkGrayColor
+                pathColor = self.newPathColor
         else:
             fileColor = self.seletedFileColor
             pathColor = self.selectedPathColor
 
         path += os.path.sep
 
-        rect = QRect(option.rect)
-        rect.setLeft (rect.left()+3)
-
         font = painter.font()
-        painter.save()
-
-        if pathColor == self.pathDarkGrayColor and index.row() > 0:
-            painter.setPen(self.pathGrayColor)
-            painter.drawLine(option.rect.left(),  option.rect.top(),  option.rect.right(),  option.rect.top())
-
-        painter.setFont (self.pathBoldFont)
+        painter.setFont(self.pathBoldFont)
         painter.setPen(pathColor)
         bound = painter.drawText (rect, Qt.AlignVCenter, path)
 

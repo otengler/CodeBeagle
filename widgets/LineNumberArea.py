@@ -22,6 +22,8 @@ from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 
 class LineNumberArea (QWidget):
     padding = 20
+    areaColor = QColor(235,235,235)
+    textColor = QColor(130,130,130)
 
     def __init__(self, textEdit: QPlainTextEdit, firstLineNumber:int = 1) -> None:
         super().__init__(textEdit)
@@ -29,8 +31,8 @@ class LineNumberArea (QWidget):
         self.textEdit: QPlainTextEdit = textEdit
         self.firstLineNumber = firstLineNumber
 
-        self.areaColor = QColor(235,235,235)
-        self.textColor = QColor(130,130,130)
+        self.areaColor = LineNumberArea.areaColor
+        self.textColor = LineNumberArea.textColor
 
         self.textEdit.blockCountChanged.connect(self.adjustAreaWidth)
         self.textEdit.updateRequest.connect(self.scrollArea)

@@ -19,16 +19,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from typing import Optional, Dict
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QColor
 from tools.FileTools import fopen
 from widgets.SyntaxHighlighter import HighlightingRules
 import HighlighterConfiguration
-from AppConfig import appConfig
+import AppConfig
+
+def themeDependedRuleFile(ruleFile: str) -> str:
+    """
+    Returns the rule file with the name of the theme appended. For "dark" and "c++.txt" that is
+    "c++-dark.txt"
+    """
+    name, ext = os.path.splitext(ruleFile)
+    return  name + "-" + AppConfig.theme() + ext
+
+def ruleFilePath(rulesFile: str) -> str:
+    return os.path.join("config", rulesFile)
+
+def rgb(r: int, g: int, b: int) -> QColor:
+    return QColor(r,g,b)
+
+def rgba(r: int, g: int, b: int, a: int) -> QColor:
+    return QColor(r,g,b,a)
 
 class RulesCache:
     """Provides a cache for HighlightingRules objects. It provides fast lookup by file name extension."""
     def __init__ (self) -> None:
-        self.highlighterConfig = HighlighterConfiguration.highlighter(appConfig().SourceViewer)
+        self.highlighterConfig = HighlighterConfiguration.highlighter(AppConfig.appConfig().SourceViewer)
         # A dict mapping a file extension to a HighlightingRules object
         self.highlightingRulesCache: Dict[str, HighlightingRules] = {}
         self.extensionsToRulesFile: Dict[str, str] = {}
@@ -45,13 +62,16 @@ class RulesCache:
             possibleRulesFile = self.highlighterConfig.lookup(ext)
             if not possibleRulesFile:
                 return None
+            themeRuleFile = themeDependedRuleFile(possibleRulesFile)
+            if os.path.isfile(ruleFilePath(themeRuleFile)):
+                possibleRulesFile = themeRuleFile
             rulesFile = possibleRulesFile
             self.extensionsToRulesFile[ext] = rulesFile
 
         if rulesFile in self.highlightingRulesCache:
             highlightingRules = self.highlightingRulesCache[rulesFile]
         else:
-            highlightingRules = self.__rulesFromFile(rulesFile,  font)
+            highlightingRules = self.__rulesFromFile(rulesFile, font)
             self.highlightingRulesCache[rulesFile] = highlightingRules
 
         return highlightingRules
@@ -83,11 +103,16 @@ class RulesCache:
                        "darkGray" : Qt.darkGray,
                        "lightGray" : Qt.lightGray,
 
+                       "QColor": QColor,
+                       "rgb": rgb,
+                       "rgba": rgba,
+
+                       "setColor": newRules.setColor,
                        "addKeywords" : newRules.addKeywords,
                        "addCommentRule" : newRules.addCommentRule,
                        "addRule" : newRules.addRule}
 
-        with fopen(os.path.join("config", rulesFile)) as script:
+        with fopen(ruleFilePath(rulesFile)) as script:
             code = compile(script.read(), rulesFile, 'exec')
         exec(code,  globals(),  localsDict)
 

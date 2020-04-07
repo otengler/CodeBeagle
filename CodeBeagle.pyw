@@ -19,13 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
-from PyQt5.QtGui import QDesktopServices, QCloseEvent
+from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
+from widgets.LineNumberArea import LineNumberArea
+from PathVisualizerDelegate import PathVisualizerDelegate
 from tools import FileTools
 from dialogs.UserHintDialog import ButtonType, showUserHint
 import AppConfig
 from UpdateCheck import UpdateCheck
 from Ui_MainWindow import Ui_MainWindow
+import qdarkstyle
+import qlightstyle
 
 
 userHintNewVersionAvailable = """
@@ -37,6 +41,20 @@ def main() -> None:
     # Switch to application directory to be able to load the configuration and search scripts even if we are
     # executed from a different working directory.
     FileTools.switchToAppDir()
+
+    if 1:
+        AppConfig.setTheme("dark")
+        LineNumberArea.areaColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_NORMAL).darker(120)
+        PathVisualizerDelegate.newPathColor = QColor(204,204,204) #QColor(qdarkstyle.DarkPalette.COLOR_FOREGROUND_LIGHT)
+        PathVisualizerDelegate.samePathColor = QColor(qdarkstyle.DarkPalette.COLOR_FOREGROUND_DARK)
+        PathVisualizerDelegate.fileColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT)
+        PathVisualizerDelegate.selectedFileColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT).lighter(120)
+        PathVisualizerDelegate.selectedPathColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT)
+        PathVisualizerDelegate.selectionBackground = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_LIGHT)
+        qdarkstyle.apply_stylesheet(app)
+    else:
+        AppConfig.setTheme("")
+        qlightstyle.apply_stylesheet(app)
 
     wnd = MainWindow()
     wnd.show()
