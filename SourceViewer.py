@@ -25,6 +25,7 @@ from tools.FileTools import fopen
 from AppConfig import appConfig
 from fulltextindex import FullTextIndex
 import HighlightingRulesCache
+from widgets.SyntaxHighlighter import SyntaxHighlighter
 from Ui_SourceViewer import Ui_SourceViewer
 
 class EditorState:
@@ -39,6 +40,9 @@ class SourceViewer (QWidget):
     noNextMatch = pyqtSignal()
     directoryDropped = pyqtSignal('QString')
     currentMatchChanged = pyqtSignal(int)
+
+    currentLineBackgroundColor = QColor(240,240,240)
+    currentMatchLineBackgroundColor = QColor(170,255,127)
 
     def __init__ (self, parent: QWidget) -> None:
         self.matches: List[Tuple[int,int]]
@@ -224,7 +228,7 @@ class SourceViewer (QWidget):
         extra.cursor = self.ui.textEdit.textCursor()
         extra.cursor.setPosition (self.ui.textEdit.textCursor().position())
         extra.format.setProperty (QTextFormat.FullWidthSelection, True)
-        extra.format.setBackground (QColor(240,240,240))
+        extra.format.setBackground (SourceViewer.currentLineBackgroundColor)
         self.__updateCurrentLineExtraSelections([extra])
 
     @pyqtSlot()
@@ -271,14 +275,14 @@ class SourceViewer (QWidget):
         extra1.cursor = self.ui.textEdit.textCursor()
         extra1.cursor.setPosition (index)
         extra1.format.setProperty (QTextFormat.FullWidthSelection,  True)
-        extra1.format.setBackground (QColor(170,255,127))
+        extra1.format.setBackground (SourceViewer.currentMatchLineBackgroundColor)
         extras.append(extra1)
 
         extra2 = QTextEdit.ExtraSelection ()
         extra2.cursor = self.ui.textEdit.textCursor()
         extra2.cursor.setPosition (index)
         extra2.cursor.setPosition (index+length,  QTextCursor.KeepAnchor)
-        extra2.format.setBackground (Qt.yellow)
+        extra2.format.setBackground (SyntaxHighlighter.matchBackgroundColor)
         extras.append(extra2)
 
         self.__updateMatchExtraSelections(extras)

@@ -21,12 +21,15 @@ import sys
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-from widgets.LineNumberArea import LineNumberArea
-from PathVisualizerDelegate import PathVisualizerDelegate
 from tools import FileTools
 from dialogs.UserHintDialog import ButtonType, showUserHint
 import AppConfig
+from widgets.LineNumberArea import LineNumberArea
+from widgets.HighlightingTextEdit import HighlightingTextEdit
+from widgets.SyntaxHighlighter import SyntaxHighlighter
+from PathVisualizerDelegate import PathVisualizerDelegate
 from UpdateCheck import UpdateCheck
+from SourceViewer import SourceViewer
 from Ui_MainWindow import Ui_MainWindow
 import qdarkstyle
 import qlightstyle
@@ -42,15 +45,23 @@ def main() -> None:
     # executed from a different working directory.
     FileTools.switchToAppDir()
 
-    if 1:
+    if 0:
         AppConfig.setTheme("dark")
         LineNumberArea.areaColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_NORMAL).darker(120)
-        PathVisualizerDelegate.newPathColor = QColor(204,204,204) #QColor(qdarkstyle.DarkPalette.COLOR_FOREGROUND_LIGHT)
+        PathVisualizerDelegate.newPathColor = QColor(204,204,204)
         PathVisualizerDelegate.samePathColor = QColor(qdarkstyle.DarkPalette.COLOR_FOREGROUND_DARK)
         PathVisualizerDelegate.fileColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT)
         PathVisualizerDelegate.selectedFileColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT).lighter(120)
         PathVisualizerDelegate.selectedPathColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT)
         PathVisualizerDelegate.selectionBackground = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_LIGHT)
+        HighlightingTextEdit.highlightOutlineColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_LIGHT).lighter(150)
+        HighlightingTextEdit.highlightSolidBackgroundColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_LIGHT).lighter(140)
+        HighlightingTextEdit.highlightSolidForegroundColor = None
+        SourceViewer.currentLineBackgroundColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_DARK).lighter(130)
+        SourceViewer.currentMatchLineBackgroundColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_DARK).darker(120)
+        SyntaxHighlighter.matchBackgroundColor = QColor(Qt.yellow).darker(120)
+        SyntaxHighlighter.matchForegroundColor = Qt.black
+
         qdarkstyle.apply_stylesheet(app)
     else:
         AppConfig.setTheme("")

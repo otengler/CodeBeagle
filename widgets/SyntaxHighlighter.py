@@ -90,13 +90,16 @@ class CommentRange:
         return self.index < other.index
 
 class SyntaxHighlighter:
+    matchBackgroundColor = Qt.yellow
+    matchForegroundColor = Qt.black
+
     def __init__(self) -> None:
         # The current rules
         self.highlightingRules: Optional[HighlightingRules] = None
 
         self.searchStringFormat = QTextCharFormat()
-        self.searchStringFormat.setBackground(Qt.yellow)
-        self.searchStringFormat.setForeground(Qt.black)
+        self.searchStringFormat.setBackground(SyntaxHighlighter.matchBackgroundColor)
+        self.searchStringFormat.setForeground(SyntaxHighlighter.matchForegroundColor)
 
         self.comments: List[CommentRange]  = []
         self.searchData: Optional[Query] = None
@@ -204,7 +207,7 @@ class SyntaxHighlighter:
                 break
             pos += 1
 
-        # Search match highlight
+        # Highlight search match
         if self.searchData:
             for index, length in self.searchData.matches (text):
                 formats.append((self.searchStringFormat, index, length))

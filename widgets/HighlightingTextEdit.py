@@ -32,6 +32,10 @@ class HighlightingTextEdit (QPlainTextEdit):
     updateNeeded = pyqtSignal()
     parentheses = [('(',')'), ('[',']'), ('{', '}')]
 
+    highlightOutlineColor = Qt.darkGray
+    highlightSolidBackgroundColor = Qt.lightGray
+    highlightSolidForegroundColor = Qt.black
+
     def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent)
         self.highlighter = SyntaxHighlighter()
@@ -202,12 +206,13 @@ class HighlightingTextEdit (QPlainTextEdit):
 
         if style == HighlightStyle.Outline:
             rectResult = QRect(rectBefore.right()+4,  rectBefore.top()+1,  rectText.width()+2,  rectText.height()-2)
-            painter.setPen(Qt.darkGray)
+            painter.setPen(HighlightingTextEdit.highlightOutlineColor)
             painter.drawRect(rectResult)
         elif style == HighlightStyle.Solid:
             rectResult = QRect(rectBefore.right()+4,  rectBefore.top(),  rectText.width()+2,  rectText.height()+2)
-            painter.fillRect(rectResult, Qt.lightGray)
-            painter.setPen(Qt.black)
+            painter.fillRect(rectResult, HighlightingTextEdit.highlightSolidBackgroundColor)
+            if HighlightingTextEdit.highlightSolidForegroundColor:
+                painter.setPen(HighlightingTextEdit.highlightSolidForegroundColor)
             painter.drawText(QRectF(rectBefore.right()+5,rectBefore.top(),rectText.width(),rectText.height()), text)
 
     def __colorizeVisibleBlocks(self, firstVisibleBlock: QTextBlock) -> bool:
