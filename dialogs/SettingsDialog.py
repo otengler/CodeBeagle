@@ -17,13 +17,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import List, Set
-from PyQt5.QtCore import Qt, QRect, QSize, pyqtSlot, QModelIndex, QObject
+from PyQt5.QtCore import Qt, QRect, QSize, pyqtSignal, pyqtSlot, QModelIndex, QObject
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QPainter
 from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QMessageBox, QWidget, QCheckBox, QListView
-from fulltextindex.IndexConfiguration import IndexConfiguration
+from fulltextindex.IndexConfiguration import IndexConfiguration, indexTypeInfo, IndexMode
 from tools.Config import Config
+import tools.FileTools as FileTools
+from dialogs import StackTraceMessageBox
+from dialogs.UserHintDialog import ButtonType,showUserHint
 from .Ui_SettingsDialog import Ui_SettingsDialog
 from .SettingsItem import SettingsItem
+import AppConfig
+
+
+userHintUpdateIndex = """
+<p align='justify'>You added or changed indexed search locations:
+%(locations)s
+</p>
+<p align='justify'>Do you want me to update the indexes now?</p>
+<p align='jusitfy'> The update runs in the background and continues even if you close the program. During the update the index cannot be used.
+To manually start the index update press the 'Update Index' button in the toolbar. See the help for more details.</p>
+"""
 
 class SettingsEditorDelegate(QStyledItemDelegate):
     itemHeight = 40
@@ -167,11 +181,15 @@ class LocationControl (QObject):
         return locs
 
 class SettingsDialog (QDialog):
+    updateChangedIndexes = pyqtSignal(list)
+
     def __init__ (self, parent: QWidget, searchLocations: List[IndexConfiguration], globalSearchLocations: List[IndexConfiguration], config: Config) -> None:
         super ().__init__(parent)
         self.ui = Ui_SettingsDialog()
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
+
+        self.searchLocations = searchLocations
 
         self.ui.fontComboBox.setCurrentFont(QFont(config.SourceViewer.FontFamily))
         self.ui.editFontSize.setText(str(config.SourceViewer.FontSize))
@@ -182,6 +200,8 @@ class SettingsDialog (QDialog):
         setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
         setCheckBox (self.ui.checkShowMatchList, config.showMatchList)
         setCheckBox (self.ui.checkShowLineNumbers, config.SourceViewer.showLineNumbers)
+        isDarkTheme = config.theme == AppConfig.darkTheme
+        setCheckBox (self.ui.checkDarkTheme, isDarkTheme)
 
         self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
@@ -291,7 +311,77 @@ class SettingsDialog (QDialog):
                                     QMessageBox.StandardButtons(QMessageBox.Ok))
                 return
             names.add(name)
-        self.accept()
+        if self.__saveUserConfig():
+            self.accept()
+        else:
+            self.reject()
+
+    def __saveUserConfig (self) -> bool:
+        locations = self.locations()
+        config = Config (typeInfoFunc=AppConfig.configTypeInfo)
+        for location in locations:
+            locConf = Config(typeInfoFunc=indexTypeInfo)
+            locConf.indexName = location.indexName
+            locConf.extensions = location.extensionsAsString()
+            locConf.directories =  location.directoriesAsString()
+            locConf.dirExcludes = location.dirExcludesAsString()
+            locConf.indexUpdateMode = location.indexUpdateMode
+            locConf.indexdb = location.indexdb
+            setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
+        config.sourceViewer.FontFamily = self.ui.fontComboBox.currentFont().family()
+        config.sourceViewer.FontSize = self.ui.editFontSize.text()
+        config.sourceViewer.TabWidth = self.ui.editTabWidth.text()
+        config.sourceViewer.showLineNumbers = self.ui.checkShowLineNumbers.checkState() == Qt.Checked
+        config.matchOverFiles = self.ui.checkMatchOverFiles.checkState() == Qt.Checked
+        config.activateFirstMatch = self.ui.checkActivateFirstMatch.checkState() == Qt.Checked
+        config.showCloseConfirmation = self.ui.checkConfirmClose.checkState() == Qt.Checked
+        config.showMatchList = self.ui.checkShowMatchList.checkState() == Qt.Checked
+        config.defaultLocation = self.defaultLocation()
+        config.previewLines = int(self.ui.editPreviewLines.text())
+        theme = ""
+        if self.ui.checkDarkTheme.checkState() == Qt.Checked:
+            theme = AppConfig.darkTheme
+        config.theme = theme
+
+        try:
+            AppConfig.saveUserConfig (config)
+        except:
+            self.failedToSaveUserConfigMessage()
+            return False
+        else:
+            updateDisplayNames = self.__getAddedOrChangedIndexedSearchLocations (self.searchLocations,  locations)
+            if updateDisplayNames:
+                # Show a user hint which allows to update added or changed indexes<ul>
+                locationsHtml = "<ul>"
+                for displayName in updateDisplayNames:
+                    locationsHtml += "<li>" + displayName + "</li>"
+                locationsHtml += "</ul>"
+                text = self.tr(userHintUpdateIndex) % {"locations" : locationsHtml}
+                result = showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text, ButtonType.Yes, False, ButtonType.No,  True,  bShowHintAgain=True)
+                if result == ButtonType.Yes:
+                    self.updateChangedIndexes(updateDisplayNames)
+
+            return True
+
+    def __getAddedOrChangedIndexedSearchLocations (self,  currentSearchLocations: List[IndexConfiguration],
+                                                   newSearchLocations: List[IndexConfiguration]) -> List[str]:
+        """Returns a list of display names of added or changed indexed search locations."""
+        changedLocations: List[str] = []
+        for location in newSearchLocations:
+            if location.indexUpdateMode == IndexMode.ManualIndexUpdate or location.indexUpdateMode == IndexMode.TriggeredIndexUpdate:
+                bFound = False
+                for oldLocation in currentSearchLocations:
+                    if location == oldLocation:
+                        bFound = True
+                        break
+                if not bFound:
+                    changedLocations.append(location.displayName())
+        return changedLocations
+
+    def failedToSaveUserConfigMessage(self) -> None:
+        StackTraceMessageBox.show(self,
+                                  self.tr("Failed to save user config"),
+                                  self.tr("The user config file could not be saved to the user profile"))
 
 def main() -> None:
     import sys

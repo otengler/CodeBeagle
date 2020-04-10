@@ -359,38 +359,45 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="0" colspan="2">
+       <item row="5" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkShowLineNumbers">
+         <property name="text">
+          <string>Show line numbers</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0" colspan="2">
         <widget class="QCheckBox" name="checkMatchOverFiles">
          <property name="text">
           <string>Clicking &quot;Next match&quot; continues with next file if the last match has been reached</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="0" colspan="2">
+       <item row="9" column="0" colspan="2">
         <widget class="QCheckBox" name="checkConfirmClose">
          <property name="text">
           <string>Ask whether to really close the application</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="0" colspan="2">
+       <item row="10" column="0" colspan="2">
         <widget class="QCheckBox" name="checkShowMatchList">
          <property name="text">
           <string>Show match list on right side by default</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="0" colspan="2">
+       <item row="7" column="0" colspan="2">
         <widget class="QCheckBox" name="checkActivateFirstMatch">
          <property name="text">
           <string>Automatically open first matching document after searching</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QCheckBox" name="checkShowLineNumbers">
+       <item row="4" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkDarkTheme">
          <property name="text">
-          <string>Show line numbers</string>
+          <string>Use dark theme (requires restart)</string>
          </property>
         </widget>
        </item>

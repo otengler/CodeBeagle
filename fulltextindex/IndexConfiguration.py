@@ -94,7 +94,7 @@ class IndexConfiguration:
         return result
 
     def __eq__(self, other: object) -> bool:
-        if type(other) is IndexConfiguration:
+        if not type(other) is IndexConfiguration:
             return False
 
         other = cast(IndexConfiguration, other)

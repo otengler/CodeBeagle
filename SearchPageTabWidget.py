@@ -34,15 +34,6 @@ from fulltextindex import IndexConfiguration
 import UpdateIndex
 
 
-userHintUpdateIndex = """
-<p align='justify'>You added or changed indexed search locations:
-%(locations)s
-</p>
-<p align='justify'>Do you want me to update the indexes now?</p>
-<p align='jusitfy'> The update runs in the background and continues even if you close the program. During the update the index cannot be used.
-To manually start the index update press the 'Update Index' button in the toolbar. See the help for more details.</p>
-"""
-
 userHintInitialSetup= """
 <p align='justify'>There are no search locations defined so far. </p>
 <p align='justify'>Would you like to open the settings dialog and create a first search location now?</p>
@@ -170,74 +161,17 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             searchLocations = IndexConfiguration.readConfig(config)
             globalSearchLocations = IndexConfiguration.readConfig(globalConfig)
             settingsDlg = SettingsDialog(self, searchLocations,  globalSearchLocations, config)
+            settingsDlg.updateChangedIndexes.connect(self.triggerIndexUpdate)
+
             if createInitialLocation:
                 settingsDlg.addLocation()
             if locationToAdd:
                 settingsDlg.addExistingLocation(locationToAdd)
             if settingsDlg.exec():
-                self.__saveUserConfig (searchLocations, settingsDlg)
-
-    def __saveUserConfig (self,  currentSearchLocations: List[IndexConfiguration.IndexConfiguration], settingsDlg: SettingsDialog) -> None:
-        locations = settingsDlg.locations()
-        config = Config (typeInfoFunc=AppConfig.configTypeInfo)
-        for location in locations:
-            locConf = Config(typeInfoFunc=IndexConfiguration.indexTypeInfo)
-            locConf.indexName = location.indexName
-            locConf.extensions = location.extensionsAsString()
-            locConf.directories =  location.directoriesAsString()
-            locConf.dirExcludes = location.dirExcludesAsString()
-            locConf.indexUpdateMode = location.indexUpdateMode
-            locConf.indexdb = location.indexdb
-            setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
-        config.sourceViewer.FontFamily = settingsDlg.ui.fontComboBox.currentFont().family()
-        config.sourceViewer.FontSize = settingsDlg.ui.editFontSize.text()
-        config.sourceViewer.TabWidth = settingsDlg.ui.editTabWidth.text()
-        config.sourceViewer.showLineNumbers = settingsDlg.ui.checkShowLineNumbers.checkState() == Qt.Checked
-        config.matchOverFiles = settingsDlg.ui.checkMatchOverFiles.checkState() == Qt.Checked
-        config.activateFirstMatch = settingsDlg.ui.checkActivateFirstMatch.checkState() == Qt.Checked
-        config.showCloseConfirmation = settingsDlg.ui.checkConfirmClose.checkState() == Qt.Checked
-        config.showMatchList = settingsDlg.ui.checkShowMatchList.checkState() == Qt.Checked
-        config.defaultLocation = settingsDlg.defaultLocation()
-        config.previewLines = int(settingsDlg.ui.editPreviewLines.text())
-        try:
-            AppConfig.saveUserConfig (config)
-        except:
-            self.failedToSaveUserConfigMessage()
-        else:
-            updateDisplayNames = self.__getAddedOrChangedIndexedSearchLocations (currentSearchLocations,  locations)
-            if updateDisplayNames:
-                # Show a user hint which allows to update added or changed indexes<ul>
-                locationsHtml = "<ul>"
-                for displayName in updateDisplayNames:
-                    locationsHtml += "<li>" + displayName + "</li>"
-                locationsHtml += "</ul>"
-                text = self.tr(userHintUpdateIndex) % {"locations" : locationsHtml}
-                result = showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text, ButtonType.Yes, False, ButtonType.No,  True,  bShowHintAgain=True)
-                if result == ButtonType.Yes:
-                    try:
-                        self.__triggerIndexUpdate (updateDisplayNames)
-                    except:
-                        self.failedToUpdateIndexesMessage()
-
-            # Refresh config
-            AppConfig.refreshConfig()
-            searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
-            self.configChanged.emit(searchLocations)
-
-    def __getAddedOrChangedIndexedSearchLocations (self,  currentSearchLocations: List[IndexConfiguration.IndexConfiguration],
-                                                   newSearchLocations: List[IndexConfiguration.IndexConfiguration]) -> List[str]:
-        """Returns a list of display names of added or changed indexed search locations."""
-        changedLocations: List[str] = []
-        for location in newSearchLocations:
-            if location.indexUpdateMode == IndexConfiguration.IndexMode.ManualIndexUpdate or location.indexUpdateMode == IndexConfiguration.IndexMode.TriggeredIndexUpdate:
-                bFound = False
-                for oldLocation in currentSearchLocations:
-                    if location == oldLocation:
-                        bFound = True
-                        break
-                if not bFound:
-                    changedLocations.append(location.displayName())
-        return changedLocations
+                # Refresh config
+                AppConfig.refreshConfig()
+                searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
+                self.configChanged.emit(searchLocations)
 
     @pyqtSlot('QString')
     def addSearchLocationFromPath (self, directory: str) -> None:
@@ -264,10 +198,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             if updateDialog.exec():
                 # The items returned are touples: (index,value)
                 updateDisplayNames = [name for i, name in updateDialog.checkedItems()]
-                try:
-                    self.__triggerIndexUpdate (updateDisplayNames)
-                except:
-                    self.failedToUpdateIndexesMessage()
+                self.triggerIndexUpdate (updateDisplayNames)
 
     @pyqtSlot()
     def openHelp(self) -> None:
@@ -282,6 +213,13 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         from dialogs.AboutDialog import AboutDialog
         aboutDialog = AboutDialog(self)
         aboutDialog.exec()
+
+    @pyqtSlot()
+    def triggerIndexUpdate (self,  updateDisplayNames: List[str]) -> None:
+        try:
+            self.__triggerIndexUpdate (updateDisplayNames)
+        except:
+            self.failedToUpdateIndexesMessage()
 
     def __triggerIndexUpdate (self,  updateDisplayNames: List[str]) -> None:
         r"""
@@ -417,11 +355,6 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 res = showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  ButtonType.Yes,  True,  ButtonType.No)
                 if res == ButtonType.Yes:
                     self.openSettings(createInitialLocation=True)
-
-    def failedToSaveUserConfigMessage(self) -> None:
-        StackTraceMessageBox.show(self,
-                                  self.tr("Failed to save user config"),
-                                  self.tr("The user config file could not be saved to the user profile"))
 
     def userConfigFailedToLoadMessage(self) -> None:
         StackTraceMessageBox.show(self,

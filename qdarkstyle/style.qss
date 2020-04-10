@@ -1361,8 +1361,8 @@ QTabBar::tab:top {
   background-color: #383838;
   color: #F0F0F0;
   margin-left: 2px;
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 11px;
+  padding-right: 11px;
   padding-top: 2px;
   padding-bottom: 2px;
   min-width: 5px;
@@ -1372,17 +1372,12 @@ QTabBar::tab:top {
 }
 QTabBar::tab:top:selected {
   background-color: #454545;
-  color: #F0F0F0;
   border-bottom: 3px solid #1464A0;
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
 }
 QTabBar::tab:top:!selected:hover {
   border: 1px solid #148CD2;
   border-bottom: 3px solid #148CD2;
-  /* Fixes spyder-ide/spyder#9766 */
-  padding-left: 4px;
-  padding-right: 4px;
+  padding: 0px;
 }
 QTabBar::tab:bottom {
   color: #F0F0F0;
@@ -1398,18 +1393,13 @@ QTabBar::tab:bottom {
   min-width: 5px;
 }
 QTabBar::tab:bottom:selected {
-  color: #F0F0F0;
   background-color: #454545;
   border-top: 3px solid #1464A0;
-  border-bottom-left-radius: 3px;
-  border-bottom-right-radius: 3px;
 }
 QTabBar::tab:bottom:!selected:hover {
   border: 1px solid #148CD2;
   border-top: 3px solid #148CD2;
-  /* Fixes spyder-ide/spyder#9766 */
-  padding-left: 4px;
-  padding-right: 4px;
+  padding: 0px;
 }
 QTabBar::tab:left {
   color: #F0F0F0;
@@ -1424,7 +1414,6 @@ QTabBar::tab:left {
   min-height: 5px;
 }
 QTabBar::tab:left:selected {
-  color: #F0F0F0;
   background-color: #454545;
   border-right: 3px solid #1464A0;
 }
@@ -1446,7 +1435,6 @@ QTabBar::tab:right {
   min-height: 5px;
 }
 QTabBar::tab:right:selected {
-  color: #F0F0F0;
   background-color: #454545;
   border-left: 3px solid #1464A0;
 }

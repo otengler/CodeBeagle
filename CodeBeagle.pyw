@@ -45,8 +45,14 @@ def main() -> None:
     # executed from a different working directory.
     FileTools.switchToAppDir()
 
-    if 0:
-        AppConfig.setTheme("dark")
+    configureTheme(app)
+
+    wnd = MainWindow()
+    wnd.show()
+    sys.exit(app.exec_())
+
+def configureTheme(app: QApplication) -> None:
+    if AppConfig.appConfig().theme == AppConfig.darkTheme:
         LineNumberArea.areaColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_NORMAL).darker(120)
         PathVisualizerDelegate.newPathColor = QColor(204,204,204)
         PathVisualizerDelegate.samePathColor = QColor(qdarkstyle.DarkPalette.COLOR_FOREGROUND_DARK)
@@ -61,15 +67,9 @@ def main() -> None:
         SourceViewer.currentMatchLineBackgroundColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_DARK).darker(120)
         SyntaxHighlighter.matchBackgroundColor = QColor(Qt.yellow).darker(120)
         SyntaxHighlighter.matchForegroundColor = Qt.black
-
         qdarkstyle.apply_stylesheet(app)
     else:
-        AppConfig.setTheme("")
         qlightstyle.apply_stylesheet(app)
-
-    wnd = MainWindow()
-    wnd.show()
-    sys.exit(app.exec_())
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:

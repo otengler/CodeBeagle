@@ -31,7 +31,7 @@ def themeDependedRuleFile(ruleFile: str) -> str:
     "c++-dark.txt"
     """
     name, ext = os.path.splitext(ruleFile)
-    return  name + "-" + AppConfig.theme() + ext
+    return  name + "-" + str(AppConfig.appConfig().theme) + ext
 
 def ruleFilePath(rulesFile: str) -> str:
     return os.path.join("config", rulesFile)

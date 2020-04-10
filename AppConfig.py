@@ -24,6 +24,7 @@ appName = "CodeBeagle"
 appCompany = "OTE"
 appVersion = "1.2.12.0"
 configName = "config.txt"
+darkTheme = "dark"
 
 class ConfigCache:
     config: Optional[Config.Config] = None
@@ -119,6 +120,7 @@ def configTypeInfo (config: Config.Config) -> None:
     config.setType("updateCheckPeriod",  Config.typeDefaultInt(0))
     config.setType("matchOverFiles",  Config.typeDefaultBool(False))
     config.setType("activateFirstMatch", Config.typeDefaultBool(False))
+    config.setType("theme", Config.typeDefaultString(""))
     config.setType("showPerformanceButton",  Config.typeDefaultBool(False))
     config.setType("defaultLocation",  Config.typeDefaultString(""))
     config.setType("SourceViewer",  typeSourceViewerDefaults())
@@ -129,9 +131,3 @@ def lastUsedConfigName () -> str:
 
 def setLastUsedConfigName (name: str) -> None:
     ConfigCache.lastUsedConfigName = name
-
-def setTheme(name: str) -> None:
-    ConfigCache.theme = name
-
-def theme() -> str:
-    return ConfigCache.theme 
