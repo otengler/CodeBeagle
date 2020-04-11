@@ -39,6 +39,13 @@ userHintInitialSetup= """
 <p align='justify'>Would you like to open the settings dialog and create a first search location now?</p>
 """
 
+userHintDarkTheme="""
+<p align='justify'>There is a dark theme available now. It can be selected from the options dialog.</p>
+<p align='justify'>Would you like to give it a try?</p>
+"""
+
+
+
 class AnimatedUpdateWidget(QWidget):
     """
     This widget attempts to look like a flat QPushButton. It shows a spinning gear icon to indicate
@@ -355,6 +362,27 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 res = showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  ButtonType.Yes,  True,  ButtonType.No)
                 if res == ButtonType.Yes:
                     self.openSettings(createInitialLocation=True)
+        if AppConfig.appConfig().theme != AppConfig.darkTheme:
+            text = self.tr(userHintDarkTheme)
+            if showUserHint (self, "darkTheme",  self.tr("Dark theme"), text,  ButtonType.Yes, True, ButtonType.No) == ButtonType.Yes:
+                AppConfig.appConfig().theme = AppConfig.darkTheme
+                AppConfig.saveUserConfig(AppConfig.appConfig())
+                self.__restartCodeBeagle()
+                sys.exit(0)
+
+    def __restartCodeBeagle(self) -> None:
+        import subprocess
+        runningInInterpreter = os.path.basename(sys.executable).lower().startswith("python")
+        if runningInInterpreter:
+            subprocess.Popen ([sys.executable, "CodeBeagle.pyw"])
+        else:
+            if os.path.exists("CodeBeagle.exe"):
+                si = subprocess.STARTUPINFO()
+                si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+                si.wShowWindow = subprocess.SW_HIDE
+                subprocess.Popen (["CodeBeagle.exe"], startupinfo=si)
+            else:
+                raise RuntimeError("CodeBeagle.exe not found")
 
     def userConfigFailedToLoadMessage(self) -> None:
         StackTraceMessageBox.show(self,

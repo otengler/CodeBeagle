@@ -1589,23 +1589,19 @@ QTabBar {
 
         /* selected ------------------------------------------------------- */
         &:top:_qnot_selected {
-            border-bottom: 2px solid $COLOR_BACKGROUND_DARK;
-            margin-top: 2px;
+            border-bottom: 3px solid $COLOR_BACKGROUND_DARK;
         }
 
         &:bottom:_qnot_selected {
-            border-top: 2px solid $COLOR_BACKGROUND_DARK;
-            margin-bottom: 3px;
+            border-top: 3px solid $COLOR_BACKGROUND_DARK;
         }
 
         &:left:_qnot_selected {
-            border-left: 2px solid $COLOR_BACKGROUND_DARK;
-            margin-right: 2px;
+            border-left: 3px solid $COLOR_BACKGROUND_DARK;
         }
 
         &:right:_qnot_selected {
-            border-right: 2px solid $COLOR_BACKGROUND_DARK;
-            margin-left: 2px;
+            border-right: 3px solid $COLOR_BACKGROUND_DARK;
         }
 
         &:top {
@@ -1634,17 +1630,17 @@ QTabBar {
         }
 
         &:bottom {
-            color: $COLOR_FOREGROUND_LIGHT;
-            border-top: 3px solid $COLOR_BACKGROUND_NORMAL;
             background-color: $COLOR_BACKGROUND_NORMAL;
+            color: $COLOR_FOREGROUND_LIGHT;
             margin-left: 2px;
-            padding-left: 4px;
-            padding-right: 4px;
+            padding-left: 11px;
+            padding-right: 11px;
             padding-top: 2px;
             padding-bottom: 2px;
+            min-width: 5px;
+            border-top: 3px solid $COLOR_BACKGROUND_NORMAL;
             border-bottom-left-radius: 3px;
             border-bottom-right-radius: 3px;
-            min-width: 5px;
 
             &:selected {
                 background-color: $COLOR_BACKGROUND_LIGHT;
@@ -1672,7 +1668,6 @@ QTabBar {
             min-height: 5px;
 
             &:selected {
-
                 background-color: $COLOR_BACKGROUND_LIGHT;
                 border-right: 3px solid $COLOR_SELECTION_NORMAL;
             }
@@ -1699,7 +1694,6 @@ QTabBar {
             &:selected {
                 background-color: $COLOR_BACKGROUND_LIGHT;
                 border-left: 3px solid $COLOR_SELECTION_NORMAL;
-
             }
 
             &:_qnot_selected:hover {
