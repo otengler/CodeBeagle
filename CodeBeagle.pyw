@@ -31,9 +31,6 @@ from PathVisualizerDelegate import PathVisualizerDelegate
 from UpdateCheck import UpdateCheck
 from SourceViewer import SourceViewer
 from Ui_MainWindow import Ui_MainWindow
-import qdarkstyle
-import qlightstyle
-
 
 userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
@@ -53,6 +50,7 @@ def main() -> None:
 
 def configureTheme(app: QApplication) -> None:
     if AppConfig.appConfig().theme == AppConfig.darkTheme:
+        import qdarkstyle
         LineNumberArea.areaColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_NORMAL).darker(120)
         PathVisualizerDelegate.newPathColor = QColor(204,204,204)
         PathVisualizerDelegate.samePathColor = QColor(qdarkstyle.DarkPalette.COLOR_FOREGROUND_DARK)
@@ -69,6 +67,7 @@ def configureTheme(app: QApplication) -> None:
         SyntaxHighlighter.matchForegroundColor = Qt.black
         qdarkstyle.apply_stylesheet(app)
     else:
+        import qlightstyle
         qlightstyle.apply_stylesheet(app)
 
 class MainWindow(QMainWindow):

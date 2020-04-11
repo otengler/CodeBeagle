@@ -1,7 +1,7 @@
 call buildvars.bat
 call build.bat
 
-set BUILDDIR=build\exe.win32-3.8
+set BUILDDIR=build\exe.win-amd64-3.8
 set LIB=%BUILDDIR%\lib
 if exist build rmdir /s /q build
 python.exe setup.py build_exe
@@ -17,7 +17,7 @@ copy %LIB%\PyQt5\__init__.pyc %LIB%\PyQt5.new
 copy %LIB%\PyQt5\QtCore.pyd %LIB%\PyQt5.new
 copy %LIB%\PyQt5\QtWidgets.pyd %LIB%\PyQt5.new
 copy %LIB%\PyQt5\QtGui.pyd %LIB%\PyQt5.new
-copy %LIB%\PyQt5\sip.cp38-win32.pyd %LIB%\PyQt5.new
+copy %LIB%\PyQt5\sip.cp38-win_amd64.pyd %LIB%\PyQt5.new
 copy %LIB%\PyQt5\Qt\bin\Qt5Core.dll %LIB%\PyQt5.new\Qt\bin\
 copy %LIB%\PyQt5\Qt\bin\Qt5Widgets.dll %LIB%\PyQt5.new\Qt\bin\
 copy %LIB%\PyQt5\Qt\bin\Qt5Gui.dll %LIB%\PyQt5.new\Qt\bin\
@@ -27,6 +27,12 @@ copy %LIB%\PyQt5\Qt\plugins\styles\qwindowsvistastyle.dll %LIB%\PyQt5.new\Qt\plu
 
 rmdir /q /s %LIB%\PyQt5
 move %LIB%\PyQt5.new %LIB%\PyQt5
+
+rmdir /q /s %LIB%\qdarkstyle\qss
+rmdir /q /s %LIB%\qdarkstyle\rc
+rmdir /q /s %LIB%\qdarkstyle\svg
+del /q %LIB%\qdarkstyle\style.qrc
+del /q %LIB%\qdarkstyle\style.qss
 
 xcopy config.txt %BUILDDIR%
 xcopy help.html %BUILDDIR%
