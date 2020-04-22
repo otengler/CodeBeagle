@@ -1,5 +1,5 @@
 fontFamily=Consolas
-fontSize=10
+fontSize=11
 tabWidth=4
 
 Highlighter_Default {
