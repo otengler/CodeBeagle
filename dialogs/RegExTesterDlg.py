@@ -31,11 +31,10 @@ class ExprHighlighter(QSyntaxHighlighter):
 
         self.bracketFormat = QTextCharFormat()
         self.bracketFormat.setFontWeight(QFont.Bold)
-        self.bracketFormat.setForeground(Qt.darkBlue)
-
+        self.bracketFormat.setForeground(RegExTesterDlg.bracketColor)
         self.repeatFormat = QTextCharFormat()
         self.repeatFormat.setFontWeight(QFont.Bold)
-        self.repeatFormat.setForeground(Qt.darkRed)
+        self.repeatFormat.setForeground(RegExTesterDlg.repeatColor)
 
     def highlightBlock(self, text: str) -> None:
         for i, c in enumerate(text):
@@ -54,10 +53,10 @@ class TextHighlighter(QSyntaxHighlighter):
         super().__init__(parent)
 
         self.matchFormat = QTextCharFormat()
-        self.matchFormat.setBackground(Qt.yellow)
+        self.matchFormat.setBackground(RegExTesterDlg.matchBackgroundColor)
         self.matchFormat.setForeground(Qt.darkBlue)
         self.groupFormats: List[QTextCharFormat] = []
-        for color in (Qt.green, Qt.cyan, Qt.gray, Qt.blue,  Qt.magenta):
+        for color in RegExTesterDlg.groupColors:
             groupFormat = QTextCharFormat()
             groupFormat.setBackground(color)
             groupFormat.setForeground(Qt.darkBlue)
@@ -88,7 +87,7 @@ class TextHighlighter(QSyntaxHighlighter):
 
         if self.iMode == SearchModes.Match:
             result = self.expr.match(text)
-            if result:
+            if result and result.span()[1] - result.span()[0] == len(text): # whole text is matched
                 self.highlightMatch (result)
         else:
             cur = 0
@@ -118,6 +117,11 @@ class TextHighlighter(QSyntaxHighlighter):
                     groupFormatIndex = (groupFormatIndex+1)%len(self.groupFormats)
 
 class RegExTesterDlg (QDialog):
+    bracketColor = Qt.darkBlue
+    repeatColor = Qt.darkRed
+    matchBackgroundColor = Qt.yellow
+    groupColors = [Qt.green, Qt.cyan, Qt.gray, Qt.blue,  Qt.magenta]
+
     def __init__ (self, parent: QWidget=None) -> None:
         super().__init__(parent)
         self.ui = Ui_RegExTesterDlg()

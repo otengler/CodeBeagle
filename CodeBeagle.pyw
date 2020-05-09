@@ -23,6 +23,7 @@ from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from tools import FileTools
 from dialogs.UserHintDialog import ButtonType, showUserHint
+from dialogs.RegExTesterDlg import RegExTesterDlg
 import AppConfig
 from widgets.LineNumberArea import LineNumberArea
 from widgets.HighlightingTextEdit import HighlightingTextEdit
@@ -65,6 +66,9 @@ def configureTheme(app: QApplication) -> None:
         SourceViewer.currentMatchLineBackgroundColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_DARK).darker(120)
         SyntaxHighlighter.matchBackgroundColor = QColor(Qt.yellow).darker(120)
         SyntaxHighlighter.matchForegroundColor = Qt.black
+        RegExTesterDlg.matchBackgroundColor = QColor(Qt.yellow).darker(120)
+        RegExTesterDlg.bracketColor = QColor(200,200,240)
+        RegExTesterDlg.repeatColor = QColor(240,200,200)
         qdarkstyle.apply_stylesheet(app)
     else:
         import qlightstyle
