@@ -54,7 +54,7 @@ class SourceViewer (QWidget):
         super ().__init__(parent)
         self.ui = Ui_SourceViewer()
         self.ui.setupUi(self)
-        self.ui.frameSearch.hide()
+        self.ui.widgetInDocumentSearch.hide()
 
         self.sourceFont: QFont = self.font()
         self.searchData: Optional[FullTextIndex.Query] = None
@@ -67,6 +67,12 @@ class SourceViewer (QWidget):
         self.addAction(self.actionGotoLine)
         self.jumpToMatchingBrace = QAction(self, shortcut=Qt.CTRL+Qt.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace)
         self.addAction(self.jumpToMatchingBrace)
+
+        # In document search
+        self.inDocumentSearch = QAction(self, shortcut=Qt.CTRL+Qt.Key_F, triggered=self.toggleSearchFrame)
+        self.addAction(self.inDocumentSearch)
+        self.ui.buttonSearch.clicked.connect(self.showSearchFrame)
+        self.ui.widgetInDocumentSearch.searchFinished.connect(self.inDocumentSearchFinished)
 
         # Forward the signal
         self.ui.textEdit.selectionFinishedWithKeyboardModifier.connect(self.selectionFinishedWithKeyboardModifier)
@@ -149,6 +155,7 @@ class SourceViewer (QWidget):
         rules = HighlightingRulesCache.rules().getRulesByFileName(name,  self.sourceFont)
         self.ui.textEdit.highlighter.setHighlightingRules (rules)
         self.ui.textEdit.setPlainText(text)
+        self.ui.widgetInDocumentSearch.setText(text)
 
         if self.searchData:
             self.matches = [match for match in self.searchData.matches (text)]
@@ -206,20 +213,6 @@ class SourceViewer (QWidget):
                 self.__enableNextPrevious()
 
     @pyqtSlot()
-    def nextSearch(self) -> None:
-        search = self.ui.editSearch.text()
-        if search:
-            self.ui.textEdit.setFocus(Qt.OtherFocusReason)
-            self.ui.textEdit.find(search)
-
-    @pyqtSlot()
-    def previousSearch(self) -> None:
-        search = self.ui.editSearch.text()
-        if search:
-            self.ui.textEdit.setFocus(Qt.OtherFocusReason)
-            self.ui.textEdit.find(search, QTextDocument.FindBackward)
-
-    @pyqtSlot()
     def updateCurrentLine (self) -> None:
         line = self.ui.textEdit.textCursor().blockNumber()+1
         self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))
@@ -232,13 +225,39 @@ class SourceViewer (QWidget):
         self.__updateCurrentLineExtraSelections([extra])
 
     @pyqtSlot()
+    def toggleSearchFrame(self) -> None:
+        self.ui.buttonSearch.toggle()
+        self.showSearchFrame()
+
+    # @pyqtSlot()
+    # def nextSearch(self) -> None:
+    #     search = self.ui.editSearch.text()
+    #     if search:
+    #         self.ui.textEdit.setFocus(Qt.OtherFocusReason)
+    #         self.ui.textEdit.find(search)
+
+    # @pyqtSlot()
+    # def previousSearch(self) -> None:
+    #     search = self.ui.editSearch.text()
+    #     if search:
+    #         self.ui.textEdit.setFocus(Qt.OtherFocusReason)
+    #         self.ui.textEdit.find(search, QTextDocument.FindBackward)
+
+    @pyqtSlot()
     def showSearchFrame(self) -> None:
-        self.ui.frameSearch.show()
-        self.ui.editSearch.setFocus(Qt.MouseFocusReason)
-        text = self.ui.textEdit.textCursor().selectedText().strip()
-        if text:
-            self.ui.editSearch.setText(text)
-        self.ui.editSearch.selectAll()
+        if self.ui.buttonSearch.isChecked():
+            self.ui.widgetInDocumentSearch.show()
+            self.ui.widgetInDocumentSearch.setFocus(Qt.MouseFocusReason)
+        else:
+            self.ui.widgetInDocumentSearch.hide()
+        # text = self.ui.textEdit.textCursor().selectedText().strip()
+        # if text:
+        #     self.ui.editSearch.setText(text)
+        # self.ui.editSearch.selectAll()
+
+    @pyqtSlot(list)
+    def inDocumentSearchFinished(self, results: List[Tuple[int,int]]) -> None:
+        pass
 
     def __enableNextPrevious (self) -> None:
         """Disable next/previous buttons if they don't make sense."""

@@ -107,6 +107,8 @@ class SyntaxHighlighter:
     def setFont (self, font: QFont) -> None:
         if self.highlightingRules:
             self.highlightingRules.setFont (font)
+        if self.searchStringFormat:
+            self.searchStringFormat.setFont (font)
 
     def setHighlightingRules (self, rules: HighlightingRules) -> None:
         self.highlightingRules = rules

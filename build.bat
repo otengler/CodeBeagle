@@ -8,6 +8,7 @@ python GenerateStylesheet.py
 "%PYRCC5%" -o qlightstyle/style_rc.py qlightstyle\style.qrc
 
 "%PYUIC%" --from-imports -o widgets\Ui_LeaveLastTabWidget.py -x widgets\LeaveLastTabWidget.ui 
+"%PYUIC%" --from-imports -o widgets\Ui_InDocumentSearchWidget.py -x widgets\InDocumentSearchWidget.ui 
 "%PYUIC%" --from-imports -o dialogs\Ui_SettingsItem.py -x dialogs\SettingsItem.ui 
 "%PYUIC%" --from-imports -o dialogs\Ui_SettingsDialog.py -x dialogs\SettingsDialog.ui 
 "%PYUIC%" --from-imports -o dialogs\Ui_AboutDialog.py -x dialogs\AboutDialog.ui 
@@ -24,6 +25,7 @@ python GenerateStylesheet.py
 "%PYUIC%" -o Ui_MatchesOverview.py -x MatchesOverview.ui 
 
 "%PYRCC5%" -o widgets\LeaveLastTabWidget_rc.py widgets\LeaveLastTabWidget.qrc
+"%PYRCC5%" -o widgets\InDocumentSearchWidget_rc.py widgets\InDocumentSearchWidget.qrc
 "%PYRCC5%" -o dialogs\SettingsDialog_rc.py dialogs\SettingsDialog.qrc
 "%PYRCC5%" -o dialogs\StackTraceMessageBox_rc.py dialogs\StackTraceMessageBox.qrc 
 "%PYRCC5%" -o SearchPage_rc.py SearchPage.qrc

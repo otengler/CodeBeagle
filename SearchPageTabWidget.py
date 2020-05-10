@@ -19,12 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import sys
 from typing import List
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QSize, QTimer
-from PyQt5.QtGui import QMovie, QKeySequence
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPushButton
-from tools.Config import Config
-from tools import FileTools
 from widgets.LeaveLastTabWidget import LeaveLastTabWidget
+from widgets.AnimatedProgressWidget import AnimatedProgressWidget
+from tools import FileTools
 from dialogs import StackTraceMessageBox
 from dialogs.UserHintDialog import ButtonType,hintWouldBeShown,showUserHint
 from dialogs.SettingsDialog import SettingsDialog
@@ -32,7 +32,6 @@ from SearchPage import SearchPage
 import AppConfig
 from fulltextindex import IndexConfiguration
 import UpdateIndex
-
 
 userHintInitialSetup= """
 <p align='justify'>There are no search locations defined so far. </p>
@@ -43,26 +42,6 @@ userHintDarkTheme="""
 <p align='justify'>There is a dark theme available now. It can be selected from the options dialog.</p>
 <p align='justify'>Would you like to give it a try?</p>
 """
-
-
-
-class AnimatedUpdateWidget(QWidget):
-    """
-    This widget attempts to look like a flat QPushButton. It shows a spinning gear icon to indicate
-    work in progress.
-    """
-    def __init__(self, text: str, parent: QWidget) -> None:
-        super().__init__(parent)
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 4, 0)
-        layout.setSpacing(4)
-        labelAnimation = QLabel(self)
-        self.movie = QMovie(":/default/resources/Update.gif")
-        self.movie.setScaledSize(QSize(20, 20))
-        labelAnimation.setMovie(self.movie)
-        labelText = QLabel(text, self)
-        layout.addWidget (labelAnimation)
-        layout.addWidget(labelText)
 
 class SearchPageTabWidget (LeaveLastTabWidget):
     configChanged = pyqtSignal(list)
@@ -301,7 +280,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         QToolTip.showText (pos, text,  self)
 
     def __addAnimatedUpdateLabel (self,  hbox: QHBoxLayout,  text: str) -> QWidget:
-        widget = AnimatedUpdateWidget (text, self)
+        widget = AnimatedProgressWidget (self, text)
         widget.hide()
         hbox.insertWidget(self.indexOfUpdateButton,  widget)
         return widget
@@ -313,9 +292,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.buttonUpdate.hide()
             self.labelUpdate.show()
             self.buttonSettings.setEnabled(False)
-            self.labelUpdate.movie.start()
+            self.labelUpdate.start()
         else:
-            self.labelUpdate.movie.stop()
+            self.labelUpdate.stop()
             self.buttonUpdate.show()
             self.labelUpdate.hide()
             self.buttonSettings.setEnabled(True)
