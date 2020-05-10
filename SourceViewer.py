@@ -19,13 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from typing import Optional, List, Tuple
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QTextDocument, QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent
+from PyQt5.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent
 from PyQt5.QtWidgets import QWidget, QAction, QListWidgetItem, QDialog, QTextEdit
 from tools.FileTools import fopen
 from AppConfig import appConfig
 from fulltextindex import FullTextIndex
 import HighlightingRulesCache
 from widgets.SyntaxHighlighter import SyntaxHighlighter
+from widgets.InDocumentSearchWidget import InDocumentSearchResult
 from Ui_SourceViewer import Ui_SourceViewer
 
 class EditorState:
@@ -255,9 +256,13 @@ class SourceViewer (QWidget):
         #     self.ui.editSearch.setText(text)
         # self.ui.editSearch.selectAll()
 
-    @pyqtSlot(list)
-    def inDocumentSearchFinished(self, results: List[Tuple[int,int]]) -> None:
-        pass
+    @pyqtSlot(InDocumentSearchResult)
+    def inDocumentSearchFinished(self, searchResult: InDocumentSearchResult) -> None:
+        if searchResult.results:
+            self.ui.textEdit.highlighter.setSearchData2 (searchResult.matcher)
+        else:
+            self.ui.textEdit.highlighter.setSearchData2 (None)
+        self.ui.textEdit.rehighlight()
 
     def __enableNextPrevious (self) -> None:
         """Disable next/previous buttons if they don't make sense."""

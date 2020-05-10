@@ -39,6 +39,7 @@ class HighlightingTextEdit (QPlainTextEdit):
     def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent)
         self.highlighter = SyntaxHighlighter()
+        self.__highlightUpdateCounter = 0 # Increment every time the highlight changes
         self.dynamicHighlight: Optional[str] = None
         self.parenthesisPair: Optional[Tuple[int,int]] = None
         self.highlightParenthesis = True
@@ -162,6 +163,13 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.viewport().setFont(font)
         self.highlighter.setFont(font)
 
+    def rehighlight(self) -> None:
+        """
+        Evaluate syntax highlighting again
+        """
+        self.__highlightUpdateCounter += 1 # causes all blocks to highlight again
+        self.viewport().update()
+
     def paintEvent(self, event: QPaintEvent) -> None:
         firstVisibleBlock: QTextBlock = self.firstVisibleBlock()
         bColorizedBlocks = self.__colorizeVisibleBlocks(firstVisibleBlock)
@@ -219,7 +227,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         bColorizedBlocks = False
         for block, _ in self.__visibleBlocks(firstVisibleBlock):
             # -1 means the block has not been highlighted yet
-            if block.userState() == -1:
+            if block.userState() != self.__highlightUpdateCounter:
                 bColorizedBlocks = True
                 blockLength = len(block.text())
                 formats = self.highlighter.highlightBlock(block.position(), block.text())
@@ -238,9 +246,8 @@ class HighlightingTextEdit (QPlainTextEdit):
                         formatRange.length = length
                     if formatRange.length >= 0:
                         addFormats.append(formatRange)
-                if addFormats:
-                    block.layout().setAdditionalFormats(addFormats)
-                block.setUserState(1)
+                block.layout().setAdditionalFormats(addFormats)
+                block.setUserState(self.__highlightUpdateCounter)
         return bColorizedBlocks
 
     def __visibleBlocks (self, firstVisibleBlock: QTextBlock) -> Iterator[Tuple[QTextBlock, QRectF]]:

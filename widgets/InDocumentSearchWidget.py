@@ -16,7 +16,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Tuple, Pattern, List, Optional
+from typing import Tuple, Pattern, List, Optional, Iterable
 import re
 import threading
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
@@ -24,6 +24,33 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QFocusEvent, QColor
 from tools.AsynchronousTask import AsynchronousTask
 from .Ui_InDocumentSearchWidget import Ui_InDocumentSearchWidget
+from .IStringMatcher import IStringMatcher
+
+class StringMatcher (IStringMatcher):
+    def __init__(self) -> None:
+        self.regex: Optional[Pattern] = None
+
+    def setRegex(self, expr: Pattern) -> None:
+        self.regex = expr
+
+    def matches(self, data: str) -> Iterable[Tuple[int,int]]:
+        if not self.regex:
+            return
+
+        cur = 0
+        while True:
+            result = self.regex.search(data, cur)
+            if result:
+                startPos, endPos = result.span()
+                yield (startPos, endPos-startPos)
+                cur = endPos
+            else:
+                return
+
+class InDocumentSearchResult:
+    def __init__(self, results: List[Tuple[int,int]], matcher: Optional[IStringMatcher]) -> None:
+        self.results = results
+        self.matcher = matcher
 
 class InDocumentSearchWidget(QWidget):
     """
@@ -32,8 +59,9 @@ class InDocumentSearchWidget(QWidget):
     """
 
     notFoundColor = QColor(255, 127, 84)
+    searchDelay = 300
 
-    searchFinished = pyqtSignal(list) # List[Tuple[int,int]])
+    searchFinished = pyqtSignal(InDocumentSearchResult)
     nextMatch = pyqtSignal()
     previousMatch = pyqtSignal()
 
@@ -59,6 +87,7 @@ class InDocumentSearchWidget(QWidget):
 
     def setText(self, text: str) -> None:
         self.text = text
+        self.__resetColor()
         self.__startSearch()
 
     def setCurrentMatch(self, num: int) -> None:
@@ -71,7 +100,7 @@ class InDocumentSearchWidget(QWidget):
 
     def __textEdited(self, _: str) -> None:
         self.__resetColor()
-        self.editTimeoutTimer.start(400)
+        self.editTimeoutTimer.start(InDocumentSearchWidget.searchDelay)
 
     def __editTimeout(self) -> None:
         self.__updateSearchRegex()
@@ -89,6 +118,7 @@ class InDocumentSearchWidget(QWidget):
         if not text or not searchRegex:
             self.totalMatches = 0
             self.setCurrentMatch(0)
+            self.searchFinished.emit(InDocumentSearchResult([],None))
             return
 
         if self.__searchTask:
@@ -106,34 +136,30 @@ class InDocumentSearchWidget(QWidget):
 
         if not self.__searchTask:
             return
-        results = self.__searchTask.result
-        if not results:
+        searchResult: InDocumentSearchResult = self.__searchTask.result
+        if not searchResult.results:
             self.__nothingFoundColor()
             self.totalMatches = 0
             self.setCurrentMatch(0)
         else:
-            self.totalMatches = len(results)
+            self.totalMatches = len(searchResult.results)
             self.setCurrentMatch(1)
-        self.searchFinished.emit(results)
+        self.searchFinished.emit(searchResult)
 
-    def __asyncSearch(self, text: str, searchRegex: Pattern, cancelEvent: threading.Event) -> List[Tuple[int,int]]:
+    def __asyncSearch(self, text: str, searchRegex: Pattern, cancelEvent: threading.Event) -> InDocumentSearchResult:
         if not text or not searchRegex:
-            return []
+            return InDocumentSearchResult([], None)
+
+        matcher = StringMatcher()
+        matcher.setRegex(searchRegex)
 
         results: List[Tuple[int,int]] = []
-        cur = 0
-        while True:
-            result = searchRegex.search(text, cur)
-            if result:
-                startPos, endPos = result.span()
-                results.append((startPos, endPos-startPos))
-                cur = endPos
-            else:
-                break
+        for match in matcher.matches(text):
+            results.append(match)
             if cancelEvent and cancelEvent.is_set():
-                return []
+                return InDocumentSearchResult([], None)
 
-        return results
+        return InDocumentSearchResult(results, matcher)
 
     def __updateSearchRegex(self) -> None:
         reFlags: int = re.IGNORECASE

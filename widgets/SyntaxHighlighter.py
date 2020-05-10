@@ -21,7 +21,7 @@ import bisect
 import re
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
-from fulltextindex.FullTextIndex import Query
+from .IStringMatcher import IStringMatcher
 
 class HighlightingRules:
     def __init__(self, font: QFont) -> None:
@@ -92,28 +92,33 @@ class CommentRange:
 class SyntaxHighlighter:
     matchBackgroundColor = Qt.yellow
     matchForegroundColor = Qt.black
+    match2BackgroundColor = Qt.green
+    match2ForegroundColor = Qt.black
 
     def __init__(self) -> None:
         # The current rules
         self.highlightingRules: Optional[HighlightingRules] = None
 
-        self.searchStringFormat = QTextCharFormat()
-        self.searchStringFormat.setBackground(SyntaxHighlighter.matchBackgroundColor)
-        self.searchStringFormat.setForeground(SyntaxHighlighter.matchForegroundColor)
+        self.searchStringFormats = [QTextCharFormat(), QTextCharFormat()]
+        self.searchStringFormats[0].setBackground(SyntaxHighlighter.matchBackgroundColor)
+        self.searchStringFormats[0].setForeground(SyntaxHighlighter.matchForegroundColor)
+        self.searchStringFormats[1].setBackground(SyntaxHighlighter.match2BackgroundColor)
+        self.searchStringFormats[1].setForeground(SyntaxHighlighter.match2ForegroundColor)
 
         self.comments: List[CommentRange]  = []
-        self.searchData: Optional[Query] = None
+        self.searchDatas: List[Optional[IStringMatcher]] = [None, None]
 
     def setFont (self, font: QFont) -> None:
         if self.highlightingRules:
             self.highlightingRules.setFont (font)
-        if self.searchStringFormat:
-            self.searchStringFormat.setFont (font)
+        for strFormat in self.searchStringFormats:
+            strFormat.setFont (font)
 
     def setHighlightingRules (self, rules: HighlightingRules) -> None:
         self.highlightingRules = rules
-        self.searchStringFormat.setFont(rules.font)
-        self.searchStringFormat.setFontWeight(QFont.Bold)
+        for strFormat in self.searchStringFormats:
+            strFormat.setFont(rules.font)
+            strFormat.setFontWeight(QFont.Bold)
 
     # Find all comments in the document and store them as CommentRange objects in self.comments
     def setText(self, text: str) -> None:
@@ -176,9 +181,13 @@ class SyntaxHighlighter:
 
         self.comments = comments
 
-    def setSearchData (self, searchData: Query) -> None:
+    def setSearchData (self, searchData: IStringMatcher) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""
-        self.searchData = searchData
+        self.searchDatas[0] = searchData
+
+    def setSearchData2 (self, searchData: IStringMatcher) -> None:
+        """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""
+        self.searchDatas[1] = searchData
 
     def highlightBlock(self, position: int, text: str) -> List[Tuple[QTextCharFormat, int, int]]:
         formats: List[Tuple[QTextCharFormat, int, int]] = []
@@ -210,9 +219,10 @@ class SyntaxHighlighter:
             pos += 1
 
         # Highlight search match
-        if self.searchData:
-            for index, length in self.searchData.matches (text):
-                formats.append((self.searchStringFormat, index, length))
+        for index, searchData in enumerate(self.searchDatas):
+            if searchData:
+                for matchPos, length in searchData.matches (text):
+                    formats.append((self.searchStringFormats[index], matchPos, length))
 
         return formats
 

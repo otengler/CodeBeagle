@@ -30,7 +30,7 @@ class AsynchronousTask (QThread):
         self.args = args
         self.bEnableCancel = bEnableCancel
         self.cancelAction = cancelAction
-        self.result = None
+        self.result: Any = None
         self.exception: Exception
         self.hasException = False
         self.cancelEvent = None
