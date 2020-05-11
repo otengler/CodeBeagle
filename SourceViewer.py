@@ -228,7 +228,12 @@ class SourceViewer (QWidget):
 
     @pyqtSlot()
     def toggleSearchFrame(self) -> None:
-        self.ui.buttonSearch.toggle()
+        text = self.ui.textEdit.textCursor().selectedText().strip()
+        self.ui.widgetInDocumentSearch.setSearch(text)
+        if not text:
+            self.ui.buttonSearch.toggle()
+        else:
+            self.ui.buttonSearch.setChecked(True)
         self.showSearchFrame()
 
     @pyqtSlot(int, int, int)
@@ -238,20 +243,23 @@ class SourceViewer (QWidget):
     @pyqtSlot()
     def showSearchFrame(self) -> None:
         if self.ui.buttonSearch.isChecked():
-            text = self.ui.textEdit.textCursor().selectedText().strip()
-            if text:
-                self.ui.widgetInDocumentSearch.setSearch(text)
             self.ui.widgetInDocumentSearch.show()
             self.ui.widgetInDocumentSearch.setFocus(Qt.MouseFocusReason)
         else:
             self.ui.widgetInDocumentSearch.hide()
+            self.__clearInDocumentSearchHighlighting()
 
     @pyqtSlot(InDocumentSearchResult)
     def inDocumentSearchFinished(self, searchResult: InDocumentSearchResult) -> None:
         if searchResult.results:
             self.ui.textEdit.highlighter.setSearchData2 (searchResult.matcher)
+            self.ui.textEdit.rehighlight()
         else:
-            self.ui.textEdit.highlighter.setSearchData2 (None)
+            self.__clearInDocumentSearchHighlighting()
+
+    def __clearInDocumentSearchHighlighting(self) -> None:
+        self.ui.textEdit.highlighter.setSearchData2 (None)
+        self.__updateMatchExtraSelections([]) # remove line highlight
         self.ui.textEdit.rehighlight()
 
     def __enableNextPrevious (self) -> None:

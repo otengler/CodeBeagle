@@ -103,6 +103,7 @@ class InDocumentSearchWidget(QWidget):
     def setSearch(self, search: str) -> None:
         self.ui.editSearch.setText(search)
         self.__resetColor()
+        self.__updateSearchRegex()
         self.__startSearch()
 
     def setText(self, text: str) -> None:
