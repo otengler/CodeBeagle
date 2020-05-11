@@ -74,6 +74,7 @@ class SourceViewer (QWidget):
         self.addAction(self.inDocumentSearch)
         self.ui.buttonSearch.clicked.connect(self.showSearchFrame)
         self.ui.widgetInDocumentSearch.searchFinished.connect(self.inDocumentSearchFinished)
+        self.ui.widgetInDocumentSearch.currentMatchChanged.connect(self.inDocumentSearchMatchChanged)
 
         # Forward the signal
         self.ui.textEdit.selectionFinishedWithKeyboardModifier.connect(self.selectionFinishedWithKeyboardModifier)
@@ -208,7 +209,7 @@ class SourceViewer (QWidget):
     def setCurrentMatch(self, index: int, forceSet: bool=False) -> None:
         if index>=0 and index<len(self.matches) and (index != self.curMatch or forceSet):
             self.__setMatchIndex(index)
-            self.__scrollToMatch (self.curMatch)
+            self.__scrollToMatch (*self.matches[index], SyntaxHighlighter.matchBackgroundColor)
             self.__setInfoLabel ()
             if not self.bMatchOverFiles:
                 self.__enableNextPrevious()
@@ -230,31 +231,20 @@ class SourceViewer (QWidget):
         self.ui.buttonSearch.toggle()
         self.showSearchFrame()
 
-    # @pyqtSlot()
-    # def nextSearch(self) -> None:
-    #     search = self.ui.editSearch.text()
-    #     if search:
-    #         self.ui.textEdit.setFocus(Qt.OtherFocusReason)
-    #         self.ui.textEdit.find(search)
-
-    # @pyqtSlot()
-    # def previousSearch(self) -> None:
-    #     search = self.ui.editSearch.text()
-    #     if search:
-    #         self.ui.textEdit.setFocus(Qt.OtherFocusReason)
-    #         self.ui.textEdit.find(search, QTextDocument.FindBackward)
+    @pyqtSlot(int, int, int)
+    def inDocumentSearchMatchChanged(self, _: int, index: int, length: int) -> None:
+        self.__scrollToMatch(index, length, SyntaxHighlighter.match2BackgroundColor)
 
     @pyqtSlot()
     def showSearchFrame(self) -> None:
         if self.ui.buttonSearch.isChecked():
+            text = self.ui.textEdit.textCursor().selectedText().strip()
+            if text:
+                self.ui.widgetInDocumentSearch.setSearch(text)
             self.ui.widgetInDocumentSearch.show()
             self.ui.widgetInDocumentSearch.setFocus(Qt.MouseFocusReason)
         else:
             self.ui.widgetInDocumentSearch.hide()
-        # text = self.ui.textEdit.textCursor().selectedText().strip()
-        # if text:
-        #     self.ui.editSearch.setText(text)
-        # self.ui.editSearch.selectAll()
 
     @pyqtSlot(InDocumentSearchResult)
     def inDocumentSearchFinished(self, searchResult: InDocumentSearchResult) -> None:
@@ -287,11 +277,7 @@ class SourceViewer (QWidget):
             text = text + "%u/%u " % (self.curMatch+1, len(self.matches))
         self.ui.labelInfo.setText (text)
 
-    def __scrollToMatch (self, num:int) -> None:
-        if num < 0 or num >= len(self.matches):
-            return
-        index, length = self.matches[num]
-
+    def __scrollToMatch (self, index: int, length: int, highlightColor: QColor) -> None:
         scrollDir = index - self.ui.textEdit.textCursor().position() # Determine if we need to scroll down or up
 
         extras = []
@@ -306,7 +292,7 @@ class SourceViewer (QWidget):
         extra2.cursor = self.ui.textEdit.textCursor()
         extra2.cursor.setPosition (index)
         extra2.cursor.setPosition (index+length,  QTextCursor.KeepAnchor)
-        extra2.format.setBackground (SyntaxHighlighter.matchBackgroundColor)
+        extra2.format.setBackground (highlightColor)
         extras.append(extra2)
 
         self.__updateMatchExtraSelections(extras)

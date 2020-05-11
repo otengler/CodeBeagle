@@ -32,10 +32,13 @@ tools\AsynchronousTask.py
 tools\Config.py
 tools\ExceptionTools.py
 tools\FileTools.py
+widgets\AnimatedProgressWidget.py
+widgets\CaseSensitiveComboBox.py
 widgets\HighlightingTextEdit.py
-widgets\LineNumberArea.py
+widgets\InDocumentSearchWidget.py
+widgets\IStringMatcher.py
 widgets\LeaveLastTabWidget.py
+widgets\LineNumberArea.py
 widgets\RecyclingVerticalScrollArea.py
 widgets\SourceHighlightingTextEdit.py
 widgets\SyntaxHighlighter.py
-widgets\CaseSensitiveComboBox.py

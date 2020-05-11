@@ -92,7 +92,7 @@ class CommentRange:
 class SyntaxHighlighter:
     matchBackgroundColor = Qt.yellow
     matchForegroundColor = Qt.black
-    match2BackgroundColor = Qt.green
+    match2BackgroundColor = QColor(194, 217, 255)
     match2ForegroundColor = Qt.black
 
     def __init__(self) -> None:

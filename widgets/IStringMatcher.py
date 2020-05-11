@@ -20,7 +20,7 @@ from abc import ABC,abstractmethod
 from typing import Tuple, Iterable
 
 class IStringMatcher(ABC):
-    # Yields all matches in str. Each match is returned as the touple (position,length)
+    # Yields all matches in data. Each match is returned as the touple (position,length)
     @abstractmethod
     def matches(self, data: str) -> Iterable[Tuple[int,int]]:
         pass

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, Pattern, List, Optional, Iterable
 import re
 import threading
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QFocusEvent, QColor
 from tools.AsynchronousTask import AsynchronousTask
@@ -52,6 +52,21 @@ class InDocumentSearchResult:
         self.results = results
         self.matcher = matcher
 
+def findAllMatches(text: str, searchRegex: Pattern, cancelEvent: threading.Event) -> InDocumentSearchResult:
+    if not text or not searchRegex:
+        return InDocumentSearchResult([], None)
+
+    matcher = StringMatcher()
+    matcher.setRegex(searchRegex)
+
+    results: List[Tuple[int,int]] = []
+    for match in matcher.matches(text):
+        results.append(match)
+        if cancelEvent and cancelEvent.is_set():
+            return InDocumentSearchResult([], None)
+
+    return InDocumentSearchResult(results, matcher)
+
 class InDocumentSearchWidget(QWidget):
     """
     This widget provides search capabilities inside a text document.
@@ -62,8 +77,7 @@ class InDocumentSearchWidget(QWidget):
     searchDelay = 300
 
     searchFinished = pyqtSignal(InDocumentSearchResult)
-    nextMatch = pyqtSignal()
-    previousMatch = pyqtSignal()
+    currentMatchChanged = pyqtSignal(int, int, int) # num, index, length
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
@@ -82,21 +96,53 @@ class InDocumentSearchWidget(QWidget):
         self.__searchTask: Optional[AsynchronousTask] = None
         self.text = ""
         self.searchRegex: Optional[Pattern] = None
-        self.totalMatches = 0
-        self.setCurrentMatch(0)
+        self.currentMatch = -1
+        self.matches: List[Tuple[int,int]] = []
+        self.ui.labelCurrentMatch.setText("")
+
+    def setSearch(self, search: str) -> None:
+        self.ui.editSearch.setText(search)
+        self.__resetColor()
+        self.__startSearch()
 
     def setText(self, text: str) -> None:
         self.text = text
         self.__resetColor()
         self.__startSearch()
 
+    @pyqtSlot()
+    def nextMatch(self) -> None:
+        self.setCurrentMatch(self.currentMatch + 1)
+
+    @pyqtSlot()
+    def previousMatch(self) -> None:
+        self.setCurrentMatch(self.currentMatch - 1)
+
     def setCurrentMatch(self, num: int) -> None:
-        if not self.totalMatches:
-            self.currentMatch = 0
+        if num + 1 > len(self.matches):
+            num = len(self.matches) - 1
+        if num < 0:
+            num = 0
+        self.__updateCurrentMatch(num)
+        self.__enableButtons()
+
+    def __setMatches(self, results: List[Tuple[int,int]]) -> None:
+        self.matches = results
+        self.currentMatch = -1
+        self.__updateCurrentMatch(0)
+        self.__enableButtons()
+
+    def __updateCurrentMatch(self, num: int) -> None:
+        if self.currentMatch == num:
+            return
+        numChanged = self.currentMatch != num
+        self.currentMatch = num
+        if not self.matches:
             self.ui.labelCurrentMatch.setText("")
         else:
-            self.currentMatch = num
-            self.ui.labelCurrentMatch.setText(f"{num}/{self.totalMatches}")
+            self.ui.labelCurrentMatch.setText(f"{num+1}/{len(self.matches)}")
+            if numChanged and 0 <= num < len(self.matches):
+                self.currentMatchChanged.emit(num, *self.matches[num])
 
     def __textEdited(self, _: str) -> None:
         self.__resetColor()
@@ -113,11 +159,11 @@ class InDocumentSearchWidget(QWidget):
         self.__startSearch()
 
     def __startSearch(self) -> None:
+        self.__setMatches([])
+
         text = self.text
         searchRegex = self.searchRegex
         if not text or not searchRegex:
-            self.totalMatches = 0
-            self.setCurrentMatch(0)
             self.searchFinished.emit(InDocumentSearchResult([],None))
             return
 
@@ -126,7 +172,7 @@ class InDocumentSearchWidget(QWidget):
 
         self.ui.widgetProgress.show()
         self.ui.widgetProgress.start()
-        self.__searchTask = AsynchronousTask(self.__asyncSearch, text, searchRegex, bEnableCancel=True)
+        self.__searchTask = AsynchronousTask(findAllMatches, text, searchRegex, bEnableCancel=True)
         self.__searchTask.finished.connect(self.__searchDone)
         self.__searchTask.start()
 
@@ -138,42 +184,28 @@ class InDocumentSearchWidget(QWidget):
             return
         searchResult: InDocumentSearchResult = self.__searchTask.result
         if not searchResult.results:
-            self.__nothingFoundColor()
-            self.totalMatches = 0
-            self.setCurrentMatch(0)
-        else:
-            self.totalMatches = len(searchResult.results)
-            self.setCurrentMatch(1)
+            self.__nothingFoundColor()       
+        self.__setMatches(searchResult.results)
         self.searchFinished.emit(searchResult)
-
-    def __asyncSearch(self, text: str, searchRegex: Pattern, cancelEvent: threading.Event) -> InDocumentSearchResult:
-        if not text or not searchRegex:
-            return InDocumentSearchResult([], None)
-
-        matcher = StringMatcher()
-        matcher.setRegex(searchRegex)
-
-        results: List[Tuple[int,int]] = []
-        for match in matcher.matches(text):
-            results.append(match)
-            if cancelEvent and cancelEvent.is_set():
-                return InDocumentSearchResult([], None)
-
-        return InDocumentSearchResult(results, matcher)
 
     def __updateSearchRegex(self) -> None:
         reFlags: int = re.IGNORECASE
         if self.ui.checkBoxCaseSensitive.isChecked():
             reFlags = 0
 
-        expr = self.ui.editSearch.text()
+        expr = self.ui.editSearch.text().strip()
         if not expr:
             self.searchRegex = None
         else:
             if not self.ui.checkBoxRegex.isChecked():
-                for c in r"[\^$.|?+()":
+                for c in r"[\^$.|?+()*":
                     expr = expr.replace(c, "\\" + c)
-                expr = expr.replace("*", r"\w*")
+                while True: # reduce all adjacent spaces to one which will then be replaced by a regex which matches arbitrary whitespace
+                    reduceSpace = expr.replace("  ", " ")
+                    if reduceSpace == expr:
+                        break
+                    expr = reduceSpace
+                expr = expr.replace(" ", r"\s*")
             try:
                 self.searchRegex = re.compile(expr, reFlags)
             except:
@@ -185,6 +217,10 @@ class InDocumentSearchWidget(QWidget):
     def __nothingFoundColor(self) -> None:
         col = "#%02x%02x%02x" % (InDocumentSearchWidget.notFoundColor.red(), InDocumentSearchWidget.notFoundColor.green(), InDocumentSearchWidget.notFoundColor.blue())
         self.setStyleSheet("QLineEdit { background: %s }" % (col,))
+
+    def __enableButtons(self) -> None:
+        self.ui.buttonSearchPrevious.setEnabled(self.currentMatch > 0)
+        self.ui.buttonSearchNext.setEnabled(self.currentMatch + 1 < len(self.matches))
 
     def focusInEvent (self, _: QFocusEvent) -> None:
         self.ui.editSearch.setFocus(Qt.ActiveWindowFocusReason)
