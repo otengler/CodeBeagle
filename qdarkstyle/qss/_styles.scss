@@ -1035,31 +1035,17 @@ QPushButton {
         background-color: $COLOR_BACKGROUND_NORMAL;
         border: $BORDER_NORMAL;
         color: $COLOR_FOREGROUND_DARK;
-        border-radius: $SIZE_BORDER_RADIUS;
-        padding: 3px;
     }
 
     &:checked {
-        background-color: $COLOR_BACKGROUND_NORMAL;
-        border: $BORDER_NORMAL;
-        border-radius: $SIZE_BORDER_RADIUS;
-        padding: 3px;
-        outline: none;
+        background-color: $COLOR_BACKGROUND_DARK;
+        border: $BORDER_SELECTION_NORMAL;
 
         &:disabled {
             background-color: $COLOR_BACKGROUND_DARK;
-            border: $BORDER_NORMAL;
+            border: $BORDER_SELECTION_DARK;
             color: $COLOR_FOREGROUND_DARK;
-            border-radius: $SIZE_BORDER_RADIUS;
-            padding: 3px;
-            outline: none;
         }
-
-        &:selected {
-            background: $COLOR_SELECTION_NORMAL;
-            color: $COLOR_BACKGROUND_NORMAL;
-        }
-
     }
 
     &::menu-indicator {
@@ -1071,25 +1057,10 @@ QPushButton {
     &:pressed {
         background-color: $COLOR_BACKGROUND_DARK;
         border: $BORDER_DARK;
-
-        &:hover {
-            border: $BORDER_SELECTION_LIGHT;
-        }
     }
 
     &:hover {
         border: $BORDER_SELECTION_LIGHT;
-        color: $COLOR_FOREGROUND_LIGHT;
-    }
-
-    &:selected {
-        background: $COLOR_SELECTION_NORMAL;
-        color: $COLOR_BACKGROUND_NORMAL;
-    }
-
-    &:hover {
-        border: $BORDER_SELECTION_LIGHT;
-        color: $COLOR_FOREGROUND_LIGHT;
     }
 
     &:focus {

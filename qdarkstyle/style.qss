@@ -893,27 +893,15 @@ QPushButton:disabled {
   background-color: #383838;
   border: 1px solid #383838;
   color: #787878;
-  border-radius: 4px;
-  padding: 3px;
 }
 QPushButton:checked {
-  background-color: #383838;
-  border: 1px solid #383838;
-  border-radius: 4px;
-  padding: 3px;
-  outline: none;
+  background-color: #1E1E1E;
+  border: 1px solid #1464A0;
 }
 QPushButton:checked:disabled {
   background-color: #1E1E1E;
-  border: 1px solid #383838;
+  border: 1px solid #14506E;
   color: #787878;
-  border-radius: 4px;
-  padding: 3px;
-  outline: none;
-}
-QPushButton:checked:selected {
-  background: #1464A0;
-  color: #383838;
 }
 QPushButton::menu-indicator {
   subcontrol-origin: padding;
@@ -924,20 +912,8 @@ QPushButton:pressed {
   background-color: #1E1E1E;
   border: 1px solid #1E1E1E;
 }
-QPushButton:pressed:hover {
-  border: 1px solid #148CD2;
-}
 QPushButton:hover {
   border: 1px solid #148CD2;
-  color: #F0F0F0;
-}
-QPushButton:selected {
-  background: #1464A0;
-  color: #383838;
-}
-QPushButton:hover {
-  border: 1px solid #148CD2;
-  color: #F0F0F0;
 }
 QPushButton:focus {
   border: 1px solid #1464A0;
