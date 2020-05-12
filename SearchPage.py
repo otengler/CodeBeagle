@@ -385,6 +385,7 @@ class SearchPage (QWidget):
             matches = result.matches
         self.matches = matches
         self.ui.sourceViewer.setSearchData (result.searchData)
+        self.ui.sourceViewer.hideInDocumentSearch()
         self.ui.matchesOverview.setSearchResult(self.matches, result.searchData)
         self.ui.labelMatches.setText("%u " % (len(matches), ) + self.tr("matches"))
         model = StringListModel(matches)

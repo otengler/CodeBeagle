@@ -323,56 +323,7 @@ p, li { white-space: pre-wrap; }
  <resources>
   <include location="SearchPage.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>buttonMatchNext</sender>
-   <signal>clicked()</signal>
-   <receiver>SourceViewer</receiver>
-   <slot>nextMatch()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>58</x>
-     <y>25</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>234</x>
-     <y>276</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>textEdit</sender>
-   <signal>cursorPositionChanged()</signal>
-   <receiver>SourceViewer</receiver>
-   <slot>updateCurrentLine()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>288</x>
-     <y>306</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>288</x>
-     <y>276</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonMatchList</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>frameMatchList</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>522</x>
-     <y>26</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>537</x>
-     <y>291</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
  <slots>
   <slot>nextMatch()</slot>
   <slot>previousMatch()</slot>

@@ -62,6 +62,11 @@ class SourceViewer (QWidget):
         self.__reset()
         self.__processConfig(None)
 
+        self.ui.textEdit.cursorPositionChanged.connect(self.updateCurrentLine)
+        self.ui.buttonMatchPrevious.clicked.connect(self.previousMatch)
+        self.ui.buttonMatchNext.clicked.connect(self.nextMatch)
+        self.ui.buttonMatchList.clicked.connect(self.ui.frameMatchList.setVisible)
+
         self.actionReloadFile = QAction(self, shortcut=Qt.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
         self.actionGotoLine = QAction(self, shortcut=Qt.CTRL+Qt.Key_G, triggered=self.gotoLine)
@@ -247,6 +252,7 @@ class SourceViewer (QWidget):
             self.ui.widgetInDocumentSearch.setFocus(Qt.MouseFocusReason)
         else:
             self.ui.widgetInDocumentSearch.hide()
+            self.ui.widgetInDocumentSearch.setSearch("")
             self.__clearInDocumentSearchHighlighting()
 
     @pyqtSlot(InDocumentSearchResult)
@@ -261,6 +267,10 @@ class SourceViewer (QWidget):
         self.ui.textEdit.highlighter.setSearchData2 (None)
         self.__updateMatchExtraSelections([]) # remove line highlight
         self.ui.textEdit.rehighlight()
+
+    def hideInDocumentSearch(self) -> None:
+        self.ui.buttonSearch.setChecked(False)
+        self.showSearchFrame()
 
     def __enableNextPrevious (self) -> None:
         """Disable next/previous buttons if they don't make sense."""
