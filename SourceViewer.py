@@ -137,6 +137,7 @@ class SourceViewer (QWidget):
         self.__setInfoLabel()
         self.ui.textEdit.setDynamicHighlight(None)
         self.ui.listMatchesWidget.clear()
+        self.__hideInDocumentSearch()
 
     def __setMatchIndex(self, index: int) -> None:
         self.curMatch = index
@@ -268,7 +269,7 @@ class SourceViewer (QWidget):
         self.__updateMatchExtraSelections([]) # remove line highlight
         self.ui.textEdit.rehighlight()
 
-    def hideInDocumentSearch(self) -> None:
+    def __hideInDocumentSearch(self) -> None:
         self.ui.buttonSearch.setChecked(False)
         self.showSearchFrame()
 

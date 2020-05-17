@@ -53,20 +53,22 @@ CREATE TABLE IF NOT EXISTS indexInfo(
 """
 
 strTablesForFileNames = """
-CREATE TABLE IF NOT EXISTS fileName(
+CREATE TABLE IF NOT EXISTS pathName(
   id INTEGER PRIMARY KEY,
-  name TEXT UNIQUE
+  name TEXT,
+  type INTEGER,
+  UNIQUE(name, type)
 );
 
-CREATE TABLE IF NOT EXISTS fileName2doc(
-  fileNameID INTEGER,
+CREATE TABLE IF NOT EXISTS pathName2doc(
+  pathNameID INTEGER,
   docID INTEGER,
-  UNIQUE(fileNameID, docID)
+  UNIQUE(pathNameID, docID)
 );
-CREATE INDEX IF NOT EXISTS i_fileName2doc_fileNameID ON fileName2doc (fileNameID);
-CREATE INDEX IF NOT EXISTS i_fileName2doc_docID ON fileName2doc (docID);
+CREATE INDEX IF NOT EXISTS i_pathName2doc_pathNameID ON pathName2doc (pathNameID);
+CREATE INDEX IF NOT EXISTS i_pathName2doc_docID ON pathName2doc (docID);
 """
-
+ 
 class IndexDatabase:
     def __init__(self, strDbLocation: str) -> None:
         self.strDbLocation = strDbLocation

@@ -32,7 +32,7 @@ def genTestQueries(dbname):
 
 def performanceTest(db,  queries,  manualIntersect):
     for query in queries:
-        q = FullTextIndex.FindAllQuery(query)
+        q = FullTextIndex.SearchQuery(query)
         db.search(q,  None,  manualIntersect=manualIntersect)
 
 def main():

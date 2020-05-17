@@ -291,40 +291,20 @@ class SearchQuery(Query):
         reExpr = re.compile(r"\s*".join(regParts), self.reFlags)
         return reExpr
 
-class FindAllQuery(Query):
-    def __init__(self, strSearch:str, strFolderFilter:str="", strExtensionFilter:str="", bCaseSensitive:bool=False) -> None:
-        super().__init__(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
-
-        parts = []
-        for i, s in self.parts:
-            if i != TokenType.IndexPart:
-                if s != "":
-                    raise QueryError("The element '%s' of the search string is not indexed! Remove it or search for the full phrase." % (s,))
-            else:
-                parts.append((i, s))
-
-        self.parts = parts
-
-    # Returns a list of regular expressions which match all found occurances in a document
-    def regExForMatches(self) -> Pattern:
-        expr = "|".join("(" + kwExpr(kw) + ")" for kw in (part[1] for part in self.parts))
-        reExpr = re.compile(expr, self.reFlags)
-        return reExpr
-
 class TestQuery(unittest.TestCase):
     def test(self) -> None:
         self.assertRaises(RuntimeError, SearchQuery, "!")
-        self.assertRaises(RuntimeError, FindAllQuery, "a < b", "", "", False) # cannot search for < if we are not searching for full phrase
         s1 = SearchQuery("a < b")
         self.assertEqual(s1.parts, [(TokenType.IndexPart, "a"), (TokenType.ScanPart, "<"), (TokenType.IndexPart, "b")])
         self.assertEqual(s1.bCaseSensitive, False)
-        s2 = FindAllQuery("a b", "", "", True)
-        self.assertEqual(s2.parts, [(TokenType.IndexPart, "a"), (TokenType.IndexPart, "b")])
-        self.assertEqual(s2.bCaseSensitive, True)
         s3 = SearchQuery("linux *")
         self.assertEqual(s3.regExForMatches().pattern, "\\blinux\\b\\s*\\*")
         s4 = SearchQuery("createNode ( CComVariant")
         self.assertEqual(s4.regExForMatches().pattern, "\\bcreateNode\\b\\s*\\(\\s*\\bCComVariant\\b")
+        s5 = SearchQuery("unknown **4")
+        self.assertEqual(s5.regExForMatches().pattern, "\\bunknown\\b\\s*(?:(?:\\s+)?\\S+){1,4}?")
+        s6 = SearchQuery("regex <!abc!>")
+        self.assertEqual(s6.regExForMatches().pattern, "\\bregex\\b\\s*(abc)")
 
 class ReportAction:
     def __init__(self, name: str) -> None:

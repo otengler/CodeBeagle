@@ -20,6 +20,7 @@ import os
 import unittest
 import shutil
 import stat
+from typing import cast, Callable
 from .FullTextIndex import FullTextIndex, SearchQuery, Keyword, buildMapFromCommonKeywordFile
 from .IndexUpdater import IndexUpdater, UpdateStatistics
 
@@ -54,14 +55,29 @@ def modifyTimestamp (name: str) -> None:
     new_mtime = mtime - (365*24*3600) # one year in the past
     os.utime(name,(atime,new_mtime))
 
+def setModifyTimestamp(name: str, seconds: float) -> None:
+    os.utime(name,(seconds,seconds))
+
 def getModulePath () -> str:
     import __main__
-    return os.path.split(__main__.__file__)[0]
+    return cast(str, os.path.split(__main__.__file__)[0])
+
+def forAllFiles(name: str, doAction: Callable) -> None:
+    for root, _, files in os.walk(name):
+        for file in files:
+            doAction(os.path.join(root,file))
 
 class TestFullTextIndex(unittest.TestCase):
     def test(self) -> None:
         testPath = os.path.join(getModulePath (), "tests")
         os.chdir(testPath)
+
+        aNiceTime = 1586099163.8849764  # Set all test files to a defined time
+        def setTime(name: str) -> None:
+            setModifyTimestamp(name, aNiceTime)
+        forAllFiles("data1", setTime)
+        forAllFiles("data2", setTime)
+
         delFile ("test.dat")
 
         updater = IndexUpdater("test.dat")
@@ -118,6 +134,7 @@ class TestFullTextIndex(unittest.TestCase):
         # ebcdic.c: "conversion table"
         # utf8.txt: "äöüß"
         # utf16.txt: "äöüß", "Dschungelbuch"
+        # corrupt_utf8.c: Corrupt BOM (file should be ignored)
         # test1.c:  "Dschungelbuch Neuer Text"
         # test2.c: "Dschungelbuch"
         # test3.c: Gelöscht

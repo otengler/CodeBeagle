@@ -139,7 +139,7 @@ def customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullT
         return directSearchAsync(searchData, indexConf).matches
 
     def regexFromText(strQuery: str, bCaseSensitive: bool) -> Pattern:
-        query = FullTextIndex.FindAllQuery(strQuery, "", "", bCaseSensitive)
+        query = FullTextIndex.SearchQuery(strQuery, "", "", bCaseSensitive)
         return query.regExForMatches()
 
     class Result:
