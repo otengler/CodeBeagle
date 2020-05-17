@@ -22,9 +22,10 @@ import re
 import time
 import logging
 import sqlite3
-from typing import List, Iterator, IO, Set, cast
+from typing import List, Iterator, IO, Set, cast, Tuple
 from tools.FileTools import fopen
 from .IndexDatabase import IndexDatabase
+from .IndexConfiguration import IndexConfiguration, IndexType
 
 reTokenize = re.compile(r"[\w#]+")
 
@@ -33,7 +34,7 @@ def __fixExtension(ext: str) -> str:
         return ext
     return ""
 
-def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None, ignoredExts: Set[str]=None) -> Iterator[str]:
+def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None, ignoredExts: Set[str]=None) -> Iterator[Tuple[str,str]]:
     dirExcludes = dirExcludes or []
 
     filepatFixed: Set[str] = set()
@@ -54,7 +55,7 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None, ign
         for name in filelist:
             ext = os.path.splitext(name)[1].lower()
             if ext in filepatFixed:
-                yield os.path.join(path, name)
+                yield (path, name)
             elif ignoredExts is not None:
                 ignoredExts.add(ext)
 
@@ -82,8 +83,12 @@ class UpdateStatistics:
         return s
 
 class IndexUpdater (IndexDatabase):
-    def updateIndex(self, directories: List[str], extensions: Set[str], dirExcludes: List[str]=None, statistics: UpdateStatistics=None) -> None:
-        dirExcludes = dirExcludes or []
+    def updateIndex(self, config: IndexConfiguration, statistics: UpdateStatistics=None) -> None:
+        directories = config.directories
+        extensions = config.extensions
+        dirExcludes = config.dirExcludes or []
+        indexType = config.indexType
+
         c = self.conn.cursor()
         q = self.conn.cursor()
 
@@ -97,7 +102,8 @@ class IndexUpdater (IndexDatabase):
             for strRootDir in directories:
                 logging.info("Updating index in %s", strRootDir)
                 ignoredExt: Set[str] = set()
-                for strFullPath in genFind(extensions, strRootDir, dirExcludes, ignoredExt):
+                for dirName, fileName in genFind(extensions, strRootDir, dirExcludes, ignoredExt):
+                    strFullPath = os.path.join(dirName, fileName)
                     mTime = os.stat(strFullPath).st_mtime
 
                     c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
@@ -105,26 +111,29 @@ class IndexUpdater (IndexDatabase):
                         # New document must always be processed
                         docID = c.lastrowid
                         timestamp = 0
+                        if statistics:
+                            statistics.incNew()
                     else:
                         q.execute("SELECT id,timestamp FROM documents WHERE fullpath=:fp", {"fp":strFullPath})
                         docID, timestamp = q.fetchone()
 
+                    if indexType != IndexType.FileContent:
+                        self.__addFileName(c, q, docID, fileName)
+
                     try:
-                        if timestamp != mTime:
-                            self.__updateFile(c, q, docID, strFullPath)
-                            c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
-                            if statistics:
-                                if timestamp != 0:
+                        if indexType != IndexType.FileName:
+                            if timestamp != mTime:
+                                self.__updateFile(c, q, docID, strFullPath)
+                                c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
+                                if statistics and timestamp != 0:
                                     statistics.incUpdated()
-                                else:
-                                    statistics.incNew()
-                        else:
-                            if statistics:
-                                statistics.incUnchanged()
+                            else:
+                                if statistics:
+                                    statistics.incUnchanged()
                     except Exception as e:
                         logging.error("Failed to process file '%s'", strFullPath)
                         logging.error(str(e))
-                        # Write an nextIndexID of -1 which makes sure the document in removed in the cleanup phase
+                        # Write an nextIndexID of -1 which makes sure the document is removed in the cleanup phase
                         c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, -1))
                     else:
                         # We always write the next index ID. This is needed to find old files which still have lower indexID values.
@@ -143,6 +152,10 @@ class IndexUpdater (IndexDatabase):
         c.execute("DELETE FROM documentInIndex WHERE indexID < :index", {"index":nextIndexID})
         logging.info("Removing orphaned keywords")
         c.execute("DELETE FROM keywords WHERE id NOT IN (SELECT kwID FROM kw2doc)")
+        logging.info("Cleaning file name associations")
+        c.execute("DELETE FROM fileName2doc WHERE docID NOT IN (SELECT id FROM documents)")
+        logging.info("Cleaning file names")
+        c.execute("DELETE FROM fileName WHERE id NOT IN (SELECT fileNameID FROM fileName2doc)")
         logging.info("Removing old indexInfo entry")
         c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
 
@@ -163,6 +176,21 @@ class IndexUpdater (IndexDatabase):
                     kwID = q.fetchone()[0]
 
                 c.execute("INSERT OR IGNORE INTO kw2doc (kwID,docID) values (?,?)", (kwID, docID))
+
+    def __addFileName(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, fileName: str) -> None:
+        name,ext = os.path.splitext(fileName)
+
+        q.execute("SELECT id from fileName WHERE name=:name AND ext=:ext", {"name":name, "ext":ext})
+        result = q.fetchone()
+        if result:
+            fileID = result[0]
+        else:
+            c.execute("INSERT INTO fileName (id,name,ext) VALUES (NULL,?,?)", (name, ext))
+            if c.rowcount == 0 or c.lastrowid == 0:
+                raise RuntimeError(f"Failed to insert file {name}")
+            fileID = c.lastrowid
+
+        c.execute("INSERT OR IGNORE INTO fileName2doc (fileNameID, docID) VALUES (?,?)", (fileID, docID))
 
     def __getNextIndexRun(self, c: sqlite3.Cursor) -> int:
         c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))

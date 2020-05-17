@@ -32,21 +32,20 @@ class IndexMode(IntEnum):
     # Keep index permanently up to date by watching the file system for changes
     AutomaticIndexUpdate = 3
 
-def indexUpdateModeToString(mode: IndexMode) -> str:
-    if mode == IndexMode.NoIndexWanted:
-        return "NoIndexWanted"
-    elif mode == IndexMode.ManualIndexUpdate:
-        return "ManualIndexUpdate"
-    elif mode == IndexMode.TriggeredIndexUpdate:
-        return "TriggeredIndexUpdate"
-    elif mode == IndexMode.AutomaticIndexUpdate:
-        return "AutomaticIndexUpdate"
-    return "Unknown"
+class IndexType(IntEnum):
+    # Index file content
+    FileContent = 0
+    # Index file names
+    FileName = 1
+    # Both file content and file names
+    FileContentAndName = 2
 
 class IndexConfiguration:
-    def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="", indexUpdateMode:IndexMode=IndexMode.TriggeredIndexUpdate) -> None:
+    def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="", 
+                 indexUpdateMode:IndexMode=IndexMode.TriggeredIndexUpdate, indexType:IndexType=IndexType.FileContentAndName) -> None:
         self.indexName = indexName
-        self.indexUpdateMode = indexUpdateMode
+        self.indexUpdateMode = IndexMode(indexUpdateMode)
+        self.indexType = IndexType(indexType)
         self.indexdb = correctPath(indexdb)
         # Add the extensions into a set. This makes the lookup if an extension matches faster.
         self.extensions: Set[str] = set()
@@ -60,7 +59,7 @@ class IndexConfiguration:
         return self.indexUpdateMode != IndexMode.NoIndexWanted
 
     def extensionsAsString(self) -> str:
-        return ",".join(sorted([ext for ext in self.extensions]))
+        return ",".join(sorted(self.extensions))
 
     def directoriesAsString(self) -> str:
         return ",".join(self.directories)
@@ -86,7 +85,8 @@ class IndexConfiguration:
 
     def __str__(self) -> str:
         result = "Name       : " + self.indexName + "\n"
-        result += "Index mode : " + indexUpdateModeToString(self.indexUpdateMode) + "\n"
+        result += "Index mode : " + self.indexUpdateMode.name + "\n"
+        result += "Index type: " + self.indexType.name + "\n"
         result += "IndexDB    : " + self.indexdb + "\n"
         result += "Directories: " + str(self.directories) + "\n"
         result += "Excludes   : " + str(self.dirExcludes) + "\n"
@@ -101,6 +101,7 @@ class IndexConfiguration:
 
         return self.indexName == other.indexName and \
                self.indexUpdateMode == other.indexUpdateMode and \
+               self.indexType == other.indexType and \
                self.indexdb == other.indexdb and \
                self.directories == other.directories and \
                self.dirExcludes == other.dirExcludes and \
@@ -111,6 +112,7 @@ def indexTypeInfo(config: Config.Config) -> None:
     config.setType("indexName", Config.typeDefaultString(""))
     config.setType("generateIndex", Config.typeDefaultBool(True)) # kept for compatibility
     config.setType("indexUpdateMode", Config.typeDefaultInt(IndexMode.TriggeredIndexUpdate))
+    config.setType("indexType", Config.typeDefaultInt(IndexType.FileContentAndName))
     config.setType("dirExcludes", Config.typeDefaultString(""))
 
 # Returns a list of Index objects from the config
@@ -131,6 +133,7 @@ def readConfig(conf: Config.Config) -> List[IndexConfiguration]:
             indexUpdateMode = IndexMode.TriggeredIndexUpdate
         else:
             indexUpdateMode = IndexMode.NoIndexWanted
+        indexType = indexConf.indexType
         indexName = indexConf.indexName
         indexdb = indexConf.indexdb
         extensions = indexConf.extensions
@@ -139,5 +142,5 @@ def readConfig(conf: Config.Config) -> List[IndexConfiguration]:
         except AttributeError:
             directories = indexConf.directory
         dirExceptions = indexConf.dirExcludes
-        result.append(IndexConfiguration(indexName, extensions, directories, dirExceptions, indexdb, indexUpdateMode))
+        result.append(IndexConfiguration(indexName, extensions, directories, dirExceptions, indexdb, indexUpdateMode, indexType))
     return result

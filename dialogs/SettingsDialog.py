@@ -144,7 +144,8 @@ class LocationControl (QObject):
                                       editor.directories(),
                                       editor.dirExcludes(),
                                       editor.indexDB(),
-                                      editor.indexUpdateMode())
+                                      editor.indexUpdateMode(),
+                                      editor.indexType())
         self.model.setData(index, location, Qt.UserRole+1)
 
     def loadDataFromItem(self, index: QModelIndex) -> None:
@@ -158,7 +159,8 @@ class LocationControl (QObject):
                        location.extensionsAsString(),
                        location.dirExcludesAsString(),
                        location.indexUpdateMode,
-                       location.indexdb)
+                       location.indexdb,
+                       location.indexType)
         editor.enable(not self.readOnly)
 
     def addLocation(self, location: IndexConfiguration, activateLocation:bool=False) -> None:
@@ -326,6 +328,7 @@ class SettingsDialog (QDialog):
             locConf.directories =  location.directoriesAsString()
             locConf.dirExcludes = location.dirExcludesAsString()
             locConf.indexUpdateMode = location.indexUpdateMode
+            locConf.indexType = location.indexType
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
         config.sourceViewer.FontFamily = self.ui.fontComboBox.currentFont().family()

@@ -23,7 +23,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QFileDialog
 from tools import FileTools
 import AppConfig
-from fulltextindex.IndexConfiguration import IndexMode
+from fulltextindex.IndexConfiguration import IndexMode, IndexType
 from .Ui_SettingsItem import Ui_SettingsItem
 
 class SettingsItem (QWidget):
@@ -44,6 +44,7 @@ class SettingsItem (QWidget):
         self.ui.comboIndexUpdateMode.currentIndexChanged.connect(self.updateIndexModeChanged)
         self.__addEntriesForExtensionsCombo()
         self.__addEntriesForIndexUpdateModeCombo()
+        self.__addEntriesForIndexTypeCombo()
 
     def __addEntriesForExtensionsCombo (self) -> None:
         try:
@@ -57,6 +58,11 @@ class SettingsItem (QWidget):
         self.ui.comboIndexUpdateMode.addItem("Manual index update with CodeBeagle")
         self.ui.comboIndexUpdateMode.addItem("Update index when UpdateIndex.exe is run")
         #self.ui.comboIndexUpdateMode.addItem("Keep index permanently up to date")
+
+    def __addEntriesForIndexTypeCombo(self) -> None:
+        self.ui.comboIndexType.addItem("Index file content")
+        self.ui.comboIndexType.addItem("Index file name")
+        self.ui.comboIndexType.addItem("Index file content and name")
 
     def focusInEvent (self, _: QFocusEvent) -> None:
         self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
@@ -83,6 +89,7 @@ class SettingsItem (QWidget):
     def updateIndexModeChanged (self,  index: IndexMode) -> None:
         indexWanted = (index != IndexMode.NoIndexWanted)
         self.ui.editIndexDB.setEnabled(indexWanted)
+        self.ui.comboIndexType.setEnabled(indexWanted)
         self.ui.buttonBrowseIndexLocation.setEnabled(indexWanted)
         if indexWanted and not self.indexDB():
             self.__updateDBName(self.name())
@@ -116,7 +123,7 @@ class SettingsItem (QWidget):
     def nameSelectAll (self) -> None:
         self.ui.editName.selectAll()
 
-    def setData (self, name: str, directories: str, extensions: str,  dirExcludes: str, indexUpdateMode: IndexMode, indexDB: str) -> None:
+    def setData (self, name: str, directories: str, extensions: str,  dirExcludes: str, indexUpdateMode: IndexMode, indexDB: str, indexType: IndexType) -> None:
         self.ui.editName.setText (name)
         self.ui.editDirectories.setText (directories)
         self.ui.editExcludeDirectories.setText (dirExcludes)
@@ -132,6 +139,7 @@ class SettingsItem (QWidget):
             else:
                 self.ui.editIndexDB.setText ("")
 
+        self.ui.comboIndexType.setCurrentIndex(indexType)
         self.ui.comboIndexUpdateMode.setCurrentIndex(indexUpdateMode)
 
     def name (self) -> str:
@@ -155,12 +163,16 @@ class SettingsItem (QWidget):
     def indexUpdateMode(self) -> IndexMode:
         return cast(IndexMode,self.ui.comboIndexUpdateMode.currentIndex())
 
+    def indexType(self) -> IndexType:
+        return cast(IndexType,self.ui.comboIndexType.currentIndex())
+
     def resetAndDisable(self) -> None:
         self.ui.editName.setText("")
         self.ui.editExcludeDirectories.setText("")
         self.ui.comboExtensions.lineEdit().setText("")
         self.ui.editDirectories.setText("")
         self.ui.editIndexDB.setText("")
+        self.ui.comboIndexType.setCurrentIndex(IndexType.FileContentAndName)
         self.enable(False)
 
     def enable(self, bEnable:bool=True) -> None:
@@ -173,3 +185,4 @@ class SettingsItem (QWidget):
             bEnable = False
         self.ui.editIndexDB.setEnabled(bEnable)
         self.ui.buttonBrowseIndexLocation.setEnabled(bEnable)
+        self.ui.comboIndexType.setEnabled(bEnable)

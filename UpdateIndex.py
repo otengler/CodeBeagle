@@ -66,7 +66,7 @@ def updateIndex(config: IndexConfiguration.IndexConfiguration) -> None:
     try:
         fti = IndexUpdater(config.indexdb)
         statistics = UpdateStatistics()
-        taketime("Updating index took ", fti.updateIndex, config.directories, config.extensions, config.dirExcludes, statistics)
+        taketime("Updating index took ", fti.updateIndex, config, statistics)
         logging.info("%s", statistics)
     except:
         logging.error("Exception caught while updating index:\n%s", exceptionAsString(None))

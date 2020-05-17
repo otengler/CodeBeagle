@@ -100,7 +100,8 @@ class FullTextIndexSearch:
 def directSearchAsync(searchData: FullTextIndex.Query, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
     matches: List[str] = []
     for directory in indexConf.directories:
-        for file in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
+        for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
+            file = os.path.join(dirName, fileName)
             if searchData.matchFolderAndExtensionFilter(file):
                 with fopen(file) as inputFile:
                     for _ in searchData.matches(inputFile.read()):
