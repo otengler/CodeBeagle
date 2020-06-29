@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+import re
 from typing import List, Pattern, Iterator, Tuple, Optional, cast
 import threading
 from PyQt5.QtCore import QObject
@@ -25,7 +26,7 @@ from tools.FileTools import fopen
 from fulltextindex import FullTextIndex, IndexUpdater, IndexConfiguration
 
 class ResultSet:
-    def __init__(self, matches: FullTextIndex.SearchResult = None, searchData: FullTextIndex.Query = None,
+    def __init__(self, matches: FullTextIndex.SearchResult = None, searchData: FullTextIndex.ContentQuery = None,
                  perfReport: FullTextIndex.PerformanceReport = None, label: str = None) -> None:
 
         self.matches = matches or []
@@ -59,7 +60,7 @@ def search(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.
     strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
     if not strSearch:
         return ResultSet()
-    searchData = FullTextIndex.SearchQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+    searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
     result: ResultSet
     if indexConf.generatesIndex():
         ftiSearch = FullTextIndexSearch()
@@ -79,14 +80,14 @@ class FullTextIndexSearch:
         self.fti: Optional[FullTextIndex.FullTextIndex] = None
         self.lock = threading.Lock()
 
-    def __call__(self, searchData: FullTextIndex.Query, commonKeywordMap:FullTextIndex.CommonKeywordMap,
+    def __call__(self, searchData: FullTextIndex.ContentQuery, commonKeywordMap:FullTextIndex.CommonKeywordMap,
                  indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
 
         perfReport = FullTextIndex.PerformanceReport()
         with perfReport.newAction("Init database"):
             with self.lock:
                 self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
-            result = ResultSet(self.fti.search(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
+            result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
         with self.lock:
             del self.fti
             self.fti = None
@@ -97,7 +98,7 @@ class FullTextIndexSearch:
             if self.fti:
                 self.fti.interrupt()
 
-def directSearchAsync(searchData: FullTextIndex.Query, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+def directSearchAsync(searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
     matches: List[str] = []
     for directory in indexConf.directories:
         for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
@@ -127,20 +128,19 @@ def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: 
 def customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullTextIndex.CommonKeywordMap,
                       indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
 
-    import re
     query, folders, extensions, caseSensitive = params
 
     def performSearch(strSearch: str, strFolderFilter: str="", strExtensionFilter:str="", bCaseSensitive: bool=False) -> FullTextIndex.SearchResult:
         if not strSearch:
             return []
-        searchData = FullTextIndex.SearchQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+        searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
         if indexConf.generatesIndex():
             ftiSearch = FullTextIndexSearch()
             return ftiSearch(searchData, commonKeywordMap, indexConf).matches
         return directSearchAsync(searchData, indexConf).matches
 
     def regexFromText(strQuery: str, bCaseSensitive: bool) -> Pattern:
-        query = FullTextIndex.SearchQuery(strQuery, "", "", bCaseSensitive)
+        query = FullTextIndex.ContentQuery(strQuery, "", "", bCaseSensitive)
         return query.regExForMatches()
 
     class Result:
@@ -188,7 +188,7 @@ def customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullT
         searchData = ScriptSearchData(highlight)
     else:
         # Highlight by default the query
-        searchData = FullTextIndex.SearchQuery(query, "", "", caseSensitive)
+        searchData = FullTextIndex.ContentQuery(query, "", "", caseSensitive)
 
     return ResultSet(matches, searchData, label=label)
 

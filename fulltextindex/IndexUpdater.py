@@ -106,13 +106,13 @@ class IndexUpdater (IndexDatabase):
                     strFullPath = os.path.join(dirName, fileName)
                     mTime = os.stat(strFullPath).st_mtime
 
+                    newFile = False
                     c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
                     if c.rowcount == 1 and c.lastrowid != 0:
                         # New document must always be processed
                         docID = c.lastrowid
                         timestamp = 0
-                        if statistics:
-                            statistics.incNew()
+                        newFile = True
                     else:
                         q.execute("SELECT id,timestamp FROM documents WHERE fullpath=:fp", {"fp":strFullPath})
                         docID, timestamp = q.fetchone()
@@ -138,6 +138,8 @@ class IndexUpdater (IndexDatabase):
                     else:
                         # We always write the next index ID. This is needed to find old files which still have lower indexID values.
                         c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, nextIndexID))
+                        if statistics and newFile:
+                            statistics.incNew()
                 if ignoredExt:
                     logging.info("Ignored files with these extensions: %s", sorted(ignoredExt))
             self.__cleanup(c, nextIndexID)

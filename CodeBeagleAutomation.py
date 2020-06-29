@@ -33,11 +33,11 @@ class CodeBeagleAutomation:
         if not indexName in indexMap:
             return []
 
-        query = FullTextIndex.SearchQuery(searchPhrase, filterDirectories, filterExtensions, caseSensitive)
+        query = FullTextIndex.ContentQuery(searchPhrase, filterDirectories, filterExtensions, caseSensitive)
 
         fti = FullTextIndex.FullTextIndex(indexMap[indexName])
 
-        return fti.search(query)
+        return fti.searchContent(query)
 
 if __name__== '__main__':
     import win32com.server.register

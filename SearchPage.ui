@@ -94,14 +94,58 @@ p, li { white-space: pre-wrap; }
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonSearch">
-        <property name="text">
-         <string>Find</string>
-        </property>
-        <property name="icon">
-         <iconset resource="SearchPage.qrc">
-          <normaloff>:/default/resources/Find.png</normaloff>:/default/resources/Find.png</iconset>
-        </property>
+       <widget class="QWidget" name="widgetSearch" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="buttonSearch">
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Find content</string>
+           </property>
+           <property name="icon">
+            <iconset resource="SearchPage.qrc">
+             <normaloff>:/default/resources/Find.png</normaloff>:/default/resources/Find.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="buttonChangeSearchType">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="SearchPage.qrc">
+             <normaloff>:/default/resources/angle-down.png</normaloff>:/default/resources/angle-down.png</iconset>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="flat">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
@@ -585,184 +629,7 @@ p, li { white-space: pre-wrap; }
  <resources>
   <include location="SearchPage.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>listView</sender>
-   <signal>activated(QModelIndex)</signal>
-   <receiver>SearchPage</receiver>
-   <slot>fileSelected(QModelIndex)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>364</x>
-     <y>360</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>493</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonSearch</sender>
-   <signal>clicked()</signal>
-   <receiver>SearchPage</receiver>
-   <slot>performSearch()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>885</x>
-     <y>26</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>493</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>listView</sender>
-   <signal>doubleClicked(QModelIndex)</signal>
-   <receiver>SearchPage</receiver>
-   <slot>openFileWithSystem()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>364</x>
-     <y>360</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>493</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>listView</sender>
-   <signal>customContextMenuRequested(QPoint)</signal>
-   <receiver>SearchPage</receiver>
-   <slot>contextMenuRequested(QPoint)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>365</x>
-     <y>360</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>496</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonInfo</sender>
-   <signal>clicked()</signal>
-   <receiver>SearchPage</receiver>
-   <slot>performanceInfo()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>838</x>
-     <y>91</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>496</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonExport</sender>
-   <signal>clicked()</signal>
-   <receiver>SearchPage</receiver>
-   <slot>exportMatches()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>798</x>
-     <y>91</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>496</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonCustomScripts</sender>
-   <signal>clicked()</signal>
-   <receiver>SearchPage</receiver>
-   <slot>execCustomScripts()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>995</x>
-     <y>32</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>554</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>listView</sender>
-   <signal>clicked(QModelIndex)</signal>
-   <receiver>SearchPage</receiver>
-   <slot>fileSelected(QModelIndex)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>430</x>
-     <y>361</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>584</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>comboLocation</sender>
-   <signal>currentIndexChanged(QString)</signal>
-   <receiver>SearchPage</receiver>
-   <slot>currentLocationChanged()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1111</x>
-     <y>24</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>584</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonLockResultSet</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>SearchPage</receiver>
-   <slot>lockResultSet(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>390</x>
-     <y>25</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>584</x>
-     <y>321</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonSwitchView</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>SearchPage</receiver>
-   <slot>switchView(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>574</x>
-     <y>77</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>546</x>
-     <y>353</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
  <slots>
   <slot>fileSelected(QModelIndex)</slot>
   <slot>performSearch()</slot>

@@ -21,8 +21,10 @@ import unittest
 import shutil
 import stat
 from typing import cast, Callable
-from .FullTextIndex import FullTextIndex, SearchQuery, Keyword, buildMapFromCommonKeywordFile
+from .FullTextIndex import FullTextIndex, Keyword, buildMapFromCommonKeywordFile
+from .Query import ContentQuery
 from .IndexUpdater import IndexUpdater, UpdateStatistics
+from .IndexConfiguration import IndexConfiguration
 
 def delFile (name: str) -> None:
     try:
@@ -94,7 +96,8 @@ class TestFullTextIndex(unittest.TestCase):
         delDir("data")
         shutil.copytree ("data1", "data")
         updateStats = UpdateStatistics()
-        updater.updateIndex ([os.path.join(testPath,"data")], {".c",".txt"}, [], updateStats)
+        config = IndexConfiguration("test", ".c,.txt", os.path.join(testPath,"data"))
+        updater.updateIndex (config, updateStats)
         self.assertEqual(updateStats.nNew,  6)
         self.assertEqual(updateStats.nUpdated,  0)
         self.assertEqual(updateStats.nUnchanged,  0)
@@ -104,28 +107,28 @@ class TestFullTextIndex(unittest.TestCase):
 
         fti = FullTextIndex("test.dat")
 
-        q = SearchQuery ("conversion table")
-        result = fti.search(q)
+        q = ContentQuery ("conversion table")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\latin_1\ebcdic.c")]
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("äöüß")
-        result = fti.search(q)
+        q = ContentQuery ("äöüß")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\utf16\utf16.txt"), os.path.join(testPath, r"data\utf8\utf8.txt")]
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("dschungelbuch")
-        result = fti.search(q)
+        q = ContentQuery ("dschungelbuch")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.c"), os.path.join(testPath, r"data\test2.c")]
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("BamBi")
-        result = fti.search(q)
+        q = ContentQuery ("BamBi")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test2.c")]
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("Tom & cherry")
-        result = fti.search(q)
+        q = ContentQuery ("Tom & cherry")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test3.c")]
         self.assertEqual (result, exp)
 
@@ -149,7 +152,7 @@ class TestFullTextIndex(unittest.TestCase):
         modifyTimestamp ("data\\test2.c")
 
         updateStats = UpdateStatistics()
-        updater.updateIndex ([os.path.join(testPath,"data")], {".c",".txt"},  [], updateStats)
+        updater.updateIndex (config, updateStats)
         self.assertEqual(updateStats.nNew,  2)
         self.assertEqual(updateStats.nUpdated,  3)
         self.assertEqual(updateStats.nUnchanged,  2)
@@ -157,62 +160,62 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual (stats[0], 7)
         self.assertEqual (stats[1], 7)
 
-        q = SearchQuery ("conversion table")
-        result = fti.search(q)
+        q = ContentQuery ("conversion table")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\latin_1\ebcdic.c")]
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("äöüß")
-        result = fti.search(q)
+        q = ContentQuery ("äöüß")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\utf16\utf16.txt"), os.path.join(testPath, r"data\utf8\utf8.txt")]
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("DschungelbUch")
-        result = fti.search(q)
+        q = ContentQuery ("DschungelbUch")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.c"), os.path.join(testPath, r"data\test2.c"), os.path.join(testPath, r"data\utf16\utf16.txt")]
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("Neuer Text")
-        result = fti.search(q)
+        q = ContentQuery ("Neuer Text")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.c")]
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("Bambi")
-        result = fti.search(q)
+        q = ContentQuery ("Bambi")
+        result = fti.searchContent(q)
         exp = []
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("Tom & Cherry")
-        result = fti.search(q)
+        q = ContentQuery ("Tom & Cherry")
+        result = fti.searchContent(q)
         exp = []
         self.assertEqual (result, exp)
 
-        q = SearchQuery ("speedy gonzales")
-        result = fti.search(q)
+        q = ContentQuery ("speedy gonzales")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test4.c")]
         self.assertEqual (result, exp)
 
         # Test folder filter
-        q = SearchQuery ("Dschungelbuch",  "utf16")
-        result = fti.search(q)
+        q = ContentQuery ("Dschungelbuch",  "utf16")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\utf16\utf16.txt")]
         self.assertEqual (result, exp)
 
         # Test extension filter
-        q = SearchQuery ("Dschungelbuch",  "", "*.c")
-        result = fti.search(q)
+        q = ContentQuery ("Dschungelbuch",  "", "*.c")
+        result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.c"), os.path.join(testPath, r"data\test2.c")]
         self.assertEqual (result, exp)
 
         # Test case sensitivity
-        q = SearchQuery ("speedy gonzales",  "", "",  True)
-        result = fti.search(q,)
+        q = ContentQuery ("speedy gonzales",  "", "",  True)
+        result = fti.searchContent(q,)
         exp = []
         self.assertEqual (result, exp)
 
         # Update index again to check that no updated file will be found
         updateStats = UpdateStatistics()
-        updater.updateIndex ([os.path.join(testPath,"data")], {".c",".txt"},  [],  updateStats)
+        updater.updateIndex (config, updateStats)
         self.assertEqual(updateStats.nNew,  0)
         self.assertEqual(updateStats.nUpdated,  0)
         self.assertEqual(updateStats.nUnchanged,  7)
@@ -223,7 +226,7 @@ class TestFullTextIndex(unittest.TestCase):
         # Now remove everything, documents and keyword associations must be empty
         delDir("data")
         os.mkdir("data")
-        updater.updateIndex ([os.path.join(testPath,"data")], {".c",".txt"})
+        updater.updateIndex (config, updateStats)
 
         stats = fti.queryStats()
         self.assertEqual (stats[0], 0)

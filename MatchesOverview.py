@@ -153,7 +153,7 @@ class MatchesInFile:
 
 # Returns a list of all matches in all files
 # This reads all files and retrieves the matches with some lines surounding them
-def extractMatches (matches: List[str], searchData: FullTextIndex.Query, linesOfContext: int, cancelEvent: threading.Event=None) -> List[MatchesInFile]:
+def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, linesOfContext: int, cancelEvent: threading.Event=None) -> List[MatchesInFile]:
     results: List[MatchesInFile] = []
     for name in matches:
         matchList = MatchesInFile(name)
@@ -195,7 +195,7 @@ class MatchesOverview (QWidget):
         self.ui = Ui_MatchesOverview()
         self.ui.setupUi(self)
         self.matches: Optional[List[str]] = None
-        self.searchData: Optional[FullTextIndex.Query] = None
+        self.searchData: Optional[FullTextIndex.ContentQuery] = None
         self.resultHandled = True
         self.sourceFont = None
         self.lineHeight = 0
@@ -223,7 +223,7 @@ class MatchesOverview (QWidget):
 
         # TODO: rebuild self.scrollItems if the font changed or tab width changed...
 
-    def setSearchResult(self, matches: List[str], searchData: FullTextIndex.Query) -> None:
+    def setSearchResult(self, matches: List[str], searchData: FullTextIndex.ContentQuery) -> None:
         self.matches = matches
         self.searchData = searchData
         self.resultHandled = False

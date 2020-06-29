@@ -13,5 +13,6 @@
     <file>resources/PerfInfo.png</file>
     <file>resources/Find.png</file>
     <file>resources/regex.png</file>
+    <file>resources/angle-down.png</file>
   </qresource>
 </RCC>

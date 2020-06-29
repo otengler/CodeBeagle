@@ -22,7 +22,7 @@ testmodules = [
     'HighlighterConfiguration',
     'MatchesOverview',
     'tools.Config',
-    'fulltextindex.FullTextIndex',
+    'fulltextindex.Query',
     'fulltextindex.testsuite'
     ]
 

@@ -58,7 +58,7 @@ class SourceViewer (QWidget):
         self.ui.widgetInDocumentSearch.hide()
 
         self.sourceFont: QFont = self.font()
-        self.searchData: Optional[FullTextIndex.Query] = None
+        self.searchData: Optional[FullTextIndex.ContentQuery] = None
         self.__reset()
         self.__processConfig(None)
 
@@ -144,7 +144,7 @@ class SourceViewer (QWidget):
         self.currentMatchChanged.emit(self.curMatch)
         self.ui.listMatchesWidget.setCurrentRow(index)
 
-    def setSearchData (self, searchData: FullTextIndex.Query) -> None:
+    def setSearchData (self, searchData: FullTextIndex.ContentQuery) -> None:
         self.__reset()
         self.searchData = searchData
         self.ui.textEdit.highlighter.setSearchData (searchData)
