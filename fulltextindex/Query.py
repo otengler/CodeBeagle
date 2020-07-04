@@ -28,6 +28,8 @@ reQueryToken = re.compile(r"[\w#*]+|<!.*!>")
 reMatchWords = re.compile(r"(\*\*)([0-9]+)")
 reMatchRegEx = re.compile(r"<!(.*)!>")
 
+regexEscape = r"[\^$.|?*+()"
+
 SearchResult = List[str]
 
 # Return tokens which are in the index
@@ -97,23 +99,61 @@ class TestSearchParts(unittest.TestCase):
         self.assertEqual(splitSearchParts("a ***"), [(TokenType.IndexPart, "a"), (TokenType.ScanPart, "***")])
         self.assertEqual(splitSearchParts("a <!abc!>"), [(TokenType.IndexPart, "a"), (TokenType.ScanPart, ""), (TokenType.RegExPart, "abc")])
 
-def createFolderFilter(strFilter: str) -> List[Tuple[str,bool]]:
-    strFilter = strFilter.strip().lower()
-    filterParts: List[Tuple[str,bool]] = []
-    if not strFilter:
-        return filterParts
-    for item in (item.strip() for item in strFilter.split(",")):
-        if item:
-            if item.startswith("-"):
-                filterParts.append((item[1:], False))
-            else:
-                filterParts.append((item, True))
-    return filterParts
+def createPathMatchPattern(pathMatch: str) -> str:
+    pattern = ""
+    for c in pathMatch:
+        if c == '*':
+            pattern += ".*"
+        elif c == '?':
+            pattern += "."
+        elif c in regexEscape:
+            pattern += f"\\{c}"
+        else:
+            pattern += c
+    return pattern
+
+class IncludeExcludePattern:
+    def __init__(self, filterParts: List[Tuple[str,bool]]) -> None:
+        self.includeParts = []
+        self.excludeParts = []
+        self.positivePattern: Optional[Pattern] = None
+        self.negativePattern: Optional[Pattern] = None
+
+        if filterParts:
+            for part,positive in filterParts:
+                if positive:
+                    self.includeParts.append(part)
+                else:
+                    self.excludeParts.append(part)
+
+        if self.includeParts:
+            positiveFilter = [createPathMatchPattern(part) for part in self.includeParts]
+            self.positivePattern = re.compile("|".join(positiveFilter), re.IGNORECASE)
+
+        if self.excludeParts:
+            negativeFilter = [createPathMatchPattern(part) for part in self.excludeParts]
+            self.negativePattern = re.compile("|".join(negativeFilter), re.IGNORECASE)
+
+    def isEmpty(self) -> bool:
+        return not self.positivePattern and not self.negativePattern
+
+    def match(self, text: str) -> bool:
+        if self.negativePattern and self.negativePattern.search(text):
+            return False
+        if self.positivePattern:
+            return bool(self.positivePattern.search(text))
+        return True
+
+class TestIncludeExcludePattern(unittest.TestCase):
+    def test(self) -> None:
+        ie = IncludeExcludePattern([("test*", True), ("black*", False) ])
+        self.assertTrue(ie.match("test123"))
+        self.assertTrue(ie.match("test_abc.txt"))
+        self.assertFalse(ie.match("test_blacklist.txt"))
 
 # Transform the comma separated list so that every extension looks like ".ext".
 # Also remove '*' to support *.ext
 def createExtensionFilter(strFilter: str) -> List[Tuple[str,bool]]:
-    strFilter = strFilter.strip().lower()
     filterParts: List[Tuple[str,bool]] = []
     if not strFilter:
         return filterParts
@@ -130,6 +170,19 @@ def createExtensionFilter(strFilter: str) -> List[Tuple[str,bool]]:
             filterParts.append((item, bPositiveFilter))
     return filterParts
 
+def createFolderFilter(strFilter: str) -> List[Tuple[str,bool]]:
+    strFilter = strFilter.strip().lower()
+    filterParts: List[Tuple[str,bool]] = []
+    if not strFilter:
+        return filterParts
+    for item in (item.strip() for item in strFilter.split(",")):
+        if item:
+            if item.startswith("-"):
+                filterParts.append((item[1:], False))
+            else:
+                filterParts.append((item, True))
+    return filterParts
+
 class QueryError(RuntimeError):
     pass
 
@@ -138,8 +191,10 @@ class Query(ABC):
         self.search = strSearch
         self.folderFilter = createFolderFilter(strFolderFilter)
         self.extensionFilter = createExtensionFilter(strExtensionFilter)
+        self.folderFilterExpression = IncludeExcludePattern(self.folderFilter)
+        self.extensionFilterExpression = IncludeExcludePattern(self.extensionFilter)
         self.hasFilters = False
-        if self.folderFilter or self.extensionFilter:
+        if not self.folderFilter or not self.extensionFilter:
             self.hasFilters = True
 
         self.bCaseSensitive = bCaseSensitive
@@ -149,33 +204,12 @@ class Query(ABC):
             return True
 
         if runFolderFilter:
-            strFileName = strFileName.lower()
-            bHasPositiveFilter = False
-            bPositiveFilterMatches = False
-            for folder, bPositive in self.folderFilter:
-                if bPositive:
-                    bHasPositiveFilter = True
-                if strFileName.find(folder) != -1:
-                    if not bPositive:
-                        return False
-                    else:
-                        bPositiveFilterMatches = True
-            if bHasPositiveFilter and not bPositiveFilterMatches:
+            if not self.folderFilterExpression.match(strFileName):
                 return False
 
         if runExtensionFilter:
             ext = os.path.splitext(strFileName)[1]
-            bHasPositiveFilter = False
-            bPositiveFilterMatches = False
-            for extension, bPositive in self.extensionFilter:
-                if bPositive:
-                    bHasPositiveFilter = True
-                if ext == extension:
-                    if not bPositive:
-                        return False
-                    else:
-                        bPositiveFilterMatches = True
-            if bHasPositiveFilter and not bPositiveFilterMatches:
+            if not self.extensionFilterExpression.match(ext):
                 return False
 
         return True
@@ -208,7 +242,7 @@ class ContentQuery(Query):
             elif TokenType.ScanPart == t:
                 # Regex special characters [\^$.|?*+()
                 for c in s:
-                    if c in r"[\^$.|?*+()":
+                    if c in regexEscape:
                         regParts.append("\\" + c)
                     else:
                         regParts.append(c)
@@ -329,3 +363,4 @@ def safeLen(obj: Sized) -> int:
         return len(obj)
     except:
         return 0
+

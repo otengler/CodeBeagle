@@ -39,14 +39,21 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
     perfReport = perfReport or PerformanceReport()
 
     search = query.search
-    extFilter = query.extensionFilter
+    positiveExtFilter = query.extensionFilterExpression.includeParts
+    negativeExtFilter = query.extensionFilterExpression.excludeParts
 
     # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
     # not specified as that takes precedance.
     if search.find('.') != -1 and not query.extensionFilter:
         tokens = os.path.splitext(search)
         search = tokens[0]
-        extFilter = createExtensionFilter(tokens[1])
+        positiveExtFilter = []
+        negativeExtFilter = []
+        for ext,positive in createExtensionFilter(tokens[1]):
+            if positive:
+                positiveExtFilter.append(ext)
+            else:
+                negativeExtFilter.append(ext)
 
     params = {}
 
@@ -59,30 +66,25 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
         queryStmt += "fn.name = :searchTerm"
         params["searchTerm"] = search
 
-    if extFilter:
-        positiveExtFilter = False
+    if positiveExtFilter or negativeExtFilter:
         positiveWildcard = False
-        negatedExtFilter = False
         negatedWildcard = False
         positiveParams = []
         negativeParams = []
         iPos = 1
         iNeg = 1
-        for ext, positive in extFilter:
-            if positive:
-                positiveExtFilter = True
-                positiveWildcard |= hasFileNameWildcard(ext)
-                p = f"p{iPos}"
-                iPos+=1
-                positiveParams.append(":" + p)
-                params[p] = escapeFileName(ext)
-            else:
-                negatedExtFilter = True
-                negatedWildcard |= hasFileNameWildcard(ext)
-                p = f"n{iNeg}"
-                iNeg+=1
-                negativeParams.append(":" + p)
-                params[p] = escapeFileName(ext)
+        for ext in positiveExtFilter:
+            positiveWildcard |= hasFileNameWildcard(ext)
+            p = f"p{iPos}"
+            iPos+=1
+            positiveParams.append(":" + p)
+            params[p] = escapeFileName(ext)
+        for ext in negativeExtFilter:
+            negatedWildcard |= hasFileNameWildcard(ext)
+            p = f"n{iNeg}"
+            iNeg+=1
+            negativeParams.append(":" + p)
+            params[p] = escapeFileName(ext)
 
         # If no wildcard is used the in list approach is more efficient. For wildcards we need 'like'. Both are shown here
         # fn.ext in ('.h','.cpp') and not (fn.ext like '.a%' or fn.ext like '.b')) 
@@ -94,7 +96,7 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
                 queryStmt += "("
                 queryStmt += " OR ".join((f"fn.ext LIKE {p}" for p in positiveParams))
                 queryStmt += ")"
-        if negatedExtFilter:
+        if negativeExtFilter:
             queryStmt += " AND NOT "
             if not negatedWildcard:
                 queryStmt += "fn.ext IN ({})".format(",".join(negativeParams)) # IN (n1,n2,n3)

@@ -22,9 +22,9 @@ import shutil
 import stat
 from typing import cast, Callable
 from .FullTextIndex import FullTextIndex, Keyword, buildMapFromCommonKeywordFile
-from .Query import ContentQuery
+from .Query import ContentQuery, FileQuery
 from .IndexUpdater import IndexUpdater, UpdateStatistics
-from .IndexConfiguration import IndexConfiguration
+from .IndexConfiguration import IndexConfiguration, IndexType
 
 def delFile (name: str) -> None:
     try:
@@ -215,6 +215,7 @@ class TestFullTextIndex(unittest.TestCase):
 
         # Update index again to check that no updated file will be found
         updateStats = UpdateStatistics()
+        config.indexType = IndexType.FileContentAndName
         updater.updateIndex (config, updateStats)
         self.assertEqual(updateStats.nNew,  0)
         self.assertEqual(updateStats.nUpdated,  0)
@@ -222,6 +223,12 @@ class TestFullTextIndex(unittest.TestCase):
         stats = fti.queryStats()
         self.assertEqual (stats[0], 7)
         self.assertEqual (stats[1], 7)
+
+        # Test file search
+        q2 = FileQuery("utf8.txt")
+        result = fti.searchFile(q2)
+        exp = [os.path.join(testPath, r"data\utf8\utf8.txt")]
+        self.assertEqual(exp, result)
 
         # Now remove everything, documents and keyword associations must be empty
         delDir("data")
