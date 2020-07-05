@@ -194,7 +194,7 @@ class Query(ABC):
         self.folderFilterExpression = IncludeExcludePattern(self.folderFilter)
         self.extensionFilterExpression = IncludeExcludePattern(self.extensionFilter)
         self.hasFilters = False
-        if not self.folderFilter or not self.extensionFilter:
+        if self.folderFilter or self.extensionFilter:
             self.hasFilters = True
 
         self.bCaseSensitive = bCaseSensitive

@@ -96,7 +96,7 @@ class TestFullTextIndex(unittest.TestCase):
         delDir("data")
         shutil.copytree ("data1", "data")
         updateStats = UpdateStatistics()
-        config = IndexConfiguration("test", ".c,.txt", os.path.join(testPath,"data"))
+        config = IndexConfiguration("test", ".c,.cpp,.cxx,.txt", os.path.join(testPath,"data"))
         updater.updateIndex (config, updateStats)
         self.assertEqual(updateStats.nNew,  6)
         self.assertEqual(updateStats.nUpdated,  0)
@@ -119,12 +119,12 @@ class TestFullTextIndex(unittest.TestCase):
 
         q = ContentQuery ("dschungelbuch")
         result = fti.searchContent(q)
-        exp = [os.path.join(testPath, r"data\test1.c"), os.path.join(testPath, r"data\test2.c")]
+        exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx")]
         self.assertEqual (result, exp)
 
         q = ContentQuery ("BamBi")
         result = fti.searchContent(q)
-        exp = [os.path.join(testPath, r"data\test2.c")]
+        exp = [os.path.join(testPath, r"data\test2.cxx")]
         self.assertEqual (result, exp)
 
         q = ContentQuery ("Tom & cherry")
@@ -148,8 +148,8 @@ class TestFullTextIndex(unittest.TestCase):
         shutil.copytree ("data2", "data")
         # Make sure these three files have a modified timestamp:
         modifyTimestamp ("data\\utf16\\utf16.txt")
-        modifyTimestamp ("data\\test1.c")
-        modifyTimestamp ("data\\test2.c")
+        modifyTimestamp ("data\\test1.cpp")
+        modifyTimestamp ("data\\test2.cxx")
 
         updateStats = UpdateStatistics()
         updater.updateIndex (config, updateStats)
@@ -172,12 +172,12 @@ class TestFullTextIndex(unittest.TestCase):
 
         q = ContentQuery ("DschungelbUch")
         result = fti.searchContent(q)
-        exp = [os.path.join(testPath, r"data\test1.c"), os.path.join(testPath, r"data\test2.c"), os.path.join(testPath, r"data\utf16\utf16.txt")]
+        exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx"), os.path.join(testPath, r"data\utf16\utf16.txt")]
         self.assertEqual (result, exp)
 
         q = ContentQuery ("Neuer Text")
         result = fti.searchContent(q)
-        exp = [os.path.join(testPath, r"data\test1.c")]
+        exp = [os.path.join(testPath, r"data\test1.cpp")]
         self.assertEqual (result, exp)
 
         q = ContentQuery ("Bambi")
@@ -204,7 +204,7 @@ class TestFullTextIndex(unittest.TestCase):
         # Test extension filter
         q = ContentQuery ("Dschungelbuch",  "", "*.c")
         result = fti.searchContent(q)
-        exp = [os.path.join(testPath, r"data\test1.c"), os.path.join(testPath, r"data\test2.c")]
+        exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx")]
         self.assertEqual (result, exp)
 
         # Test case sensitivity
@@ -225,10 +225,20 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual (stats[1], 7)
 
         # Test file search
-        q2 = FileQuery("utf8.txt")
+        q2 = FileQuery("utf8.txt") # test search specific file
         result = fti.searchFile(q2)
         exp = [os.path.join(testPath, r"data\utf8\utf8.txt")]
         self.assertEqual(exp, result)
+
+        q2 = FileQuery("test*", "", "c??") # test extension filter
+        result = fti.searchFile(q2)
+        exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx")]
+        self.assertEqual (result, exp)
+
+        q2 = FileQuery("*", "latin_?", "c") # test folder filter
+        result = fti.searchFile(q2)
+        exp = [os.path.join(testPath, r"data\latin_1\ebcdic.c")]
+        self.assertEqual (result, exp)
 
         # Now remove everything, documents and keyword associations must be empty
         delDir("data")
