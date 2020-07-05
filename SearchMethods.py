@@ -34,6 +34,85 @@ class ResultSet:
         self.searchData = searchData
         self.label = label
 
+SearchParams = Tuple[str, str, str, bool] # Search query, folders, extensions, case sensitive
+
+def search(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
+    """This executes an indexed or a direct search. This depends on the IndexConfiguration setting "indexUpdateMode"."""
+    commonKeywordMap = commonKeywordMap or {}
+
+    strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
+    if not strSearch:
+        return ResultSet()
+
+    searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+    result: ResultSet
+
+    ftiSearch = FullTextIndexSearch()
+    result = AsynchronousTask.execute(parent, ftiSearch.searchContent, searchData, indexConf, commonKeywordMap, bEnableCancel=True, cancelAction=ftiSearch.cancel)
+    result.label = strSearch
+
+    return result
+
+class FullTextIndexSearch:
+    """
+    Holds an instance of FullTextIndex. Setting the instance is secured by a lock because
+    the call to 'cancel' may happen any time - also during construction and assignment of FullTextIndex
+    """
+    def __init__(self) -> None:
+        self.fti: Optional[FullTextIndex.FullTextIndex] = None
+        self.lock = threading.Lock()
+
+    def searchContent(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
+                      commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: threading.Event=None) -> ResultSet:
+
+        if indexConf.isContentIndexed():
+            return self.__searchContentIndexed(searchData, indexConf, commonKeywordMap, cancelEvent)
+        return self.__searchContentDirect(searchData, indexConf, cancelEvent)
+
+    def __searchContentIndexed(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
+                               commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: threading.Event=None) -> ResultSet:
+        perfReport = FullTextIndex.PerformanceReport()
+        with perfReport.newAction("Init database"):
+            with self.lock:
+                self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
+            result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
+        with self.lock:
+            del self.fti
+            self.fti = None
+        return result
+
+    def __searchContentDirect(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+        matches: List[str] = []
+        for directory in indexConf.directories:
+            for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
+                file = os.path.join(dirName, fileName)
+                if searchData.matchFolderAndExtensionFilter(file):
+                    with fopen(file) as inputFile:
+                        for _ in searchData.matches(inputFile.read()):
+                            matches.append(file)
+                            break
+                if cancelEvent and cancelEvent.is_set():
+                    return ResultSet([], searchData)
+        matches = removeDupsAndSort(matches)
+        return ResultSet(matches, searchData)
+
+    def cancel(self) -> None:
+        with self.lock:
+            if self.fti:
+                self.fti.interrupt()
+
+def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration,
+                 commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
+
+    """
+    Executes a custom search script from disk. The script receives a locals dictionary with all neccessary
+    search parameters and returns its result in the variable "result". The variable "highlight" must be set
+    to a regular expression which is used to highlight the matches in the result.
+    """
+    commonKeywordMap = commonKeywordMap or {}
+    result: ResultSet = AsynchronousTask.execute(parent, __customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
+    return result
+
 class ScriptSearchData:
     def __init__(self, reExpr: Pattern) -> None:
         self.reExpr = reExpr
@@ -52,81 +131,8 @@ class ScriptSearchData:
             else:
                 return
 
-SearchParams = Tuple[str, str, str, bool] # Search query, folders, extensions, case sensitive
-
-def search(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
-    """This executes an indexed or a direct search. This depends on the IndexConfiguration setting "indexUpdateMode"."""
-    commonKeywordMap = commonKeywordMap or {}
-    strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
-    if not strSearch:
-        return ResultSet()
-    searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
-    result: ResultSet
-    if indexConf.generatesIndex():
-        ftiSearch = FullTextIndexSearch()
-        result = AsynchronousTask.execute(parent, ftiSearch, searchData, commonKeywordMap, indexConf, bEnableCancel=True, cancelAction=ftiSearch.cancel)
-    else:
-        result = AsynchronousTask.execute(parent, directSearchAsync, searchData, indexConf, bEnableCancel=True)
-
-    result.label = strSearch
-    return result
-
-class FullTextIndexSearch:
-    """
-    Holds an instance of FullTextIndex. Setting the instance is secured by a lock because
-    the call to 'cancel' may happen any time - also during construction and assignment of FullTextIndex
-    """
-    def __init__(self) -> None:
-        self.fti: Optional[FullTextIndex.FullTextIndex] = None
-        self.lock = threading.Lock()
-
-    def __call__(self, searchData: FullTextIndex.ContentQuery, commonKeywordMap:FullTextIndex.CommonKeywordMap,
-                 indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
-
-        perfReport = FullTextIndex.PerformanceReport()
-        with perfReport.newAction("Init database"):
-            with self.lock:
-                self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
-            result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
-        with self.lock:
-            del self.fti
-            self.fti = None
-        return result
-
-    def cancel(self) -> None:
-        with self.lock:
-            if self.fti:
-                self.fti.interrupt()
-
-def directSearchAsync(searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
-    matches: List[str] = []
-    for directory in indexConf.directories:
-        for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
-            file = os.path.join(dirName, fileName)
-            if searchData.matchFolderAndExtensionFilter(file):
-                with fopen(file) as inputFile:
-                    for _ in searchData.matches(inputFile.read()):
-                        matches.append(file)
-                        break
-            if cancelEvent and cancelEvent.is_set():
-                return ResultSet([], searchData)
-    matches = removeDupsAndSort(matches)
-    return ResultSet(matches, searchData)
-
-def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration,
-                 commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
-
-    """
-    Executes a custom search script from disk. The script receives a locals dictionary with all neccessary
-    search parameters and returns its result in the variable "result". The variable "highlight" must be set
-    to a regular expression which is used to highlight the matches in the result.
-    """
-    commonKeywordMap = commonKeywordMap or {}
-    result: ResultSet = AsynchronousTask.execute(parent, customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
-    return result
-
-def customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullTextIndex.CommonKeywordMap,
-                      indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
+def __customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullTextIndex.CommonKeywordMap,
+                        indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
 
     query, folders, extensions, caseSensitive = params
 
@@ -134,10 +140,8 @@ def customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullT
         if not strSearch:
             return []
         searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
-        if indexConf.generatesIndex():
-            ftiSearch = FullTextIndexSearch()
-            return ftiSearch(searchData, commonKeywordMap, indexConf).matches
-        return directSearchAsync(searchData, indexConf).matches
+        ftiSearch = FullTextIndexSearch()
+        return ftiSearch.searchContent(searchData, indexConf, commonKeywordMap).matches
 
     def regexFromText(strQuery: str, bCaseSensitive: bool) -> Pattern:
         query = FullTextIndex.ContentQuery(strQuery, "", "", bCaseSensitive)

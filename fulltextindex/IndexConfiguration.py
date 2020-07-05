@@ -57,6 +57,14 @@ class IndexConfiguration:
 
     def generatesIndex(self) -> bool:
         return self.indexUpdateMode != IndexMode.NoIndexWanted
+    def isContentIndexed(self) -> bool:
+        if not self.generatesIndex():
+            return False
+        return self.indexType == IndexType.FileContent or self.indexType == IndexType.FileContentAndName
+    def isFileNameIndexed(self) -> bool:
+        if not self.generatesIndex():
+            return False
+        return self.indexType == IndexType.FileName or self.indexType == IndexType.FileContentAndName
 
     def extensionsAsString(self) -> str:
         return ",".join(sorted(self.extensions))

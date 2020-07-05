@@ -28,7 +28,7 @@ class CodeBeagleAutomation:
 
         indexes = IndexConfiguration.readConfig(conf)
         # Build a map from index name to index database for those configuration which actually generate an index
-        indexMap = dict((conf.indexName.lower(), conf.indexdb) for conf in indexes if conf.generatesIndex())
+        indexMap = dict((conf.indexName.lower(), conf.indexdb) for conf in indexes if conf.isContentIndexed())
 
         if not indexName in indexMap:
             return []
