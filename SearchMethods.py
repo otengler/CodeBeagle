@@ -23,10 +23,10 @@ import threading
 from PyQt5.QtCore import QObject
 from tools import AsynchronousTask
 from tools.FileTools import fopen
-from fulltextindex import FullTextIndex, IndexUpdater, IndexConfiguration
+from fulltextindex import FullTextIndex, IndexUpdater, IndexConfiguration, Query
 
 class ResultSet:
-    def __init__(self, matches: FullTextIndex.SearchResult = None, searchData: FullTextIndex.ContentQuery = None,
+    def __init__(self, matches: FullTextIndex.SearchResult = None, searchData: Query.Query = None,
                  perfReport: FullTextIndex.PerformanceReport = None, label: str = None) -> None:
 
         self.matches = matches or []
@@ -36,8 +36,9 @@ class ResultSet:
 
 SearchParams = Tuple[str, str, str, bool] # Search query, folders, extensions, case sensitive
 
-def search(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
-    """This executes an indexed or a direct search. This depends on the IndexConfiguration setting "indexUpdateMode"."""
+def searchContent(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
+    """This executes an indexed or a direct search in the file content. This depends on the IndexConfiguration 
+       setting "indexUpdateMode" and "indexType"."""
     commonKeywordMap = commonKeywordMap or {}
 
     strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
@@ -53,6 +54,24 @@ def search(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.
 
     return result
 
+def searchFileName(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
+    """This executes an indexed or a direct search for the file name. This depends on the IndexConfiguration 
+       setting "indexUpdateMode" and "indexType"."""
+
+    strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
+    if not strSearch:
+        return ResultSet()
+
+    searchData = FullTextIndex.FileQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+    result: ResultSet
+
+    ftiSearch = FullTextIndexSearch()
+    result = AsynchronousTask.execute(parent, ftiSearch.searchFileName, searchData, indexConf, bEnableCancel=True, cancelAction=ftiSearch.cancel)
+    result.label = strSearch
+
+    return result
+
+
 class FullTextIndexSearch:
     """
     Holds an instance of FullTextIndex. Setting the instance is secured by a lock because
@@ -65,9 +84,14 @@ class FullTextIndexSearch:
     def searchContent(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
                       commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: threading.Event=None) -> ResultSet:
 
-        if indexConf.isContentIndexed():
-            return self.__searchContentIndexed(searchData, indexConf, commonKeywordMap, cancelEvent)
-        return self.__searchContentDirect(searchData, indexConf, cancelEvent)
+        try:
+            if indexConf.isContentIndexed():
+                return self.__searchContentIndexed(searchData, indexConf, commonKeywordMap, cancelEvent)
+            return self.__searchContentDirect(searchData, indexConf, cancelEvent)
+        finally:
+            with self.lock:
+                del self.fti
+                self.fti = None
 
     def __searchContentIndexed(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
                                commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: threading.Event=None) -> ResultSet:
@@ -76,9 +100,6 @@ class FullTextIndexSearch:
             with self.lock:
                 self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
             result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
-        with self.lock:
-            del self.fti
-            self.fti = None
         return result
 
     def __searchContentDirect(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
@@ -94,6 +115,55 @@ class FullTextIndexSearch:
                 if cancelEvent and cancelEvent.is_set():
                     return ResultSet([], searchData)
         matches = removeDupsAndSort(matches)
+        return ResultSet(matches, searchData)
+
+    def searchFileName(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+
+        try:
+            if indexConf.isFileNameIndexed():
+                return self.__searchFileNameIndexed(searchData, indexConf, cancelEvent)
+            return self.__searchFileNameDirect(searchData, indexConf, cancelEvent)
+        finally:
+            with self.lock:
+                del self.fti
+                self.fti = None
+
+    def __searchFileNameIndexed(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+        perfReport = FullTextIndex.PerformanceReport()
+        with perfReport.newAction("Init database"):
+            with self.lock:
+                self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
+            result = ResultSet(self.fti.searchFile(searchData, perfReport, cancelEvent=cancelEvent), searchData, perfReport)
+        return result
+
+    def __searchFileNameDirect(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+        search = searchData.search
+
+        # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
+        # not specified as that takes precedance.
+        if search.find('.') != -1 and not searchData.extensionFilter:
+            search, ext = os.path.splitext(search)
+            searchData = FullTextIndex.FileQuery(searchData.search, searchData.folderFilterString, ext, searchData.bCaseSensitive)
+
+        hasWildcards = Query.hasFileNameWildcard(search)
+        searchPattern = re.compile(Query.createPathMatchPattern(search), re.IGNORECASE)
+
+        matches: List[str] = []
+        for directory in indexConf.directories:
+            for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
+                fullPath = os.path.join(dirName, fileName)
+                name,ext = os.path.splitext(fileName)
+                if not hasWildcards:
+                    if name != search:
+                        continue
+                else:
+                    if not searchPattern.match(name):
+                        continue
+                if searchData.matchFolderAndExtensionFilter(fullPath): # TODO: splits file name again
+                    matches.append(fullPath)
+                if cancelEvent and cancelEvent.is_set():
+                    return ResultSet([], searchData)
+        matches.sort()
         return ResultSet(matches, searchData)
 
     def cancel(self) -> None:

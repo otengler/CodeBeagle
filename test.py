@@ -1,11 +1,10 @@
 import os, re
-from fulltextindex.FullTextIndex import FullTextIndex
-from fulltextindex.Query import FileQuery
+from fulltextindex.FullTextIndex import FullTextIndex, FileQuery
 from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal
 
 # fti = FullTextIndex("C:\\Users\\oliver\\AppData\\Local\\CodeBeagle\\New location.dat")
 
-# q = FileQuery("widget*", "opengl", "-.h")
+# q = FullTextIndex.FileQuery("widget*", "opengl", "-.h")
 # r = fti.searchFile(q)
 # print(r)
 

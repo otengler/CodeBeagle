@@ -26,7 +26,7 @@ from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QWidget
 from tools.FileTools import fopen
 from tools import AsynchronousTask
-from  fulltextindex import FullTextIndex
+from fulltextindex import FullTextIndex
 from widgets.SourceHighlightingTextEdit import SourceHighlightingTextEdit
 from widgets import RecyclingVerticalScrollArea
 from AppConfig import appConfig

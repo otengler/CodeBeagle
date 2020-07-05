@@ -21,7 +21,7 @@ import time
 import re
 import unittest
 from enum import Enum
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal
 
 reQueryToken = re.compile(r"[\w#*]+|<!.*!>")
@@ -98,6 +98,13 @@ class TestSearchParts(unittest.TestCase):
         self.assertEqual(splitSearchParts("a **2"), [(TokenType.IndexPart, "a"), (TokenType.ScanPart, ""), (TokenType.MatchWordsPart, "2")])
         self.assertEqual(splitSearchParts("a ***"), [(TokenType.IndexPart, "a"), (TokenType.ScanPart, "***")])
         self.assertEqual(splitSearchParts("a <!abc!>"), [(TokenType.IndexPart, "a"), (TokenType.ScanPart, ""), (TokenType.RegExPart, "abc")])
+
+def hasFileNameWildcard(name: str) -> bool:
+    if name.find("*") != -1:
+        return True
+    if name.find("?") != -1:
+        return True
+    return False
 
 def createPathMatchPattern(pathMatch: str) -> str:
     pattern = ""
@@ -189,30 +196,41 @@ class QueryError(RuntimeError):
 class Query(ABC):
     def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
         self.search = strSearch
+        self.folderFilterString = strFolderFilter
+        self.extensionFilterString =  strExtensionFilter
         self.folderFilter = createFolderFilter(strFolderFilter)
         self.extensionFilter = createExtensionFilter(strExtensionFilter)
-        self.folderFilterExpression = IncludeExcludePattern(self.folderFilter)
-        self.extensionFilterExpression = IncludeExcludePattern(self.extensionFilter)
-        self.hasFilters = False
+        self.__folderFilterExpression = IncludeExcludePattern(self.folderFilter)
+        self.__extensionFilterExpression = IncludeExcludePattern(self.extensionFilter)
+        self.__hasFilters = False
         if self.folderFilter or self.extensionFilter:
-            self.hasFilters = True
+            self.__hasFilters = True
 
         self.bCaseSensitive = bCaseSensitive
 
+    def getFolderFilterExpression(self) -> IncludeExcludePattern:
+        return self.__folderFilterExpression
+    def getExtensionFilterExpression(self) -> IncludeExcludePattern:
+        return self.__extensionFilterExpression
+
     def matchFolderAndExtensionFilter(self, strFileName: str, runFolderFilter: bool=True, runExtensionFilter: bool=True) -> bool:
-        if not self.hasFilters:
+        if not self.__hasFilters:
             return True
 
         if runFolderFilter:
-            if not self.folderFilterExpression.match(strFileName):
+            if not self.__folderFilterExpression.match(strFileName):
                 return False
 
         if runExtensionFilter:
             ext = os.path.splitext(strFileName)[1]
-            if not self.extensionFilterExpression.match(ext):
+            if not self.__extensionFilterExpression.match(ext):
                 return False
 
         return True
+
+    @abstractmethod
+    def matches(self, data: str) -> Iterable[Tuple[int,int]]:
+        pass
 
 # Returns the regular expression which matches a keyword
 def kwExpr(kw: str) -> str:
@@ -311,7 +329,8 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(s6.regExForMatches().pattern, "\\bregex\\b\\s*(abc)")
 
 class FileQuery(Query):
-    pass
+    def matches(self, data: str) -> Iterable[Tuple[int,int]]:
+        return []
 
 class ReportAction:
     def __init__(self, name: str) -> None:

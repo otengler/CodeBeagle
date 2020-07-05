@@ -41,6 +41,14 @@ userHintUseWildcards = """
 E.g. <b>part*</b> matches also <b>partial</b>. See the help for more information about the search syntax.</p>
 """
 
+userHintContentNotIndexed = """
+<p align='justify'>The file content is not indexed. Try indexing the content if the search performance is not good enough.</p>
+"""
+
+userHintFileNameNotIndexed = """
+<p align='justify'>The file names are not indexed. Try indexing file names if the search performance is not good enough.</p>
+"""
+
 def getCustomScriptsFromDisk() -> List[str]:
     return [s for s in os.listdir("scripts") if os.path.splitext(s)[1].lower() == ".script"]
 
@@ -132,10 +140,14 @@ class SearchPage (QWidget):
             return
 
         self.searchType = searchType
-        self.ui.buttonCustomScripts.setEnabled(self.searchFinished == SearchType.SearchContent)
-        self.ui.buttonSwitchView.setEnabled(self.searchFinished == SearchType.SearchContent)
+        self.ui.buttonCustomScripts.setEnabled(self.searchType == SearchType.SearchContent)
+        self.ui.buttonSwitchView.setEnabled(self.searchType == SearchType.SearchContent)
         if self.searchType == SearchType.SearchName:
             self.switchView(False)
+            self.ui.buttonSwitchView.setChecked(False)
+            self.ui.buttonSearch.setText("Find name")
+        else:
+            self.ui.buttonSearch.setText("Find content")
 
     # Return the display name of the initial config. This is either the configured default location or if there is no default location
     # the last used location.
@@ -339,7 +351,10 @@ class SearchPage (QWidget):
         AppConfig.setLastUsedConfigName(indexConf.displayName())
 
         try:
-            result = SearchMethods.search (self, params, indexConf,  self.commonKeywordMap)
+            if self.searchType == SearchType.SearchContent:
+                result = SearchMethods.searchContent (self, params, indexConf,  self.commonKeywordMap)
+            else:
+                result = SearchMethods.searchFileName (self, params, indexConf)
         except Query.QueryError as error:
             self.reportQueryError(error)
         except:
@@ -348,7 +363,14 @@ class SearchPage (QWidget):
             self.__updateSearchResult(result)
             self.__rememberSearchTerms()
             text = self.tr(userHintUseWildcards)
-            showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  ButtonType.OK)
+            if self.searchType == SearchType.SearchContent:
+                showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  ButtonType.OK)
+            if self.searchType == SearchType.SearchContent and not indexConf.isContentIndexed():
+                text = self.tr(userHintContentNotIndexed)
+                showUserHint (self, "contentSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
+            if self.searchType == SearchType.SearchName and not indexConf.isFileNameIndexed():
+                text = self.tr(userHintFileNameNotIndexed)
+                showUserHint (self, "fileNameSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
 
     def __updateSearchResult (self, result: SearchMethods.ResultSet) -> None:
         if result.label:

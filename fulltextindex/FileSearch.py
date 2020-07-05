@@ -18,14 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sqlite3
-from .Query import FileQuery, PerformanceReport, SearchResult, createExtensionFilter, safeLen
-
-def hasFileNameWildcard(name: str) -> bool:
-    if name.find("*") != -1:
-        return True
-    if name.find("?") != -1:
-        return True
-    return False
+from .Query import FileQuery, PerformanceReport, SearchResult, createExtensionFilter, safeLen, hasFileNameWildcard
 
 def escapeFileName(name: str) -> str:
     name = name.replace("_", "!_")
@@ -39,21 +32,16 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
     perfReport = perfReport or PerformanceReport()
 
     search = query.search
-    positiveExtFilter = query.extensionFilterExpression.includeParts
-    negativeExtFilter = query.extensionFilterExpression.excludeParts
+    positiveExtFilter = query.getExtensionFilterExpression().includeParts
+    negativeExtFilter = query.getExtensionFilterExpression().excludeParts
 
     # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
     # not specified as that takes precedance.
     if search.find('.') != -1 and not query.extensionFilter:
         tokens = os.path.splitext(search)
         search = tokens[0]
-        positiveExtFilter = []
-        negativeExtFilter = []
-        for ext,positive in createExtensionFilter(tokens[1]):
-            if positive:
-                positiveExtFilter.append(ext)
-            else:
-                negativeExtFilter.append(ext)
+        for ext,_ in createExtensionFilter(tokens[1]):
+            positiveExtFilter.append(ext)
 
     params = {}
 
