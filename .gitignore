@@ -2,10 +2,11 @@ __pycache__/
 build/
 Ui_*.py
 *_rc.py
-_eric5project/
 ManagedConfig.txt
 UserConfig.txt
 *.dat
 .vscode/tags
 .mypy_cache/
 .vscode/.ropeproject/objectdb
+tests/data
+tests/test.dat*

@@ -1,7 +1,20 @@
-from fulltextindex.FullTextIndex import FullTextIndex, FileQuery
+import os, re
+from fulltextindex.FullTextIndex import FullTextIndex
+from fulltextindex.Query import FileQuery
+from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal
 
-fti = FullTextIndex("C:\\Users\\oliver\\AppData\\Local\\CodeBeagle\\New location.dat")
+# fti = FullTextIndex("C:\\Users\\oliver\\AppData\\Local\\CodeBeagle\\New location.dat")
 
-q = FileQuery("widget*", "opengl", "-.h")
-r = fti.searchFile(q)
-print(r)
+# q = FileQuery("widget*", "opengl", "-.h")
+# r = fti.searchFile(q)
+# print(r)
+
+cq = FileQuery("", "test", ".h,.c,.cpp")
+
+def totime():
+    cq.matchFolderAndExtensionFilter("test.cpp")
+
+import timeit
+print(timeit.timeit(totime))
+
+# Orginal: 0.5057702

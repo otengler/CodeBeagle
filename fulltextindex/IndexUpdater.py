@@ -182,15 +182,12 @@ class IndexUpdater (IndexDatabase):
     def __addFileName(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, fileName: str) -> None:
         name,ext = os.path.splitext(fileName)
 
-        q.execute("SELECT id from fileName WHERE name=:name AND ext=:ext", {"name":name, "ext":ext})
-        result = q.fetchone()
-        if result:
-            fileID = result[0]
-        else:
-            c.execute("INSERT INTO fileName (id,name,ext) VALUES (NULL,?,?)", (name, ext))
-            if c.rowcount == 0 or c.lastrowid == 0:
-                raise RuntimeError(f"Failed to insert file {name}")
+        c.execute("INSERT OR IGNORE INTO fileName (id,name,ext) VALUES (NULL,?,?)", (name, ext))
+        if c.rowcount == 1 and c.lastrowid != 0:
             fileID = c.lastrowid
+        else:
+            q.execute("SELECT id from fileName WHERE name=:name AND ext=:ext", {"name":name, "ext":ext})
+            fileID = q.fetchone()[0]
 
         c.execute("INSERT OR IGNORE INTO fileName2doc (fileNameID, docID) VALUES (?,?)", (fileID, docID))
 
