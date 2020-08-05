@@ -120,7 +120,7 @@ def indexTypeInfo(config: Config.Config) -> None:
     config.setType("indexName", Config.typeDefaultString(""))
     config.setType("generateIndex", Config.typeDefaultBool(True)) # kept for compatibility
     config.setType("indexUpdateMode", Config.typeDefaultInt(IndexMode.TriggeredIndexUpdate))
-    config.setType("indexType", Config.typeDefaultInt(IndexType.FileContentAndName))
+    config.setType("indexType", Config.typeDefaultInt(IndexType.FileContent))
     config.setType("dirExcludes", Config.typeDefaultString(""))
 
 # Returns a list of Index objects from the config
