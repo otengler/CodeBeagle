@@ -29,7 +29,7 @@ from dialogs import StackTraceMessageBox
 import PathVisualizerDelegate
 from fulltextindex import FullTextIndex
 from fulltextindex import Query
-from fulltextindex.IndexConfiguration import IndexConfiguration
+from fulltextindex.IndexConfiguration import IndexConfiguration, IndexMode
 import SearchMethods
 import CustomContextMenu
 import AppConfig
@@ -365,12 +365,14 @@ class SearchPage (QWidget):
             text = self.tr(userHintUseWildcards)
             if self.searchType == SearchType.SearchContent:
                 showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  ButtonType.OK)
-            if self.searchType == SearchType.SearchContent and not indexConf.isContentIndexed():
-                text = self.tr(userHintContentNotIndexed)
-                showUserHint (self, "contentSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
-            if self.searchType == SearchType.SearchName and not indexConf.isFileNameIndexed():
-                text = self.tr(userHintFileNameNotIndexed)
-                showUserHint (self, "fileNameSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
+            
+            if indexConf.indexUpdateMode != IndexMode.NoIndexWanted:
+                if self.searchType == SearchType.SearchContent and not indexConf.isContentIndexed():
+                    text = self.tr(userHintContentNotIndexed)
+                    showUserHint (self, "contentSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
+                if self.searchType == SearchType.SearchName and not indexConf.isFileNameIndexed():
+                    text = self.tr(userHintFileNameNotIndexed)
+                    showUserHint (self, "fileNameSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
 
     def __updateSearchResult (self, result: SearchMethods.ResultSet) -> None:
         if result.label:
@@ -458,15 +460,17 @@ class SearchPage (QWidget):
             menu.addAction(self.tr("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))
 
         entries = CustomContextMenu.customMenuEntries (AppConfig.appConfig())
+        filePairSelected = len(self.__getSelectedFiles()) == 2
         for entry in entries:
             try:
                 entry.executionFailed.disconnect() # will raise error if there are no connections
             except:
                 pass
             entry.executionFailed.connect (self.reportCustomContextMenuFailed)
-            # The default lambda argument is used to preserve the value of entry for each lambda. Otherwise all lambdas would call the last entry.execute
-            # See http://stackoverflow.com/questions/2295290/what-do-lambda-function-closures-capture-in-python
-            menu.addAction(entry.title,  lambda entry=entry: AsynchronousTask.execute (self, entry.execute,  self.__getSelectedFiles()))
+            if (entry.filePair and filePairSelected) or not entry.filePair:
+                # The default lambda argument is used to preserve the value of entry for each lambda. Otherwise all lambdas would call the last entry.execute
+                # See http://stackoverflow.com/questions/2295290/what-do-lambda-function-closures-capture-in-python
+                menu.addAction(entry.title,  lambda entry=entry: AsynchronousTask.execute (self, entry.execute,  self.__getSelectedFiles()))
 
         menu.exec(self.ui.listView.mapToGlobal(pos))
 
