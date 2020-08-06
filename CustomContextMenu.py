@@ -23,6 +23,8 @@ from PyQt5.QtCore import QObject, pyqtSignal
 from tools import Config
 from tools.FileTools import fopen
 from tools.ExceptionTools import exceptionAsString
+import subprocess
+import shlex
 
 class ContextMenuError:
     def __init__(self,  program: str,  failedFiles: List[str],  exception: str=None) -> None:
@@ -35,16 +37,24 @@ class ContextMenuTask(ABC):
     def execute (self, files: List[str]) -> Optional[ContextMenuError]:
         pass
 
+    def executePair (self, file1: str, file2: str) -> Optional[ContextMenuError]:
+        pass
+
 class CustomContextMenu (QObject):
     executionFailed = pyqtSignal(ContextMenuError)
 
-    def __init__(self, title: str, task: ContextMenuTask) -> None:
+    def __init__(self, title: str, filePair: bool, task: ContextMenuTask) -> None:
         super().__init__()
         self.title = title
+        self.filePair = filePair # This is true for context menu actions that reference two files. Can be used to call a diff program for instannce.
         self.task = task
 
     def execute (self, files: List[str]) -> None:
-        error = self.task.execute(files)
+        error: Optional[ContextMenuError] = None
+        if not self.filePair:
+            error = self.task.execute(files)
+        elif len(files) == 2:
+            error = self.task.executePair(files[0], files[1])
         if error:
             self.executionFailed.emit (error)
 
@@ -57,26 +67,35 @@ class ExecuteProgramTask (ContextMenuTask):
         self.bShowWindow = bShowWindow
 
     def execute (self, files: List[str]) -> Optional[ContextMenuError]:
-        import subprocess
-        import shlex
-
         failedFiles: List[str] = []
         for file in files:
             os.environ["file"] = file
-            args = os.path.expandvars(self.args)
-            argList = shlex.split(args)
-            si = subprocess.STARTUPINFO()
-            if not self.bShowWindow:
-                si.dwFlags = subprocess.STARTF_USESHOWWINDOW
-                si.wShowWindow = subprocess.SW_HIDE
-            try:
-                subprocess.Popen ([self.program] + argList,  startupinfo=si)
-            except:
+            if not self.__executeProgram():
                 failedFiles.append (file)
 
         if failedFiles:
             return ContextMenuError(self.program,  failedFiles)
         return None
+
+    def executePair(self, file1: str, file2: str) -> Optional[ContextMenuError]:
+        os.environ["file1"] = file1
+        os.environ["file2"] = file2
+        if not self.__executeProgram():
+            return ContextMenuError(self.program,  [file1, file2])
+        return None
+
+    def __executeProgram(self) -> bool:
+        args = os.path.expandvars(self.args)
+        argList = shlex.split(args)
+        si = subprocess.STARTUPINFO()
+        if not self.bShowWindow:
+            si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = subprocess.SW_HIDE
+        try:
+            subprocess.Popen ([self.program] + argList,  startupinfo=si)
+            return True
+        except:
+            return False
 
 class CustomScriptTask (ContextMenuTask):
     """Executes an python script with all of the files passed via context menu"""
@@ -153,8 +172,9 @@ def __readConfig (conf: Config.Config) -> List[CustomContextMenu]:
         script = menuConf.script
 
         if executable:
-            entries.append(CustomContextMenu(title,  ExecuteProgramTask(executable,  menuConf.args,  menuConf.showWindow)))
+            filePair = menuConf.args.find("file1") != -1 and menuConf.args.find("file2") != -1
+            entries.append(CustomContextMenu(title, filePair, ExecuteProgramTask(executable,  menuConf.args,  menuConf.showWindow)))
         elif script:
-            entries.append(CustomContextMenu(title,  CustomScriptTask(script)))
+            entries.append(CustomContextMenu(title, False, CustomScriptTask(script)))
 
     return entries
