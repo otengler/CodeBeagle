@@ -40,6 +40,15 @@ class IndexType(IntEnum):
     # Both file content and file names
     FileContentAndName = 2
 
+def indexTypeToString(indexType: IndexType) -> str:
+    if indexType == IndexType.FileContent:
+        return "file content"
+    if indexType == IndexType.FileContentAndName:
+        return "file content and name"
+    if indexType == IndexType.FileName:
+        return "file name"
+    return "Unknown"
+
 class IndexConfiguration:
     def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="", 
                  indexUpdateMode:IndexMode=IndexMode.TriggeredIndexUpdate, indexType:IndexType=IndexType.FileContentAndName) -> None:

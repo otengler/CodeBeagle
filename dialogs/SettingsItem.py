@@ -87,10 +87,8 @@ class SettingsItem (QWidget):
 
     @pyqtSlot(int)
     def updateIndexModeChanged (self,  index: IndexMode) -> None:
+        self.__enableBasedOnUpdateModeSetting(index)
         indexWanted = (index != IndexMode.NoIndexWanted)
-        self.ui.editIndexDB.setEnabled(indexWanted)
-        self.ui.comboIndexType.setEnabled(indexWanted)
-        self.ui.buttonBrowseIndexLocation.setEnabled(indexWanted)
         if indexWanted and not self.indexDB():
             self.__updateDBName(self.name())
         self.dataChanged.emit()
@@ -158,7 +156,7 @@ class SettingsItem (QWidget):
         return cast(str,self.ui.editIndexDB.text())
 
     def indexGenerationEnabled (self) -> bool:
-        return cast(bool,self.ui.comboIndexUpdateMode.currentIndex != IndexMode.NoIndexWanted)
+        return cast(bool, self.ui.comboIndexUpdateMode.currentIndex() != IndexMode.NoIndexWanted)
 
     def indexUpdateMode(self) -> IndexMode:
         return cast(IndexMode,self.ui.comboIndexUpdateMode.currentIndex())
@@ -186,3 +184,9 @@ class SettingsItem (QWidget):
         self.ui.editIndexDB.setEnabled(bEnable)
         self.ui.buttonBrowseIndexLocation.setEnabled(bEnable)
         self.ui.comboIndexType.setEnabled(bEnable)
+
+    def __enableBasedOnUpdateModeSetting(self, indexMode: IndexMode) -> None:
+        indexWanted = (indexMode != IndexMode.NoIndexWanted)
+        self.ui.editIndexDB.setEnabled(indexWanted)
+        self.ui.comboIndexType.setEnabled(indexWanted)
+        self.ui.buttonBrowseIndexLocation.setEnabled(indexWanted)
