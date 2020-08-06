@@ -25,7 +25,7 @@ import sqlite3
 from typing import List, Iterator, IO, Set, cast, Tuple
 from tools.FileTools import fopen
 from .IndexDatabase import IndexDatabase
-from .IndexConfiguration import IndexConfiguration, IndexType
+from .IndexConfiguration import IndexConfiguration, IndexType, indexTypeToString
 
 reTokenize = re.compile(r"[\w#]+")
 
@@ -100,7 +100,7 @@ class IndexUpdater (IndexDatabase):
             nextIndexID = self.__getNextIndexRun(c)
 
             for strRootDir in directories:
-                logging.info("Updating index in %s", strRootDir)
+                logging.info("Updating index in %s. Indexing %s", strRootDir, indexTypeToString(indexType))
                 ignoredExt: Set[str] = set()
                 for dirName, fileName in genFind(extensions, strRootDir, dirExcludes, ignoredExt):
                     strFullPath = os.path.join(dirName, fileName)
