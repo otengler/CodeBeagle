@@ -172,7 +172,7 @@ def __readConfig (conf: Config.Config) -> List[CustomContextMenu]:
         script = menuConf.script
 
         if executable:
-            filePair = menuConf.args.find("file1") != -1 and menuConf.args.find("file2") != -1
+            filePair = menuConf.args.find("%file1%") != -1 and menuConf.args.find("%file2%") != -1
             entries.append(CustomContextMenu(title, filePair, ExecuteProgramTask(executable,  menuConf.args,  menuConf.showWindow)))
         elif script:
             entries.append(CustomContextMenu(title, False, CustomScriptTask(script)))
