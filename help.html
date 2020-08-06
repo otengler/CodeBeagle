@@ -307,6 +307,19 @@ As the example illustrates environment variables are resolved properly. The comm
 The special variable <strong>%file%</strong> is resolved as the selected file in the tree control. If more than one file is selected the
 executable is started for each of the files.
 </p>
+<p>
+There is also a variant that supports calling programs that need exactly two file parameters like diffing tools. In this case provide two variables
+in your <strong>args</strong> with the name <strong>file1</strong> and <strong>file2</strong>.
+Here is an example that starts WinMerge:
+<pre>
+ContextMenu2 {
+  title = WinMerge
+  executable = C:\Program Files (x86)\WinMerge\WinMergeU.exe
+  args = "%file1%" "%file2%"
+  showWindow = True
+}
+</pre>
+</p>
 <pre>
 ContextMenu2 {
     title = Checkout from version control
