@@ -104,7 +104,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         left behind which cause CodeBeagle to think that there is an update index running.
         Clean this up.
         """
-        UpdateIndex.handleUncleanShutdown(self.indexTriggerPath)
+        UpdateIndex.handleUncleanShutdown(self.indexTriggerPath, removeTriggerFiles = True)
 
     @pyqtSlot()
     def activateTab1(self) -> None:

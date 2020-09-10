@@ -23,6 +23,8 @@ import time
 import collections
 from typing import IO, DefaultDict, Any, Optional, Literal
 
+# pylint: disable=import-outside-toplevel
+
 def fopen (name:str, mode: str='r') -> IO:
     f = open(name, mode, -1, "latin_1")
     try:
@@ -64,10 +66,9 @@ def getTempPath () -> str:
     """Return a path which can be used to store temporary data"""
     if "TEMP" in os.environ:
         return os.path.expandvars("$TEMP")
-    elif "HOME" in os.environ:
+    if "HOME" in os.environ:
         return os.path.expandvars("$HOME")
-    else:
-        return ""
+    return ""
 
 def switchToAppDir () -> None:
     """Switch to application directory. This helps to locate files by a relative path."""
@@ -173,11 +174,26 @@ class PidFile:
         return False # do not suppress exception
 
 def isProcessAlive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
+    """Check whether pid exists in the current process table."""
+    if os.name == 'posix':
+        import errno
+        if pid < 0:
+            return False
+        try:
+            os.kill(pid, 0)
+        except OSError as e:
+            return e.errno == errno.EPERM
+        else:
+            return True
+    else:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        synchronize = 0x100000
+        process = kernel32.OpenProcess(synchronize, 0, pid)
+        if not process:
+            return False
+        kernel32.CloseHandle(process)
         return True
-    except:
-        return False
 
 def correctPath(name: str) -> str:
     if os.path.sep == "/":

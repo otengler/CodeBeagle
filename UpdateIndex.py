@@ -127,15 +127,21 @@ def nextJob(jobDir: str) -> Optional[Tuple[str, str]]:
             return (file, jobFileRunning)
     return None
 
-def handleUncleanShutdown(jobDir: str) -> None:
+def handleUncleanShutdown(jobDir: str, removeTriggerFiles: bool) -> None:
     pidfile, bStaleFileWasRemoved = getPidFile()
     if bStaleFileWasRemoved:
         # This writes the current PID and make sure the file is removed at the end
         with pidfile:
-            cleanupCrash(jobDir)
+            cleanupCrash(jobDir, removeTriggerFiles)
+
+def removeFile(name: str) -> None:
+    try:
+        os.unlink(name)
+    except:
+        pass
 
 # Cleans up stuff left behind from a crash
-def cleanupCrash(jobDir: str) -> None:
+def cleanupCrash(jobDir: str, removeTriggerFiles: bool = False) -> None:
     guarddir = os.path.join(FileTools.getTempPath(), "UpdateIndex_running")
     if os.path.isdir(guarddir):
         try:
@@ -145,13 +151,14 @@ def cleanupCrash(jobDir: str) -> None:
 
     if jobDir:
         files = os.listdir(jobDir)
-        for file in files:
+        for file in files:        
             if file.endswith(".running"):
-                jobFile = os.path.join(jobDir, file)
-                try:
-                    os.unlink(jobFile)
-                except:
-                    pass
+                jobFile = os.path.join(jobDir, file)            
+                removeFile(jobFile)
+            # This is the branch when UpdateIndex is not started in job mode. We want to get rid of job files then.
+            elif removeTriggerFiles:
+                triggerFile = os.path.join(jobDir, file)            
+                removeFile(triggerFile)
 
 # Returns touple (pidfile, bStaleFileWasRemoved)
 def getPidFile() -> Tuple[FileTools.PidFile, bool]:
