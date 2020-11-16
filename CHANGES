@@ -1,3 +1,6 @@
+1.3.3
+- Small bug fix regarding starting a new search with keyboard modifiers (shift, ctrl)
+
 1.3.2
 - Add indexed search for file names
 - Support custom context menu entries for programs with two file parameters

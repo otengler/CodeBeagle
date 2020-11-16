@@ -22,7 +22,7 @@ from tools import Config, FileTools
 
 appName = "CodeBeagle"
 appCompany = "OTE"
-appVersion = "1.3.2.0"
+appVersion = "1.3.3.0"
 configName = "config.txt"
 darkTheme = "dark"
 
