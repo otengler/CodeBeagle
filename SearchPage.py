@@ -279,15 +279,12 @@ class SearchPage (QWidget):
     @pyqtSlot(str, int)
     def newSearchBasedOnSelection (self, text: str, modifiers: int) -> None:
         if modifiers & Qt.ControlModifier:
-            requestNewTab = False
-            if modifiers & Qt.ShiftModifier or self.searchType == SearchType.SearchName:
-                requestNewTab = True
-            if not requestNewTab:
+            if modifiers & Qt.ShiftModifier:
                 # Search in the same search page
                 self.searchForText(text)
             else:
                 # Search in a new tab
-                self.newSearchRequested.emit(text, self.ui.comboLocation.currentText())
+                self.newSearchRequested.emit(text,  self.ui.comboLocation.currentText())
 
     def getSearchParameterFromUI (self) -> SearchParams:
         strSearch = self.ui.comboSearch.currentText().strip()
