@@ -25,6 +25,8 @@ from tools import AsynchronousTask
 from tools.FileTools import fopen
 from fulltextindex import FullTextIndex, IndexUpdater, IndexConfiguration, Query
 
+emptyPattern = re.compile("") # make mypy happy
+
 class ResultSet:
     def __init__(self, matches: FullTextIndex.SearchResult = None, searchData: Query.Query = None,
                  perfReport: FullTextIndex.PerformanceReport = None, label: str = None) -> None:
@@ -138,6 +140,7 @@ class FullTextIndexSearch:
 
     def __searchFileNameDirect(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
         search = searchData.search
+        searchLower = search.lower()
 
         # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
         # not specified as that takes precedance.
@@ -146,7 +149,14 @@ class FullTextIndexSearch:
             searchData = FullTextIndex.FileQuery(searchData.search, searchData.folderFilterString, ext, searchData.bCaseSensitive)
 
         hasWildcards = Query.hasFileNameWildcard(search)
-        searchPattern = re.compile(Query.createPathMatchPattern(search), re.IGNORECASE)
+        bCaseSensitive = searchData.bCaseSensitive
+
+        searchPattern = emptyPattern
+        if hasWildcards:
+            reFlags = 0
+            if not bCaseSensitive:
+                reFlags = re.IGNORECASE
+            searchPattern = re.compile(Query.createPathMatchPattern(search), reFlags)
 
         matches: List[str] = []
         for directory in indexConf.directories:
@@ -154,11 +164,14 @@ class FullTextIndexSearch:
                 fullPath = os.path.join(dirName, fileName)
                 name,ext = os.path.splitext(fileName)
                 if not hasWildcards:
-                    if name != search:
-                        continue
-                else:
-                    if not searchPattern.match(name):
-                        continue
+                    if bCaseSensitive:
+                        if name != search:
+                            continue
+                    else:
+                        if name.lower() != searchLower:
+                            continue
+                elif not searchPattern.match(name):
+                    continue
                 if searchData.matchFolderAndExtensionFilter(fullPath): # TODO: splits file name again
                     matches.append(fullPath)
                 if cancelEvent and cancelEvent.is_set():

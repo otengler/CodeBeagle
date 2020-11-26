@@ -16,9 +16,12 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
 import os
 import sqlite3
-from .Query import FileQuery, PerformanceReport, SearchResult, createExtensionFilter, safeLen, hasFileNameWildcard
+from .Query import FileQuery, PerformanceReport, SearchResult, createExtensionFilter, safeLen, hasFileNameWildcard, createPathMatchPattern
+
+emptyPattern = re.compile("") # make mypy happy
 
 def escapeFileName(name: str) -> str:
     name = name.replace("_", "!_")
@@ -31,7 +34,7 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
 
     perfReport = perfReport or PerformanceReport()
 
-    search = query.search
+    search = query.search.lower()
     positiveExtFilter = query.getExtensionFilterExpression().includeParts
     negativeExtFilter = query.getExtensionFilterExpression().excludeParts
 
@@ -47,8 +50,10 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
 
     queryStmt = "SELECT DISTINCT fullpath FROM fileName fn,fileName2doc fn2d,documents d WHERE fn2d.docID=d.id AND fn2d.fileNameID=fn.id AND "
 
-    if hasFileNameWildcard(search):
-        queryStmt += "fn.name LIKE :searchTerm ESCAPE '!'"""
+    fileNameHasWildcards = hasFileNameWildcard(search)
+
+    if fileNameHasWildcards:
+        queryStmt += "fn.name LIKE :searchTerm ESCAPE '!'"
         params["searchTerm"] = escapeFileName(search)
     else:
         queryStmt += "fn.name = :searchTerm"
@@ -98,6 +103,29 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
         result = q.fetchall()
         action.addData("%u matches", safeLen(result))
 
+
     if query.folderFilter:
-        return [r[0] for r in result if query.matchFolderAndExtensionFilter(r[0], True, False)]
-    return [r[0] for r in result]
+        result = [r[0] for r in result if query.matchFolderAndExtensionFilter(r[0], True, False)]
+    else:
+        result = [r[0] for r in result]
+
+    if not query.bCaseSensitive:
+        return result
+
+    # Case sensitive search requested. The DB is always case insensitive so filter out unwanted results
+    searchPattern = emptyPattern
+    searchName = os.path.splitext(query.search)[0]
+    if fileNameHasWildcards:
+        searchPattern = re.compile(createPathMatchPattern(searchName), 0)
+
+    filtered = []
+    for r in result:
+        name,_ = os.path.splitext(r)
+        name = os.path.basename(name)
+        if not fileNameHasWildcards:
+            if name == searchName:
+                filtered.append(r)
+        elif searchPattern.match(name):
+            filtered.append(r)
+
+    return filtered
