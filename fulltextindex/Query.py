@@ -180,6 +180,8 @@ def createExtensionFilter(strFilter: str) -> List[Tuple[str,bool]]:
         return filterParts
     for item in (item.strip() for item in strFilter.split(",")):
         if item:
+            if item.startswith("*."):
+                item = item[2:]    
             bPositiveFilter = True
             if item.startswith("-"):
                 item = item[1:]

@@ -202,7 +202,7 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual (result, exp)
 
         # Test extension filter
-        q = ContentQuery ("Dschungelbuch",  "", "*.c")
+        q = ContentQuery ("Dschungelbuch",  "", "*.c*")
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx")]
         self.assertEqual (result, exp)
