@@ -74,7 +74,7 @@ def splitSearchParts(strSearch: str) -> SearchPartList:
             r =  reMatchRegEx.match(token)
             if r:
                 regExPart = (TokenType.RegExPart, r.group(1))
-            parts.append(regExPart)
+                parts.append(regExPart)
         else:
             partIndexPart = (TokenType.IndexPart, token)
             parts.append(partIndexPart)
@@ -120,11 +120,12 @@ def createPathMatchPattern(pathMatch: str) -> str:
     return pattern
 
 class IncludeExcludePattern:
-    def __init__(self, filterParts: List[Tuple[str,bool]]) -> None:
+    def __init__(self, filterParts: List[Tuple[str,bool]], matchAll: bool = False) -> None:
         self.includeParts = []
         self.excludeParts = []
         self.positivePattern: Optional[Pattern] = None
         self.negativePattern: Optional[Pattern] = None
+        self.matchAll = matchAll # If true all characters from the text must be used by the pattern
 
         if filterParts:
             for part,positive in filterParts:
@@ -145,10 +146,23 @@ class IncludeExcludePattern:
         return not self.positivePattern and not self.negativePattern
 
     def match(self, text: str) -> bool:
-        if self.negativePattern and self.negativePattern.search(text):
-            return False
+        if self.negativePattern:
+            if self.negativePattern.pattern: # Empty pattern matches always but should only match empty string
+                if not self.matchAll:
+                    if self.negativePattern.search(text):
+                        return False
+                elif m:= self.negativePattern.match(text):
+                    if m.end() == len(text):
+                        return False
+            elif text:
+                return False
         if self.positivePattern:
-            return bool(self.positivePattern.search(text))
+            if self.positivePattern.pattern: # Empty pattern matches always but should only match empty string
+                if not self.matchAll:
+                    return bool(self.positivePattern.search(text))
+                m = self.positivePattern.match(text)
+                return bool(m and m.end() == len(text))
+            return not bool(text)
         return True
 
 class TestIncludeExcludePattern(unittest.TestCase):
@@ -164,7 +178,7 @@ def createExtensionFilter(strFilter: str) -> List[Tuple[str,bool]]:
     filterParts: List[Tuple[str,bool]] = []
     if not strFilter:
         return filterParts
-    for item in (item.strip().replace("*", "") for item in strFilter.split(",")):
+    for item in (item.strip() for item in strFilter.split(",")):
         if item:
             bPositiveFilter = True
             if item.startswith("-"):
@@ -201,7 +215,7 @@ class Query(ABC):
         self.folderFilter = createFolderFilter(strFolderFilter)
         self.extensionFilter = createExtensionFilter(strExtensionFilter)
         self.__folderFilterExpression = IncludeExcludePattern(self.folderFilter)
-        self.__extensionFilterExpression = IncludeExcludePattern(self.extensionFilter)
+        self.__extensionFilterExpression = IncludeExcludePattern(self.extensionFilter, matchAll=True)
         self.__hasFilters = False
         if self.folderFilter or self.extensionFilter:
             self.__hasFilters = True
@@ -329,6 +343,18 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(s6.regExForMatches().pattern, "\\bregex\\b\\s*(abc)")
 
 class FileQuery(Query):
+    def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
+        # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
+        # not specified as that takes precedance.
+        if strSearch.find('.') != -1 and not strExtensionFilter:
+            search, extensionFilter = os.path.splitext(strSearch)
+            if extensionFilter == ".*":
+                extensionFilter = ""
+        else:
+            search = strSearch
+            extensionFilter = strExtensionFilter
+        super().__init__(search, strFolderFilter, extensionFilter, bCaseSensitive)
+
     def matches(self, data: str) -> Iterable[Tuple[int,int]]:
         return []
 

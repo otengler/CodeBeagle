@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import re
 import os
 import sqlite3
-from .Query import FileQuery, PerformanceReport, SearchResult, createExtensionFilter, safeLen, hasFileNameWildcard, createPathMatchPattern
+from .Query import FileQuery, PerformanceReport, SearchResult, safeLen, hasFileNameWildcard, createPathMatchPattern
 
 emptyPattern = re.compile("") # make mypy happy
 
@@ -37,14 +37,6 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
     search = query.search.lower()
     positiveExtFilter = query.getExtensionFilterExpression().includeParts
     negativeExtFilter = query.getExtensionFilterExpression().excludeParts
-
-    # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
-    # not specified as that takes precedance.
-    if search.find('.') != -1 and not query.extensionFilter:
-        tokens = os.path.splitext(search)
-        search = tokens[0]
-        for ext,_ in createExtensionFilter(tokens[1]):
-            positiveExtFilter.append(ext)
 
     params = {}
 

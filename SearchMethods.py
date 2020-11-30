@@ -142,12 +142,6 @@ class FullTextIndexSearch:
         search = searchData.search
         searchLower = search.lower()
 
-        # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
-        # not specified as that takes precedance.
-        if search.find('.') != -1 and not searchData.extensionFilter:
-            search, ext = os.path.splitext(search)
-            searchData = FullTextIndex.FileQuery(searchData.search, searchData.folderFilterString, ext, searchData.bCaseSensitive)
-
         hasWildcards = Query.hasFileNameWildcard(search)
         bCaseSensitive = searchData.bCaseSensitive
 
@@ -162,7 +156,7 @@ class FullTextIndexSearch:
         for directory in indexConf.directories:
             for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
                 fullPath = os.path.join(dirName, fileName)
-                name,ext = os.path.splitext(fileName)
+                name,_ = os.path.splitext(fileName)
                 if not hasWildcards:
                     if bCaseSensitive:
                         if name != search:
