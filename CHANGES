@@ -1,5 +1,6 @@
 1.3.4
 - Fix case sensitive search for file names
+- Fix include exclude handling for folder filter and extension filter
 
 1.3.3
 - Small bug fix regarding starting a new search with keyboard modifiers (shift, ctrl)
