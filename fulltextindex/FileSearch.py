@@ -108,7 +108,7 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
     searchPattern = emptyPattern
     searchName = os.path.splitext(query.search)[0]
     if fileNameHasWildcards:
-        searchPattern = re.compile(createPathMatchPattern(searchName), 0)
+        searchPattern = re.compile(createPathMatchPattern(searchName, True), 0)
 
     filtered = []
     for r in result:

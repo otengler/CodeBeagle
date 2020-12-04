@@ -21,57 +21,61 @@ from typing import Tuple
 
 strSetup = """
 CREATE TABLE IF NOT EXISTS keywords(
-  id INTEGER PRIMARY KEY,
-  keyword TEXT UNIQUE
+    id INTEGER PRIMARY KEY,
+    keyword TEXT UNIQUE
 );
 CREATE INDEX IF NOT EXISTS i_keywords_keyword ON keywords (keyword);
 
 CREATE TABLE IF NOT EXISTS documents(
-  id INTEGER PRIMARY KEY,
-  timestamp INTEGER,
-  fullpath TEXT UNIQUE
+    id INTEGER PRIMARY KEY,
+    timestamp INTEGER,
+    fullpath TEXT UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS documentInIndex(
-  docID INTEGER UNIQUE,
-  indexID INTEGER
+    docID INTEGER UNIQUE,
+    indexID INTEGER
 );
 CREATE INDEX IF NOT EXISTS i_documentInIndex_indexID ON documentInIndex (indexID);
 
 CREATE TABLE IF NOT EXISTS kw2doc(
-  kwID INTEGER,
-  docID INTEGER,
-  UNIQUE (kwID,docID)
+    kwID INTEGER,
+    docID INTEGER,
+    UNIQUE (kwID,docID)
 );
 CREATE INDEX IF NOT EXISTS i_kw2doc_kwID ON kw2doc (kwID);
 CREATE INDEX IF NOT EXISTS i_kw2doc_docID ON kw2doc (docID);
 
 CREATE TABLE IF NOT EXISTS indexInfo(
-  id INTEGER PRIMARY KEY,
-  timestamp INTEGER
+    id INTEGER PRIMARY KEY,
+    timestamp INTEGER
 );
 """
 
 strTablesForFileNames = """
 CREATE TABLE IF NOT EXISTS fileName(
-  id INTEGER PRIMARY KEY,
-  name TEXT,
-  ext TEXT,
-  UNIQUE(name, ext)
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    ext TEXT,
+    UNIQUE(name, ext)
 );
 CREATE INDEX IF NOT EXISTS i_fileName_fileName ON fileName (name);
 CREATE INDEX IF NOT EXISTS i_fileName_ext ON fileName (ext);
 
 CREATE TABLE IF NOT EXISTS fileName2doc(
-  fileNameID INTEGER,
-  docID INTEGER,
-  UNIQUE(fileNameID, docID)
+    fileNameID INTEGER,
+    docID INTEGER,
+    UNIQUE(fileNameID, docID)
 );
 CREATE INDEX IF NOT EXISTS i_fileName2doc_fileNameID ON fileName2doc (fileNameID);
 """
 
+
 class IndexDatabase:
     def __init__(self, strDbLocation: str) -> None:
+        if not strDbLocation:
+            raise RuntimeError("Database location cannot be empty")
+
         self.strDbLocation = strDbLocation
         self.conn = sqlite3.connect(strDbLocation)
         self.__setupDatabase()

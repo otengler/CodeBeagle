@@ -18,28 +18,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
-from typing import List, Pattern, Iterator, Tuple, Optional, cast
-import threading
+from typing import Pattern, Iterator, Tuple, cast
 from PyQt5.QtCore import QObject
 from tools import AsynchronousTask
 from tools.FileTools import fopen
-from fulltextindex import FullTextIndex, IndexUpdater, IndexConfiguration, Query
-
-emptyPattern = re.compile("") # make mypy happy
-
-class ResultSet:
-    def __init__(self, matches: FullTextIndex.SearchResult = None, searchData: Query.Query = None,
-                 perfReport: FullTextIndex.PerformanceReport = None, label: str = None) -> None:
-
-        self.matches = matches or []
-        self.perfReport = perfReport
-        self.searchData = searchData
-        self.label = label
+from fulltextindex import FullTextIndex, IndexConfiguration
+from fulltextindex.SearchMethods import SearchMethods, ResultSet, removeDupsAndSort
 
 SearchParams = Tuple[str, str, str, bool] # Search query, folders, extensions, case sensitive
 
 def searchContent(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
-    """This executes an indexed or a direct search in the file content. This depends on the IndexConfiguration 
+    """This executes an indexed or a direct search in the file content. This depends on the IndexConfiguration
        setting "indexUpdateMode" and "indexType"."""
     commonKeywordMap = commonKeywordMap or {}
 
@@ -50,14 +39,14 @@ def searchContent(parent: QObject, params: SearchParams, indexConf: IndexConfigu
     searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
     result: ResultSet
 
-    ftiSearch = FullTextIndexSearch()
+    ftiSearch = SearchMethods()
     result = AsynchronousTask.execute(parent, ftiSearch.searchContent, searchData, indexConf, commonKeywordMap, bEnableCancel=True, cancelAction=ftiSearch.cancel)
     result.label = strSearch
 
     return result
 
 def searchFileName(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
-    """This executes an indexed or a direct search for the file name. This depends on the IndexConfiguration 
+    """This executes an indexed or a direct search for the file name. This depends on the IndexConfiguration
        setting "indexUpdateMode" and "indexType"."""
 
     strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
@@ -67,116 +56,11 @@ def searchFileName(parent: QObject, params: SearchParams, indexConf: IndexConfig
     searchData = FullTextIndex.FileQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
     result: ResultSet
 
-    ftiSearch = FullTextIndexSearch()
+    ftiSearch = SearchMethods()
     result = AsynchronousTask.execute(parent, ftiSearch.searchFileName, searchData, indexConf, bEnableCancel=True, cancelAction=ftiSearch.cancel)
     result.label = strSearch
 
     return result
-
-
-class FullTextIndexSearch:
-    """
-    Holds an instance of FullTextIndex. Setting the instance is secured by a lock because
-    the call to 'cancel' may happen any time - also during construction and assignment of FullTextIndex
-    """
-    def __init__(self) -> None:
-        self.fti: Optional[FullTextIndex.FullTextIndex] = None
-        self.lock = threading.Lock()
-
-    def searchContent(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
-                      commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: threading.Event=None) -> ResultSet:
-
-        try:
-            if indexConf.isContentIndexed():
-                return self.__searchContentIndexed(searchData, indexConf, commonKeywordMap, cancelEvent)
-            return self.__searchContentDirect(searchData, indexConf, cancelEvent)
-        finally:
-            with self.lock:
-                del self.fti
-                self.fti = None
-
-    def __searchContentIndexed(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                               commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: threading.Event=None) -> ResultSet:
-        perfReport = FullTextIndex.PerformanceReport()
-        with perfReport.newAction("Init database"):
-            with self.lock:
-                self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
-            result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
-        return result
-
-    def __searchContentDirect(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
-        matches: List[str] = []
-        for directory in indexConf.directories:
-            for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
-                file = os.path.join(dirName, fileName)
-                if searchData.matchFolderAndExtensionFilter(file):
-                    with fopen(file) as inputFile:
-                        for _ in searchData.matches(inputFile.read()):
-                            matches.append(file)
-                            break
-                if cancelEvent and cancelEvent.is_set():
-                    return ResultSet([], searchData)
-        matches = removeDupsAndSort(matches)
-        return ResultSet(matches, searchData)
-
-    def searchFileName(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
-
-        try:
-            if indexConf.isFileNameIndexed():
-                return self.__searchFileNameIndexed(searchData, indexConf, cancelEvent)
-            return self.__searchFileNameDirect(searchData, indexConf, cancelEvent)
-        finally:
-            with self.lock:
-                del self.fti
-                self.fti = None
-
-    def __searchFileNameIndexed(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
-        perfReport = FullTextIndex.PerformanceReport()
-        with perfReport.newAction("Init database"):
-            with self.lock:
-                self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
-            result = ResultSet(self.fti.searchFile(searchData, perfReport, cancelEvent=cancelEvent), searchData, perfReport)
-        return result
-
-    def __searchFileNameDirect(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
-        search = searchData.search
-        searchLower = search.lower()
-
-        hasWildcards = Query.hasFileNameWildcard(search)
-        bCaseSensitive = searchData.bCaseSensitive
-
-        searchPattern = emptyPattern
-        if hasWildcards:
-            reFlags = 0
-            if not bCaseSensitive:
-                reFlags = re.IGNORECASE
-            searchPattern = re.compile(Query.createPathMatchPattern(search), reFlags)
-
-        matches: List[str] = []
-        for directory in indexConf.directories:
-            for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
-                fullPath = os.path.join(dirName, fileName)
-                name,_ = os.path.splitext(fileName)
-                if not hasWildcards:
-                    if bCaseSensitive:
-                        if name != search:
-                            continue
-                    else:
-                        if name.lower() != searchLower:
-                            continue
-                elif not searchPattern.match(name):
-                    continue
-                if searchData.matchFolderAndExtensionFilter(fullPath): # TODO: splits file name again
-                    matches.append(fullPath)
-                if cancelEvent and cancelEvent.is_set():
-                    return ResultSet([], searchData)
-        matches.sort()
-        return ResultSet(matches, searchData)
-
-    def cancel(self) -> None:
-        with self.lock:
-            if self.fti:
-                self.fti.interrupt()
 
 def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration,
                  commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
@@ -217,7 +101,7 @@ def __customSearchAsync(script: str, params: SearchParams, commonKeywordMap: Ful
         if not strSearch:
             return []
         searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
-        ftiSearch = FullTextIndexSearch()
+        ftiSearch = SearchMethods()
         return ftiSearch.searchContent(searchData, indexConf, commonKeywordMap).matches
 
     def regexFromText(strQuery: str, bCaseSensitive: bool) -> Pattern:
@@ -272,12 +156,3 @@ def __customSearchAsync(script: str, params: SearchParams, commonKeywordMap: Ful
         searchData = FullTextIndex.ContentQuery(query, "", "", caseSensitive)
 
     return ResultSet(matches, searchData, label=label)
-
-def removeDupsAndSort(matches: FullTextIndex.SearchResult) -> FullTextIndex.SearchResult:
-    """Remove duplicates and sort"""
-    uniqueMatches = set()
-    for match in matches:
-        uniqueMatches.add(match)
-    matches = [match for match in uniqueMatches]
-    matches.sort()
-    return matches

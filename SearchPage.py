@@ -30,7 +30,7 @@ import PathVisualizerDelegate
 from fulltextindex import FullTextIndex
 from fulltextindex import Query
 from fulltextindex.IndexConfiguration import IndexConfiguration, IndexMode
-import SearchMethods
+import SearchAsync
 import CustomContextMenu
 import AppConfig
 from StringListModel import StringListModel
@@ -300,7 +300,7 @@ class SearchPage (QWidget):
 
     # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
     def __prepareSearch (self) -> Tuple[SearchParams, IndexConfiguration]:
-        self.__updateSearchResult(SearchMethods.ResultSet()) # clear current results
+        self.__updateSearchResult(SearchAsync.ResultSet()) # clear current results
         indexConf = self.__currentIndexConf()
         params = self.getSearchParameterFromUI()
         return (params, indexConf)
@@ -328,7 +328,7 @@ class SearchPage (QWidget):
             return
 
         try:
-            result = SearchMethods.customSearch (self, script, params, indexConf,  self.commonKeywordMap)
+            result = SearchAsync.customSearch (self, script, params, indexConf,  self.commonKeywordMap)
         except:
             self.reportCustomSearchFailed ()
         else:
@@ -349,9 +349,9 @@ class SearchPage (QWidget):
 
         try:
             if self.searchType == SearchType.SearchContent:
-                result = SearchMethods.searchContent (self, params, indexConf,  self.commonKeywordMap)
+                result = SearchAsync.searchContent (self, params, indexConf,  self.commonKeywordMap)
             else:
-                result = SearchMethods.searchFileName (self, params, indexConf)
+                result = SearchAsync.searchFileName (self, params, indexConf)
         except Query.QueryError as error:
             self.reportQueryError(error)
         except:
@@ -371,7 +371,7 @@ class SearchPage (QWidget):
                     text = self.tr(userHintFileNameNotIndexed)
                     showUserHint (self, "fileNameSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
 
-    def __updateSearchResult (self, result: SearchMethods.ResultSet) -> None:
+    def __updateSearchResult (self, result: SearchAsync.ResultSet) -> None:
         if result.label:
             self.searchFinished.emit(self, result.label)
         self.perfReport = result.perfReport

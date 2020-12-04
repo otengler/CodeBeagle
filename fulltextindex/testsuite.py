@@ -20,15 +20,17 @@ import os
 import unittest
 import shutil
 import stat
-from typing import cast, Callable
+from typing import cast, Callable, List
 from .FullTextIndex import FullTextIndex, Keyword, buildMapFromCommonKeywordFile
 from .Query import ContentQuery, FileQuery
 from .IndexUpdater import IndexUpdater, UpdateStatistics
-from .IndexConfiguration import IndexConfiguration, IndexType
+from .IndexConfiguration import IndexConfiguration, IndexType, IndexMode, indexTypeInfo
+from .SearchMethods import SearchMethods
 
 def delFile (name: str) -> None:
     try:
-        os.unlink (name)
+        if os.path.isfile(name):
+            os.unlink (name)
     except Exception as e:
         print (str(e))
 
@@ -69,19 +71,110 @@ def forAllFiles(name: str, doAction: Callable) -> None:
         for file in files:
             doAction(os.path.join(root,file))
 
+def setTime(name: str) -> None:
+    aNiceTime = 1586099163.8849764  # Set all test files to a defined time
+    setModifyTimestamp(name, aNiceTime)
+
 class TestFullTextIndex(unittest.TestCase):
-    def test(self) -> None:
+    def testNameSearch(self) -> None:
         testPath = os.path.join(getModulePath (), "tests")
         os.chdir(testPath)
 
-        aNiceTime = 1586099163.8849764  # Set all test files to a defined time
-        def setTime(name: str) -> None:
-            setModifyTimestamp(name, aNiceTime)
+        forAllFiles("data_names", setTime)
+
+        testDb = "test-names.dat"
+        extPattern = ".c,.cp,.cpp,.cxx,.txt,."
+        dirName = os.path.join(testPath,"data")
+
+        delFile (testDb)
+        delDir("data")
+        shutil.copytree ("data_names", "data")
+
+        configDirect = IndexConfiguration("test", extPattern, dirName, indexUpdateMode = IndexMode.NoIndexWanted)
+
+        updateStats = UpdateStatistics()
+        configDB = IndexConfiguration("test", extPattern, dirName, indexdb=testDb, indexType = IndexType.FileContentAndName)
+        updater = IndexUpdater(testDb)
+        updater.updateIndex (configDB, updateStats)
+
+        # Run the same tests directly agains the file system and against a full text index DB
+        self.__testNameSearch(testPath, configDirect)
+        self.__testNameSearch(testPath, configDB)
+
+    def __assertArray(self, expected: List, actual: List) -> None:
+        self.assertEqual(len(expected), len(actual))
+        for a,b in zip(expected,actual):
+            self.assertEqual(a,b)
+
+    def __assertTestFiles(self, testPath: str, result: List, expectedFiles: List) -> None:
+        exp = [os.path.join(testPath,x) for x in expectedFiles]
+        self.__assertArray(exp, result)
+
+    def __testNameSearch(self, testPath: str, config: IndexConfiguration) -> None:
+        search = SearchMethods()
+
+        q = FileQuery ("test.cpp")
+        result = search.searchFileName(q, config).matches
+        self.__assertTestFiles(testPath, result, ["data\\test.cpp"])
+
+        q = FileQuery ("test")
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\test", "data\\test.cpp"]
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("test*.*")
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\test",  "data\\test.cpp", "data\\test1.c", "data\\test2.c", "data\\tester.cp", "data\\tester3.c"]
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("test", "", ".") # no extension
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\test"]
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("tes") # no match
+        result = search.searchFileName(q, config).matches
+        exp = []
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("*est?")
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\test1.c", "data\\test2.c"]
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("test*")
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\test", "data\\test.cpp", "data\\test1.c", "data\\test2.c", "data\\tester.cp", "data\\tester3.c"]
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("test*", "", ".c*,-.cpp") # .c* but no files with .cpp extension
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\test1.c", "data\\test2.c", "data\\tester.cp", "data\\tester3.c"]
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("test*", "", ".cp*,-.c") # .cp* but no files with .c extension / useless but most work
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\test.cpp", "data\\tester.cp"]
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("test*", "-test2,-tester?", ".c")
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\test1.c"]
+        self.__assertTestFiles(testPath, result, exp)
+
+        q = FileQuery ("test*", "er*,-e?3", ".c,.cp")
+        result = search.searchFileName(q, config).matches
+        exp = ["data\\tester.cp"]
+        self.__assertTestFiles(testPath, result, exp)
+
+    def testContentSearch(self) -> None:
+        testPath = os.path.join(getModulePath (), "tests")
+        os.chdir(testPath)
+
         forAllFiles("data1", setTime)
         forAllFiles("data2", setTime)
 
         delFile ("test.dat")
-
         updater = IndexUpdater("test.dat")
 
         # Copy initial data

@@ -106,7 +106,7 @@ def hasFileNameWildcard(name: str) -> bool:
         return True
     return False
 
-def createPathMatchPattern(pathMatch: str) -> str:
+def createPathMatchPattern(pathMatch: str, fullMatch: bool) -> str:
     pattern = ""
     for c in pathMatch:
         if c == '*':
@@ -117,6 +117,8 @@ def createPathMatchPattern(pathMatch: str) -> str:
             pattern += f"\\{c}"
         else:
             pattern += c
+    if fullMatch:
+        pattern += "$"
     return pattern
 
 class IncludeExcludePattern:
@@ -135,11 +137,11 @@ class IncludeExcludePattern:
                     self.excludeParts.append(part)
 
         if self.includeParts:
-            positiveFilter = [createPathMatchPattern(part) for part in self.includeParts]
+            positiveFilter = [createPathMatchPattern(part, matchAll) for part in self.includeParts]
             self.positivePattern = re.compile("|".join(positiveFilter), re.IGNORECASE)
 
         if self.excludeParts:
-            negativeFilter = [createPathMatchPattern(part) for part in self.excludeParts]
+            negativeFilter = [createPathMatchPattern(part, matchAll) for part in self.excludeParts]
             self.negativePattern = re.compile("|".join(negativeFilter), re.IGNORECASE)
 
     def isEmpty(self) -> bool:
@@ -152,8 +154,7 @@ class IncludeExcludePattern:
                     if self.negativePattern.search(text):
                         return False
                 elif m:= self.negativePattern.match(text):
-                    if m.end() == len(text):
-                        return False
+                    return False
             elif text:
                 return False
         if self.positivePattern:
@@ -161,7 +162,7 @@ class IncludeExcludePattern:
                 if not self.matchAll:
                     return bool(self.positivePattern.search(text))
                 m = self.positivePattern.match(text)
-                return bool(m and m.end() == len(text))
+                return bool(m)
             return not bool(text)
         return True
 

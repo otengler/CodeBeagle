@@ -6,7 +6,7 @@ HighlightingRulesCache.py
 MatchesOverview.py
 PathDragListView.py
 PathVisualizerDelegate.py
-SearchMethods.py
+SearchAsync.py
 SearchPage.py
 SearchPageTabWidget.py
 SourceViewer.py
