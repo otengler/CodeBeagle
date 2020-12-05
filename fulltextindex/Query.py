@@ -179,7 +179,7 @@ def createExtensionFilter(strFilter: str) -> List[Tuple[str,bool]]:
     filterParts: List[Tuple[str,bool]] = []
     if not strFilter:
         return filterParts
-    for item in (item.strip() for item in strFilter.split(",")):
+    for item in (item.strip() for item in strFilter.lower().split(",")):
         if item:
             if item.startswith("*."):
                 item = item[2:]    

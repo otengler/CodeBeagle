@@ -180,7 +180,7 @@ class IndexUpdater (IndexDatabase):
                 c.execute("INSERT OR IGNORE INTO kw2doc (kwID,docID) values (?,?)", (kwID, docID))
 
     def __addFileName(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, fileName: str) -> None:
-        name,ext = os.path.splitext(fileName)
+        name,ext = os.path.splitext(fileName.lower())
 
         c.execute("INSERT OR IGNORE INTO fileName (id,name,ext) VALUES (NULL,?,?)", (name, ext))
         if c.rowcount == 1 and c.lastrowid != 0:

@@ -98,17 +98,18 @@ class TestFullTextIndex(unittest.TestCase):
         updater.updateIndex (configDB, updateStats)
 
         # Run the same tests directly agains the file system and against a full text index DB
-        self.__testNameSearch(testPath, configDirect)
-        self.__testNameSearch(testPath, configDB)
+        for config in [configDirect, configDB]:
+            self.__testNameSearch(testPath, config)
+            self.__testNameSearchCaseSensitive(testPath, config)
 
-    def __assertArray(self, expected: List, actual: List) -> None:
+    def __assertStringArray(self, expected: List[str], actual: List[str]) -> None:
         self.assertEqual(len(expected), len(actual))
         for a,b in zip(expected,actual):
-            self.assertEqual(a,b)
+            self.assertEqual(a.lower(),b.lower())
 
     def __assertTestFiles(self, testPath: str, result: List, expectedFiles: List) -> None:
         exp = [os.path.join(testPath,x) for x in expectedFiles]
-        self.__assertArray(exp, result)
+        self.__assertStringArray(exp, result)
 
     def __testNameSearch(self, testPath: str, config: IndexConfiguration) -> None:
         search = SearchMethods()
@@ -119,12 +120,12 @@ class TestFullTextIndex(unittest.TestCase):
 
         q = FileQuery ("test")
         result = search.searchFileName(q, config).matches
-        exp = ["data\\test", "data\\test.cpp"]
+        exp = ["data\\test.cpp", "data\\test"]
         self.__assertTestFiles(testPath, result, exp)
 
         q = FileQuery ("test*.*")
         result = search.searchFileName(q, config).matches
-        exp = ["data\\test",  "data\\test.cpp", "data\\test1.c", "data\\test2.c", "data\\tester.cp", "data\\tester3.c"]
+        exp = ["data\\test2.c", "data\\test.cpp", "data\\test", "data\\test1.c", "data\\tester.cp", "data\\tester3.c"]
         self.__assertTestFiles(testPath, result, exp)
 
         q = FileQuery ("test", "", ".") # no extension
@@ -139,17 +140,17 @@ class TestFullTextIndex(unittest.TestCase):
 
         q = FileQuery ("*est?")
         result = search.searchFileName(q, config).matches
-        exp = ["data\\test1.c", "data\\test2.c"]
+        exp = ["data\\test2.c", "data\\test1.c",]
         self.__assertTestFiles(testPath, result, exp)
 
         q = FileQuery ("test*")
         result = search.searchFileName(q, config).matches
-        exp = ["data\\test", "data\\test.cpp", "data\\test1.c", "data\\test2.c", "data\\tester.cp", "data\\tester3.c"]
+        exp = ["data\\test2.c", "data\\test.cpp", "data\\test", "data\\test1.c", "data\\tester.cp", "data\\tester3.c"]
         self.__assertTestFiles(testPath, result, exp)
 
         q = FileQuery ("test*", "", ".c*,-.cpp") # .c* but no files with .cpp extension
         result = search.searchFileName(q, config).matches
-        exp = ["data\\test1.c", "data\\test2.c", "data\\tester.cp", "data\\tester3.c"]
+        exp = ["data\\test2.c", "data\\test1.c", "data\\tester.cp", "data\\tester3.c"]
         self.__assertTestFiles(testPath, result, exp)
 
         q = FileQuery ("test*", "", ".cp*,-.c") # .cp* but no files with .c extension / useless but most work
@@ -166,6 +167,26 @@ class TestFullTextIndex(unittest.TestCase):
         result = search.searchFileName(q, config).matches
         exp = ["data\\tester.cp"]
         self.__assertTestFiles(testPath, result, exp)
+
+    def __testNameSearchCaseSensitive(self, testPath: str, config: IndexConfiguration) -> None:
+        search = SearchMethods()
+
+        q = FileQuery ("TEst.cpp", bCaseSensitive=True)
+        result = search.searchFileName(q, config).matches
+        self.__assertTestFiles(testPath, result, [])
+
+        q = FileQuery ("Test.cpp", bCaseSensitive=True)
+        result = search.searchFileName(q, config).matches
+        self.__assertTestFiles(testPath, result, ["data\\Test.cpp"])
+
+        q = FileQuery ("T*", bCaseSensitive=True)
+        result = search.searchFileName(q, config).matches
+        self.__assertTestFiles(testPath, result, ["data\\TEst2.c", "data\\Test.cpp"])
+
+        q = FileQuery ("tester.cP", bCaseSensitive=True) # extensions are not treated case sensitive
+        result = search.searchFileName(q, config).matches
+        self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
+
 
     def testContentSearch(self) -> None:
         testPath = os.path.join(getModulePath (), "tests")

@@ -93,7 +93,6 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
     with perfReport.newAction("Finding documents") as action:
         q.execute(queryStmt + " ORDER BY d.fullpath", params)
         result = q.fetchall()
-        action.addData("%u matches", safeLen(result))
 
 
     if query.folderFilter:
@@ -102,6 +101,7 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
         result = [r[0] for r in result]
 
     if not query.bCaseSensitive:
+        action.addData("%u matches", safeLen(result))
         return result
 
     # Case sensitive search requested. The DB is always case insensitive so filter out unwanted results
@@ -120,4 +120,5 @@ def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceRepor
         elif searchPattern.match(name):
             filtered.append(r)
 
+    action.addData("%u matches", safeLen(filtered))
     return filtered
