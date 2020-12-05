@@ -187,6 +187,17 @@ class TestFullTextIndex(unittest.TestCase):
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
 
+        q = FileQuery ("tester", ".cp", bCaseSensitive=True) # extensions are not treated case sensitive
+        result = search.searchFileName(q, config).matches
+        self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
+
+        q = FileQuery ("tester", ".cP", bCaseSensitive=True) # extensions are not treated case sensitive
+        result = search.searchFileName(q, config).matches
+        self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
+
+        q = FileQuery ("tester", "CP", bCaseSensitive=True) # extensions are not treated case sensitive
+        result = search.searchFileName(q, config).matches
+        self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
 
     def testContentSearch(self) -> None:
         testPath = os.path.join(getModulePath (), "tests")
