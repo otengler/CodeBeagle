@@ -1,0 +1,60 @@
+#
+# General settings
+#
+
+# Comment in to show a close confirmation message box
+# showCloseConfirmation = True
+
+# Comment in to print profiling information to stdout when updating the index
+# profileUpdate=1
+
+# Contains some information about the update process
+# updateIndexLog = D:\update.log
+
+# This list of extensions fills the extensions combo box in the settings dialog
+PredefinedExtensions {
+exts1 = c,cpp,h
+exts2 = c,cpp,h,rc,rc2,sln,vcxproj
+}
+
+# Location of the config file which is read and written by the CodeBeagle UI. If this is empty
+# or missing then the user profile is used.
+#managedConfig=ManagedConfig.txt
+
+# Comment in to enable a search optimization which skips keywords which are too common to be useful.
+# The keyword file contains one keyword per line. The file should be sorted from the worst keyword to the
+# less bad keyword.
+#commonKeywords = config/CommonKeywords.txt
+
+# Check for new versions of CodeBeagle every X days. 0 disables the check
+updateCheckPeriod = 7
+
+#
+# Source viewer settings
+#
+
+import config/SourceViewer.txt as SourceViewer
+
+#
+# Sample index config below. Please override in UserConfig.txt.
+#
+
+#Index1 {
+#    indexdb=D:\qt473.dat
+#    extensions=h,cpp
+#    directories=D:\qt47
+# }
+
+# You may specifiy as many indexes as you want. The UI allows to choose in which one to search
+#Index2 {
+#    indexdb=D:\alpha.dat
+#    extensions=h,c
+#    directories=D:\test\linux-3.0.1\arch\alpha
+#}
+
+# Place your index definitions inside UserConfig.txt to preserve your settings when updating to 
+# a new version.
+import UserConfig.txt
+
+
+

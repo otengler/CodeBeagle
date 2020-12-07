@@ -1,0 +1,12 @@
+__pycache__/
+build/
+Ui_*.py
+*_rc.py
+ManagedConfig.txt
+UserConfig.txt
+*.dat
+.vscode/tags
+.mypy_cache/
+.vscode/.ropeproject/objectdb
+tests/data
+tests/test.dat*

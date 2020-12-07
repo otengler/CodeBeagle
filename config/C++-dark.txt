@@ -1,0 +1,15 @@
+# addKeywords (keywords,  fontWeight,  foreground)
+# addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)
+# addRule (expr,  fontWeight,  foreground)
+
+keywords="char,class,const,double,enum,explicit,friend,inline,int,long,namespace,operator,private,protected,\
+public,short,signed,static,struct,template,typedef,typename,union,unsigned,virtual,void,volatile"
+addKeywords (keywords, Bold, rgb(197,134,192))
+
+addCommentRule ("//[^\n]*", "/\\*", "\\*/", Normal, rgb(82,153,73))
+
+addRule ("\\bC[A-Za-z]+\\b", Bold, rgb(58,201,162)) # Classes
+addRule ("\".*\"", Normal, rgb(206,145,120)) # Quotations
+addRule ("\\b[A-Za-z0-9_]+(?=\\s*\\()", Normal, rgb(220,220,170)) # Functions
+
+setColor(rgb(212,212,212)) # Default font color

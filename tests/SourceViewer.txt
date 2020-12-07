@@ -1,0 +1,14 @@
+Highlighter_Default {
+    config = default.txt
+    extensions = *
+}
+
+Highlighter_C {
+    config = C.txt
+    extensions = c*,h*,inl
+}
+
+Highlighter_CPP {
+    config = C++.txt
+    extensions = cpp
+}

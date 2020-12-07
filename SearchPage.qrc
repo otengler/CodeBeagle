@@ -1,0 +1,18 @@
+<RCC>
+  <qresource prefix="default">
+    <file>resources/MatchList.png</file>
+    <file>resources/Overview.png</file>
+    <file>resources/CustomSearch.png</file>
+    <file>resources/Find.png</file>
+    <file>resources/NextMatch.png</file>
+    <file>resources/PreviousMatch.png</file>
+    <file>resources/Search.png</file>
+    <file>resources/Lock.png</file>
+    <file>resources/Export.png</file>
+    <file>resources/Find.png</file>
+    <file>resources/PerfInfo.png</file>
+    <file>resources/Find.png</file>
+    <file>resources/regex.png</file>
+    <file>resources/angle-down.png</file>
+  </qresource>
+</RCC>

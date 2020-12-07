@@ -1,0 +1,13 @@
+# addKeywords (keywords,  fontWeight,  foreground)
+# addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)
+# addRule (expr,  fontWeight,  foreground)
+
+keywords="import,from,def,class,return,if,else,elif,for,in,while,None"
+addKeywords (keywords, Bold, rgb(197,134,192))
+
+addCommentRule ("#[^\n]*", "\"\"\"", "\"\"\"", Normal, rgb(82,153,73))
+
+addRule ("\".*\"", Normal, rgb(206,145,120)) # Quotations
+addRule ("\\b[A-Za-z0-9_]+(?=\\()", Normal, rgb(220,220,170)) # Functions
+
+setColor(rgb(212,212,212)) # Default font color
