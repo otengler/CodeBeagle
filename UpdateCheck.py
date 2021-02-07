@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
+import json
 from typing import Optional
 from urllib.request import urlopen
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, QDateTime
@@ -39,20 +39,10 @@ class UpdateCheckThread (QThread):
             print(exceptionAsString())
 
     def __runInternal(self) -> None:
-        html = str (urlopen("http://sourceforge.net/projects/codebeagle/files").read(), "latin_1")
-        reVersion = re.compile(r"CodeBeagle[-\w]*\.(\d+\.\d+\.\d+)\.(zip|7z)", re.IGNORECASE)
-        cur=0
-        versions = set ()
-        while True:
-            result = reVersion.search(html, cur)
-            if result:
-                _, endPos = result.span()
-                versions.add((formatVersion(result.group(1)),  result.group(1)))
-                cur = endPos
-            else:
-                break
-        sortedVersions = sorted([ver for ver in versions],reverse=True)
-        self.latestVersion = sortedVersions[0][1]
+        versionStr = str (urlopen("https://raw.githubusercontent.com/otengler/CodeBeagle/main/VERSION").read(), "utf8")
+        versionDoc = json.loads(versionStr)
+        if "version" in versionDoc:
+            self.latestVersion = versionDoc["version"]
 
 class UpdateCheck (QObject):
     """

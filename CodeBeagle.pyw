@@ -123,7 +123,7 @@ class MainWindow(QMainWindow):
         result = showUserHint(self, "newVersion" + version, self.tr("New version available"), text,
                               ButtonType.Yes, True, ButtonType.No, False, bShowHintAgain=True)
         if result == ButtonType.Yes:
-            url = QUrl("http://sourceforge.net/projects/codebeagle/files/")
+            url = QUrl("https://github.com/otengler/CodeBeagle/releases/latest")
             QDesktopServices.openUrl(url)
 
     def __restoreGeometryAndState(self) -> None:
