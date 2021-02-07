@@ -5,6 +5,8 @@ CodeBeagle allows you to quickly find all occurrences of a search term inside so
 
 Version 1.3.5 is released. See ![CHANGES](/CHANGES) for details.
 
+Download here: https://github.com/otengler/CodeBeagle/releases/latest
+
 Visual Studio 2015 C++ runtime (x64) is a prerequisite. Fetch it from here if needed: https://www.microsoft.com/en-us/download/details.aspx?id=48145
 
 # Features
