@@ -29,7 +29,7 @@ dist: all
 	cp scripts/* build/CodeBeagle/scripts
 	cp config/* build/CodeBeagle/config
 	cp config.txt build/CodeBeagle
-	cp help.html gpl.txt lgpl.txt readme.txt build/CodeBeagle
+	cp help.html LICENSE readme.txt build/CodeBeagle
 	python3 -c "import compileall; compileall.compile_dir('build')"
 	chmod +x build/CodeBeagle/CodeBeagle.pyw
 	chmod +x build/CodeBeagle/UpdateIndex.py

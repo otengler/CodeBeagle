@@ -36,8 +36,7 @@ del /q %LIB%\qdarkstyle\style.qss
 
 xcopy config.txt %BUILDDIR%
 xcopy help.html %BUILDDIR%
-xcopy gpl.txt %BUILDDIR%
-xcopy lgpl.txt %BUILDDIR%
+xcopy LICENSE %BUILDDIR%
 xcopy scripts\* %BUILDDIR%\scripts\
 xcopy config\* %BUILDDIR%\config\
 
