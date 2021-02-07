@@ -7,12 +7,23 @@ Version 1.3.5 is released. See ![CHANGES](/CHANGES) for details.
 
 Visual Studio 2015 C++ runtime (x64) is a prerequisite. Fetch it from here if needed: https://www.microsoft.com/en-us/download/details.aspx?id=48145
 
-Features:
+# Features
 - Indexes multiple directories, lets you choose file extensions to index
+- Search in file content or for file name
 - Search indexed and not indexed locations
 - Source viewer with customizable syntax highlighting
 - Tabbed searching
 - Custom search scripts allow to automate search tasks
 - Supports ANSI,UTF8 and UTF16
 - Dark theme
+
+# Screenshots
+
+![main-light](/../screenshots/screenshots/main-light.png?raw=true "Main windows (light theme)")
+
+![settings](/../screenshots/screenshots/settings.png?raw=true "Settings")
+
+![options](/../screenshots/screenshots/options.png?raw=true "Options")
+
+![main-dark](/../screenshots/screenshots/main-dark.png?raw=true "Main windows (dark theme)")
 
