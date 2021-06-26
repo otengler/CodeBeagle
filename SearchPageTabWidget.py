@@ -200,7 +200,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         aboutDialog = AboutDialog(self)
         aboutDialog.exec()
 
-    @pyqtSlot()
+    @pyqtSlot(list)
     def triggerIndexUpdate (self,  updateDisplayNames: List[str]) -> None:
         try:
             self.__triggerIndexUpdate (updateDisplayNames)

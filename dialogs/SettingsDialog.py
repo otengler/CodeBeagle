@@ -362,7 +362,7 @@ class SettingsDialog (QDialog):
                 text = self.tr(userHintUpdateIndex) % {"locations" : locationsHtml}
                 result = showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text, ButtonType.Yes, False, ButtonType.No,  True,  bShowHintAgain=True)
                 if result == ButtonType.Yes:
-                    self.updateChangedIndexes(updateDisplayNames)
+                    self.updateChangedIndexes.emit(updateDisplayNames)
 
             return True
 

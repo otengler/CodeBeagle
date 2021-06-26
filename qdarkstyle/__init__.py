@@ -9,17 +9,14 @@
 import logging
 import os
 import platform
-import warnings
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QCoreApplication, QFile, QTextStream
+from PyQt5.QtCore import QFile, QTextStream
 from PyQt5.QtGui import QColor, QPalette
 
 # Local imports
 from qdarkstyle.palette import DarkPalette
 from qdarkstyle.constants import PACKAGE_PATH, QSS_FILE
-
-from qdarkstyle import style_rc
 
 _logger = logging.getLogger(__name__)
 
@@ -81,6 +78,9 @@ def apply_stylesheet(app: QApplication, additionalStyles: str = "") -> None:
     Returns:
         str: the stylesheet string.
     """
+
+    from qdarkstyle import style_rc
+
     # Thus, by importing the binary we can access the resources
     package_dir = os.path.basename(PACKAGE_PATH)
     qss_rc_path = ":" + os.path.join(package_dir, QSS_FILE)

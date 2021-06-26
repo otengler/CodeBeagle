@@ -10,3 +10,4 @@ UserConfig.txt
 .vscode/.ropeproject/objectdb
 tests/data
 tests/test.dat*
+qdarkstyle/qss/_styles.scss.processed
