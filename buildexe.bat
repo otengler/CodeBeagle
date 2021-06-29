@@ -4,7 +4,8 @@ call build.bat
 set BUILDDIR=build\exe.win-amd64-3.8
 set LIB=%BUILDDIR%\lib
 if exist build rmdir /s /q build
-python.exe setup.py build_exe
+REM build with cx_freeze 6.4 to avoid false positives with VirusTotal
+python.exe setup.py build_exe 
 
 del /q %LIB%\unicodedata.pyd
 copy "%PYDIR%\python3.dll" %BUILDDIR%
