@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2012 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import os
 from typing import Optional, Dict
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
-from tools.FileTools import fopen
+from tools.FileTools import freadall
 from widgets.SyntaxHighlighter import HighlightingRules
 import HighlighterConfiguration
 import AppConfig
@@ -112,8 +112,7 @@ class RulesCache:
                        "addCommentRule" : newRules.addCommentRule,
                        "addRule" : newRules.addRule}
 
-        with fopen(ruleFilePath(rulesFile)) as script:
-            code = compile(script.read(), rulesFile, 'exec')
+        code = compile(freadall(ruleFilePath(rulesFile)), rulesFile, 'exec')
         exec(code,  globals(),  localsDict)
 
         return newRules

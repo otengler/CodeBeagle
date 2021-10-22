@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2018 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import time
 import logging
 import sqlite3
 from typing import List, Iterator, IO, Set, cast, Tuple
-from tools.FileTools import fopen
+from tools.FileTools import fopen, freadall
 from .IndexDatabase import IndexDatabase
 from .IndexConfiguration import IndexConfiguration, IndexType, indexTypeToString
 
@@ -59,8 +59,8 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None, ign
             elif ignoredExts is not None:
                 ignoredExts.add(ext)
 
-def genTokens(file: IO) -> Iterator[str]:
-    for token in reTokenize.findall(file.read()):
+def genTokens(text: str) -> Iterator[str]:
+    for token in reTokenize.findall(text):
         yield token
 
 class UpdateStatistics:
@@ -166,18 +166,17 @@ class IndexUpdater (IndexDatabase):
         c.execute("DELETE FROM kw2doc WHERE docID=?", (docID,))
         # Associate document with all tokens
         lower = str.lower
-        with fopen(strFullPath) as inputFile:
-            for token in genTokens(inputFile):
-                keyword = lower(token)
+        for token in genTokens(freadall(strFullPath)):
+            keyword = lower(token)
 
-                c.execute("INSERT OR IGNORE INTO keywords (id,keyword) VALUES (NULL,?)", (keyword,))
-                if c.rowcount == 1 and c.lastrowid != 0:
-                    kwID = c.lastrowid
-                else:
-                    q.execute("SELECT id FROM keywords WHERE keyword=:kw", {"kw":keyword})
-                    kwID = q.fetchone()[0]
+            c.execute("INSERT OR IGNORE INTO keywords (id,keyword) VALUES (NULL,?)", (keyword,))
+            if c.rowcount == 1 and c.lastrowid != 0:
+                kwID = c.lastrowid
+            else:
+                q.execute("SELECT id FROM keywords WHERE keyword=:kw", {"kw":keyword})
+                kwID = q.fetchone()[0]
 
-                c.execute("INSERT OR IGNORE INTO kw2doc (kwID,docID) values (?,?)", (kwID, docID))
+            c.execute("INSERT OR IGNORE INTO kw2doc (kwID,docID) values (?,?)", (kwID, docID))
 
     def __addFileName(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, fileName: str) -> None:
         name,ext = os.path.splitext(fileName.lower())

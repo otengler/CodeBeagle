@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2018 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,16 +17,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
+import os
+from typing import cast
 
 testmodules = [
     'HighlighterConfiguration',
     'MatchesOverview',
     'tools.Config',
+    'tools.FileTools',
     'fulltextindex.Query',
     'fulltextindex.testsuite'
     ]
 
+def getModulePath() -> str:
+    import __main__
+    return cast(str, os.path.split(__main__.__file__)[0])
+
 if __name__ == "__main__":
+    testPath = os.path.join(getModulePath (), "tests")
+    os.chdir(testPath)
+
     suite = unittest.TestSuite()
 
     for t in testmodules:

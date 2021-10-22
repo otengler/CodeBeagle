@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2011 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex, QSettings
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
+from SourceViewer import EditorState
 from tools import AsynchronousTask
 from dialogs.UserHintDialog import showUserHint, ButtonType
 from dialogs.RegExTesterDlg import RegExTesterDlg
@@ -249,15 +250,13 @@ class SearchPage (QWidget):
             model.setEditorState(model.getSelectedFileIndex(), self.ui.sourceViewer.saveEditorState())
         model.setSelectedFileIndex (index.row())
         name = index.data(Qt.UserRole)
-        self.showFile (name)
-        self.ui.matchesOverview.scrollToFile(index.row())
         editorState = self.ui.listView.model().getEditorState(index.row())
-        if editorState:
-            self.ui.sourceViewer.restoreEditorState(editorState)
+        self.showFile (name, editorState)
+        self.ui.matchesOverview.scrollToFile(index.row())
 
-    def showFile (self, name: str) -> None:
+    def showFile (self, name: str, editorState: EditorState) -> None:
         if self.ui.sourceViewer.currentFile != name:
-            self.ui.sourceViewer.showFile(name)
+            self.ui.sourceViewer.showFile(name, editorState)
             self.documentShown.emit(name)
 
     @pyqtSlot()

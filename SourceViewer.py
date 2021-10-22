@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2011 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ from typing import Optional, List, Tuple
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent
 from PyQt5.QtWidgets import QWidget, QAction, QListWidgetItem, QDialog, QTextEdit
-from tools.FileTools import fopen
+from tools.FileTools import Encoding, freadallEx
 from AppConfig import appConfig
 from fulltextindex import FullTextIndex
 import HighlightingRulesCache
@@ -49,6 +49,7 @@ class SourceViewer (QWidget):
         self.matches: List[Tuple[int,int]]
         self.curMatch: int
         self.currentFile: str
+        self.encoding: Encoding = Encoding.Default
         self.currentLineExtras: List[QTextEdit.ExtraSelection] = []
         self.currentMatchExtras: List[QTextEdit.ExtraSelection] = []
 
@@ -93,6 +94,9 @@ class SourceViewer (QWidget):
         # Show match list if button is pressed
         self.ui.buttonMatchList.setChecked(appConfig().showMatchList)
         self.ui.frameMatchList.setVisible(self.ui.buttonMatchList.isChecked())
+
+        # Encoding info label
+        self.ui.labelEncoding.hide()
 
     @pyqtSlot(int)
     def matchListRowChanged(self, row: int) -> None:
@@ -149,16 +153,28 @@ class SourceViewer (QWidget):
         self.searchData = searchData
         self.ui.textEdit.highlighter.setSearchData (searchData)
 
-    def showFile (self, name: str) -> None:
+    def showFile (self, name: str, editorState: Optional[EditorState] = None) -> None:
         self.__reset()
         self.ui.labelFile.setText(name)
         self.currentFile = name
 
+        encoding: Encoding
+        text: str
         try:
-            with fopen(name) as file:
-                text = file.read()
+            text, encoding = freadallEx(name)
         except:
             text = self.tr("Failed to open file")
+            self.ui.labelEncoding.hide()
+        else:
+            self.ui.labelEncoding.show()
+            if encoding == Encoding.UTF8:
+                self.ui.labelEncoding.setText("UTF8")
+            if encoding == Encoding.UTF8_BOM:
+                self.ui.labelEncoding.setText("UTF8 BOM")
+            elif encoding == Encoding.UTF16_BOM:
+                self.ui.labelEncoding.setText("UTF16 BOM")
+            elif encoding == Encoding.Default:
+                self.ui.labelEncoding.setText("Latin1")
 
         rules = HighlightingRulesCache.rules().getRulesByFileName(name,  self.sourceFont)
         self.ui.textEdit.highlighter.setHighlightingRules (rules)
@@ -173,6 +189,9 @@ class SourceViewer (QWidget):
                 self.ui.listMatchesWidget.addItem(item)
             if self.matches:
                 self.nextMatch ()
+
+        if editorState:
+            self.restoreEditorState(editorState)
 
     @pyqtSlot()
     def reloadFile(self) -> None:

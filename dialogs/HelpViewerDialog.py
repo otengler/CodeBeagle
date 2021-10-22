@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2012 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QApplication, QWidget
-from tools.FileTools import fopen
+from tools.FileTools import freadall
 from .Ui_HelpViewerDialog import Ui_HelpViewerDialog
 
 class HelpViewerDialog (QDialog):
@@ -31,8 +31,7 @@ class HelpViewerDialog (QDialog):
 
     def showFile (self, name: str) -> None:
         try:
-            with fopen(name) as file:
-                text = file.read()
+            text = freadall(name)
         except:
             text = self.tr("Failed to open file")
 

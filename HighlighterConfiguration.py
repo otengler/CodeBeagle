@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2011 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ def highlighter(conf: Config.Config) -> Highlighter:
 
 class TestHighlighterConfig(unittest.TestCase):
     def test(self) -> None:
-        h = highlighter(Config.Config("tests\\SourceViewer.txt"))
+        h = highlighter(Config.Config("SourceViewer.txt"))
         self.assertEqual (h.lookup("py"),  "default.txt")
         self.assertEqual (h.lookup("cpp"),  "C++.txt")
         self.assertEqual (h.lookup("CPP"),  "C++.txt")

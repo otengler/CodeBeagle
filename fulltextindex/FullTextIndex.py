@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2011 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sqlite3
 import threading
 from typing import List, Tuple, Iterable, Any, Dict, cast, Callable
-from tools.FileTools import fopen
+from tools.FileTools import fopen, freadall
 from .IndexDatabase import IndexDatabase
 from .FileSearch import searchFile
 from .Query import ContentQuery, FileQuery, PerformanceReport, ReportAction, safeLen, SearchResult
@@ -183,9 +183,8 @@ class FullTextIndex (IndexDatabase):
                 if not query.matchFolderAndExtensionFilter(fullpath):
                     continue
             try:
-                with fopen(fullpath) as inputFile:
-                    if reExpr.search(inputFile.read()):
-                        finalResults.append(fullpath)
+                if reExpr.search(freadall(fullpath)):
+                    finalResults.append(fullpath)
             except:
                 pass
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2020 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import os
 import re
 import threading
 from typing import Optional, List
-from tools.FileTools import fopen
+from tools.FileTools import fopen, freadall
 from  . import FullTextIndex, IndexConfiguration, Query, IndexUpdater
 
 emptyPattern = re.compile("") # make mypy happy
@@ -70,17 +70,15 @@ class SearchMethods:
             for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
                 file = os.path.join(dirName, fileName)
                 if searchData.matchFolderAndExtensionFilter(file):
-                    with fopen(file) as inputFile:
-                        for _ in searchData.matches(inputFile.read()):
-                            matches.append(file)
-                            break
+                    for _ in searchData.matches(freadall(file)):
+                        matches.append(file)
+                        break
                 if cancelEvent and cancelEvent.is_set():
                     return ResultSet([], searchData)
         matches = removeDupsAndSort(matches)
         return ResultSet(matches, searchData)
 
     def searchFileName(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
-
         try:
             if indexConf.isFileNameIndexed():
                 return self.__searchFileNameIndexed(searchData, indexConf, cancelEvent)

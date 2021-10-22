@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2011 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,32 +16,88 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from enum import IntEnum
 import sys
 import os
 import codecs
 import time
 import collections
-from typing import IO, DefaultDict, Any, Optional, Literal
+from typing import IO, DefaultDict, Any, Optional, Literal, Tuple, cast
+import unittest
 
 # pylint: disable=import-outside-toplevel
 
-def fopen (name:str, mode: str='r') -> IO:
-    f = open(name, mode, -1, "latin_1")
+def getModulePath() -> str:
+    import __main__
+    return cast(str, os.path.split(__main__.__file__)[0])
+
+class Encoding(IntEnum):
+    Default = 1,
+    UTF8 = 2,
+    UTF8_BOM = 3,
+    UTF16_BOM = 4
+
+def fopenEx (name:str, mode: str='r', defaultEncoding: Optional[str]="latin_1") -> Tuple[IO, Encoding]:
+    f = open(name, mode, -1, "latin-1")
     try:
         start = f.read(3)
         if len(start) >=3:
-            if codecs.BOM_UTF8 == bytes(start[:3],"latin_1"):
+            if codecs.BOM_UTF8 == bytes(start[:3],"latin-1"):
                 f.close()
-                return open (name, mode, -1, "utf_8_sig")
+                return (open (name, mode, -1, "utf_8_sig"), Encoding.UTF8_BOM)
         if len(start) >=2:
-            if codecs.BOM_UTF16 == bytes(start[:2],"latin_1"):
+            bom = bytes(start[:2],"latin-1")
+            if codecs.BOM_UTF16_LE == bom:
                 f.close()
-                return open (name, mode, -1, "utf_16")
+                f = open (name, mode, -1, "utf_16_le")
+                f.seek(2)
+                return (f, Encoding.UTF16_BOM)
+            if codecs.BOM_UTF16_BE == bom:
+                f.close()
+                f = open (name, mode, -1, "utf_16_be")
+                f.seek(2)
+                return (f, Encoding.UTF16_BOM)
+            if defaultEncoding and defaultEncoding != "latin-1":
+                f.close()
+                return (open(name, mode, -1, defaultEncoding), Encoding.Default)
         f.seek(0)
-        return f
+        return (f, Encoding.Default)
     except:
         f.close()
         raise
+
+def fopen (name: str, mode: str='r', defaultEncoding: str="latin_1") -> IO:
+    return fopenEx(name, mode, defaultEncoding)[0]
+
+def freadall(name: str, mode: str='r', defaultEncoding: str="latin_1") -> str:
+    """
+    Reads the whole content of a text file. If the file does not contain a byte order mark
+    the content is first decoded using UTF8 and if this fails using the given defaultEncoding
+    if that differs from UTF8.
+    """
+    return freadallEx(name, mode, defaultEncoding)[0]
+
+def freadallEx(name: str, mode: str='r', defaultEncoding: str="latin_1") -> Tuple[str, Encoding]:
+    """
+    Reads the whole content of a text file. If the file does not contain a byte order mark
+    the content is first decoded using UTF8 and if this fails using the given defaultEncoding
+    if that differs from UTF8.
+    Returns the text and the encoding.
+    """
+    try:
+        file, encoding = fopenEx(name, mode, defaultEncoding="utf_8")
+        with file:
+            text = file.read()
+            if encoding == Encoding.Default:
+                encoding = Encoding.UTF8
+            return (text, encoding)
+    except:
+        if defaultEncoding == "utf_8": # already tried that
+            raise
+        file, _ = fopenEx(name, mode, defaultEncoding=defaultEncoding)
+        with file:
+            text = file.read()
+            return (text, Encoding.Default)
 
 def getAppDataPath (appName: str) -> str:
     """
@@ -199,3 +255,25 @@ def correctPath(name: str) -> str:
     if os.path.sep == "/":
         return name
     return name.replace("/", os.path.sep)
+
+class TestConfig(unittest.TestCase):
+    def test(self) -> None:
+        res = freadallEx("encodings\\latin-1.txt")
+        self.assertEqual(res[0], "äö")
+        self.assertEqual(res[1], Encoding.Default)
+        res = freadallEx("encodings\\utf-8.txt")
+        self.assertEqual(res[0], "äö")
+        self.assertEqual(res[1], Encoding.UTF8_BOM)
+        res = freadallEx("encodings\\utf-8-no-bom.txt")
+        self.assertEqual(res[0], "äö")
+        self.assertEqual(res[1], Encoding.UTF8)
+        res = freadallEx("encodings\\utf-16-be.txt")
+        self.assertEqual(res[0], "äö")
+        self.assertEqual(res[1], Encoding.UTF16_BOM)
+        res = freadallEx("encodings\\utf-16-le.txt")
+        self.assertEqual(res[0], "äö")
+        self.assertEqual(res[1], Encoding.UTF16_BOM)       
+
+if __name__ == "__main__":
+    unittest.main()
+

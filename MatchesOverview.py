@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2013 Oliver Tengler
+Copyright (C) 2021 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ from typing import List,Tuple,Optional
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QWidget
-from tools.FileTools import fopen
+from tools.FileTools import freadall
 from tools import AsynchronousTask
 from fulltextindex import FullTextIndex
 from widgets.SourceHighlightingTextEdit import SourceHighlightingTextEdit
@@ -158,8 +158,7 @@ def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, 
     for name in matches:
         matchList = MatchesInFile(name)
         try:
-            with fopen(name) as file:
-                text = file.read()
+            text = freadall(name)
         except:
             matchList.addMatches(0, ["Failed to open file"])
         else:
