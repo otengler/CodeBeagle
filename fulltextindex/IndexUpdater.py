@@ -22,8 +22,8 @@ import re
 import time
 import logging
 import sqlite3
-from typing import List, Iterator, IO, Set, cast, Tuple
-from tools.FileTools import fopen, freadall
+from typing import List, Iterator, Set, cast, Tuple
+from tools.FileTools import freadall
 from .IndexDatabase import IndexDatabase
 from .IndexConfiguration import IndexConfiguration, IndexType, indexTypeToString
 
