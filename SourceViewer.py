@@ -343,12 +343,18 @@ class SourceViewer (QWidget):
 
     def dropEvent(self, event: QDropEvent) -> None:
         # check if the data contains urls
-        if event.mimeData().hasUrls():
-            name = event.mimeData().urls()[0].toLocalFile()
-            if os.path.isfile(name):
-                self.showFile(name)
-            elif os.path.isdir(name):
-                self.directoryDropped.emit(name)
+        mimeData = event.mimeData()
+        name = None
+        if mimeData.hasUrls() and len(mimeData.urls()) > 0:
+            name = mimeData.urls()[0].toLocalFile()
+        elif mimeData.hasText() and len(mimeData.text()) > 0:
+            name = mimeData.text()
+        if not name:
+            return
+        if os.path.isfile(name):
+            self.showFile(name)
+        elif os.path.isdir(name):
+            self.directoryDropped.emit(name)
 
     def saveEditorState(self) -> EditorState:
         currentMatch = self.curMatch

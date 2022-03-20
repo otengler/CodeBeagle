@@ -160,9 +160,8 @@ class SyntaxHighlighter:
                             multiComments.append (CommentRange(beginStart, len(text) - beginStart))
                             break
                         endStart,end = endMatch.span()
-                        if not self.isInsideComment(endStart):
-                            multiComments.append (CommentRange(beginStart, end - beginStart))
-                            break
+                        multiComments.append (CommentRange(beginStart, end - beginStart))
+                        break
 
         comments.extend(multiComments)
         comments.sort()
