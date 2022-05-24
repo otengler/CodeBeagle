@@ -153,11 +153,7 @@ class SourceViewer (QWidget):
         self.searchData = searchData
         self.ui.textEdit.highlighter.setSearchData (searchData)
 
-    def showFile (self, name: str, editorState: Optional[EditorState] = None) -> None:
-        self.__reset()
-        self.ui.labelFile.setText(name)
-        self.currentFile = name
-
+    def __readFileAndSetEncoding(self, name: str) -> str:
         encoding: Encoding
         text: str
         try:
@@ -175,6 +171,14 @@ class SourceViewer (QWidget):
                 self.ui.labelEncoding.setText("UTF16 BOM")
             elif encoding == Encoding.Default:
                 self.ui.labelEncoding.setText("Latin1")
+        return text
+
+    def showFile (self, name: str, editorState: Optional[EditorState] = None) -> None:
+        self.__reset()
+        self.ui.labelFile.setText(name)
+        self.currentFile = name
+
+        text = self.__readFileAndSetEncoding(name)
 
         rules = HighlightingRulesCache.rules().getRulesByFileName(name,  self.sourceFont)
         self.ui.textEdit.highlighter.setHighlightingRules (rules)

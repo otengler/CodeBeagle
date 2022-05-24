@@ -11,3 +11,4 @@ UserConfig.txt
 tests/data
 tests/test.dat*
 qdarkstyle/qss/_styles.scss.processed
+node_modules/

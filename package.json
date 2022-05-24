@@ -1,0 +1,25 @@
+{
+  "name": "codebeagle",
+  "version": "1.0.0",
+  "description": "A tool to search source code based on a full text index.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/otengler/CodeBeagle.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/otengler/CodeBeagle/issues"
+  },
+  "homepage": "https://github.com/otengler/CodeBeagle#readme",
+  "dependencies": {
+    "sass": "^1.52.1"
+  }
+}

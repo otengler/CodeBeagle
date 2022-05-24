@@ -6,7 +6,7 @@ from qdarkstyle.palette import DarkPalette
 
 def generate() -> None:
     _create_scss_variables(VARIABLES_SCSS_FILEPATH, DarkPalette)
-    subprocess.run(["sass", "--no-source-map", MAIN_SCSS_FILEPATH, STYLES_SCSS_FILEPATH_PROCESSED], check=True, shell=True)
+    subprocess.run(["%SASS%", "--no-source-map", MAIN_SCSS_FILEPATH, STYLES_SCSS_FILEPATH_PROCESSED], check=True, shell=True)
     _replaceInFile(STYLES_SCSS_FILEPATH_PROCESSED, QSS_FILEPATH, "_qnot_", "!")
 
 def _dict_to_scss(data: dict) -> str:
