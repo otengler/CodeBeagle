@@ -4,7 +4,7 @@
 # Build variables
 #
 
-PYTHON=python3
-PYUIC=pyuic5
-PYRCC5=pyrcc5
-SASS=node_modules/.bin/sass
+export PYTHON=python3
+export PYUIC=pyuic5
+export PYRCC5=pyrcc5
+export SASS=node_modules/.bin/sass
