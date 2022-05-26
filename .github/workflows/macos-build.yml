@@ -12,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: macos-latest
+    env: 
+      FREEZE_EXE: exe.macosx-10.15-x86_64-3.8
     
     steps:
     - uses: actions/checkout@v3

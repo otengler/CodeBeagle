@@ -15,13 +15,13 @@ npm ci
 # Run Cx_freeze
 # 
 
-BUILDDIR=build/exe.win-amd64-3.8
+BUILDDIR=build/$FREEZE_EXE
 LIB=$BUILDDIR/lib
 rm -r -f build
 # build with cx_freeze 6.4 to avoid false positives with VirusTotal
 $PYTHON setup.py build_exe 
-# DUMP build
-ls -al build
+# Uncomment to show how executable is named:
+# ls -al build
 
 rm -f $LIB/unicodedata.pyd
 
