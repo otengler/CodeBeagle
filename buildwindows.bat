@@ -1,3 +1,5 @@
+SETLOCAL EnableExtensions
+
 REM
 REM Build variables
 REM
