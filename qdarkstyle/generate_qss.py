@@ -4,15 +4,12 @@ import os, subprocess
 from qdarkstyle.constants import MAIN_SCSS_FILEPATH, STYLES_SCSS_FILEPATH_PROCESSED, QSS_FILEPATH, VARIABLES_SCSS_FILEPATH
 from qdarkstyle.palette import DarkPalette
 
-def sassVarName() -> str:
-    if os.name == "nt":
-        return "%SASS%"
-    else:
-        return "$SASS"
+def sassExecutable() -> str:
+    return os.environ["SASS"]
 
 def generate() -> None:
     _create_scss_variables(VARIABLES_SCSS_FILEPATH, DarkPalette)
-    subprocess.run([sassVarName(), "--no-source-map", MAIN_SCSS_FILEPATH, STYLES_SCSS_FILEPATH_PROCESSED], check=True, shell=True)
+    subprocess.run([sassExecutable(), "--no-source-map", MAIN_SCSS_FILEPATH, STYLES_SCSS_FILEPATH_PROCESSED], check=True, shell=False)
     _replaceInFile(STYLES_SCSS_FILEPATH_PROCESSED, QSS_FILEPATH, "_qnot_", "!")
 
 def _dict_to_scss(data: dict) -> str:

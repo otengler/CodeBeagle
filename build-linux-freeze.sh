@@ -15,39 +15,39 @@ npm ci
 # Run Cx_freeze
 # 
 
-set BUILDDIR=build/exe.win-amd64-3.8
-set LIB=$BUILDDIR/lib
+BUILDDIR=build/exe.win-amd64-3.8
+LIB=$BUILDDIR/lib
 rm -r -f build
 # build with cx_freeze 6.4 to avoid false positives with VirusTotal
 $PYTHON setup.py build_exe 
 
-del /q $LIB/unicodedata.pyd
+rm -f $LIB/unicodedata.pyd
 
 mkdir $LIB/PyQt5.new/Qt5/bin
 mkdir $LIB/PyQt5.new/Qt5/plugins/imageformats
 mkdir $LIB/PyQt5.new/Qt5/plugins/platforms
 mkdir $LIB/PyQt5.new/Qt5/plugins/styles
 
-copy $LIB/PyQt5/__init__.pyc $LIB/PyQt5.new 
-copy $LIB/PyQt5/QtCore.pyd $LIB/PyQt5.new
-copy $LIB/PyQt5/QtWidgets.pyd $LIB/PyQt5.new
-copy $LIB/PyQt5/QtGui.pyd $LIB/PyQt5.new
-copy $LIB/PyQt5/sip.cp38-win_amd64.pyd $LIB/PyQt5.new
-copy $LIB/PyQt5/Qt5/bin/Qt5Core.dll $LIB/PyQt5.new/Qt5/bin/
-copy $LIB/PyQt5/Qt5/bin/Qt5Widgets.dll $LIB/PyQt5.new/Qt5/bin/
-copy $LIB/PyQt5/Qt5/bin/Qt5Gui.dll $LIB/PyQt5.new/Qt5/bin/
-copy $LIB/PyQt5/Qt5/plugins/imageformats/qgif.dll $LIB/PyQt5.new/Qt5/plugins/imageformats/
-copy $LIB/PyQt5/Qt5/plugins/platforms/qwindows.dll $LIB/PyQt5.new/Qt5/plugins/platforms/
-copy $LIB/PyQt5/Qt5/plugins/styles/qwindowsvistastyle.dll $LIB/PyQt5.new/Qt5/plugins/styles/
+cp $LIB/PyQt5/__init__.pyc $LIB/PyQt5.new 
+cp $LIB/PyQt5/QtCore.pyd $LIB/PyQt5.new
+cp $LIB/PyQt5/QtWidgets.pyd $LIB/PyQt5.new
+cp $LIB/PyQt5/QtGui.pyd $LIB/PyQt5.new
+cp $LIB/PyQt5/sip.cp38-win_amd64.pyd $LIB/PyQt5.new
+cp $LIB/PyQt5/Qt5/bin/Qt5Core.dll $LIB/PyQt5.new/Qt5/bin/
+cp $LIB/PyQt5/Qt5/bin/Qt5Widgets.dll $LIB/PyQt5.new/Qt5/bin/
+cp $LIB/PyQt5/Qt5/bin/Qt5Gui.dll $LIB/PyQt5.new/Qt5/bin/
+cp $LIB/PyQt5/Qt5/plugins/imageformats/qgif.dll $LIB/PyQt5.new/Qt5/plugins/imageformats/
+cp $LIB/PyQt5/Qt5/plugins/platforms/qwindows.dll $LIB/PyQt5.new/Qt5/plugins/platforms/
+cp $LIB/PyQt5/Qt5/plugins/styles/qwindowsvistastyle.dll $LIB/PyQt5.new/Qt5/plugins/styles/
 
-rm -r /q /s $LIB/PyQt5
+rm -r -f $LIB/PyQt5
 mv $LIB/PyQt5.new $LIB/PyQt5
 
-rm -r /q /s $LIB/qdarkstyle/qss
-rm -r /q /s $LIB/qdarkstyle/rc
-rm -r /q /s $LIB/qdarkstyle/svg
-rm /q $LIB/qdarkstyle/style.qrc
-rm /q $LIB/qdarkstyle/style.qss
+rm -r -f $LIB/qdarkstyle/qss
+rm -r -f $LIB/qdarkstyle/rc
+rm -r -f $LIB/qdarkstyle/svg
+rm -f $LIB/qdarkstyle/style.qrc
+rm -f $LIB/qdarkstyle/style.qss
 
 cp config.txt $BUILDDIR
 cp help.html $BUILDDIR
