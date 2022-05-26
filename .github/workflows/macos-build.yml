@@ -31,7 +31,9 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
     - name: Run build
-      run: ./build-linux-freeze.sh
+      run: |
+        chmod +x build-linux-*.sh
+        ./build-linux-freeze.sh
     - name: MacOS build result
       uses: actions/upload-artifact@v3
       with:
