@@ -43,4 +43,9 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
     - name: Run build
       run: .\buildwindows.bat
+    - name: Windows build result
+      uses: actions/upload-artifact@v3
+      with:
+        name: CodeBeagle.Windows
+        path: build/CodeBeagle
 
