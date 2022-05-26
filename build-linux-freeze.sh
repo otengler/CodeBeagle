@@ -17,7 +17,7 @@ npm ci
 
 set BUILDDIR=build/exe.win-amd64-3.8
 set LIB=$BUILDDIR/lib
-[ -d "build" ] rm -r build
+rm -r -f build
 # build with cx_freeze 6.4 to avoid false positives with VirusTotal
 $PYTHON setup.py build_exe 
 

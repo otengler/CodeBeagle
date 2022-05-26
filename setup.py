@@ -1,16 +1,27 @@
+import os
 from cx_Freeze import setup, Executable
 import AppConfig
 
+targetBase = None
+if os.name == "nt":
+    targetBase = "Win32GUI"
+    targetCodeBeagle = "CodeBeagle.exe"
+    targetUpdateIndex = "UpdateIndex.exe"
+else:
+    targetBase = None
+    targetCodeBeagle = "CodeBeagle"
+    targetUpdateIndex = "UpdateIndex"
+
 CodeBeagle=Executable(
     script = "CodeBeagle.pyw",
-    base = "Win32GUI",
-    targetName = "CodeBeagle.exe",
+    base = targetBase,
+    targetName = targetCodeBeagle,
     icon = "resources/CodeBeagle.ico"
 )
 
 UpdateIndex=Executable(
     script = "UpdateIndex.py",
-    targetName = "UpdateIndex.exe"
+    targetName = targetUpdateIndex
 )
 
 options = {
@@ -25,6 +36,6 @@ setup(
     name = AppConfig.appName,
     version = AppConfig.appVersion,
     description = "CodeBeagle - A tool to search source code based on a full text index",
-    executables = [CodeBeagle,  UpdateIndex]
+    executables = [CodeBeagle, UpdateIndex]
 )
 
