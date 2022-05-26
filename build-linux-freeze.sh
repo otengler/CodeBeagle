@@ -20,6 +20,8 @@ LIB=$BUILDDIR/lib
 rm -r -f build
 # build with cx_freeze 6.4 to avoid false positives with VirusTotal
 $PYTHON setup.py build_exe 
+# DUMP build
+ls -al build
 
 rm -f $LIB/unicodedata.pyd
 
