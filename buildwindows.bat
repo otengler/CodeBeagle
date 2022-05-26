@@ -57,6 +57,13 @@ mkdir %LIB%\PyQt5.new\Qt\bin
 mkdir %LIB%\PyQt5.new\Qt\plugins\imageformats
 mkdir %LIB%\PyQt5.new\Qt\plugins\platforms
 mkdir %LIB%\PyQt5.new\Qt\plugins\styles
+
+REM Dump PyQt5.new dir
+dir %LIB%\PyQt5.new /s
+
+REM Dump PyQt5 dir
+dir %LIB%\PyQt5 /s
+
 copy %LIB%\PyQt5\__init__.pyc %LIB%\PyQt5.new 
 copy %LIB%\PyQt5\QtCore.pyd %LIB%\PyQt5.new
 copy %LIB%\PyQt5\QtWidgets.pyd %LIB%\PyQt5.new
@@ -68,6 +75,8 @@ copy %LIB%\PyQt5\Qt\bin\Qt5Gui.dll %LIB%\PyQt5.new\Qt\bin\
 copy %LIB%\PyQt5\Qt\plugins\imageformats\qgif.dll %LIB%\PyQt5.new\Qt\plugins\imageformats\
 copy %LIB%\PyQt5\Qt\plugins\platforms\qwindows.dll %LIB%\PyQt5.new\Qt\plugins\platforms\
 copy %LIB%\PyQt5\Qt\plugins\styles\qwindowsvistastyle.dll %LIB%\PyQt5.new\Qt\plugins\styles\
+
+pause
 
 rmdir /q /s %LIB%\PyQt5
 move %LIB%\PyQt5.new %LIB%\PyQt5
