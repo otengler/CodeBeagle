@@ -25,10 +25,10 @@ $PYTHON setup.py build_exe
 
 rm -f $LIB/unicodedata.pyd
 
-mkdir $LIB/PyQt5.new/Qt5/bin
-mkdir $LIB/PyQt5.new/Qt5/plugins/imageformats
-mkdir $LIB/PyQt5.new/Qt5/plugins/platforms
-mkdir $LIB/PyQt5.new/Qt5/plugins/styles
+mkdir -p $LIB/PyQt5.new/Qt5/bin
+mkdir -p $LIB/PyQt5.new/Qt5/plugins/imageformats
+mkdir -p $LIB/PyQt5.new/Qt5/plugins/platforms
+mkdir -p $LIB/PyQt5.new/Qt5/plugins/styles
 
 cp $LIB/PyQt5/__init__.pyc $LIB/PyQt5.new 
 cp $LIB/PyQt5/QtCore.pyd $LIB/PyQt5.new
@@ -51,6 +51,8 @@ rm -r -f $LIB/qdarkstyle/svg
 rm -f $LIB/qdarkstyle/style.qrc
 rm -f $LIB/qdarkstyle/style.qss
 
+mkdir -p $BUILDDIR/scripts
+mkdir -p $BUILDDIR/config
 cp config.txt $BUILDDIR
 cp help.html $BUILDDIR
 cp LICENSE $BUILDDIR
