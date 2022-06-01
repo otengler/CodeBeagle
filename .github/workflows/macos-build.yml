@@ -36,6 +36,8 @@ jobs:
       run: |
         chmod +x build-linux-*.sh
         ./build-linux-freeze.sh
+        chmod +x CodeBeagle
+        chmod +x UpdateIndex
     - name: MacOS build result
       uses: actions/upload-artifact@v3
       with:
