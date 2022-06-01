@@ -214,10 +214,11 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-        sys.exit(0)
     except:
         print("Exception caught while updating index:\n%s" % exceptionAsString(None))
         sys.exit(1)
+    else:
+        sys.exit(0)
 
 # Synchronization in slave mode between UI and UpdateIndex:
 #

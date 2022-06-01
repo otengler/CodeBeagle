@@ -230,8 +230,10 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 si.dwFlags = subprocess.STARTF_USESHOWWINDOW
                 si.wShowWindow = subprocess.SW_HIDE
                 subprocess.Popen (["UpdateIndex.exe"] + args,  startupinfo=si)
+            elif os.path.exists("UpdateIndex"):
+                subprocess.Popen (["UpdateIndex"] + args)
             else:
-                raise RuntimeError("UpdateIndex.exe not found")
+                raise RuntimeError("UpdateIndex executable not found")
 
         self.__watchForIndexUpdate()
 
