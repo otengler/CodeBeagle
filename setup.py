@@ -13,7 +13,7 @@ if os.name == "nt":
     targetBase = "Win32GUI"
     targetCodeBeagle = "CodeBeagle.exe"
     targetUpdateIndex = "UpdateIndex.exe"
-    options["build_exe"]["excludes"] = "distutils,html,multiprocessing,lib2to3,xml,test,tkinter,pydoc_data,bz2,queue,lzma,ssl"
+    options["build_exe"]["excludes"] = "distutils,html,multiprocessing,lib2to3,xml,test,tkinter,pydoc_data,bz2,queue,lzma,ssl,pyreadline"
 else:
     targetBase = None
     targetCodeBeagle = "CodeBeagle"
@@ -22,13 +22,13 @@ else:
 CodeBeagle=Executable(
     script = "CodeBeagle.pyw",
     base = targetBase,
-    targetName = targetCodeBeagle,
+    target_name = targetCodeBeagle,
     icon = "resources/CodeBeagle.ico"
 )
 
 UpdateIndex=Executable(
     script = "UpdateIndex.py",
-    targetName = targetUpdateIndex
+    target_name = targetUpdateIndex
 )
 
 setup(

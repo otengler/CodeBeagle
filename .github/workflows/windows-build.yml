@@ -15,15 +15,15 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.8
+    - name: Set up Python 3.9
       uses: actions/setup-python@v3
       with:
-        python-version: "3.8"
+        python-version: "3.9"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install flake8 
-        pip install Cx_freeze==6.4 PyQt5 pywin32
+        pip install Cx_freeze PyQt5 pywin32
     - name: Setup Node.js environment
       uses: actions/setup-node@v3.2.0
     - name: Lint with flake8
@@ -31,7 +31,7 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
     - name: Run build
-      run: .\build-windows-freeze.bat
+      run: .\build-windows-freeze.ps1
     - name: Windows build result
       uses: actions/upload-artifact@v3
       with:

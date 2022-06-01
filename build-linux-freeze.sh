@@ -15,33 +15,11 @@ npm ci
 # Run Cx_freeze
 # 
 
-BUILDDIR=build/$FREEZE_EXE
-LIB=$BUILDDIR/lib
 rm -r -f build
-# build with cx_freeze 6.4 to avoid false positives with VirusTotal
 $PYTHON setup.py build_exe 
-# Uncomment to show how executable is named:
-# ls -al build
 
-# mkdir -p $LIB/PyQt5.new/Qt5/bin
-# mkdir -p $LIB/PyQt5.new/Qt5/plugins/imageformats
-# mkdir -p $LIB/PyQt5.new/Qt5/plugins/platforms
-# mkdir -p $LIB/PyQt5.new/Qt5/plugins/styles
-
-# cp $LIB/PyQt5/__init__.pyc $LIB/PyQt5.new 
-# cp $LIB/PyQt5/QtCore.pyd $LIB/PyQt5.new
-# cp $LIB/PyQt5/QtWidgets.pyd $LIB/PyQt5.new
-# cp $LIB/PyQt5/QtGui.pyd $LIB/PyQt5.new
-# cp $LIB/PyQt5/sip.cp38-win_amd64.pyd $LIB/PyQt5.new
-# cp $LIB/PyQt5/Qt5/bin/Qt5Core.dll $LIB/PyQt5.new/Qt5/bin/
-# cp $LIB/PyQt5/Qt5/bin/Qt5Widgets.dll $LIB/PyQt5.new/Qt5/bin/
-# cp $LIB/PyQt5/Qt5/bin/Qt5Gui.dll $LIB/PyQt5.new/Qt5/bin/
-# cp $LIB/PyQt5/Qt5/plugins/imageformats/qgif.dll $LIB/PyQt5.new/Qt5/plugins/imageformats/
-# cp $LIB/PyQt5/Qt5/plugins/platforms/qwindows.dll $LIB/PyQt5.new/Qt5/plugins/platforms/
-# cp $LIB/PyQt5/Qt5/plugins/styles/qwindowsvistastyle.dll $LIB/PyQt5.new/Qt5/plugins/styles/
-
-# rm -r -f $LIB/PyQt5
-# mv $LIB/PyQt5.new $LIB/PyQt5
+BUILDDIR="build/"`ls build`
+LIB=$BUILDDIR/lib
 
 rm -r -f $LIB/qdarkstyle/qss
 rm -r -f $LIB/qdarkstyle/rc
