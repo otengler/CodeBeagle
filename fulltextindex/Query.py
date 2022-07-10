@@ -282,9 +282,14 @@ class ContentQuery(Query):
                     else:
                         regParts.append(c)
             elif TokenType.MatchWordsPart == t:
-                regParts.append(r"(?:(?:\s+)?\S+){1,%u}?" % int(s))
+                wordCount = int(s)
+                if wordCount:
+                    part = r"\S+"
+                    if wordCount > 1:
+                        part += r"(?:\s+\S+){0,%u}" % (wordCount-1)
+                    regParts.append(part)
             elif TokenType.RegExPart == t:
-                regParts.append("("+s+")")
+                regParts.append("(?:"+s+")")
         reExpr = re.compile(r"\s*".join(regParts), self.reFlags)
         return reExpr
 
@@ -337,13 +342,13 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(s1.parts, [(TokenType.IndexPart, "a"), (TokenType.ScanPart, "<"), (TokenType.IndexPart, "b")])
         self.assertEqual(s1.bCaseSensitive, False)
         s3 = ContentQuery("linux *")
-        self.assertEqual(s3.regExForMatches().pattern, "\\blinux\\b\\s*\\*")
+        self.assertEqual(s3.regExForMatches().pattern, r"\blinux\b\s*\*")
         s4 = ContentQuery("createNode ( CComVariant")
-        self.assertEqual(s4.regExForMatches().pattern, "\\bcreateNode\\b\\s*\\(\\s*\\bCComVariant\\b")
+        self.assertEqual(s4.regExForMatches().pattern, r"\bcreateNode\b\s*\(\s*\bCComVariant\b")
         s5 = ContentQuery("unknown **4")
-        self.assertEqual(s5.regExForMatches().pattern, "\\bunknown\\b\\s*(?:(?:\\s+)?\\S+){1,4}?")
+        self.assertEqual(s5.regExForMatches().pattern, r"\bunknown\b\s*\S+(?:\s+\S+){0,3}")
         s6 = ContentQuery("regex <!abc!>")
-        self.assertEqual(s6.regExForMatches().pattern, "\\bregex\\b\\s*(abc)")
+        self.assertEqual(s6.regExForMatches().pattern, r"\bregex\b\s*(?:abc)")
 
 class FileQuery(Query):
     def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
