@@ -16,6 +16,8 @@ npm ci
 # 
 
 rm -r -f build
+
+cp CodeBeagle.pyw CodeBeagle.py
 $PYTHON setup.py build_exe 
 echo Build done
 
