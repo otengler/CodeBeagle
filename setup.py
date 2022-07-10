@@ -9,18 +9,23 @@ options = {
 }
 
 targetBase = None
+codeBeagleScript = None
 if os.name == "nt":
+    print("Using Windows settings")
+    codeBeagleScript = "CodeBeagle.pyw"
     targetBase = "Win32GUI"
     targetCodeBeagle = "CodeBeagle.exe"
     targetUpdateIndex = "UpdateIndex.exe"
     options["build_exe"]["excludes"] = "distutils,html,multiprocessing,lib2to3,xml,test,tkinter,pydoc_data,bz2,queue,lzma,ssl,pyreadline"
 else:
+    print("Using Linux/MacOS settings")
+    codeBeagleScript = "CodeBeagle.py"
     targetBase = None
     targetCodeBeagle = "CodeBeagle"
     targetUpdateIndex = "UpdateIndex"
 
 CodeBeagle=Executable(
-    script = "CodeBeagle.pyw",
+    script = codeBeagleScript,
     base = targetBase,
     target_name = targetCodeBeagle,
     icon = "resources/CodeBeagle.ico"
