@@ -17,7 +17,10 @@ if (Test-Path -Path "build") {
     rmdir ".\build\" -Recurse -Force
 }
 py -3 setup.py build_exe 
+echo "Build done"
+
 $BUILDDIR="build\" + (Get-ChildItem "build").Name
+echo "Build directory is $BUILDDIR"
 $LIB="$BUILDDIR\lib"
 
 del "$BUILDDIR\api-ms-*.dll" -Force
@@ -39,7 +42,7 @@ copy $LIB\PyQt5\__init__.pyc $LIB\PyQt5.new
 copy $LIB\PyQt5\QtCore.pyd $LIB\PyQt5.new
 copy $LIB\PyQt5\QtWidgets.pyd $LIB\PyQt5.new
 copy $LIB\PyQt5\QtGui.pyd $LIB\PyQt5.new
-copy $LIB\PyQt5\sip.cp38-win_amd64.pyd $LIB\PyQt5.new
+copy $LIB\PyQt5\sip.cp310-win_amd64.pyd $LIB\PyQt5.new
 copy $LIB\PyQt5\Qt5\bin\Qt5Core.dll $LIB\PyQt5.new\Qt5\bin\
 copy $LIB\PyQt5\Qt5\bin\Qt5Widgets.dll $LIB\PyQt5.new\Qt5\bin\
 copy $LIB\PyQt5\Qt5\bin\Qt5Gui.dll $LIB\PyQt5.new\Qt5\bin\

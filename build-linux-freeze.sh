@@ -17,8 +17,10 @@ npm ci
 
 rm -r -f build
 $PYTHON setup.py build_exe 
+echo Build done
 
 BUILDDIR="build/"`ls build`
+echo Build directory is $BUILDDIR
 LIB=$BUILDDIR/lib
 
 rm -r -f $LIB/qdarkstyle/qss
