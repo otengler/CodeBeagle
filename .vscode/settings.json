@@ -4,12 +4,13 @@
         "**/Ui_*.py": true,
         "__pycache__": true
     },
-    "python.linting.mypyEnabled": true,
+    "python.linting.mypyEnabled": false,
     "python.linting.mypyArgs": [
         "--ignore-missing-imports",
         "--follow-imports=silent",
         "--warn-return-any",
         "--disallow-untyped-defs"
     ],
-    "python.linting.enabled": true
+    "python.linting.enabled": false,
+    "python.linting.pylintEnabled": true
 }

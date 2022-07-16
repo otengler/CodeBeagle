@@ -22,6 +22,7 @@ from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex, QSettings
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
+from tomlkit import boolean
 from SourceViewer import EditorState
 from tools import AsynchronousTask
 from dialogs.UserHintDialog import showUserHint, ButtonType
@@ -53,11 +54,18 @@ userHintFileNameNotIndexed = """
 def getCustomScriptsFromDisk() -> List[str]:
     return [s for s in os.listdir("scripts") if os.path.splitext(s)[1].lower() == ".script"]
 
-SearchParams = Tuple[str, str, str, bool]
-
 class SearchType(IntEnum):
     SearchContent = 1
     SearchName = 2
+
+class SearchState:
+    def __init__(self, searchType: SearchType, configName: str, searchParams: SearchAsync.SearchParams, resultSet: SearchAsync.ResultSet, lockedResultSet: Optional[FullTextIndex.SearchResult]):
+        self.searchType: SearchType = searchType
+        self.configName: str = configName
+        self.searchParams: SearchAsync.SearchParams = searchParams
+        self.resultSet: SearchAsync.ResultSet = resultSet
+        self.lockedResultSet: Optional[FullTextIndex.SearchResult] = lockedResultSet
+        self.selectedFileIndex: int = -1
 
 class SearchPage (QWidget):
     # Triggered when a new search tab is requested which should be opened using a given search string
@@ -95,18 +103,26 @@ class SearchPage (QWidget):
         self.ui.buttonExport.clicked.connect(self.exportMatches)
         self.ui.buttonCustomScripts.clicked.connect(self.execCustomScripts)
         self.ui.buttonChangeSearchType.clicked.connect(self.changeSearchTypeMenu)
+        self.ui.buttonBackward.clicked.connect(self.backwardClicked)
+        self.ui.buttonForward.clicked.connect(self.forwardClicked)
 
         self.ui.splitter.setSizes((1, 2)) # distribute splitter space 1:2
 
         self.perfReport: Optional[FullTextIndex.PerformanceReport] = None
-        self.searchType: SearchType = SearchType.SearchContent
         self.searchLocationList: List[IndexConfiguration] = []
-        self.currentConfigName = self.__chooseInitialLocation ()
         self.unavailableConfigName: str = ""
         self.commonKeywordMap = self.__loadCommonKeywordMap()
-        self.matches: FullTextIndex.SearchResult = []
         self.sourceFont: QFont = None
+
+        self.currentConfigName = self.__chooseInitialLocation ()
+        self.searchType: SearchType = SearchType.SearchContent
+        self.matches: FullTextIndex.SearchResult = []
         self.lockedResultSet: Optional[FullTextIndex.SearchResult] = None # matches are filtered with this set
+
+        self.searchStateList: List[SearchState] = [] # A history of search states which allows to navigate through different search results
+        self.searchStateIndex: int = -1
+        self.__updateBackForwardButtons()
+
         # Hide the custom scripts button if there are no custom scripts on disk
         if not getCustomScriptsFromDisk():
             self.ui.buttonCustomScripts.hide()
@@ -285,12 +301,12 @@ class SearchPage (QWidget):
                 # Search in a new tab
                 self.newSearchRequested.emit(text,  self.ui.comboLocation.currentText())
 
-    def getSearchParameterFromUI (self) -> SearchParams:
+    def getSearchParameterFromUI (self) -> SearchAsync.SearchParams:
         strSearch = self.ui.comboSearch.currentText().strip()
         strFolderFilter = self.ui.comboFolderFilter.currentText().strip()
         strExtensionFilter = self.ui.comboExtensionFilter.currentText().strip()
         bCaseSensitive = self.ui.checkCaseSensitive.checkState() == Qt.Checked
-        return (strSearch, strFolderFilter,  strExtensionFilter,  bCaseSensitive)
+        return SearchAsync.SearchParams(strSearch, strFolderFilter,  strExtensionFilter,  bCaseSensitive)
 
     def __currentIndexConf(self) -> IndexConfiguration:
         i = self.ui.comboLocation.currentIndex()
@@ -298,7 +314,12 @@ class SearchPage (QWidget):
         return config
 
     # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
-    def __prepareSearch (self) -> Tuple[SearchParams, IndexConfiguration]:
+    def __prepareSearch (self) -> Tuple[SearchAsync.SearchParams, IndexConfiguration]:
+        # Remember the current selected file in the current state before pushing the next state into the historx
+        if self.searchStateIndex >= 0:
+            model = self.ui.listView.model()
+            self.searchStateList[self.searchStateIndex].selectedFileIndex = model.getSelectedFileIndex()
+
         self.__updateSearchResult(SearchAsync.ResultSet()) # clear current results
         indexConf = self.__currentIndexConf()
         params = self.getSearchParameterFromUI()
@@ -332,6 +353,7 @@ class SearchPage (QWidget):
             self.reportCustomSearchFailed ()
         else:
             self.__updateSearchResult(result)
+            self.__rememberSearchState(params, result)
 
     def searchForText (self,  text: str) -> None:
         self.ui.comboSearch.setEditText(text)
@@ -357,6 +379,7 @@ class SearchPage (QWidget):
             self.reportFailedSearch(indexConf)
         else:
             self.__updateSearchResult(result)
+            self.__rememberSearchState(params, result)
             self.__rememberSearchTerms()
             text = self.tr(userHintUseWildcards)
             if self.searchType == SearchType.SearchContent:
@@ -394,6 +417,49 @@ class SearchPage (QWidget):
                 if index.isValid():
                     self.ui.listView.setCurrentIndex(index)
                     self.ui.listView.activated.emit(index)
+
+    def __rememberSearchState(self, params: SearchAsync.SearchParams, resultSet: SearchAsync.ResultSet) -> None:
+        self.searchStateList.append(SearchState(self.searchType, self.currentConfigName, params, resultSet, self.lockedResultSet))
+        self.searchStateIndex = len(self.searchStateList) - 1
+        self.__updateBackForwardButtons()
+
+    def __updateBackForwardButtons(self):
+        self.ui.buttonBackward.setEnabled(self.searchStateIndex > 0)
+        self.ui.buttonForward.setEnabled(self.searchStateIndex + 1 < len(self.searchStateList))
+
+    @pyqtSlot()
+    def backwardClicked(self):
+        self.searchStateIndex -= 1
+        if self.searchStateIndex < 0:
+            self.searchStateIndex = 0
+        self.__updateUIFromSearchState()
+
+    @pyqtSlot()
+    def forwardClicked(self):
+        self.searchStateIndex += 1
+        if self.searchStateIndex + 1 > len(self.searchStateList):
+            self.searchStateIndex = len(self.searchStateIndex) - 1
+        self.__updateUIFromSearchState()
+
+    def __updateUIFromSearchState(self):
+        if self.searchStateIndex >= len(self.searchStateList):
+            return
+        state = self.searchStateList[self.searchStateIndex]
+        if state.configName != self.currentConfigName:
+            self.setCurrentSearchLocation(state.configName)
+        self.ui.comboSearch.setEditText(state.searchParams.search)
+        self.ui.comboFolderFilter.setEditText(state.searchParams.folderFilter)
+        self.ui.comboExtensionFilter.setEditText(state.searchParams.extensionFilter)
+        self.ui.checkCaseSensitive.setChecked(state.searchParams.caseSensitive)
+        self.ui.buttonLockResultSet.setChecked(state.lockedResultSet != None)
+        self.lockedResultSet = state.lockedResultSet
+        self.__updateSearchResult(state.resultSet)
+        if state.selectedFileIndex != -1:
+            selectedIndex = self.ui.listView.model().index(state.selectedFileIndex, 0)
+            self.ui.listView.setCurrentIndex(selectedIndex)
+            self.ui.listView.activated.emit(selectedIndex)
+
+        self.__updateBackForwardButtons()
 
     @pyqtSlot(bool)
     def lockResultSet (self,  bChecked: bool) -> None:

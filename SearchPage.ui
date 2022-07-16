@@ -34,13 +34,47 @@
    </property>
    <item>
     <widget class="QFrame" name="frameSearch">
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,2,0,0,0,0,0,0,0,0,0,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0">
       <property name="leftMargin">
        <number>22</number>
       </property>
       <property name="rightMargin">
        <number>22</number>
       </property>
+      <item>
+       <widget class="QPushButton" name="buttonBackward">
+        <property name="toolTip">
+         <string>Backward to previous search results</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="SearchPage.qrc">
+          <normaloff>:/default/resources/arrow-left.png</normaloff>:/default/resources/arrow-left.png</iconset>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonForward">
+        <property name="toolTip">
+         <string>Forward to next search results</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="SearchPage.qrc">
+          <normaloff>:/default/resources/arrow-right.png</normaloff>:/default/resources/arrow-right.png</iconset>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QLabel" name="labelSearchFor">
         <property name="text">

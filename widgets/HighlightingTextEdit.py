@@ -250,12 +250,12 @@ class HighlightingTextEdit (QPlainTextEdit):
                 block.setUserState(self.__highlightUpdateCounter)
         return bColorizedBlocks
 
-    def __visibleBlocks (self, firstVisibleBlock: QTextBlock) -> Iterator[Tuple[QTextBlock, QRectF]]:
+    def __visibleBlocks (self, firstVisibleBlock: QTextBlock) -> Iterator[Tuple[QTextBlock, QRect]]:
         size = self.viewport().size()
         block = firstVisibleBlock
         while block.isValid():
             bound = self.blockBoundingGeometry(block).translated(self.contentOffset())
             if bound.top() > size.height():
                 break
-            yield block, bound
+            yield block, QRect(int(bound.left()), int(bound.top()), int(bound.width()), int(bound.height()))
             block = block.next()

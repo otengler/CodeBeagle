@@ -25,23 +25,27 @@ from tools.FileTools import fopen
 from fulltextindex import FullTextIndex, IndexConfiguration
 from fulltextindex.SearchMethods import SearchMethods, ResultSet, removeDupsAndSort
 
-SearchParams = Tuple[str, str, str, bool] # Search query, folders, extensions, case sensitive
+class SearchParams:
+    def __init__(self, search: str, folderFilter: str = "", extensionFilter: str = "", caseSensitive: bool = False):
+        self.search = search
+        self.folderFilter = folderFilter
+        self.extensionFilter = extensionFilter
+        self.caseSensitive = caseSensitive
 
 def searchContent(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
     """This executes an indexed or a direct search in the file content. This depends on the IndexConfiguration
        setting "indexUpdateMode" and "indexType"."""
     commonKeywordMap = commonKeywordMap or {}
 
-    strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
-    if not strSearch:
+    if not params.search:
         return ResultSet()
 
-    searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+    searchData = FullTextIndex.ContentQuery(params.search, params.folderFilter, params.extensionFilter, params.caseSensitive)
     result: ResultSet
 
     ftiSearch = SearchMethods()
     result = AsynchronousTask.execute(parent, ftiSearch.searchContent, searchData, indexConf, commonKeywordMap, bEnableCancel=True, cancelAction=ftiSearch.cancel)
-    result.label = strSearch
+    result.label = params.search
 
     return result
 
@@ -49,16 +53,15 @@ def searchFileName(parent: QObject, params: SearchParams, indexConf: IndexConfig
     """This executes an indexed or a direct search for the file name. This depends on the IndexConfiguration
        setting "indexUpdateMode" and "indexType"."""
 
-    strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive = params
-    if not strSearch:
+    if not params.search:
         return ResultSet()
 
-    searchData = FullTextIndex.FileQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+    searchData = FullTextIndex.FileQuery(params.search, params.folderFilter, params.extensionFilter, params.caseSensitive)
     result: ResultSet
 
     ftiSearch = SearchMethods()
     result = AsynchronousTask.execute(parent, ftiSearch.searchFileName, searchData, indexConf, bEnableCancel=True, cancelAction=ftiSearch.cancel)
-    result.label = strSearch
+    result.label = params.search
 
     return result
 
