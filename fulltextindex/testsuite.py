@@ -275,6 +275,12 @@ class TestFullTextIndex(unittest.TestCase):
         exp = [os.path.join(testPath, r"data\test3.c")]
         self.assertEqual (result, exp)
 
+        print("\n================== ContentSearch Test6.1 ==================")
+        q = ContentQuery ("Whatever#")
+        result = fti.searchContent(q)
+        exp = [os.path.join(testPath, r"data\test1.cpp")]
+        self.assertEqual (result, exp)
+
         # Update data
         # Data2
         # ebcdic.c: "conversion table"
