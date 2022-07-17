@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1094</width>
+    <width>1136</width>
     <height>707</height>
    </rect>
   </property>
@@ -123,7 +123,7 @@ p, li { white-space: pre-wrap; }
          <bool>true</bool>
         </property>
         <property name="insertPolicy">
-         <enum>QComboBox::InsertAtTop</enum>
+         <enum>QComboBox::NoInsert</enum>
         </property>
        </widget>
       </item>
@@ -285,7 +285,7 @@ p, li { white-space: pre-wrap; }
          <bool>true</bool>
         </property>
         <property name="insertPolicy">
-         <enum>QComboBox::InsertAtTop</enum>
+         <enum>QComboBox::NoInsert</enum>
         </property>
        </widget>
       </item>
@@ -333,7 +333,7 @@ p, li { white-space: pre-wrap; }
          <bool>true</bool>
         </property>
         <property name="insertPolicy">
-         <enum>QComboBox::InsertAtTop</enum>
+         <enum>QComboBox::NoInsert</enum>
         </property>
        </widget>
       </item>

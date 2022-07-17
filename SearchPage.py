@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from typing import List, Tuple, Optional, cast
 from enum import IntEnum
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex, QSettings
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
-from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy, QComboBox
 from tomlkit import boolean
 from SourceViewer import EditorState
 from tools import AsynchronousTask
@@ -37,6 +37,7 @@ import CustomContextMenu
 import AppConfig
 from StringListModel import StringListModel
 from Ui_SearchPage import Ui_SearchPage
+from SearchParamHistory import getSearchParamHistory
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard.
@@ -53,6 +54,19 @@ userHintFileNameNotIndexed = """
 
 def getCustomScriptsFromDisk() -> List[str]:
     return [s for s in os.listdir("scripts") if os.path.splitext(s)[1].lower() == ".script"]
+
+def rememberSearchItem(storageKey: str, item: str, comboBox: QComboBox) -> None:
+    if not item:
+        return
+    history = getSearchParamHistory(storageKey)
+    history.addItem(item)
+    comboBox.setEditText(item)
+
+def restoreSearchItem(storageKey: str, comboBox: QComboBox) -> None:
+    current = comboBox.currentText()    
+    history = getSearchParamHistory(storageKey)
+    comboBox.setModel(history.model())
+    comboBox.setEditText(current)
 
 class SearchType(IntEnum):
     SearchContent = 1
@@ -250,14 +264,13 @@ class SearchPage (QWidget):
                 configName = ""
 
         self.currentConfigName = configName
-        self.__restoreSearchTerms()
 
         return foundLocation
 
     @pyqtSlot(str)
     def currentLocationChanged(self, currentConfigName: str) -> None:
         self.currentConfigName = currentConfigName
-        self.__restoreSearchTerms()
+        self.__restoreSearchParams()
 
     @pyqtSlot(QModelIndex)
     def fileSelected (self,  index: QModelIndex) -> None:
@@ -357,7 +370,6 @@ class SearchPage (QWidget):
 
     def searchForText (self,  text: str) -> None:
         self.ui.comboSearch.setEditText(text)
-        self.ui.comboSearch.insertItem(0, text)
         self.performSearch()
 
     @pyqtSlot()
@@ -380,7 +392,7 @@ class SearchPage (QWidget):
         else:
             self.__updateSearchResult(result)
             self.__rememberSearchState(params, result)
-            self.__rememberSearchTerms()
+            self.__rememberSearchParams(params)
             text = self.tr(userHintUseWildcards)
             if self.searchType == SearchType.SearchContent:
                 showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  ButtonType.OK)
@@ -593,27 +605,17 @@ class SearchPage (QWidget):
         layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.layout().insertWidget(1, self.ui.frameSearch2) # type: ignore
 
-    def __restoreSearchTerms(self) -> None:
-        currentText = self.ui.comboSearch.currentText()
-        self.ui.comboSearch.clear()
-        if self.currentConfigName:
-            settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-            key = "SearchTerms_"+self.currentConfigName
-            if settings.value(key):
-                strList = settings.value(key)
-                self.ui.comboSearch.addItems(strList)
-        self.ui.comboSearch.setEditText(currentText)
-
-    def __rememberSearchTerms(self) -> None:
-        model = self.ui.comboSearch.model()
-        if not model or model.rowCount()==0:
+    def __restoreSearchParams(self) -> None:
+        if not self.currentConfigName:
             return
-        terms=[]
-        for row in range(min(20,model.rowCount())):
-            index = model.index(row, 0)
-            terms.append(model.data(index, Qt.DisplayRole))
-        settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-        settings.setValue("SearchTerms_"+self.currentConfigName, terms)
+        restoreSearchItem("SearchTerms_" + self.currentConfigName, self.ui.comboSearch)
+        restoreSearchItem("FolderHistory_" + self.currentConfigName, self.ui.comboFolderFilter)
+        restoreSearchItem("ExtensionHistory_" + self.currentConfigName, self.ui.comboExtensionFilter)
+
+    def __rememberSearchParams(self, searchParams: SearchAsync.SearchParams) -> None:
+        rememberSearchItem("SearchTerms_" + self.currentConfigName, searchParams.search, self.ui.comboSearch)
+        rememberSearchItem("FolderHistory_" + self.currentConfigName, searchParams.folderFilter, self.ui.comboFolderFilter)
+        rememberSearchItem("ExtensionHistory_" + self.currentConfigName, searchParams.extensionFilter, self.ui.comboExtensionFilter)
 
     @pyqtSlot(CustomContextMenu.ContextMenuError)
     def reportCustomContextMenuFailed (self, contextMenuError: CustomContextMenu.ContextMenuError) -> None:
