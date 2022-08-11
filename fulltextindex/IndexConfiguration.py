@@ -51,7 +51,7 @@ def indexTypeToString(indexType: IndexType) -> str:
 
 class IndexConfiguration:
     def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="", 
-                 indexUpdateMode:IndexMode=IndexMode.TriggeredIndexUpdate, indexType:IndexType=IndexType.FileContentAndName) -> None:
+                 indexUpdateMode:IndexMode=IndexMode.ManualIndexUpdate, indexType:IndexType=IndexType.FileContentAndName) -> None:
         self.indexName = indexName
         self.indexUpdateMode = IndexMode(indexUpdateMode)
         self.indexType = IndexType(indexType)

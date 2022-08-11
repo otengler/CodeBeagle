@@ -55,7 +55,7 @@ class SettingsItem (QWidget):
 
     def __addEntriesForIndexUpdateModeCombo(self) -> None:
         self.ui.comboIndexUpdateMode.addItem("Do not generate an index")
-        self.ui.comboIndexUpdateMode.addItem("Manual index update with CodeBeagle")
+        self.ui.comboIndexUpdateMode.addItem("Manual index update in CodeBeagle")
         self.ui.comboIndexUpdateMode.addItem("Update index when UpdateIndex.exe is run")
         #self.ui.comboIndexUpdateMode.addItem("Keep index permanently up to date")
 

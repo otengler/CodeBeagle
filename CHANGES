@@ -1,3 +1,8 @@
+1.3.10
+- Add feature to move back and forth between different searches in a single tab
+- Fix how search term and folder settings are remembered. This caused issues when using mulitple tabs.
+- Fix bug in unknown word query. E.g. **2
+
 1.3.9
 - Fix syntax highlighting when multi line comment ends within single line comment
 

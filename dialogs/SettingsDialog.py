@@ -61,7 +61,7 @@ class SettingsEditorDelegate(QStyledItemDelegate):
 
         rect = QRect(option.rect)
         rect.setHeight(self.itemHeight)
-        third = (rect.width()-12) / 3
+        third = (rect.width()-12) // 3
 
         rect1 = QRect(rect)
         rect1.translate(12, 0)
@@ -86,7 +86,7 @@ class SettingsEditorDelegate(QStyledItemDelegate):
         locationName = location.displayName()
         if index.row() == self.defaultLocationRow:
             locationName = locationName + self.tr(" (Default)")
-            painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize/2, self.defaultPixmapSize, self.defaultPixmapSize, self.defaultPixmap)
+            painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize//2, self.defaultPixmapSize, self.defaultPixmapSize, self.defaultPixmap)
         painter.drawText(rect1, Qt.AlignVCenter + Qt.TextWordWrap, locationName)
 
         painter.restore()
