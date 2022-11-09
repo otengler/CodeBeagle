@@ -144,20 +144,25 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         except:
             self.userConfigFailedToLoadMessage()
         else:
-            searchLocations = IndexConfiguration.readConfig(config)
-            globalSearchLocations = IndexConfiguration.readConfig(globalConfig)
-            settingsDlg = SettingsDialog(self, searchLocations,  globalSearchLocations, config)
-            settingsDlg.updateChangedIndexes.connect(self.triggerIndexUpdate)
+            try:
+                searchLocations = IndexConfiguration.readConfig(config)
+                globalSearchLocations = IndexConfiguration.readConfig(globalConfig)
+                settingsDlg = SettingsDialog(self, searchLocations,  globalSearchLocations, config)
+                settingsDlg.updateChangedIndexes.connect(self.triggerIndexUpdate)
 
-            if createInitialLocation:
-                settingsDlg.addLocation()
-            if locationToAdd:
-                settingsDlg.addExistingLocation(locationToAdd)
-            if settingsDlg.exec():
-                # Refresh config
-                AppConfig.refreshConfig()
-                searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
-                self.configChanged.emit(searchLocations)
+                if createInitialLocation:
+                    settingsDlg.addLocation()
+                if locationToAdd:
+                    settingsDlg.addExistingLocation(locationToAdd)
+                if settingsDlg.exec():
+                    # Refresh config
+                    AppConfig.refreshConfig()
+                    searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
+                    self.configChanged.emit(searchLocations)
+            except:
+                StackTraceMessageBox.show(self,
+                                      self.tr("Error in settings dialog"),
+                                      self.tr("""Please report the stack trace"""))
 
     @pyqtSlot(str)
     def addSearchLocationFromPath (self, directory: str) -> None:

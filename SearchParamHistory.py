@@ -34,8 +34,11 @@ class SearchParamHistory:
             for deleteRow in sorted(toDelete, reverse=True):
                 self.itemModel.removeRow(deleteRow)
 
-            while self.itemModel.rowCount() > self.maxItems:
-                self.itemModel.removeRow(self.maxItems)
+            # Keep all parameters in the model for one run but only persist up to maxItems. This was neccessary because
+            # combo box seems to remember the select index and if the model changes the same index is used which then
+            # points to a different entry.
+            #while self.itemModel.rowCount() > self.maxItems:
+                #self.itemModel.removeRow(self.maxItems)
 
         settings = QSettings(AppConfig.appCompany, AppConfig.appName)
         settings.setValue(self.storageKey, storeItems)
@@ -66,7 +69,7 @@ class SearchParamHistoryCollection:
         if storageKey in self.histories:
             return self.histories[storageKey]
 
-        history = SearchParamHistory(storageKey)
+        history = SearchParamHistory(storageKey, 2)
         self.histories[storageKey] = history
         return history
 

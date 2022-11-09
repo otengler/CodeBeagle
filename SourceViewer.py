@@ -67,6 +67,7 @@ class SourceViewer (QWidget):
         self.ui.buttonMatchPrevious.clicked.connect(self.previousMatch)
         self.ui.buttonMatchNext.clicked.connect(self.nextMatch)
         self.ui.buttonMatchList.clicked.connect(self.ui.frameMatchList.setVisible)
+        self.ui.buttonMatchCurrent.clicked.connect(self.jumpToCurrentMatch)
 
         self.actionReloadFile = QAction(self, shortcut=Qt.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
@@ -74,6 +75,8 @@ class SourceViewer (QWidget):
         self.addAction(self.actionGotoLine)
         self.jumpToMatchingBrace = QAction(self, shortcut=Qt.CTRL+Qt.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace)
         self.addAction(self.jumpToMatchingBrace)
+        self.actionJumpToCurrentMatch = QAction(self, shortcut=Qt.CTRL+Qt.Key_J, triggered=self.jumpToCurrentMatch)
+        self.addAction(self.actionJumpToCurrentMatch)
 
         # In document search
         self.inDocumentSearch = QAction(self, shortcut=Qt.CTRL+Qt.Key_F, triggered=self.toggleSearchFrame)
@@ -234,6 +237,11 @@ class SourceViewer (QWidget):
         else:
             if self.bMatchOverFiles:
                 self.noPreviousMatch.emit()
+
+    @pyqtSlot()
+    def jumpToCurrentMatch(self) -> None:
+        if not self.curMatch is None:
+            self.__scrollToMatch (*self.matches[self.curMatch], SyntaxHighlighter.matchBackgroundColor)
 
     def setCurrentMatch(self, index: int, forceSet: bool=False) -> None:
         if index>=0 and index<len(self.matches) and (index != self.curMatch or forceSet):

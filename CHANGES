@@ -1,3 +1,7 @@
+1.3.11
+- Fix wrong display in combo boxes when lots of tabs are open (>20)
+- Add jump to current match icon (CTRL+J)
+
 1.3.10
 - Add feature to move back and forth between different searches in a single tab
 - Fix how search term and folder settings are remembered. This caused issues when using mulitple tabs.
