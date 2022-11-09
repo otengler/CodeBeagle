@@ -69,7 +69,7 @@ class SearchParamHistoryCollection:
         if storageKey in self.histories:
             return self.histories[storageKey]
 
-        history = SearchParamHistory(storageKey, 2)
+        history = SearchParamHistory(storageKey)
         self.histories[storageKey] = history
         return history
 
