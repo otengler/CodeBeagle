@@ -22,7 +22,6 @@ from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy, QComboBox
-from tomlkit import boolean
 from SourceViewer import EditorState
 from tools import AsynchronousTask
 from dialogs.UserHintDialog import showUserHint, ButtonType
