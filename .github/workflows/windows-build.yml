@@ -16,23 +16,22 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v4
+      name: Set up Python 3.10
       with:
-        python-version: '3.10'
-        cache: 'pip'
+        python-version: "3.10"
     - name: Install dependencies
       run: pip install flake8 Cx_freeze PyQt5 pywin32    
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v3.2.0
+    - uses: actions/setup-node@v3.2.0
+      name: Setup Node.js environment
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
     - name: Run build
       run: .\build-windows-freeze.ps1
-    - name: Windows build result
-      uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v3
+      name: Windows build result
       with:
         name: CodeBeagle.Windows
         path: build/CodeBeagle
