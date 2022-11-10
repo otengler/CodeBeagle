@@ -3,7 +3,7 @@ A tool to search source code based on a full text index.
 
 CodeBeagle allows you to quickly find all occurrences of a search term inside source code files. It can handle large projects with thousands of files with a very good performance. To do so it creates a full text index of the desired source files. Because it is tolerant to whitespace its search syntax works great for searching source code. The search results are displayed in a source viewer with customizable syntax highlighting. It runs without installation and leaves you in full control when to update the index. Advanced features are the support of multiple search locations, extensible context menus and custom search scripts which allow to automate sequences of searches.
 
-Version 1.3.8 is released. See ![CHANGES](/CHANGES) for details.
+Change log can be found here: ![CHANGES](/CHANGES)
 
 Download here: https://github.com/otengler/CodeBeagle/releases/latest
 
@@ -33,9 +33,9 @@ Visual Studio 2015 C++ runtime (x64) is a prerequisite. Fetch it from here if ne
 
 First the prerequisites (that's what I used to build the binary distribution):
 - NodeJs to be able to use npm
-- Python 3.8.2 (www.python.org)
-- PyQt GPL v5.14.2 (install with "pip install PyQt5")
-- Cx_Freeze and pywin32 (install with "pip install Cx_freeze pywin32"):
+- Python 3.10.5 (www.python.org)
+- PyQt GPL v5.15.2 (install with "pip install PyQt5")
+- Cx_Freeze (install with "pip install Cx_freeze==6.11"):
     Only needed if you want convert the python scripts into executables
 
 Compile the user interface and resource files by calling "build-windows-ui.bat". The user interface is launched via "CodeBeagle.pyw". The script to update the index is called "UpdateIndex.py".
