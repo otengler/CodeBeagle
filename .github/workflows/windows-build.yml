@@ -21,7 +21,9 @@ jobs:
       with:
         python-version: "3.10"
     - name: Install dependencies
-      run: pip install flake8 tomlkit Cx_freeze==6.11 PyQt5     
+      run: |
+        python.exe -m pip install --upgrade pip
+        pip install flake8 Cx_freeze==6.11 PyQt5
     - uses: actions/setup-node@v3.2.0
       name: Setup Node.js environment
     - name: Lint with flake8
