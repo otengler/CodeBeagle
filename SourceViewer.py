@@ -240,7 +240,7 @@ class SourceViewer (QWidget):
 
     @pyqtSlot()
     def jumpToCurrentMatch(self) -> None:
-        if not self.curMatch is None:
+        if self.curMatch >= 0:
             self.__scrollToMatch (*self.matches[self.curMatch], SyntaxHighlighter.matchBackgroundColor)
 
     def setCurrentMatch(self, index: int, forceSet: bool=False) -> None:
