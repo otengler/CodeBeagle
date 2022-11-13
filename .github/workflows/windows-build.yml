@@ -5,7 +5,6 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,14 +15,17 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      name: Set up Python 3.10
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
       with:
         python-version: "3.10"
     - name: Install dependencies
-      run: pip install flake8 tomlkit Cx_freeze==6.11 PyQt5     
-    - uses: actions/setup-node@v3.2.0
-      name: Setup Node.js environment
+      run: |
+        python.exe -m pip install --upgrade pip
+        pip install flake8 
+        pip install Cx_freeze==6.11 PyQt5
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v3.2.0
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
