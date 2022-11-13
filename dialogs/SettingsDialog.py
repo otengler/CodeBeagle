@@ -200,6 +200,7 @@ class SettingsDialog (QDialog):
         setCheckBox (self.ui.checkActivateFirstMatch, config.activateFirstMatch)
         setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
         setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
+        setCheckBox (self.ui.checkRegexDialog, config.showRegexDialog)
         setCheckBox (self.ui.checkShowMatchList, config.showMatchList)
         setCheckBox (self.ui.checkShowLineNumbers, config.SourceViewer.showLineNumbers)
         isDarkTheme = config.theme == AppConfig.darkTheme
@@ -338,6 +339,7 @@ class SettingsDialog (QDialog):
         config.matchOverFiles = self.ui.checkMatchOverFiles.checkState() == Qt.Checked
         config.activateFirstMatch = self.ui.checkActivateFirstMatch.checkState() == Qt.Checked
         config.showCloseConfirmation = self.ui.checkConfirmClose.checkState() == Qt.Checked
+        config.showRegexDialog = self.ui.checkRegexDialog.checkState() == Qt.Checked
         config.showMatchList = self.ui.checkShowMatchList.checkState() == Qt.Checked
         config.defaultLocation = self.defaultLocation()
         config.previewLines = int(self.ui.editPreviewLines.text())

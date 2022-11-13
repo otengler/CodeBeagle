@@ -54,7 +54,8 @@ class LineNumberArea (QWidget):
             self.update(0, rect.y(), self.width(), rect.height())
 
     def sizeHint(self) -> QSize:
-        return QSize(self.areaWidth(), 0)
+        cr:QRect = self.textEdit.contentsRect()
+        return QSize(self.areaWidth(), cr.height())
 
     def reactOnResize(self, e: QResizeEvent) -> None:
         cr:QRect = self.textEdit.contentsRect()

@@ -119,6 +119,8 @@ class SearchPage (QWidget):
         self.ui.buttonBackward.clicked.connect(self.backwardClicked)
         self.ui.buttonForward.clicked.connect(self.forwardClicked)
 
+        self.__showRegexDialogIcon()
+
         self.ui.splitter.setSizes((1, 2)) # distribute splitter space 1:2
 
         self.perfReport: Optional[FullTextIndex.PerformanceReport] = None
@@ -204,6 +206,9 @@ class SearchPage (QWidget):
         else:
             self.ui.stackedWidget.setCurrentIndex(0)
 
+    def __showRegexDialogIcon(self):
+        self.ui.buttonRegEx.setVisible(AppConfig.appConfig().showRegexDialog)
+
     def __updateSourceFont (self) -> QFont:
         if not self.sourceFont:
             self.sourceFont = QFont()
@@ -231,6 +236,7 @@ class SearchPage (QWidget):
             self.unavailableConfigName = backupCurrentConfigName
         self.ui.sourceViewer.reloadConfig(self.__updateSourceFont())
         self.ui.matchesOverview.reloadConfig(self.__updateSourceFont())
+        self.__showRegexDialogIcon()
 
     def __updateSearchLocationList(self,  searchLocationList: List[IndexConfiguration]) -> None:
         self.searchLocationList = searchLocationList
