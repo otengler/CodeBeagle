@@ -38,7 +38,7 @@ jobs:
         chmod +x ./build/CodeBeagle/CodeBeagle
         chmod +x ./build/CodeBeagle/UpdateIndex
     - name: MacOS build result
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: CodeBeagle.MacOS
         path: build/CodeBeagle
