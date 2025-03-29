@@ -24,7 +24,7 @@ jobs:
       run: |
         python.exe -m pip install --upgrade pip
         pip install flake8 
-        pip install Cx_freeze==6.11 PyQt5
+        pip install Cx_freeze PyQt5 # Cx_freeze was '==6.11' before
     - name: Setup Node.js environment
       uses: actions/setup-node@v3.2.0
     - name: Lint with flake8
