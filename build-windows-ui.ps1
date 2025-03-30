@@ -4,7 +4,7 @@
 # Compile interface definitions
 # 
 
-py -3 GenerateStylesheet.py
+python GenerateStylesheet.py
 & $env:PYRCC5 -o qdarkstyle/style_rc.py qdarkstyle\style.qrc
 & $env:PYRCC5 -o qlightstyle/style_rc.py qlightstyle\style.qrc
 

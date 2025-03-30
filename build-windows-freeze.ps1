@@ -16,12 +16,13 @@ npm ci
 if (Test-Path -Path "build") {
     rmdir ".\build\" -Recurse -Force
 }
-py -3 setup.py build_exe 
+python setup.py build_exe 
 echo "Build done"
 
 $BUILDDIR="build\" + (Get-ChildItem "build").Name
 echo "Build directory is $BUILDDIR"
 $LIB="$BUILDDIR\lib"
+
 
 del "$BUILDDIR\api-ms-*.dll" -Force
 if (Test-Path "$BUILDDIR\vcruntime140.dll") 
@@ -39,10 +40,11 @@ mkdir $LIB\PyQt5.new\Qt5\plugins\platforms
 mkdir $LIB\PyQt5.new\Qt5\plugins\styles
 
 copy $LIB\PyQt5\__init__.pyc $LIB\PyQt5.new 
+copy $LIB\PyQt5\_cx_freeze_debug.pyc $LIB\PyQt5.new 
 copy $LIB\PyQt5\QtCore.pyd $LIB\PyQt5.new
 copy $LIB\PyQt5\QtWidgets.pyd $LIB\PyQt5.new
 copy $LIB\PyQt5\QtGui.pyd $LIB\PyQt5.new
-copy $LIB\PyQt5\sip.cp310-win_amd64.pyd $LIB\PyQt5.new
+copy $LIB\PyQt5\sip.cp* $LIB\PyQt5.new
 copy $LIB\PyQt5\Qt5\bin\Qt5Core.dll $LIB\PyQt5.new\Qt5\bin\
 copy $LIB\PyQt5\Qt5\bin\Qt5Widgets.dll $LIB\PyQt5.new\Qt5\bin\
 copy $LIB\PyQt5\Qt5\bin\Qt5Gui.dll $LIB\PyQt5.new\Qt5\bin\
@@ -56,8 +58,12 @@ move $LIB\PyQt5.new $LIB\PyQt5
 rmdir "$LIB\qdarkstyle\qss" -Recurse -Force
 rmdir "$LIB\qdarkstyle\rc" -Recurse -Force
 rmdir "$LIB\qdarkstyle\svg" -Recurse -Force
+rmdir "$LIB\qdarkstyle\.mypy_cache" -Recurse -Force
 del "$LIB\qdarkstyle\style.qrc" -Force
 del "$LIB\qdarkstyle\style.qss" -Force
+
+rmdir "$LIB\_pyrepl" -Recurse -Force
+del "$LIB\libcrypto-3.dll" -Force
 
 xcopy config.txt $BUILDDIR
 xcopy help.html $BUILDDIR

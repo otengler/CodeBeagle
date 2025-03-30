@@ -23,8 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 wheel
-        pip install Cx_freeze PyQt5
+        pip install flake8 wheel Cx_freeze PyQt5 qt5-tools
     - name: Setup Node.js environment
       uses: actions/setup-node@v3.2.0
     - name: Lint with flake8
