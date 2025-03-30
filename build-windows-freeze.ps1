@@ -58,7 +58,6 @@ move $LIB\PyQt5.new $LIB\PyQt5
 rmdir "$LIB\qdarkstyle\qss" -Recurse -Force
 rmdir "$LIB\qdarkstyle\rc" -Recurse -Force
 rmdir "$LIB\qdarkstyle\svg" -Recurse -Force
-rmdir "$LIB\qdarkstyle\.mypy_cache" -Recurse -Force
 del "$LIB\qdarkstyle\style.qrc" -Force
 del "$LIB\qdarkstyle\style.qss" -Force
 
