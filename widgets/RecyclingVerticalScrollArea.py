@@ -36,7 +36,7 @@ class ScrollAreaItem (ABC):
         self.id: int = 0
 
     @abstractmethod
-    def generateItem (self, parent: QWidget) -> QWidget:
+    def generateItem (self, parent: Optional[QWidget]) -> QWidget:
         pass
 
     @abstractmethod
@@ -53,7 +53,7 @@ class Labeltem (ScrollAreaItem):
         self.text = text
         self.bIsBold = bIsBold
 
-    def generateItem (self, parent: QWidget) -> QWidget:
+    def generateItem (self, parent: Optional[QWidget]) -> QWidget:
         return QLabel("", parent)
 
     def configureItem(self, item: QWidget) -> None:
@@ -135,15 +135,18 @@ class EmptyLayout(QLayout):
         return 0
 
     def sizeHint(self) -> QSize:
-        return self.parent().size()
+        pw = self.parentWidget()
+        if pw:
+            return pw.size()
+        return QSize()
 
 class RecyclingVerticalScrollArea(QScrollArea):
-    def __init__(self, parent: QWidget=None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.items: Optional[SrollAreaItemList] = None
         self.activeWidgets: Dict[int, QWidget] = {} # id to widget
-        self.reservedWidgets: DefaultDict[str, QWidget] = collections.defaultdict(list) # type name to widgets
+        self.reservedWidgets: DefaultDict[str, list[QWidget]] = collections.defaultdict(list) # type name to widgets
         w = QWidget(self)
         w.setLayout(EmptyLayout(w))
         self.setWidget(w)
@@ -152,7 +155,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
         if self.items:
             self.ensureVisible (0, self.items.itemYPos(index),  0,  int(self.height()/2))
 
-    def resizeEvent(self, event: QResizeEvent) -> None:
+    def resizeEvent(self, event: Optional[QResizeEvent]) -> None:
         super().resizeEvent(event)
         self.__refreshItems()
 
@@ -163,7 +166,9 @@ class RecyclingVerticalScrollArea(QScrollArea):
     def setItems (self, items: SrollAreaItemList) -> None:
         self.__reset()
         self.items = items
-        self.widget().setFixedHeight(self.items.height())
+        widget = self.widget()
+        if widget:
+            widget.setFixedHeight(self.items.height())
         self.__refreshItems()
 
     def __reset (self) -> None:
@@ -179,7 +184,11 @@ class RecyclingVerticalScrollArea(QScrollArea):
         if not self.items:
             return
 
-        y = self.verticalScrollBar().value()
+        scrollBar = self.verticalScrollBar()
+        if not scrollBar:
+            return
+        
+        y = scrollBar.value()
         size = self.size()
         width = size.width()
         height = size.height()
@@ -190,7 +199,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
         for ident, w in self.activeWidgets.items():
             wg = w.geometry()
             if  not doLinesIntersect (y, height,  wg.top(),  wg.height()):
-                self.reservedWidgets[w.__class__].append(w)
+                self.reservedWidgets[str(w.__class__)].append(w)
                 inactive.append(ident)
         for ident in inactive:
             del self.activeWidgets[ident]
@@ -218,7 +227,11 @@ class RecyclingVerticalScrollArea(QScrollArea):
         if not self.items:
             return 0
 
-        width: int = 2*self.items.spacing+7+self.verticalScrollBar().width()
+        scrollBar = self.verticalScrollBar()
+        if not scrollBar:
+            return 0
+
+        width: int = 2 * self.items.spacing+7 + scrollBar.width()
         return width
 
 def main() -> None:

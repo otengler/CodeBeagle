@@ -36,7 +36,7 @@ class HighlightingTextEdit (QPlainTextEdit):
     highlightSolidBackgroundColor = Qt.lightGray
     highlightSolidForegroundColor = Qt.black
 
-    def __init__ (self, parent: QWidget) -> None:
+    def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
         self.highlighter = SyntaxHighlighter()
         self.__highlightUpdateCounter = 0 # Increment every time the highlight changes

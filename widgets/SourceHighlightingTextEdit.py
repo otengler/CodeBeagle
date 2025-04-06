@@ -19,12 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QApplication, QWidget
 from .HighlightingTextEdit import HighlightingTextEdit
+from typing import Optional
 
 class SourceHighlightingTextEdit (HighlightingTextEdit):
     # Triggered if a selection was finished while holding a modifier key down
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
 
-    def __init__(self, parent: QWidget=None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.selectionChanged.connect (self.highlightSelection)
 

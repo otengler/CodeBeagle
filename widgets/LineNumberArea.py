@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtCore import Qt, pyqtSlot, QRect, QSize
 from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit
+from typing import Optional
 
 class LineNumberArea (QWidget):
     padding = 20
@@ -38,9 +39,10 @@ class LineNumberArea (QWidget):
         self.textEdit.updateRequest.connect(self.scrollArea)
         self.adjustAreaWidth()
 
-    def close(self) -> None:
+    def close(self) -> bool:
         super().close()
         self.textEdit.setViewportMargins(0, 0, 0, 0)
+        return True
 
     @pyqtSlot(int)
     def adjustAreaWidth(self, newBlockCount: int = 0) -> None:
@@ -64,11 +66,14 @@ class LineNumberArea (QWidget):
     def areaWidth(self, newBlockCount: int = 0) -> int:
         if not newBlockCount:
             newBlockCount = self.textEdit.blockCount()
+        newBlockCount = self.firstLineNumber + newBlockCount
         digits = len(f"{newBlockCount}")
         space:int = self.padding + self.textEdit.fontMetrics().horizontalAdvance("9") * digits
         return space
 
-    def paintEvent(self, event: QPaintEvent) -> None:
+    def paintEvent(self, event: Optional[QPaintEvent]) -> None:
+        if not event:
+            return
         painter = QPainter(self)
         painter.setFont(self.textEdit.font())
         painter.fillRect(event.rect(), self.areaColor)

@@ -66,7 +66,7 @@ class TestCollapseOverlappingRanges(unittest.TestCase):
         self.assertEqual(ranges, [(1, 9)])
 
 class FixedSizeSourcePreview(SourceHighlightingTextEdit):
-    def __init__(self, parent: QWidget=None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -196,7 +196,7 @@ class MatchesOverview (QWidget):
         self.matches: Optional[List[str]] = None
         self.searchData: Optional[FullTextIndex.ContentQuery] = None
         self.resultHandled = True
-        self.sourceFont = None
+        self.sourceFont: Optional[QFont] = None
         self.lineHeight = 0
         self.tabWidth = 4
         self.linesOfContext = 2
@@ -285,9 +285,9 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         item.selectionFinishedWithKeyboardModifier.connect (self.matchesOverview.selectionFinishedWithKeyboardModifier)
         return item
 
-    def configureItem(self, item: QWidget) -> None:
+    def configureItem(self, item: FixedSizeSourcePreview) -> None:
         rules = HighlightingRulesCache.rules().getRulesByFileName(self.name, self.matchesOverview.sourceFont)
-        item.setFont(self.matchesOverview.sourceFont)
+        item.setFont(self.matchesOverview.sourceFont) 
         item.setTabStopWidth(self.matchesOverview.tabWidth*10)
         item.highlighter.setHighlightingRules (rules)
         item.highlighter.setSearchData (self.matchesOverview.searchData)
