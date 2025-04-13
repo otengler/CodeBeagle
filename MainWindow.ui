@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="MainWindow.qrc">
-    <normaloff>:/default/resources/CodeBeagle.png</normaloff>:/default/resources/CodeBeagle.png</iconset>
+    <normaloff>resources/CodeBeagle.png</normaloff>resources/CodeBeagle.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">

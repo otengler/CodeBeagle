@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="default">
-	<file>../resources/SearchNext.png</file>
-    <file>../resources/SearchPrevious.png</file>
-  </qresource>
-</RCC>

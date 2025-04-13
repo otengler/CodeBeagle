@@ -49,30 +49,30 @@ def main() -> None:
     wnd.show()
     sys.exit(app.exec_())
 
-def configureTheme(app: QApplication) -> None:
+def configureTheme(app: QApplication) -> None: 
     if AppConfig.appConfig().theme == AppConfig.darkTheme:
-        import qdarkstyle
-        LineNumberArea.areaColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_NORMAL).darker(120)
+        from themes import dark
+        LineNumberArea.areaColor = QColor(dark.DarkPalette.COLOR_BACKGROUND_NORMAL).darker(120)
         PathVisualizerDelegate.newPathColor = QColor(204,204,204)
-        PathVisualizerDelegate.samePathColor = QColor(qdarkstyle.DarkPalette.COLOR_FOREGROUND_DARK)
-        PathVisualizerDelegate.fileColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT).lighter(150)
-        PathVisualizerDelegate.selectedFileColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT).lighter(200)
-        PathVisualizerDelegate.selectedPathColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_LIGHT).lighter(150)
-        PathVisualizerDelegate.selectionBackground = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_LIGHT)
-        HighlightingTextEdit.highlightOutlineColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_LIGHT).lighter(150)
-        HighlightingTextEdit.highlightSolidBackgroundColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_LIGHT).lighter(140)
+        PathVisualizerDelegate.samePathColor = QColor(dark.DarkPalette.COLOR_FOREGROUND_DARK)
+        PathVisualizerDelegate.fileColor = QColor(dark.DarkPalette.COLOR_SELECTION_LIGHT).lighter(150)
+        PathVisualizerDelegate.selectedFileColor = QColor(dark.DarkPalette.COLOR_SELECTION_LIGHT).lighter(200)
+        PathVisualizerDelegate.selectedPathColor = QColor(dark.DarkPalette.COLOR_SELECTION_LIGHT).lighter(150)
+        PathVisualizerDelegate.selectionBackground = QColor(dark.DarkPalette.COLOR_BACKGROUND_LIGHT)
+        HighlightingTextEdit.highlightOutlineColor = QColor(dark.DarkPalette.COLOR_BACKGROUND_LIGHT).lighter(150)
+        HighlightingTextEdit.highlightSolidBackgroundColor = QColor(dark.DarkPalette.COLOR_BACKGROUND_LIGHT).lighter(140)
         HighlightingTextEdit.highlightSolidForegroundColor = None
-        SourceViewer.currentLineBackgroundColor = QColor(qdarkstyle.DarkPalette.COLOR_BACKGROUND_DARK).lighter(130)
-        SourceViewer.currentMatchLineBackgroundColor = QColor(qdarkstyle.DarkPalette.COLOR_SELECTION_DARK).darker(120)
+        SourceViewer.currentLineBackgroundColor = QColor(dark.DarkPalette.COLOR_BACKGROUND_DARK).lighter(130)
+        SourceViewer.currentMatchLineBackgroundColor = QColor(dark.DarkPalette.COLOR_SELECTION_DARK).darker(120)
         SyntaxHighlighter.matchBackgroundColor = QColor(Qt.yellow).darker(120)
         SyntaxHighlighter.matchForegroundColor = Qt.black
         RegExTesterDlg.matchBackgroundColor = QColor(Qt.yellow).darker(120)
         RegExTesterDlg.bracketColor = QColor(200,200,240)
         RegExTesterDlg.repeatColor = QColor(240,200,200)
-        qdarkstyle.apply_stylesheet(app)
+        dark.apply_stylesheet(app)
     else:
-        import qlightstyle
-        qlightstyle.apply_stylesheet(app)
+        from themes import light
+        light.apply_stylesheet(app)
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:

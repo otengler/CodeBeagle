@@ -47,7 +47,7 @@ p, li { white-space: pre-wrap; }
        </property>
        <property name="icon">
         <iconset resource="InDocumentSearchWidget.qrc">
-         <normaloff>:/default/resources/SearchPrevious.png</normaloff>:/default/resources/SearchPrevious.png</iconset>
+         <normaloff>resources/SearchPrevious.png</normaloff>resources/SearchPrevious.png</iconset>
        </property>
        <property name="shortcut">
         <string>F4</string>
@@ -68,7 +68,7 @@ p, li { white-space: pre-wrap; }
        </property>
        <property name="icon">
         <iconset resource="InDocumentSearchWidget.qrc">
-         <normaloff>:/default/resources/SearchNext.png</normaloff>:/default/resources/SearchNext.png</iconset>
+         <normaloff>resources/SearchNext.png</normaloff>resources/SearchNext.png</iconset>
        </property>
        <property name="shortcut">
         <string>F3</string>

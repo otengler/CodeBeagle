@@ -51,7 +51,7 @@
         </property>
         <property name="icon">
          <iconset resource="SearchPage.qrc">
-          <normaloff>:/default/resources/arrow-left.png</normaloff>:/default/resources/arrow-left.png</iconset>
+          <normaloff>resources/arrow-left.png</normaloff>resources/arrow-left.png</iconset>
         </property>
         <property name="flat">
          <bool>true</bool>
@@ -68,7 +68,7 @@
         </property>
         <property name="icon">
          <iconset resource="SearchPage.qrc">
-          <normaloff>:/default/resources/arrow-right.png</normaloff>:/default/resources/arrow-right.png</iconset>
+          <normaloff>resources/arrow-right.png</normaloff>resources/arrow-right.png</iconset>
         </property>
         <property name="flat">
          <bool>true</bool>
@@ -158,7 +158,7 @@ p, li { white-space: pre-wrap; }
            </property>
            <property name="icon">
             <iconset resource="SearchPage.qrc">
-             <normaloff>:/default/resources/Find.png</normaloff>:/default/resources/Find.png</iconset>
+             <normaloff>resources/Find.png</normaloff>resources/Find.png</iconset>
            </property>
           </widget>
          </item>
@@ -169,7 +169,7 @@ p, li { white-space: pre-wrap; }
            </property>
            <property name="icon">
             <iconset resource="SearchPage.qrc">
-             <normaloff>:/default/resources/angle-down.png</normaloff>:/default/resources/angle-down.png</iconset>
+             <normaloff>resources/angle-down.png</normaloff>resources/angle-down.png</iconset>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -196,7 +196,7 @@ p, li { white-space: pre-wrap; }
         </property>
         <property name="icon">
          <iconset resource="SearchPage.qrc">
-          <normaloff>:/default/resources/CustomSearch.png</normaloff>:/default/resources/CustomSearch.png</iconset>
+          <normaloff>resources/CustomSearch.png</normaloff>resources/CustomSearch.png</iconset>
         </property>
         <property name="flat">
          <bool>true</bool>
@@ -214,7 +214,7 @@ p, li { white-space: pre-wrap; }
         </property>
         <property name="icon">
          <iconset resource="SearchPage.qrc">
-          <normaloff>:/default/resources/Lock.png</normaloff>:/default/resources/Lock.png</iconset>
+          <normaloff>resources/Lock.png</normaloff>resources/Lock.png</iconset>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -234,7 +234,7 @@ p, li { white-space: pre-wrap; }
         </property>
         <property name="icon">
          <iconset resource="SearchPage.qrc">
-          <normaloff>:/default/resources/regex.png</normaloff>:/default/resources/regex.png</iconset>
+          <normaloff>resources/regex.png</normaloff>resources/regex.png</iconset>
         </property>
         <property name="flat">
          <bool>true</bool>
@@ -468,7 +468,7 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="icon">
                <iconset resource="SearchPage.qrc">
-                <normaloff>:/default/resources/Export.png</normaloff>:/default/resources/Export.png</iconset>
+                <normaloff>resources/Export.png</normaloff>resources/Export.png</iconset>
               </property>
               <property name="flat">
                <bool>true</bool>
@@ -486,7 +486,7 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="icon">
                <iconset resource="SearchPage.qrc">
-                <normaloff>:/default/resources/Overview.png</normaloff>:/default/resources/Overview.png</iconset>
+                <normaloff>resources/Overview.png</normaloff>resources/Overview.png</iconset>
               </property>
               <property name="checkable">
                <bool>true</bool>
@@ -503,7 +503,7 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="icon">
                <iconset resource="SearchPage.qrc">
-                <normaloff>:/default/resources/PerfInfo.png</normaloff>:/default/resources/PerfInfo.png</iconset>
+                <normaloff>resources/PerfInfo.png</normaloff>resources/PerfInfo.png</iconset>
               </property>
               <property name="flat">
                <bool>true</bool>

@@ -7,8 +7,6 @@
 # 
 
 "$PYTHON" GenerateStylesheet.py
-"$PYRCC5" -o qdarkstyle/style_rc.py qdarkstyle/style.qrc
-"$PYRCC5" -o qlightstyle/style_rc.py qlightstyle/style.qrc
 
 "$PYUIC" --from-imports -o widgets/Ui_LeaveLastTabWidget.py -x widgets/LeaveLastTabWidget.ui 
 "$PYUIC" --from-imports -o widgets/Ui_InDocumentSearchWidget.py -x widgets/InDocumentSearchWidget.ui 
@@ -27,11 +25,5 @@
 "$PYUIC" -o Ui_SourceViewer.py -x SourceViewer.ui 
 "$PYUIC" -o Ui_MatchesOverview.py -x MatchesOverview.ui 
 
-"$PYRCC5" -o widgets/LeaveLastTabWidget_rc.py widgets/LeaveLastTabWidget.qrc
-"$PYRCC5" -o widgets/InDocumentSearchWidget_rc.py widgets/InDocumentSearchWidget.qrc
-"$PYRCC5" -o dialogs/SettingsDialog_rc.py dialogs/SettingsDialog.qrc
-"$PYRCC5" -o dialogs/StackTraceMessageBox_rc.py dialogs/StackTraceMessageBox.qrc 
-"$PYRCC5" -o SearchPage_rc.py SearchPage.qrc
-"$PYRCC5" -o MainWindow_rc.py MainWindow.qrc
 
 

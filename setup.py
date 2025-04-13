@@ -28,7 +28,7 @@ CodeBeagle=Executable(
     script = codeBeagleScript,
     base = targetBase,
     target_name = targetCodeBeagle,
-    icon = "resources/CodeBeagle.ico"
+    icon = "resources.src/CodeBeagle.ico"
 )
 
 UpdateIndex=Executable(

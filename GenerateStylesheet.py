@@ -1,3 +1,3 @@
-import qdarkstyle.generate_qss
+from themes.dark.generate_qss import generate
 
-qdarkstyle.generate_qss.generate()
+generate()
