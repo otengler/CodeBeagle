@@ -54,7 +54,7 @@ class LeaveLastTabWidget (QTabWidget):
     def addButtonToCornerWidget (self, hbox: QHBoxLayout, name: str, iconFile: str, handler: Callable) -> QPushButton:
         button = QPushButton(name, self)
         icon = QIcon()
-        icon.addPixmap(QPixmap(":/default/resources/" + iconFile), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap("resources/" + iconFile), QIcon.Normal, QIcon.Off)
         button.setIcon(icon)
         button.setFlat(True)
         hbox.addWidget (button)

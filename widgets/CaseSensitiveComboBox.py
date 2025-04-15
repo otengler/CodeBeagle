@@ -18,12 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QComboBox, QCompleter
+from typing import Optional
 
 class CaseSensitiveComboBox (QComboBox):
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         completer = QCompleter()
-        completer.setCaseSensitivity(Qt.CaseSensitive)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseSensitive)
         self.setEditable(True)
         self.setCompleter(completer)
         

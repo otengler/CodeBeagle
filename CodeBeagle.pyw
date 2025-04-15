@@ -32,6 +32,7 @@ from PathVisualizerDelegate import PathVisualizerDelegate
 from UpdateCheck import UpdateCheck
 from SourceViewer import SourceViewer
 from Ui_MainWindow import Ui_MainWindow
+from typing import Optional
 
 userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
@@ -64,9 +65,9 @@ def configureTheme(app: QApplication) -> None:
         HighlightingTextEdit.highlightSolidForegroundColor = None
         SourceViewer.currentLineBackgroundColor = QColor(dark.DarkPalette.COLOR_BACKGROUND_DARK).lighter(130)
         SourceViewer.currentMatchLineBackgroundColor = QColor(dark.DarkPalette.COLOR_SELECTION_DARK).darker(120)
-        SyntaxHighlighter.matchBackgroundColor = QColor(Qt.yellow).darker(120)
-        SyntaxHighlighter.matchForegroundColor = Qt.black
-        RegExTesterDlg.matchBackgroundColor = QColor(Qt.yellow).darker(120)
+        SyntaxHighlighter.matchBackgroundColor = QColor(Qt.GlobalColor.yellow).darker(120)
+        SyntaxHighlighter.matchForegroundColor = Qt.GlobalColor.black
+        RegExTesterDlg.matchBackgroundColor = QColor(Qt.GlobalColor.yellow).darker(120)
         RegExTesterDlg.bracketColor = QColor(200,200,240)
         RegExTesterDlg.repeatColor = QColor(240,200,200)
         dark.apply_stylesheet(app)
@@ -77,7 +78,7 @@ def configureTheme(app: QApplication) -> None:
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         # Restore last used search location name
         self.appSettings = QSettings(AppConfig.appCompany, AppConfig.appName)
         if self.appSettings.value("lastUsedSearchLocation"):
@@ -97,7 +98,9 @@ class MainWindow(QMainWindow):
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: Optional[QCloseEvent]) -> None:
+        if not event:
+            return
         if AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
                                        self.tr("Really close?"),

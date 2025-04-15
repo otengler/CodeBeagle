@@ -19,19 +19,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
 from PyQt5.QtGui import QMovie
+from typing import Optional
 
 class AnimatedProgressWidget(QWidget):
     """
     This widget attempts to look like a flat QPushButton. It shows a spinning gear icon to indicate
     work in progress.
     """
-    def __init__(self, parent: QWidget, text: str = None) -> None:
+    def __init__(self, parent: QWidget, text: Optional[str] = None) -> None:
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 4, 0)
         layout.setSpacing(4)
         labelAnimation = QLabel(self)
-        self.movie = QMovie(":/default/resources/Update.gif")
+        self.movie = QMovie("resources/Update.gif")
         self.movie.setScaledSize(QSize(20, 20))
         labelAnimation.setMovie(self.movie)
         self.labelText = QLabel(self)

@@ -17,18 +17,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import Qt, pyqtSlot, QRect, QSize
-from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent
+from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit
-from typing import Optional
+from typing import Optional, Iterator, Tuple
 
 class LineNumberArea (QWidget):
     padding = 20
     areaColor = QColor(235,235,235)
     textColor = QColor(130,130,130)
 
-    def __init__(self, textEdit: QPlainTextEdit, firstLineNumber:int = 1) -> None:
+    def __init__(self, textEdit: QPlainTextEdit, firstLineNumber:int = 1, enableBookmarks = False) -> None:
         super().__init__(textEdit)
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.textEdit: QPlainTextEdit = textEdit
         self.firstLineNumber = firstLineNumber
 
@@ -38,6 +38,22 @@ class LineNumberArea (QWidget):
         self.textEdit.blockCountChanged.connect(self.adjustAreaWidth)
         self.textEdit.updateRequest.connect(self.scrollArea)
         self.adjustAreaWidth()
+
+        self.enableBookmarks = enableBookmarks
+        bookMarkPixmap = QPixmap("resources/bookmark.png")
+        iconHeight = self.textEdit.fontMetrics().height() - 2
+        factor = iconHeight/bookMarkPixmap.height()
+        self.bookMarkPixmap = bookMarkPixmap.scaled(int(bookMarkPixmap.width() * factor), iconHeight, 
+                                                    Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        
+        self.bookmarkLines: set[int] = set()
+
+    def setBookmarks(self, lines: set[int]) -> None:
+        if lines is None:
+            lines = []
+        else:
+            self.bookmarkLines = lines
+        self.repaint()
 
     def close(self) -> bool:
         super().close()
@@ -71,23 +87,43 @@ class LineNumberArea (QWidget):
         space:int = self.padding + self.textEdit.fontMetrics().horizontalAdvance("9") * digits
         return space
 
+    def mouseReleaseEvent(self, event: Optional[QMouseEvent]) -> None:
+        if not event or not self.enableBookmarks:
+            return
+        pos = event.pos()
+        for number, rect in self.__visibleBlocks(self.rect()):
+            if pos.y() > rect.top() and pos.y() < rect.bottom():
+                if number in self.bookmarkLines:
+                    self.bookmarkLines.remove(number)
+                else:
+                    self.bookmarkLines.add(number)
+                self.repaint()
+                break
+
     def paintEvent(self, event: Optional[QPaintEvent]) -> None:
         if not event:
             return
         painter = QPainter(self)
         painter.setFont(self.textEdit.font())
         painter.fillRect(event.rect(), self.areaColor)
+        painter.setPen(self.textColor)
+        
+        for number, rect in self.__visibleBlocks(event.rect()):
+            painter.drawText(rect.left(), rect.top(), rect.width()-self.padding//2, rect.height(), Qt.AlignmentFlag.AlignRight, str(number))
+            if self.enableBookmarks and number in self.bookmarkLines:
+                painter.drawPixmap(0, rect.top() + 2, self.bookMarkPixmap)
 
+
+    def __visibleBlocks (self, updateRect: QRect) -> Iterator[Tuple[int, QRect]]:
         block: QTextBlock = self.textEdit.firstVisibleBlock()
         blockNumber: int = block.blockNumber()
         top = int(self.textEdit.blockBoundingGeometry(block).translated(self.textEdit.contentOffset()).top())
         bottom = top + int(self.textEdit.blockBoundingRect(block).height())
 
-        painter.setPen(self.textColor)
-        while block.isValid() and top <= event.rect().bottom():
-            if block.isVisible() and bottom >= event.rect().top():
-                number = f"{blockNumber+self.firstLineNumber}"
-                painter.drawText(0, top, self.width()-self.padding//2, self.textEdit.fontMetrics().height(), Qt.AlignRight, number)
+        while block.isValid() and top <= updateRect.bottom():
+            if block.isVisible() and bottom >= updateRect.top():
+                number = blockNumber+self.firstLineNumber
+                yield number, QRect(0, top, self.width(), bottom-top)
 
             block = block.next()
             top = bottom

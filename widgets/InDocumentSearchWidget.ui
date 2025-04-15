@@ -127,8 +127,5 @@ p, li { white-space: pre-wrap; }
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="InDocumentSearchWidget.qrc"/>
- </resources>
  <connections/>
 </ui>

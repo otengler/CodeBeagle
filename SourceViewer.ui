@@ -369,9 +369,6 @@ p, li { white-space: pre-wrap; }
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="SearchPage.qrc"/>
- </resources>
  <connections/>
  <slots>
   <slot>nextMatch()</slot>

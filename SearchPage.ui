@@ -660,9 +660,6 @@ p, li { white-space: pre-wrap; }
    <header>widgets.CaseSensitiveComboBox</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="SearchPage.qrc"/>
- </resources>
  <connections/>
  <slots>
   <slot>fileSelected(QModelIndex)</slot>

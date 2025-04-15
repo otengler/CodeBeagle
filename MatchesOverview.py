@@ -68,8 +68,8 @@ class TestCollapseOverlappingRanges(unittest.TestCase):
 class FixedSizeSourcePreview(SourceHighlightingTextEdit):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
 class Line:
     def __init__(self, charPos: int, lineNumber: int) -> None:
@@ -153,7 +153,7 @@ class MatchesInFile:
 
 # Returns a list of all matches in all files
 # This reads all files and retrieves the matches with some lines surounding them
-def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, linesOfContext: int, cancelEvent: threading.Event=None) -> List[MatchesInFile]:
+def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, linesOfContext: int, cancelEvent: Optional[threading.Event]=None) -> List[MatchesInFile]:
     results: List[MatchesInFile] = []
     for name in matches:
         matchList = MatchesInFile(name)
@@ -279,7 +279,7 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         self.text = text
         self.name = name
 
-    def generateItem (self, parent: QWidget) -> QWidget:
+    def generateItem (self, parent: Optional[QWidget]) -> QWidget:
         item = FixedSizeSourcePreview(parent)
         # Forward the signal to MatchesOverview instance
         item.selectionFinishedWithKeyboardModifier.connect (self.matchesOverview.selectionFinishedWithKeyboardModifier)

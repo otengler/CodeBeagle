@@ -475,9 +475,6 @@
   <tabstop>buttonOK</tabstop>
   <tabstop>buttonCancel</tabstop>
  </tabstops>
- <resources>
-  <include location="SettingsDialog.qrc"/>
- </resources>
  <connections>
   <connection>
    <sender>buttonAdd</sender>

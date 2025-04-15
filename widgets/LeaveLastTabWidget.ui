@@ -31,8 +31,5 @@
    </attribute>
   </widget>
  </widget>
- <resources>
-  <include location="LeaveLastTabWidget.qrc"/>
- </resources>
  <connections/>
 </ui>

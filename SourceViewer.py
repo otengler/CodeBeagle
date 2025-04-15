@@ -281,7 +281,7 @@ class SourceViewer (QWidget):
     def showSearchFrame(self) -> None:
         if self.ui.buttonSearch.isChecked():
             self.ui.widgetInDocumentSearch.show()
-            self.ui.widgetInDocumentSearch.setFocus(Qt.MouseFocusReason)
+            self.ui.widgetInDocumentSearch.setFocus(Qt.FocusReason.MouseFocusReason)
         else:
             self.ui.widgetInDocumentSearch.hide()
             self.ui.widgetInDocumentSearch.setSearch("")

@@ -50,7 +50,7 @@ class SettingsEditorDelegate(QStyledItemDelegate):
             self.boldFont = QFont(QApplication.font())
         self.boldFont.setBold(True)
         self.defaultLocationRow = -1
-        self.defaultPixmap = QPixmap(":/default/resources/Default.png")
+        self.defaultPixmap = QPixmap("resources/Default.png")
         self.defaultPixmapSize = 20
 
     def setDefaultLocationRow(self, row: int) -> None:

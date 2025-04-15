@@ -90,10 +90,10 @@ class CommentRange:
         return self.index < other.index
 
 class SyntaxHighlighter:
-    matchBackgroundColor = Qt.yellow
-    matchForegroundColor = Qt.black
+    matchBackgroundColor = Qt.GlobalColor.yellow
+    matchForegroundColor = Qt.GlobalColor.black
     match2BackgroundColor = QColor(194, 217, 255)
-    match2ForegroundColor = Qt.black
+    match2ForegroundColor = Qt.GlobalColor.black
 
     def __init__(self) -> None:
         # The current rules
@@ -114,7 +114,7 @@ class SyntaxHighlighter:
         for strFormat in self.searchStringFormats:
             strFormat.setFont (font)
 
-    def setHighlightingRules (self, rules: HighlightingRules) -> None:
+    def setHighlightingRules (self, rules: Optional[HighlightingRules]) -> None:
         self.highlightingRules = rules
         for strFormat in self.searchStringFormats:
             strFormat.setFont(rules.font)
@@ -180,11 +180,11 @@ class SyntaxHighlighter:
 
         self.comments = comments
 
-    def setSearchData (self, searchData: IStringMatcher) -> None:
+    def setSearchData (self, searchData: Optional[IStringMatcher]) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""
         self.searchDatas[0] = searchData
 
-    def setSearchData2 (self, searchData: IStringMatcher) -> None:
+    def setSearchData2 (self, searchData: Optional[IStringMatcher]) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""
         self.searchDatas[1] = searchData
 
