@@ -31,6 +31,7 @@ from dialogs.SettingsDialog import SettingsDialog
 from SearchPage import SearchPage
 import AppConfig
 from fulltextindex import IndexConfiguration
+from tools.QHelper import createQAction
 import UpdateIndex
 
 userHintInitialSetup= """
@@ -62,27 +63,27 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.addNewTab()
 
         # Add new tab (QKeySequence.AddTab is the same as Qt.CTRL + Qt.Key_T)
-        self.actionNewTab = QAction(self, shortcut=QKeySequence.AddTab, triggered= self.addNewTab)
+        self.actionNewTab = createQAction(self, shortcut=QKeySequence.AddTab, triggered = self.addNewTab)
         self.addAction(self.actionNewTab)
         # Close current tab
-        self.actionRemoveCurrentTab = QAction(self, shortcut=Qt.CTRL + Qt.Key_W, triggered= self.removeCurrentTab)
+        self.actionRemoveCurrentTab = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier + Qt.Key.Key_W, triggered= self.removeCurrentTab)
         self.addAction(self.actionRemoveCurrentTab)
 
         # Open settings
-        self.actionOpenSettings = QAction(self, shortcut=Qt.CTRL + Qt.Key_S, triggered= self.openSettings)
+        self.actionOpenSettings = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier + Qt.Key.Key_S, triggered= self.openSettings)
         self.addAction(self.actionOpenSettings)
 
-        self.actionTab1 = QAction(self, shortcut=Qt.ALT + Qt.Key_1, triggered= self.activateTab1)
+        self.actionTab1 = createQAction(self, shortcut=Qt.KeyboardModifier.AltModifier + Qt.Key.Key_1, triggered= self.activateTab1)
         self.addAction(self.actionTab1)
-        self.actionTab2 = QAction(self, shortcut=Qt.ALT + Qt.Key_2, triggered= self.activateTab2)
+        self.actionTab2 = createQAction(self, shortcut=Qt.KeyboardModifier.AltModifier + Qt.Key.Key_2, triggered= self.activateTab2)
         self.addAction(self.actionTab2)
-        self.actionTab3 = QAction(self, shortcut=Qt.ALT + Qt.Key_3, triggered= self.activateTab3)
+        self.actionTab3 = createQAction(self, shortcut=Qt.KeyboardModifier.AltModifier + Qt.Key.Key_3, triggered= self.activateTab3)
         self.addAction(self.actionTab3)
-        self.actionTab4 = QAction(self, shortcut=Qt.ALT + Qt.Key_4, triggered= self.activateTab4)
+        self.actionTab4 = createQAction(self, shortcut=Qt.KeyboardModifier.AltModifier + Qt.Key.Key_4, triggered= self.activateTab4)
         self.addAction(self.actionTab4)
-        self.actionTab5 = QAction(self, shortcut=Qt.ALT + Qt.Key_5, triggered= self.activateTab5)
+        self.actionTab5 = createQAction(self, shortcut=Qt.KeyboardModifier.AltModifier + Qt.Key.Key_5, triggered= self.activateTab5)
         self.addAction(self.actionTab5)
-        self.actionTab6 = QAction(self, shortcut=Qt.ALT + Qt.Key_6, triggered= self.activateTab6)
+        self.actionTab6 = createQAction(self, shortcut=Qt.KeyboardModifier.AltModifier + Qt.Key.Key_6, triggered= self.activateTab6)
         self.addAction(self.actionTab6)
 
         self.indexUpdateTimer: QTimer = None

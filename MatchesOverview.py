@@ -189,14 +189,14 @@ class MatchesOverview (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
 
-    def __init__ (self, parent: QWidget) -> None:
+    def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
         self.ui = Ui_MatchesOverview()
         self.ui.setupUi(self)
         self.matches: Optional[List[str]] = None
         self.searchData: Optional[FullTextIndex.ContentQuery] = None
         self.resultHandled = True
-        self.sourceFont: Optional[QFont] = None
+        self.sourceFont: QFont = QFont()
         self.lineHeight = 0
         self.tabWidth = 4
         self.linesOfContext = 2

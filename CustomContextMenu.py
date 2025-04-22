@@ -25,9 +25,10 @@ from tools.FileTools import fopen
 from tools.ExceptionTools import exceptionAsString
 import subprocess
 import shlex
+from typing import Optional
 
 class ContextMenuError:
-    def __init__(self,  program: str,  failedFiles: List[str],  exception: str=None) -> None:
+    def __init__(self,  program: str,  failedFiles: List[str],  exception: Optional[str]=None) -> None:
         self.program = program
         self.failedFiles = failedFiles
         self.exception = exception

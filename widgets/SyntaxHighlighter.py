@@ -21,7 +21,7 @@ import bisect
 import re
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
-from .IStringMatcher import IStringMatcher
+from fulltextindex.IStringMatcher import IStringMatcher
 
 class HighlightingRules:
     def __init__(self, font: QFont) -> None:
@@ -31,8 +31,8 @@ class HighlightingRules:
         self.multiCommentStop: Optional[Pattern] = None
         self.commentFormat: Optional[QTextCharFormat] = None
         self.font = font
-        self.color = None
-        self.defaultFormat = None
+        self.color: Optional[QColor] = None
+        self.defaultFormat: Optional[QTextCharFormat] = None
 
     def addKeywords (self, keywords: str, fontWeight: int, foreground: QBrush) -> None:
         """Adds a list of comma separated keywords."""
@@ -117,7 +117,8 @@ class SyntaxHighlighter:
     def setHighlightingRules (self, rules: Optional[HighlightingRules]) -> None:
         self.highlightingRules = rules
         for strFormat in self.searchStringFormats:
-            strFormat.setFont(rules.font)
+            if rules:
+                strFormat.setFont(rules.font)
             strFormat.setFontWeight(QFont.Bold)
 
     # Find all comments in the document and store them as CommentRange objects in self.comments
@@ -205,17 +206,18 @@ class SyntaxHighlighter:
                 match = expression.search(text, end)
 
         # Colorize comments
-        pos = bisect.bisect_right (self.comments,  CommentRange(position))
-        if pos > 0:
-            pos -= 1
-        while pos < len(self.comments):
-            comment = self.comments[pos]
-            # Comment starts before end of line
-            if comment.index < position+len(text):
-                formats.append((self.highlightingRules.commentFormat, comment.index-position, comment.length))
-            else:
-                break
-            pos += 1
+        if commentFormat := self.highlightingRules.commentFormat:
+            pos = bisect.bisect_right (self.comments,  CommentRange(position))
+            if pos > 0:
+                pos -= 1
+            while pos < len(self.comments):
+                comment = self.comments[pos]
+                # Comment starts before end of line
+                if comment.index < position+len(text):
+                    formats.append((commentFormat, comment.index-position, comment.length))
+                else:
+                    break
+                pos += 1
 
         # Highlight search match
         for index, searchData in enumerate(self.searchDatas):

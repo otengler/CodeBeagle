@@ -160,7 +160,9 @@ class HighlightingTextEdit (QPlainTextEdit):
 
     def setFont(self, font: QFont) -> None:
         super().setFont (font)
-        self.viewport().setFont(font)
+        viewport = self.viewport()
+        if viewport:
+            viewport.setFont(font)
         self.highlighter.setFont(font)
 
     def rehighlight(self) -> None:

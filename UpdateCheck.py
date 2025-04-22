@@ -50,7 +50,7 @@ class UpdateCheck (QObject):
     """
     newerVersionFound = pyqtSignal('QString')
 
-    def __init__ (self,  parent: QObject=None) -> None:
+    def __init__ (self,  parent: Optional[QObject] = None) -> None:
         super().__init__(parent)
         self.lastUpdateCheck: Optional[int] = None
         self.updateThread: Optional[UpdateCheckThread] = None

@@ -21,6 +21,7 @@ from typing import List, Dict, Optional, Any
 from PyQt5.QtCore import Qt, QFileInfo, QAbstractListModel, QModelIndex, QSize
 from PyQt5.QtWidgets import QWidget
 import SourceViewer
+from typing import Optional
 
 # Returns the first difference in two strings
 def firstDifference(s1: str, s2: str) -> int:
@@ -30,11 +31,11 @@ def firstDifference(s1: str, s2: str) -> int:
     return min(len(s1),len(s2))
 
 class StringListModel(QAbstractListModel):
-    def __init__(self, filelist: List[str],  parent: QWidget=None) -> None:
+    def __init__(self, filelist: List[str],  parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.filelist = filelist
         self.editorState: Dict[QModelIndex, SourceViewer.EditorState] = {} # maps from file index to an editor state object
-        self.sizeHint: QSize = None
+        self.sizeHint: Optional[QSize] = None
         self.cutLeft = self.__computeCutLeft()
         self.selectedFileIndex = -1
 
@@ -72,18 +73,18 @@ class StringListModel(QAbstractListModel):
     def rowCount(self, _:QModelIndex = QModelIndex()) -> int:
         return len(self.filelist)
 
-    def data(self, index: QModelIndex, role: int) -> Any:
+    def data(self, index: QModelIndex, role = ...) -> Any:
         if not index.isValid():
             return None
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             if self.cutLeft:
                 return "..."+self.filelist[index.row()][self.cutLeft:]
             return self.filelist[index.row()]
-        if role == Qt.UserRole:
+        if role == Qt.ItemDataRole.UserRole:
             return self.filelist[index.row()]
-        if role == Qt.SizeHintRole:
+        if role == Qt.ItemDataRole.SizeHintRole:
             return self.sizeHint
-        if role == Qt.ToolTipRole and self.cutLeft:
+        if role == Qt.ItemDataRole.ToolTipRole and self.cutLeft:
             name = self.filelist[index.row()]
             fileinfo = QFileInfo(name)
             lastmodified = fileinfo.lastModified().toString()

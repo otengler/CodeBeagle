@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QFocusEvent, QColor
 from tools.AsynchronousTask import AsynchronousTask
 from .Ui_InDocumentSearchWidget import Ui_InDocumentSearchWidget
-from .IStringMatcher import IStringMatcher
+from fulltextindex.IStringMatcher import IStringMatcher
 
 class StringMatcher (IStringMatcher):
     def __init__(self) -> None:

@@ -28,6 +28,7 @@ import HighlightingRulesCache
 from widgets.SyntaxHighlighter import SyntaxHighlighter
 from widgets.InDocumentSearchWidget import InDocumentSearchResult
 from Ui_SourceViewer import Ui_SourceViewer
+from tools.QHelper import createQAction
 
 class EditorState:
     def __init__(self, scrollPosition: int, currentMatch: int) -> None:
@@ -69,17 +70,17 @@ class SourceViewer (QWidget):
         self.ui.buttonMatchList.clicked.connect(self.ui.frameMatchList.setVisible)
         self.ui.buttonMatchCurrent.clicked.connect(self.jumpToCurrentMatch)
 
-        self.actionReloadFile = QAction(self, shortcut=Qt.Key_F5, triggered= self.reloadFile)
+        self.actionReloadFile = createQAction(self, shortcut=Qt.Key.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
-        self.actionGotoLine = QAction(self, shortcut=Qt.CTRL+Qt.Key_G, triggered=self.gotoLine)
+        self.actionGotoLine = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_G, triggered=self.gotoLine)
         self.addAction(self.actionGotoLine)
-        self.jumpToMatchingBrace = QAction(self, shortcut=Qt.CTRL+Qt.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace)
+        self.jumpToMatchingBrace = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace)
         self.addAction(self.jumpToMatchingBrace)
-        self.actionJumpToCurrentMatch = QAction(self, shortcut=Qt.CTRL+Qt.Key_J, triggered=self.jumpToCurrentMatch)
+        self.actionJumpToCurrentMatch = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_J, triggered=self.jumpToCurrentMatch)
         self.addAction(self.actionJumpToCurrentMatch)
 
         # In document search
-        self.inDocumentSearch = QAction(self, shortcut=Qt.CTRL+Qt.Key_F, triggered=self.toggleSearchFrame)
+        self.inDocumentSearch = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F, triggered=self.toggleSearchFrame)
         self.addAction(self.inDocumentSearch)
         self.ui.buttonSearch.clicked.connect(self.showSearchFrame)
         self.ui.widgetInDocumentSearch.searchFinished.connect(self.inDocumentSearchFinished)
@@ -220,7 +221,7 @@ class SourceViewer (QWidget):
                 cursor = self.ui.textEdit.textCursor()
                 cursor.setPosition(block.position())
                 self.ui.textEdit.setTextCursor(cursor)
-                self.ui.textEdit.setFocus(Qt.ActiveWindowFocusReason)
+                self.ui.textEdit.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
     @pyqtSlot()
     def nextMatch (self) -> None:
@@ -327,7 +328,7 @@ class SourceViewer (QWidget):
             text = text + "%u/%u " % (self.curMatch+1, len(self.matches))
         self.ui.labelInfo.setText (text)
 
-    def __scrollToMatch (self, index: int, length: int, highlightColor: QColor) -> None:
+    def __scrollToMatch (self, index: int, length: int, highlightColor: QColor|Qt.GlobalColor) -> None:
         scrollDir = index - self.ui.textEdit.textCursor().position() # Determine if we need to scroll down or up
 
         extras = []

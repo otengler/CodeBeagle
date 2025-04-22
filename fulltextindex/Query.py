@@ -21,7 +21,7 @@ import time
 import re
 import unittest
 from enum import Enum
-from abc import ABC, abstractmethod
+from .IStringMatcher import IStringMatcher
 from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal
 
 reQueryToken = re.compile(r"[\w#*]+|<!.*!>")
@@ -210,7 +210,7 @@ def createFolderFilter(strFilter: str) -> List[Tuple[str,bool]]:
 class QueryError(RuntimeError):
     pass
 
-class Query(ABC):
+class Query (IStringMatcher):
     def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
         self.search = strSearch
         self.folderFilterString = strFolderFilter
@@ -244,10 +244,6 @@ class Query(ABC):
                 return False
 
         return True
-
-    @abstractmethod
-    def matches(self, data: str) -> Iterable[Tuple[int,int]]:
-        pass
 
 # Returns the regular expression which matches a keyword
 def kwExpr(kw: str) -> str:
