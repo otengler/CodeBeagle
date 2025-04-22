@@ -196,7 +196,7 @@ class MatchesOverview (QWidget):
         self.matches: Optional[List[str]] = None
         self.searchData: Optional[FullTextIndex.ContentQuery] = None
         self.resultHandled = True
-        self.sourceFont: QFont = QFont()
+        self.sourceFont: QFont = self.font()
         self.lineHeight = 0
         self.tabWidth = 4
         self.linesOfContext = 2

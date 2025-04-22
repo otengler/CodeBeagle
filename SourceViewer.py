@@ -46,7 +46,7 @@ class SourceViewer (QWidget):
     currentLineBackgroundColor = QColor(240,240,240)
     currentMatchLineBackgroundColor = QColor(170,255,127)
 
-    def __init__ (self, parent: QWidget) -> None:
+    def __init__ (self, parent: Optional[QWidget]) -> None:
         self.matches: List[Tuple[int,int]]
         self.curMatch: int
         self.currentFile: str
@@ -121,7 +121,7 @@ class SourceViewer (QWidget):
     def reloadConfig (self, font: QFont) -> None:
         self.__processConfig(font)
 
-    def __processConfig (self, font: QFont) -> None:
+    def __processConfig (self, font: Optional[QFont]) -> None:
         if font:
             self.sourceFont = font
             self.ui.textEdit.setFont(self.sourceFont)
@@ -349,18 +349,25 @@ class SourceViewer (QWidget):
         self.__updateMatchExtraSelections(extras)
         self.ui.textEdit.scrollToPosition(index, scrollDir)
 
-    def dragEnterEvent(self, event: QDragEnterEvent) -> None: # pylint: disable=no-self-use
+    def dragEnterEvent(self, event: Optional[QDragEnterEvent]) -> None: # pylint: disable=no-self-use
         # check if the data contains urls
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
+        if not event:
+            return
+        
+        if mimeData := event.mimeData():
+            if mimeData.hasUrls():
+                event.acceptProposedAction()
 
-    def dropEvent(self, event: QDropEvent) -> None:
+    def dropEvent(self, event: Optional[QDropEvent]) -> None:
+        if not event:
+            return
+
         # check if the data contains urls
         mimeData = event.mimeData()
         name = None
-        if mimeData.hasUrls() and len(mimeData.urls()) > 0:
+        if mimeData and mimeData.hasUrls() and len(mimeData.urls()) > 0:
             name = mimeData.urls()[0].toLocalFile()
-        elif mimeData.hasText() and len(mimeData.text()) > 0:
+        elif mimeData and mimeData.hasText() and len(mimeData.text()) > 0:
             name = mimeData.text()
         if not name:
             return

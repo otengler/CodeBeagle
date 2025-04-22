@@ -27,12 +27,12 @@ class PathDragListView (QListView):
         self.startPos: Optional[QPoint] = None
 
     def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
-        if event and event.button() == Qt.LeftButton:
+        if event and event.button() == Qt.MouseButton.LeftButton:
             self.startPos = event.pos()
         super ().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: Optional[QMouseEvent]) -> None:
-        if self.startPos and event and event.buttons() and Qt.LeftButton:
+        if self.startPos and event and event.buttons() and Qt.MouseButton.LeftButton:
             distance = (event.pos() - self.startPos).manhattanLength()
             if distance >= QApplication.startDragDistance():
                 self.performDrag()
@@ -40,10 +40,10 @@ class PathDragListView (QListView):
 
     def performDrag(self) -> None:
         if model := self.model():
-            paths = (model.data(index,  Qt.UserRole) for index in self.selectedIndexes())
+            paths = (model.data(index,  Qt.ItemDataRole.UserRole) for index in self.selectedIndexes())
             urls = [QUrl.fromLocalFile(path) for path in paths]
             mimeData = QMimeData()
             mimeData.setUrls (urls)
             drag = QDrag(self)
             drag.setMimeData(mimeData)
-            drag.exec(Qt.CopyAction)
+            drag.exec(Qt.DropAction.CopyAction)

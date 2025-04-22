@@ -23,7 +23,7 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from .Ui_LeaveLastTabWidget import Ui_LeaveLastTabWidget
 
 class LeaveLastTabWidget (QTabWidget):
-    def __init__(self, parent: QWidget=None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.buttonNewTab = None
         self.ui = Ui_LeaveLastTabWidget()

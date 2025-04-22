@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
-from typing import Pattern, Iterator, Tuple, cast
+from typing import Pattern, Iterator, Tuple, cast, Optional
 from PyQt5.QtCore import QObject
 from tools import AsynchronousTask
 from tools.FileTools import fopen
@@ -32,7 +32,7 @@ class SearchParams:
         self.extensionFilter = extensionFilter
         self.caseSensitive = caseSensitive
 
-def searchContent(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
+def searchContent(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: Optional[FullTextIndex.CommonKeywordMap] = None) -> ResultSet:
     """This executes an indexed or a direct search in the file content. This depends on the IndexConfiguration
        setting "indexUpdateMode" and "indexType"."""
     commonKeywordMap = commonKeywordMap or {}
@@ -66,7 +66,7 @@ def searchFileName(parent: QObject, params: SearchParams, indexConf: IndexConfig
     return result
 
 def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration,
-                 commonKeywordMap: FullTextIndex.CommonKeywordMap=None) -> ResultSet:
+                 commonKeywordMap: Optional[FullTextIndex.CommonKeywordMap] = None) -> ResultSet:
 
     """
     Executes a custom search script from disk. The script receives a locals dictionary with all neccessary
@@ -98,7 +98,10 @@ class ScriptSearchData:
 def __customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullTextIndex.CommonKeywordMap,
                         indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
 
-    query, folders, extensions, caseSensitive = params
+    query = params.search
+    folders = params.folderFilter
+    extensions = params.extensionFilter
+    caseSensitive = params.caseSensitive
 
     def performSearch(strSearch: str, strFolderFilter: str="", strExtensionFilter:str="", bCaseSensitive: bool=False) -> FullTextIndex.SearchResult:
         if not strSearch:

@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import List
+from typing import List, Optional
 from PyQt5.QtCore import Qt, QRect, QSize, QModelIndex
 from PyQt5.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
 from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
@@ -46,11 +46,15 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         self.pathBoldFont.setBold (True)
         self.pathBoldFontMetrics = QFontMetrics(self.pathBoldFont)
 
-    def paint (self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-        if option.type != QStyleOption.SO_ViewItem:
+    def paint (self, painter: Optional[QPainter], option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        if not painter or option.type != QStyleOption.SO_ViewItem:
             return
 
-        bSelected = option.state & QStyle.State_Selected
+        model = index.model()
+        if not model:
+            return
+
+        bSelected = option.state & QStyle.State.State_Selected
 
         rect = QRect(option.rect)
         if bSelected:
@@ -60,13 +64,12 @@ class PathVisualizerDelegate (QStyledItemDelegate):
 
         painter.save()
 
-        model = index.model()
-        path, name = os.path.split(model.data(index,  Qt.DisplayRole))
+        path, name = os.path.split(model.data(index,  Qt.ItemDataRole.DisplayRole))
         if not bSelected:
             fileColor = self.fileColor
             if index.row() > 0:
                 indexAbove = model.index(index.row()-1, 0, QModelIndex())
-                pathAbove,_ = os.path.split(model.data (indexAbove, Qt.DisplayRole))
+                pathAbove,_ = os.path.split(model.data (indexAbove, Qt.ItemDataRole.DisplayRole))
                 if pathAbove == path:
                     pathColor = self.samePathColor
                 else:
@@ -85,12 +88,12 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         font = painter.font()
         painter.setFont(self.pathBoldFont)
         painter.setPen(pathColor)
-        bound = painter.drawText (rect, Qt.AlignVCenter, path)
+        bound = painter.drawText (rect, Qt.Alignment.AlignVCenter, path)
 
         painter.setFont (font)
         painter.setPen(fileColor)
         rect.setLeft(bound.right())
-        painter.drawText (rect, Qt.AlignVCenter,  name)
+        painter.drawText (rect, Qt.Alignment.AlignVCenter,  name)
 
         painter.restore()
 

@@ -127,7 +127,7 @@ class SearchPage (QWidget):
         self.searchLocationList: List[IndexConfiguration] = []
         self.unavailableConfigName: str = ""
         self.commonKeywordMap = self.__loadCommonKeywordMap()
-        self.sourceFont: QFont = None
+        self.sourceFont: QFont = self.font()
 
         self.currentConfigName = self.__chooseInitialLocation ()
         self.searchType: SearchType = SearchType.SearchContent
@@ -147,11 +147,12 @@ class SearchPage (QWidget):
 
         # Move some elements of the search bar to a second row if the screen width is too small. This avoid
         # clipping errors if the widget has to paint below minimum size.
-        screenGeometry = QApplication.desktop().screenGeometry()
-        if screenGeometry.width() < 1200:
-            self.__layoutForLowScreenWidth()
+        if desktop := QApplication.desktop():
+            screenGeometry = desktop.screenGeometry()
+            if screenGeometry.width() < 1200:
+                self.__layoutForLowScreenWidth()
 
-    def showEvent(self, _: QShowEvent) -> None:
+    def showEvent(self, _: Optional[QShowEvent]) -> None:
         self.documentShown.emit(self.ui.sourceViewer.currentFile)
 
     @pyqtSlot()
@@ -195,8 +196,8 @@ class SearchPage (QWidget):
         except:
             return {}
 
-    def focusInEvent (self, _: QFocusEvent) -> None:
-        self.ui.comboSearch.setFocus(Qt.ActiveWindowFocusReason)
+    def focusInEvent (self, _: Optional[QFocusEvent]) -> None:
+        self.ui.comboSearch.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
     @pyqtSlot(bool)
     def switchView(self, bChecked: bool) -> None:
@@ -211,7 +212,7 @@ class SearchPage (QWidget):
 
     def __updateSourceFont (self) -> QFont:
         if not self.sourceFont:
-            self.sourceFont = QFont()
+            self.sourceFont = self.font()
 
         config = AppConfig.appConfig().SourceViewer
 
@@ -283,7 +284,7 @@ class SearchPage (QWidget):
         if model.getSelectedFileIndex() != -1:
             model.setEditorState(model.getSelectedFileIndex(), self.ui.sourceViewer.saveEditorState())
         model.setSelectedFileIndex (index.row())
-        name = index.data(Qt.UserRole)
+        name = index.data(Qt.ItemDataRole.UserRole)
         editorState = self.ui.listView.model().getEditorState(index.row())
         self.showFile (name, editorState)
         self.ui.matchesOverview.scrollToFile(index.row())
@@ -311,8 +312,8 @@ class SearchPage (QWidget):
 
     @pyqtSlot(str, int)
     def newSearchBasedOnSelection (self, text: str, modifiers: int) -> None:
-        if modifiers & Qt.ControlModifier:
-            if modifiers & Qt.ShiftModifier:
+        if modifiers & Qt.KeyboardModifier.ControlModifier:
+            if modifiers & Qt.KeyboardModifier.ShiftModifier:
                 # Search in the same search page
                 self.searchForText(text)
             else:
@@ -323,12 +324,12 @@ class SearchPage (QWidget):
         strSearch = self.ui.comboSearch.currentText().strip()
         strFolderFilter = self.ui.comboFolderFilter.currentText().strip()
         strExtensionFilter = self.ui.comboExtensionFilter.currentText().strip()
-        bCaseSensitive = self.ui.checkCaseSensitive.checkState() == Qt.Checked
+        bCaseSensitive = self.ui.checkCaseSensitive.checkState() == Qt.CheckState.Checked
         return SearchAsync.SearchParams(strSearch, strFolderFilter,  strExtensionFilter,  bCaseSensitive)
 
     def __currentIndexConf(self) -> IndexConfiguration:
         i = self.ui.comboLocation.currentIndex()
-        config: IndexConfiguration = self.ui.comboLocation.model().index(i, 0).data(Qt.UserRole)
+        config: IndexConfiguration = self.ui.comboLocation.model().index(i, 0).data(Qt.ItemDataRole.UserRole)
         return config
 
     # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
@@ -366,12 +367,12 @@ class SearchPage (QWidget):
             return
 
         try:
-            result = SearchAsync.customSearch (self, script, params, indexConf,  self.commonKeywordMap)
+            searchResult = SearchAsync.customSearch (self, script, params, indexConf,  self.commonKeywordMap)
         except:
             self.reportCustomSearchFailed ()
         else:
-            self.__updateSearchResult(result)
-            self.__rememberSearchState(params, result)
+            self.__updateSearchResult(searchResult)
+            self.__rememberSearchState(params, searchResult)
 
     def searchForText (self,  text: str) -> None:
         self.ui.comboSearch.setEditText(text)
@@ -487,7 +488,7 @@ class SearchPage (QWidget):
 
     @pyqtSlot(QModelIndex)
     def openFileWithSystem(self, index: QModelIndex) -> None:
-        name = index.data(Qt.UserRole)
+        name = index.data(Qt.ItemDataRole.UserRole)
         url = QUrl.fromLocalFile (name)
         QDesktopServices.openUrl (url)
 
@@ -508,7 +509,7 @@ class SearchPage (QWidget):
             index = model.index(row, 0)
             if result:
                 result += os.linesep
-            result += model.data(index, Qt.UserRole)
+            result += model.data(index, Qt.ItemDataRole.UserRole)
 
         exportFile = QFileDialog.getSaveFileName(
             self,
@@ -556,21 +557,21 @@ class SearchPage (QWidget):
     @pyqtSlot()
     def showRegExTester(self) -> None:
         tester = RegExTesterDlg(self)
-        tester.setAttribute(Qt.WA_DeleteOnClose)
+        tester.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tester.show()
 
     def __copyFullPaths(self,  names: List[str]) -> None:
-        clipboard = QApplication.clipboard()
-        clipboard.setText(os.linesep.join(names))
+        if clipboard := QApplication.clipboard():
+            clipboard.setText(os.linesep.join(names))
 
     def __copyPathOfContainingFolder(self,  name: str) -> None:
-        clipboard = QApplication.clipboard()
-        clipboard.setText(os.path.split(name)[0])
+        if clipboard := QApplication.clipboard():
+            clipboard.setText(os.path.split(name)[0])
 
     def __copyFileNames(self,  names: List[str]) -> None:
-        clipboard = QApplication.clipboard()
-        text = os.linesep.join(os.path.split(name)[1] for name in names)
-        clipboard.setText(text)
+        if clipboard := QApplication.clipboard():
+            text = os.linesep.join(os.path.split(name)[1] for name in names)
+            clipboard.setText(text)
 
     def __browseToFolder (self,  name: str) -> None:
         if os.name != "nt":
@@ -588,7 +589,7 @@ class SearchPage (QWidget):
         indexes = self.ui.listView.selectedIndexes ()
         for index in indexes:
             if index.isValid():
-                filenames.append (index.data(Qt.UserRole))
+                filenames.append (index.data(Qt.ItemDataRole.UserRole))
         return filenames
 
     def __layoutForLowScreenWidth (self) -> None:

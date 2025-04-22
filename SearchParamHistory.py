@@ -17,14 +17,14 @@ class SearchParamHistory:
 
         if self.itemModel.insertRow(0):
             firstRow = self.itemModel.index(0, 0)
-            self.itemModel.setItemData(firstRow, {Qt.DisplayRole: item})
+            self.itemModel.setItemData(firstRow, {Qt.ItemDataRole.DisplayRole: item})
 
         storeItems = [item]
         if self.itemModel.rowCount() > 0:    
             toDelete=[]
             for row in range(1, self.itemModel.rowCount()):
                 index = self.itemModel.index(row, 0)
-                previousItem = self.itemModel.data(index, Qt.DisplayRole)
+                previousItem = self.itemModel.data(index, Qt.ItemDataRole.DisplayRole)
                 if item == previousItem:
                     toDelete.append(row)
                 else:
@@ -50,7 +50,7 @@ class SearchParamHistory:
             self.itemModel.beginInsertRows(QModelIndex(), 0, len(strList)-1)
             if self.itemModel.insertRows(0, len(strList)):
                 for row in range(len(strList)):
-                    self.itemModel.setItemData(self.itemModel.index(row, 0), {Qt.DisplayRole: strList[row]})
+                    self.itemModel.setItemData(self.itemModel.index(row, 0), {Qt.ItemDataRole.DisplayRole: strList[row]})
             self.itemModel.endInsertRows()
         else:
             # Clear model

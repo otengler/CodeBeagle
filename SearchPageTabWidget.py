@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
-from typing import List
+from typing import List, Optional
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPushButton
@@ -48,13 +48,13 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     configChanged = pyqtSignal(list)
     requestWindowTitleChange = pyqtSignal(str)
 
-    def __init__(self, parent:QWidget=None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         self.buttonSettings: QPushButton
         self.buttonUpdate: QPushButton
         self.indexOfUpdateButton:int
         self.buttonHelp: QPushButton
         self.buttonAbout: QPushButton
-        self.labelUpdate: QLabel
+        self.labelUpdate: Optional[QLabel]
 
         super().__init__(parent)
 
@@ -86,7 +86,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.actionTab6 = createQAction(self, shortcut=Qt.KeyboardModifier.AltModifier + Qt.Key.Key_6, triggered= self.activateTab6)
         self.addAction(self.actionTab6)
 
-        self.indexUpdateTimer: QTimer = None
+        self.indexUpdateTimer: Optional[QTimer] = None
         self.indexTriggerPath = os.path.join (AppConfig.userDataPath (),  "TriggerUpdate")
 
         self.handleUncleanShutdown()
@@ -138,7 +138,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     # The settings allow to configure search locations.
     @pyqtSlot()
-    def openSettings(self, createInitialLocation: bool=False, locationToAdd: IndexConfiguration.IndexConfiguration=None) -> None:
+    def openSettings(self, createInitialLocation: bool=False, locationToAdd: Optional[IndexConfiguration.IndexConfiguration] = None) -> None:
         try:
             config = AppConfig.userConfig()
             globalConfig = AppConfig.globalConfig()
@@ -196,7 +196,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def openHelp(self) -> None:
         from dialogs.HelpViewerDialog import HelpViewerDialog
         helpDialog = HelpViewerDialog(self)
-        helpDialog.setAttribute(Qt.WA_DeleteOnClose)
+        helpDialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         helpDialog.showFile("help.html")
         helpDialog.show()
 
@@ -257,7 +257,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     def __checkIndexUpdateProgress (self) -> None:
         running = self.__indexUpdateRunning()
         self.__maintainRunningIndexUpdates(running)
-        if not running:
+        if not running and self.indexUpdateTimer:
             self.indexUpdateTimer.stop()
             self.__showIndexUpdateInProgress(False)
             self.__informAboutIndexUpdate("Index update finshed")
@@ -283,9 +283,12 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.disabledIndexes = running
 
     def __informAboutIndexUpdate(self,  text: str) -> None:
-        pos = self.labelUpdate.parent().mapToGlobal(self.labelUpdate.pos())
-        pos.setX(pos.x())
-        QToolTip.showText (pos, text,  self)
+        if labelUpdate := self.labelUpdate:
+            if parent := labelUpdate.parent():
+                if isinstance(parent, QWidget):
+                    pos = parent.mapToGlobal(self.labelUpdate.pos())
+                    pos.setX(pos.x())
+                    QToolTip.showText (pos, text,  self)
 
     def __addAnimatedUpdateLabel (self,  hbox: QHBoxLayout,  text: str) -> QWidget:
         widget = AnimatedProgressWidget (self, text)
