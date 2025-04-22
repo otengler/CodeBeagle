@@ -25,7 +25,7 @@ from .Ui_LeaveLastTabWidget import Ui_LeaveLastTabWidget
 class LeaveLastTabWidget (QTabWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.buttonNewTab = None
+        self.buttonNewTab: Optional[QPushButton] = None
         self.ui = Ui_LeaveLastTabWidget()
         self.ui.setupUi(self)
         self.setupUi()
@@ -54,7 +54,7 @@ class LeaveLastTabWidget (QTabWidget):
     def addButtonToCornerWidget (self, hbox: QHBoxLayout, name: str, iconFile: str, handler: Callable) -> QPushButton:
         button = QPushButton(name, self)
         icon = QIcon()
-        icon.addPixmap(QPixmap("resources/" + iconFile), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap("resources/" + iconFile), QIcon.Mode.Normal, QIcon.State.Off)
         button.setIcon(icon)
         button.setFlat(True)
         hbox.addWidget (button)
@@ -67,7 +67,8 @@ class LeaveLastTabWidget (QTabWidget):
             return
         widget = self.widget(index)
         super().removeTab(index)
-        widget.close()
+        if widget:
+            widget.close()
 
     def setNewTabButtonText (self, text: str) -> None:
         if self.buttonNewTab:
@@ -78,18 +79,18 @@ class LeaveLastTabWidget (QTabWidget):
         self.strTabName = strTabName
 
     @pyqtSlot()
-    def addNewTab(self) -> QWidget:
+    def addNewTab(self) -> QWidget|None:
         if not self.objType:
             return None
         prevTabWidget = self.currentWidget()
         newTabWidget = self.objType(self)
-        newTabWidget.setAttribute(Qt.WA_DeleteOnClose)
+        newTabWidget.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.addTab(newTabWidget, self.strTabName)
         self.setCurrentWidget(newTabWidget)
         self.newTabAdded(prevTabWidget, newTabWidget)
         return newTabWidget
 
-    def newTabAdded(self, prevTabWidget: QWidget, newTabWidget: QWidget) -> None:
+    def newTabAdded(self, prevTabWidget: Optional[QWidget], newTabWidget: QWidget) -> None:
         pass
 
     def removeCurrentTab(self) -> None:
@@ -101,13 +102,18 @@ class LeaveLastTabWidget (QTabWidget):
     def focusSetter(self, index: int) -> None:
         widget = self.widget(index)
         if widget:
-            widget.setFocus(Qt.ActiveWindowFocusReason)
+            widget.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
         """Show context menu which offers the possibility to close multiple tabs at once"""
-        if event.button() != Qt.RightButton or self.count() == 1:
+        if not event:
             return
-        tabIndex = self.tabBar().tabAt(event.pos())
+        if event.button() != Qt.MouseButton.RightButton or self.count() == 1:
+            return
+        tabBar = self.tabBar()
+        if not tabBar:
+            return
+        tabIndex = tabBar.tabAt(event.pos())
         if tabIndex == -1:
             return
         menu = QMenu()

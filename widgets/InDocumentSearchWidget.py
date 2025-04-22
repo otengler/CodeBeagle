@@ -154,7 +154,7 @@ class InDocumentSearchWidget(QWidget):
         self.__startSearch()
 
     def __optionsChanged(self) -> None:
-        self.ui.editSearch.setFocus(Qt.ActiveWindowFocusReason)
+        self.ui.editSearch.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
         self.__resetColor()
         self.__updateSearchRegex()
         self.__startSearch()
@@ -223,6 +223,6 @@ class InDocumentSearchWidget(QWidget):
         self.ui.buttonSearchPrevious.setEnabled(self.currentMatch > 0)
         self.ui.buttonSearchNext.setEnabled(self.currentMatch + 1 < len(self.matches))
 
-    def focusInEvent (self, _: QFocusEvent) -> None:
-        self.ui.editSearch.setFocus(Qt.ActiveWindowFocusReason)
+    def focusInEvent (self, _: Optional[QFocusEvent]) -> None:
+        self.ui.editSearch.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 

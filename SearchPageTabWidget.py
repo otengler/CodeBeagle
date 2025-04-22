@@ -310,7 +310,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.labelUpdate.hide()
             self.buttonSettings.setEnabled(True)
 
-    def newTabAdded(self,  prevTabWidget:SearchPage, newTabWidget:SearchPage) -> None:
+    def newTabAdded(self,  prevTabWidget:Optional[SearchPage], newTabWidget:SearchPage) -> None:
         """
         This is called by the base class when a new tab is added. We use this to connect the request for a new search
         to open up in a new tab.
@@ -331,8 +331,9 @@ class SearchPageTabWidget (LeaveLastTabWidget):
     @pyqtSlot(str, str)
     def searchInNewTab (self, text: str, searchLocationName: str) -> None:
         searchPage = self.addNewTab ()
-        searchPage.setCurrentSearchLocation(searchLocationName)
-        searchPage.searchForText(text)
+        if searchPage:
+            searchPage.setCurrentSearchLocation(searchLocationName)
+            searchPage.searchForText(text)
 
     @pyqtSlot(QWidget, str)
     def changeTabName (self,  searchPage: SearchPage,  text: str) -> None:

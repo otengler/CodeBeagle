@@ -54,7 +54,7 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         if not model:
             return
 
-        bSelected = option.state & QStyle.State.State_Selected
+        bSelected = option.state & QStyle.StateFlag.State_Selected
 
         rect = QRect(option.rect)
         if bSelected:
@@ -88,12 +88,12 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         font = painter.font()
         painter.setFont(self.pathBoldFont)
         painter.setPen(pathColor)
-        bound = painter.drawText (rect, Qt.Alignment.AlignVCenter, path)
-
-        painter.setFont (font)
-        painter.setPen(fileColor)
-        rect.setLeft(bound.right())
-        painter.drawText (rect, Qt.Alignment.AlignVCenter,  name)
+        bound = painter.drawText (rect, Qt.AlignmentFlag.AlignVCenter, path)
+        if bound:
+            painter.setFont (font)
+            painter.setPen(fileColor)
+            rect.setLeft(int(bound.right()))
+            painter.drawText (rect, Qt.AlignmentFlag.AlignVCenter,  name)
 
         painter.restore()
 

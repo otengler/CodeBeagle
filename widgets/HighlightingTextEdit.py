@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Tuple, Optional, Iterator
+from typing import Tuple, Optional, Iterator, cast
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, pyqtSlot
 from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor
@@ -32,9 +32,9 @@ class HighlightingTextEdit (QPlainTextEdit):
     updateNeeded = pyqtSignal()
     parentheses = [('(',')'), ('[',']'), ('{', '}')]
 
-    highlightOutlineColor = Qt.darkGray
-    highlightSolidBackgroundColor = Qt.lightGray
-    highlightSolidForegroundColor = Qt.black
+    highlightOutlineColor = Qt.GlobalColor.darkGray
+    highlightSolidBackgroundColor = Qt.GlobalColor.lightGray
+    highlightSolidForegroundColor = Qt.GlobalColor.black
 
     def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
@@ -46,7 +46,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.setUndoRedoEnabled(False)
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.setReadOnly(True)
-        self.setTextInteractionFlags(Qt.TextSelectableByKeyboard|Qt.TextSelectableByMouse)
+        self.setTextInteractionFlags(cast(Qt.TextInteractionFlag, Qt.TextInteractionFlag.TextSelectableByKeyboard|Qt.TextInteractionFlag.TextSelectableByMouse))
 
         self.lineNumberArea: Optional[LineNumberArea] = None
 
@@ -55,7 +55,11 @@ class HighlightingTextEdit (QPlainTextEdit):
 
     @pyqtSlot()
     def cursorChanged(self) -> None:
-        text = self.document().toPlainText()
+        document = self.document()
+        if not document:
+            return
+        
+        text = document.toPlainText()
         pos = self.textCursor().position()
         char = text[pos:pos+1]
         paren = self.__isParenthesis(char)
@@ -75,7 +79,8 @@ class HighlightingTextEdit (QPlainTextEdit):
         highlightParenthesis = not self.textCursor().selectedText()
         if highlightParenthesis != self.highlightParenthesis:
             self.highlightParenthesis = highlightParenthesis
-            self.viewport().update()
+            if viewport := self.viewport():
+                viewport.update()
 
     @pyqtSlot()
     def jumpToMatchingBrace(self) -> None:
@@ -96,7 +101,11 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
 
     def __findMatchingParenthesis(self, char: str, start: int, paren: Tuple[str, str]) -> int:
-        text = self.document().toPlainText()
+        document = self.document()
+        if not document:
+            return -1
+        
+        text = document.toPlainText()
         openCount = 1
         if char == paren[0]:
             direction = 1
@@ -138,25 +147,28 @@ class HighlightingTextEdit (QPlainTextEdit):
                 self.lineNumberArea.close()
                 self.lineNumberArea = None
 
-    def resizeEvent(self, e: QResizeEvent) -> None:
+    def resizeEvent(self, e: Optional[QResizeEvent]) -> None:
         super().resizeEvent(e)
-        if self.lineNumberArea:
+        if self.lineNumberArea and e:
             self.lineNumberArea.reactOnResize(e)
 
-    def setPlainText(self, text: str) -> None:
-        self.highlighter.setText(text)
-        super().setPlainText(text)
+    def setPlainText(self, text: Optional[str]) -> None:
+        if text:
+            self.highlighter.setText(text)
+            super().setPlainText(text)
 
     def setDynamicHighlight(self, text: str) -> None:
         if self.dynamicHighlight != text:
             self.dynamicHighlight = text
-            self.viewport().update()
+            if viewport := self.viewport():
+                viewport.update()
 
     def setParenthesisPair(self, pair: Optional[Tuple[int,int]]) -> None:
         if not pair and not self.parenthesisPair:
             return
         self.parenthesisPair = pair
-        self.viewport().update()
+        if viewport := self.viewport():
+            viewport.update()
 
     def setFont(self, font: QFont) -> None:
         super().setFont (font)
@@ -170,9 +182,10 @@ class HighlightingTextEdit (QPlainTextEdit):
         Evaluate syntax highlighting again
         """
         self.__highlightUpdateCounter += 1 # causes all blocks to highlight again
-        self.viewport().update()
+        if viewport := self.viewport():
+            viewport.update()
 
-    def paintEvent(self, event: QPaintEvent) -> None:
+    def paintEvent(self, event: Optional[QPaintEvent]) -> None:
         firstVisibleBlock: QTextBlock = self.firstVisibleBlock()
         bColorizedBlocks = self.__colorizeVisibleBlocks(firstVisibleBlock)
 
@@ -211,8 +224,8 @@ class HighlightingTextEdit (QPlainTextEdit):
     def __highlightPartOfLine(self, painter: QPainter, metrics: QFontMetrics, block: QTextBlock, bound: QRect, startIndex: int, length: int, style: HighlightStyle) -> None:
         text = block.text()[startIndex:startIndex+length]
         partBefore = block.text()[:startIndex]
-        rectBefore = metrics.boundingRect(bound, Qt.TextExpandTabs, partBefore,  self.tabStopWidth())
-        rectText = metrics.boundingRect(bound, Qt.TextExpandTabs,  text, self.tabStopWidth())
+        rectBefore = metrics.boundingRect(bound, Qt.TextFlag.TextExpandTabs, partBefore,  self.tabStopWidth())
+        rectText = metrics.boundingRect(bound, Qt.TextFlag.TextExpandTabs,  text, self.tabStopWidth())
 
         if style == HighlightStyle.Outline:
             rectResult = QRect(rectBefore.right()+4,  rectBefore.top()+1,  rectText.width()+2,  rectText.height()-2)
@@ -248,16 +261,18 @@ class HighlightingTextEdit (QPlainTextEdit):
                         formatRange.length = length
                     if formatRange.length >= 0:
                         addFormats.append(formatRange)
-                block.layout().setAdditionalFormats(addFormats)
+                if layout := block.layout():
+                    layout.setAdditionalFormats(addFormats)
                 block.setUserState(self.__highlightUpdateCounter)
         return bColorizedBlocks
 
     def __visibleBlocks (self, firstVisibleBlock: QTextBlock) -> Iterator[Tuple[QTextBlock, QRect]]:
-        size = self.viewport().size()
-        block = firstVisibleBlock
-        while block.isValid():
-            bound = self.blockBoundingGeometry(block).translated(self.contentOffset())
-            if bound.top() > size.height():
-                break
-            yield block, QRect(int(bound.left()), int(bound.top()), int(bound.width()), int(bound.height()))
-            block = block.next()
+        if viewport := self.viewport():
+            size = viewport.size()
+            block = firstVisibleBlock
+            while block.isValid():
+                bound = self.blockBoundingGeometry(block).translated(self.contentOffset())
+                if bound.top() > size.height():
+                    break
+                yield block, QRect(int(bound.left()), int(bound.top()), int(bound.width()), int(bound.height()))
+                block = block.next()
