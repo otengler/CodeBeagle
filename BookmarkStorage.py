@@ -22,28 +22,55 @@ from PyQt5.QtCore import QSettings
 import AppConfig
 
 class BookmarkStorage:
-    def __init__(self) -> None:
-        self.bookmarks: Optional[dict[str, list[int]]] = None
+    BookmarkStorageKey = "bookmarks"
 
-    def getBookmarksForFile(self, fileName: str) -> list[int]:
-        return self.__readBookmarks().get(fileName) or []
+    def __init__(self) -> None:
+        self.bookmarks: Optional[dict[str, set[int]]] = None
+
+    def getBookmarksForFile(self, fileName: str) -> set[int]:
+        return self.__readBookmarks().get(fileName) or set()
     
-    def setBookmarksForFile(self, fileName, lines: list[int]) -> None:
+    def setBookmarksForFile(self, fileName, lines: set[int]) -> None:
         bookmarks = self.__readBookmarks()
         bookmarks[fileName] = lines
         settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-        settings.setValue("bookmarks", json.dumps(self.bookmarks))
+        settings.setValue(self.BookmarkStorageKey, self.__serializeBookmarks())
 
-    def __readBookmarks(self) -> dict[str, list[int]]:
+    def toggleBookmarkForFile(self, fileName, line: int) -> set[int]:
+        lines = self.getBookmarksForFile(fileName)
+        if line in lines:
+            lines.remove(line)
+        else:
+            lines.add(line)
+        self.setBookmarksForFile(fileName, lines)
+        return lines
+
+    def __readBookmarks(self) -> dict[str, set[int]]:
         if self.bookmarks is None:
             settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-            try:
-                self.bookmarks = json.loads(settings.value("bookmarks"))
-                if self.bookmarks is None or not isinstance(self.bookmarks, dict):
-                    self.bookmarks = {}
-            except:
-                self.bookmarks = {}
+            self.bookmarks = self.__deserializeBookmarks(settings.value(self.BookmarkStorageKey))
         return self.bookmarks
+    
+    def __serializeBookmarks(self) -> str:
+        data = {}
+        if self.bookmarks:
+            for key, value in self.bookmarks.items():
+                data[key] = [v for v in value]
+        return json.dumps(data)
+    
+    def __deserializeBookmarks(self, serialized: str) -> dict[str, set[int]]:
+        bookmarks = {}
+        try:
+            deserialized = json.loads(serialized)
+            if deserialized and isinstance(deserialized, dict):
+                for fileName, lines in deserialized.items():
+                    lineSet = set()
+                    for line in lines:
+                        lineSet.add(line)
+                    bookmarks[fileName] = lineSet
+        except:
+            bookmarks = {}
+        return bookmarks
 
 bookmarkStorage = BookmarkStorage()
 def getBookmarkStorage() -> BookmarkStorage:

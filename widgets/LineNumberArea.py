@@ -50,9 +50,9 @@ class LineNumberArea (QWidget):
         
         self.bookmarkLines: set[int] = set()
 
-    def setBookmarks(self, lines: set[int]) -> None:
+    def setBookmarks(self, lines: Optional[set[int]]) -> None:
         if lines is None:
-            lines = []
+            lines = set()
         else:
             self.bookmarkLines = lines
         self.repaint()

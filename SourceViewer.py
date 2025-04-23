@@ -25,6 +25,7 @@ from tools.FileTools import Encoding, freadallEx
 from AppConfig import appConfig
 from fulltextindex import FullTextIndex
 import HighlightingRulesCache
+from BookmarkStorage import getBookmarkStorage
 from widgets.SyntaxHighlighter import SyntaxHighlighter
 from widgets.InDocumentSearchWidget import InDocumentSearchResult
 from Ui_SourceViewer import Ui_SourceViewer
@@ -132,7 +133,15 @@ class SourceViewer (QWidget):
         if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
             self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
         if self.ui.textEdit.areLineNumbersShown() != config.showLineNumbers:
-            self.ui.textEdit.showLineNumbers(config.showLineNumbers)
+            self.ui.textEdit.showLineNumbers(config.showLineNumbers, enableBookmarks=True)
+            if self.ui.textEdit.lineNumberArea:
+                self.ui.textEdit.lineNumberArea.bookmarkChanged.connect(self.bookmarkChanged)
+
+    @pyqtSlot(int)
+    def bookmarkChanged(self, line: int) -> None:
+        if self.currentFile and self.ui.textEdit.lineNumberArea:
+            lines = getBookmarkStorage().toggleBookmarkForFile(self.currentFile, line)
+            self.ui.textEdit.lineNumberArea.setBookmarks(lines)
 
     def __reset (self) -> None:
         self.currentFile = ""
@@ -146,6 +155,8 @@ class SourceViewer (QWidget):
         self.ui.textEdit.setDynamicHighlight(None)
         self.ui.listMatchesWidget.clear()
         self.__hideInDocumentSearch()
+        if self.ui.textEdit.lineNumberArea:
+            self.ui.textEdit.lineNumberArea.setBookmarks(None)
 
     def __setMatchIndex(self, index: int) -> None:
         self.curMatch = index
@@ -187,6 +198,10 @@ class SourceViewer (QWidget):
         rules = HighlightingRulesCache.rules().getRulesByFileName(name,  self.sourceFont)
         self.ui.textEdit.highlighter.setHighlightingRules (rules)
         self.ui.textEdit.setPlainText(text)
+        if self.ui.textEdit.lineNumberArea:
+            lines = getBookmarkStorage().getBookmarksForFile(self.currentFile)
+            self.ui.textEdit.lineNumberArea.setBookmarks(lines)
+
         self.ui.widgetInDocumentSearch.setText(text)
 
         if self.searchData:

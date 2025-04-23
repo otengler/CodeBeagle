@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Tuple, Optional, Iterator, cast
 from enum import IntEnum
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF
 from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor, QColor
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 from .LineNumberArea import LineNumberArea
@@ -63,10 +63,10 @@ class HighlightingTextEdit (QPlainTextEdit):
     def areLineNumbersShown(self) -> bool:
         return bool(self.lineNumberArea)
 
-    def showLineNumbers(self, show: bool, firstLineNumber:int=1) -> None:
+    def showLineNumbers(self, show: bool, firstLineNumber:int=1, enableBookmarks:bool=False) -> None:
         if show:
             if not self.lineNumberArea:
-                self.lineNumberArea = LineNumberArea(self, firstLineNumber, enableBookmarks=True)
+                self.lineNumberArea = LineNumberArea(self, firstLineNumber, enableBookmarks=enableBookmarks)
                 self.lineNumberArea.show()
         else:
             if self.lineNumberArea:
