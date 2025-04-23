@@ -20,10 +20,11 @@ import sys
 from PyQt5.QtWidgets import QDialog, QApplication, QWidget
 from PyQt5 import QtCore
 import AppConfig
+from typing import Optional
 from .Ui_AboutDialog import Ui_AboutDialog
 
 class AboutDialog(QDialog):
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
         self.ui = Ui_AboutDialog()
         self.ui.setupUi(self)

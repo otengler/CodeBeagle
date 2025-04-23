@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import cast
+from typing import cast, Optional
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, QSettings
 from PyQt5.QtWidgets import QDialog, QWidget, QPushButton
@@ -31,8 +31,8 @@ class ButtonType(IntEnum):
     No = 8
 
 class UserHintDialog (QDialog):
-    def __init__ (self, parent: QWidget) -> None:
-        super().__init__(parent,  Qt.Tool)
+    def __init__ (self, parent: Optional[QWidget]) -> None:
+        super().__init__(parent,  Qt.WindowType.Tool)
         self.ui = Ui_UserHintDialog()
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
@@ -50,12 +50,12 @@ class UserHintDialog (QDialog):
 
     def setShowHintAgainCheckbox (self, bCheck: bool) -> None:
         if bCheck:
-            self.ui.checkShowHint.setCheckState(Qt.Checked)
+            self.ui.checkShowHint.setCheckState(Qt.CheckState.Checked)
         else:
-            self.ui.checkShowHint.setCheckState(Qt.Unchecked)
+            self.ui.checkShowHint.setCheckState(Qt.CheckState.Unchecked)
 
     def showHintAgain(self) -> bool:
-        return cast(bool, self.ui.checkShowHint.checkState() == Qt.Checked)
+        return cast(bool, self.ui.checkShowHint.checkState() == Qt.CheckState.Checked)
 
     def addButton (self, buttonID: ButtonType, bIsDefault:bool=False) -> None:
         if not self.button1:
@@ -102,8 +102,8 @@ def hintWouldBeShown(hintID: str) -> bool:
 # Show the user a hint which can be suppressed with a check box in the future.
 # hintID is an arbitrary string which must be unique for each user hint. The return value is the button which was pressed to
 # close the dialog or NoResult if the hint dialog was not shown or closed by any other mean.
-def showUserHint (parent: QWidget, hintID: str, title: str, htmlText: str, button1: ButtonType, default1:bool=True,
-                  button2:ButtonType=None, default2:bool=False, bShowHintAgain:bool=False) -> ButtonType:
+def showUserHint (parent: Optional[QWidget], hintID: str, title: str, htmlText: str, button1: ButtonType, default1:bool=True,
+                  button2: Optional[ButtonType]=None, default2:bool=False, bShowHintAgain:bool=False) -> ButtonType:
 
     settings = QSettings(AppConfig.appCompany, AppConfig.appName)
     hintStore = "hint_" + hintID

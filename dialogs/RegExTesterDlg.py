@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import QDialog, QApplication, QWidget
 from .Ui_RegExTesterDlg import Ui_RegExTesterDlg
 
 class ExprHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent: QWidget=None) -> None:
+    def __init__(self, parent: Optional[QWidget]=None) -> None:
         super().__init__(parent)
 
         self.bracketFormat = QTextCharFormat()
@@ -36,12 +36,13 @@ class ExprHighlighter(QSyntaxHighlighter):
         self.repeatFormat.setFontWeight(QFont.Bold)
         self.repeatFormat.setForeground(RegExTesterDlg.repeatColor)
 
-    def highlightBlock(self, text: str) -> None:
-        for i, c in enumerate(text):
-            if c in ("(", ")", "{", "}", "[", "]"):
-                self.setFormat(i, 1,  self.bracketFormat)
-            if c in ("*", "+", "?"):
-                self.setFormat(i, 1,  self.repeatFormat)
+    def highlightBlock(self, text: Optional[str]) -> None:
+        if text:
+            for i, c in enumerate(text):
+                if c in ("(", ")", "{", "}", "[", "]"):
+                    self.setFormat(i, 1,  self.bracketFormat)
+                if c in ("*", "+", "?"):
+                    self.setFormat(i, 1,  self.repeatFormat)
 
 class SearchModes(IntEnum):
     SearchFirst = 1
@@ -49,17 +50,17 @@ class SearchModes(IntEnum):
     Match = 3
 
 class TextHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent: QWidget=None) -> None:
+    def __init__(self, parent: Optional[QWidget]=None) -> None:
         super().__init__(parent)
 
         self.matchFormat = QTextCharFormat()
         self.matchFormat.setBackground(RegExTesterDlg.matchBackgroundColor)
-        self.matchFormat.setForeground(Qt.darkBlue)
+        self.matchFormat.setForeground(Qt.GlobalColor.darkBlue)
         self.groupFormats: List[QTextCharFormat] = []
         for color in RegExTesterDlg.groupColors:
             groupFormat = QTextCharFormat()
             groupFormat.setBackground(color)
-            groupFormat.setForeground(Qt.darkBlue)
+            groupFormat.setForeground(Qt.GlobalColor.darkBlue)
             self.groupFormats.append(groupFormat)
 
         self.expr: Optional[Pattern] = None
@@ -81,8 +82,8 @@ class TextHighlighter(QSyntaxHighlighter):
         self.bColorizeGroups = bColorizeGroups
         self.rehighlight()
 
-    def highlightBlock(self, text: str) -> None:
-        if not self.expr:
+    def highlightBlock(self, text: Optional[str]) -> None:
+        if not text or not self.expr:
             return
 
         if self.iMode == SearchModes.Match:
@@ -117,12 +118,12 @@ class TextHighlighter(QSyntaxHighlighter):
                     groupFormatIndex = (groupFormatIndex+1)%len(self.groupFormats)
 
 class RegExTesterDlg (QDialog):
-    bracketColor = Qt.darkBlue
-    repeatColor = Qt.darkRed
-    matchBackgroundColor = Qt.yellow
-    groupColors = [Qt.green, Qt.cyan, Qt.gray, Qt.blue,  Qt.magenta]
+    bracketColor = Qt.GlobalColor.darkBlue
+    repeatColor = Qt.GlobalColor.darkRed
+    matchBackgroundColor = Qt.GlobalColor.yellow
+    groupColors = [Qt.GlobalColor.green, Qt.GlobalColor.cyan, Qt.GlobalColor.gray, Qt.GlobalColor.blue,  Qt.GlobalColor.magenta]
 
-    def __init__ (self, parent: QWidget=None) -> None:
+    def __init__ (self, parent: Optional[QWidget]=None) -> None:
         super().__init__(parent)
         self.ui = Ui_RegExTesterDlg()
         self.ui.setupUi(self)

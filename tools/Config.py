@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import re
 import types
 import unittest
-from typing import TypeVar, Any, Dict, Callable, Tuple, Iterator, cast
+from typing import TypeVar, Any, Dict, Callable, Tuple, Iterator, cast, Optional
 from tools.FileTools import fopen
 
 T = TypeVar('T')
@@ -69,7 +69,7 @@ def plainTypeMapper(t: Any) -> Tuple[Callable, Callable, Callable]:
 # c.sub = Config()
 # c.sub.a = "Text"
 class Config:
-    def __init__ (self, name: str="", dataMap: Dict[str,Any]=None,  configLines:Iterator[str]=None,  typeInfoFunc: Callable=None) -> None:
+    def __init__ (self, name: str="", dataMap: Optional[Dict[str,Any]]=None,  configLines:Optional[Iterator[str]]=None,  typeInfoFunc: Optional[Callable]=None) -> None:
         self.__data = dataMap or {}
         self.__typeMapper: Dict[str,Tuple[Callable,Callable,Callable]] = {}
         if typeInfoFunc:

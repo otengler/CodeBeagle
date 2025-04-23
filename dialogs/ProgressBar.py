@@ -19,22 +19,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QDialog, QWidget
+from typing import Optional
 from .Ui_ProgressBar import Ui_ProgressBar
 
 class ProgressBar (QDialog):
     onCancelClicked = pyqtSignal()
 
-    def __init__ (self, parent: QWidget, bEnableCancel: bool=False) -> None:
-        super().__init__(parent, Qt.SplashScreen)
+    def __init__ (self, parent: Optional[QWidget], bEnableCancel: bool=False) -> None:
+        super().__init__(parent, Qt.WindowType.SplashScreen)
         self.ui = Ui_ProgressBar()
         self.ui.setupUi(self)
         self.ui.frame.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         if not bEnableCancel:
             self.ui.buttonCancel.setEnabled(False)
 
-    def keyPressEvent(self, e: QKeyEvent) -> None:
+    def keyPressEvent(self, e: Optional[QKeyEvent]) -> None:
         """Disable closing the dialog with Esc and emit onCancelClicked instead."""
-        if e.key() != Qt.Key_Escape:
+        if e and e.key() != Qt.Key.Key_Escape:
             super ().keyPressEvent(e)
         else:
             self.onCancelClicked.emit()

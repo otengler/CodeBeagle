@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import cast
+from typing import cast, Optional
 from PyQt5.QtGui import QFocusEvent
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QFileDialog
@@ -64,8 +64,8 @@ class SettingsItem (QWidget):
         self.ui.comboIndexType.addItem("Index file name")
         self.ui.comboIndexType.addItem("Index file content and name")
 
-    def focusInEvent (self, _: QFocusEvent) -> None:
-        self.ui.editName.setFocus(Qt.ActiveWindowFocusReason)
+    def focusInEvent (self, _: Optional[QFocusEvent]) -> None:
+        self.ui.editName.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
     @pyqtSlot(str)
     def nameEdited(self, text: str) -> None:

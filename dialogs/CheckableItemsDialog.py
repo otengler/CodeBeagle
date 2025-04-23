@@ -20,10 +20,11 @@ from typing import List,Tuple
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QApplication, QDialog, QWidget
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from typing import cast, Optional
 from .Ui_CheckableItemsDialog import Ui_CheckableItemsDialog
 
 class CheckableItemsDialog(QDialog):
-    def __init__(self, title: str, bCheckAllState: bool, parent: QWidget) -> None:
+    def __init__(self, title: str, bCheckAllState: bool, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
         self.ui = Ui_CheckableItemsDialog()
         self.ui.setupUi(self)
@@ -37,36 +38,36 @@ class CheckableItemsDialog(QDialog):
 
         self.ui.listViewItems.setModel(self.model)
         if bCheckAllState:
-            self.ui.checkToggleAll.setCheckState(Qt.Checked)
+            self.ui.checkToggleAll.setCheckState(Qt.CheckState.Checked)
         else:
-            self.ui.checkToggleAll.setCheckState(Qt.Unchecked)
+            self.ui.checkToggleAll.setCheckState(Qt.CheckState.Unchecked)
 
     def addItem(self, name: str, bCheck: bool=True) -> None:
         item = QStandardItem(name)
-        item.setFlags(Qt.ItemIsUserCheckable | item.flags())
+        item.setFlags(cast(Qt.ItemFlag, Qt.ItemFlag.ItemIsUserCheckable | item.flags()))
         if bCheck:
-            item.setData(Qt.Checked, Qt.CheckStateRole)
+            item.setData(Qt.CheckState.Checked, Qt.ItemDataRole.CheckStateRole)
         else:
-            item.setData(Qt.Unchecked, Qt.CheckStateRole)
+            item.setData(Qt.CheckState.Unchecked, Qt.ItemDataRole.CheckStateRole)
         self.model.appendRow(item)
 
     def checkedItems(self) -> List[Tuple[int,str]]:
         items = []
         for i in range(self.model.rowCount()):
             index = self.model.index(i, 0)
-            if index.data(Qt.CheckStateRole) == Qt.Checked:
+            if index.data(Qt.ItemDataRole.CheckStateRole) == Qt.CheckState.Checked:
                 items.append((i, index.data()))
         return items
 
     @pyqtSlot(bool)
     def checkAll(self, bCheckAll: bool) -> None:
         if bCheckAll:
-            flag = Qt.Checked
+            flag = Qt.CheckState.Checked
         else:
-            flag = Qt.Unchecked
+            flag = Qt.CheckState.Unchecked
         for i in range(self.model.rowCount()):
             index = self.model.index(i, 0)
-            self.model.setData(index, flag, Qt.CheckStateRole)
+            self.model.setData(index, flag, Qt.ItemDataRole.CheckStateRole)
 
 def main() -> None:
     import sys

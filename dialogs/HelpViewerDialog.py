@@ -19,11 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QApplication, QWidget
 from tools.FileTools import freadall
+from typing import cast, Optional
 from .Ui_HelpViewerDialog import Ui_HelpViewerDialog
 
 class HelpViewerDialog (QDialog):
-    def __init__ (self, parent: QWidget) -> None:
-        super().__init__(parent,  Qt.Dialog | Qt.WindowMinMaxButtonsHint)
+    def __init__ (self, parent: Optional[QWidget]) -> None:
+        super().__init__(parent,  cast(Qt.WindowType, Qt.WindowType.Dialog | Qt.WindowType.WindowMinMaxButtonsHint))
         self.ui = Ui_HelpViewerDialog()
         self.ui.setupUi(self)
         self.ui.okButton.clicked.connect(self.accept)

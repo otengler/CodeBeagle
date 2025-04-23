@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, Optional, Iterator, cast
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF, pyqtSlot
-from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor
+from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor, QColor
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 from .LineNumberArea import LineNumberArea
 from .SyntaxHighlighter import SyntaxHighlighter
@@ -32,9 +32,9 @@ class HighlightingTextEdit (QPlainTextEdit):
     updateNeeded = pyqtSignal()
     parentheses = [('(',')'), ('[',']'), ('{', '}')]
 
-    highlightOutlineColor = Qt.GlobalColor.darkGray
-    highlightSolidBackgroundColor = Qt.GlobalColor.lightGray
-    highlightSolidForegroundColor = Qt.GlobalColor.black
+    highlightOutlineColor: QColor|Qt.GlobalColor = Qt.GlobalColor.darkGray
+    highlightSolidBackgroundColor: QColor|Qt.GlobalColor = Qt.GlobalColor.lightGray
+    highlightSolidForegroundColor: Optional[QColor|Qt.GlobalColor] = Qt.GlobalColor.black
 
     def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)

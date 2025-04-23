@@ -20,6 +20,7 @@ import re
 import os
 import sqlite3
 from .Query import FileQuery, PerformanceReport, SearchResult, safeLen, hasFileNameWildcard, createPathMatchPattern
+from typing import Optional
 
 emptyPattern = re.compile("") # make mypy happy
 
@@ -28,7 +29,7 @@ def escapeFileName(name: str) -> str:
     name = name.replace("?", "_") # one char wild card
     return name.replace("*", "%") # any number char wild card
 
-def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: PerformanceReport=None) -> SearchResult:
+def searchFile(q: sqlite3.Cursor, query: FileQuery, perfReport: Optional[PerformanceReport]=None) -> SearchResult:
     if not isinstance(query, FileQuery):
         raise RuntimeError("query must be a FileQuery derived object")
 

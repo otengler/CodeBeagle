@@ -10,6 +10,7 @@ import logging
 import os
 import platform
 import pathlib
+from typing import cast
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile, QTextStream
@@ -93,7 +94,7 @@ def apply_stylesheet(app: QApplication, additionalStyles: str = "") -> None:
     stylesheet = ""
 
     if qss_file.exists():
-        qss_file.open(QFile.ReadOnly | QFile.Text)
+        qss_file.open(cast(QFile.OpenModeFlag, QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text))
         text_stream = QTextStream(qss_file)
         stylesheet = text_stream.readAll()
 

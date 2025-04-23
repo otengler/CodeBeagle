@@ -17,14 +17,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import threading
-from typing import Callable, Any
+from typing import Callable, Any, Optional, cast, Union
 from PyQt5.QtCore import QThread, pyqtSlot, QObject
+from PyQt5.QtWidgets import QWidget
 from dialogs.ProgressBar import ProgressBar
 
 CancelFunction = Callable[[],None]
 
 class AsynchronousTask (QThread):
-    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: CancelFunction=None) -> None:
+    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> None:
         super().__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.function = function
         self.args = args
@@ -54,7 +55,7 @@ class AsynchronousTask (QThread):
         if self.cancelAction:
             self.cancelAction()
 
-def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: CancelFunction=None) -> Any:
+def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> Any:
     """
     Executes the action performed by the callable 'func' called with *args in a seperate thread.
     During the action a progress bar is shown. If 'bEnableCancel' is true the callable is
@@ -62,10 +63,14 @@ def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=Fals
     can be used to test if it is signalled.
     """
     try:
-        progress = ProgressBar(parent, bEnableCancel)
+        parentWidget = None
+        if isinstance(parent, QWidget):
+            parentWidget = parent
+
+        progress = ProgressBar(parentWidget, bEnableCancel)
 
         searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction)
-        searchTask.finished.connect(progress.close)
+        searchTask.finished.connect(cast(Callable, progress.close))
         progress.onCancelClicked.connect(searchTask.cancel)
         progress.show()
 

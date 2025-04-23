@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import List, Set
+from typing import List, Set, Optional, cast
 from PyQt5.QtCore import Qt, QRect, QSize, pyqtSignal, pyqtSlot, QModelIndex, QObject
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QPainter
 from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QMessageBox, QWidget, QCheckBox, QListView
@@ -42,7 +42,7 @@ To manually start the index update press the 'Update Index' button in the toolba
 class SettingsEditorDelegate(QStyledItemDelegate):
     itemHeight = 40
 
-    def __init__(self, parent: QWidget=None) -> None:
+    def __init__(self, parent: Optional[QWidget]=None) -> None:
         super().__init__(parent)
         if parent:
             self.boldFont = QFont(parent.font())
@@ -56,8 +56,12 @@ class SettingsEditorDelegate(QStyledItemDelegate):
     def setDefaultLocationRow(self, row: int) -> None:
         self.defaultLocationRow = row
 
-    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-        QApplication.style().drawPrimitive(QStyle.PE_PanelItemViewItem, option, painter, self.parent())
+    def paint(self, painter: Optional[QPainter], option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        if not painter:
+            return
+        
+        if style := QApplication.style():
+            style.drawPrimitive(QStyle.PrimitiveElement.PE_PanelItemViewItem, option, painter, cast(Optional[QWidget],self.parent()))
 
         rect = QRect(option.rect)
         rect.setHeight(self.itemHeight)
@@ -72,7 +76,7 @@ class SettingsEditorDelegate(QStyledItemDelegate):
 
         painter.save()
 
-        location = index.data(Qt.UserRole+1)
+        location = index.data(Qt.ItemDataRole.UserRole+1)
 
         if location.directories:
             dirs = self.tr("Directories: ") + location.directoriesAsString()
@@ -80,14 +84,14 @@ class SettingsEditorDelegate(QStyledItemDelegate):
                 dirs += " ("
                 dirs += self.tr("Extensions: ") + location.extensionsAsString()
                 dirs += ")"
-            painter.drawText(rect2, Qt.AlignVCenter + Qt.TextWordWrap, dirs)
+            painter.drawText(rect2, Qt.AlignmentFlag.AlignVCenter + Qt.TextFlag.TextWordWrap, dirs)
 
         painter.setFont(self.boldFont)
         locationName = location.displayName()
         if index.row() == self.defaultLocationRow:
             locationName = locationName + self.tr(" (Default)")
             painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize//2, self.defaultPixmapSize, self.defaultPixmapSize, self.defaultPixmap)
-        painter.drawText(rect1, Qt.AlignVCenter + Qt.TextWordWrap, locationName)
+        painter.drawText(rect1, Qt.AlignmentFlag.AlignVCenter + Qt.TextFlag.TextWordWrap, locationName)
 
         painter.restore()
 
@@ -97,9 +101,9 @@ class SettingsEditorDelegate(QStyledItemDelegate):
 
 def setCheckBox(check: QCheckBox, value: bool) -> None:
     if value:
-        check.setCheckState(Qt.Checked)
+        check.setCheckState(Qt.CheckState.Checked)
     else:
-        check.setCheckState(Qt.Unchecked)
+        check.setCheckState(Qt.CheckState.Unchecked)
 
 class LocationControl (QObject):
     def __init__(self, settingsItem: SettingsItem, listView: QListView, searchLocations: List[IndexConfiguration], readOnly: bool) -> None:
@@ -112,7 +116,8 @@ class LocationControl (QObject):
         self.listView.setModel(self.model)
         self.listView.setItemDelegate(SettingsEditorDelegate(self.listView))
 
-        self.listView.selectionModel().currentChanged.connect(self.selectionChanged)
+        if selectionModel := self.listView.selectionModel():
+            selectionModel.currentChanged.connect(self.selectionChanged)
         self.settingsItem.dataChanged.connect(self.updateDisplayRole)
 
         for location in searchLocations:
@@ -146,14 +151,14 @@ class LocationControl (QObject):
                                       editor.indexDB(),
                                       editor.indexUpdateMode(),
                                       editor.indexType())
-        self.model.setData(index, location, Qt.UserRole+1)
+        self.model.setData(index, location, Qt.ItemDataRole.UserRole+1)
 
     def loadDataFromItem(self, index: QModelIndex) -> None:
         editor = self.settingsItem
         if not index.isValid():
             editor.resetAndDisable()
             return
-        location = index.data(Qt.UserRole+1)
+        location = index.data(Qt.ItemDataRole.UserRole+1)
         editor.setData(location.displayName(),
                        location.directoriesAsString(),
                        location.extensionsAsString(),
@@ -172,20 +177,20 @@ class LocationControl (QObject):
             index = self.model.index(rows, 0)
             if activateLocation and index.isValid():
                 self.listView.setCurrentIndex(index)
-                self.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
+                self.settingsItem.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
                 self.settingsItem.nameSelectAll()
 
     def locations(self) -> List[IndexConfiguration]:
         locs = []
         for row in range(self.model.rowCount()):
             index = self.model.index(row, 0)
-            locs.append(index.data(Qt.UserRole+1))
+            locs.append(index.data(Qt.ItemDataRole.UserRole+1))
         return locs
 
 class SettingsDialog (QDialog):
     updateChangedIndexes = pyqtSignal(list)
 
-    def __init__ (self, parent: QWidget, searchLocations: List[IndexConfiguration], globalSearchLocations: List[IndexConfiguration], config: Config) -> None:
+    def __init__ (self, parent: Optional[QWidget], searchLocations: List[IndexConfiguration], globalSearchLocations: List[IndexConfiguration], config: Config) -> None:
         super ().__init__(parent)
         self.ui = Ui_SettingsDialog()
         self.ui.setupUi(self)
@@ -223,7 +228,7 @@ class SettingsDialog (QDialog):
             self.ui.tabWidget.removeTab(1)
             del self.ui.tabGlobalSearchLocations
 
-        self.ui.settingsItem.setFocus(Qt.ActiveWindowFocusReason)
+        self.ui.settingsItem.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
     def defaultLocation (self) -> str:
         index = None
@@ -237,7 +242,7 @@ class SettingsDialog (QDialog):
             index = model.index(row, 0)
 
         if index and index.isValid():
-            location: IndexConfiguration = index.data(Qt.UserRole+1)
+            location: IndexConfiguration = index.data(Qt.ItemDataRole.UserRole+1)
             return location.displayName()
         return ""
 
@@ -269,20 +274,22 @@ class SettingsDialog (QDialog):
             self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations,  -1)
 
     def __defaultLocationChanged(self, listviewCurrent: QListView, listviewOther: QListView, newDefaultRow: int) -> None:
-        listviewCurrent.itemDelegate().setDefaultLocationRow(newDefaultRow)
-        listviewOther.itemDelegate().setDefaultLocationRow(-1)
+        if itemDelegate := cast(Optional[SettingsEditorDelegate], listviewCurrent.itemDelegate()):
+            itemDelegate.setDefaultLocationRow(newDefaultRow)
+            itemDelegate.setDefaultLocationRow(-1)
         # Refresh the listview
         model = listviewCurrent.model()
-        firstIndex = model.index(0, 0)
-        lastIndex = model.index(model.rowCount()-1, 0)
-        if firstIndex.isValid() and lastIndex.isValid():
-            model.dataChanged.emit(firstIndex, lastIndex)
+        if model:
+            firstIndex = model.index(0, 0)
+            lastIndex = model.index(model.rowCount()-1, 0)
+            if firstIndex.isValid() and lastIndex.isValid():
+                model.dataChanged.emit(firstIndex, lastIndex)
 
     @pyqtSlot()
     def duplicateLocation(self) -> None:
         index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
-            location = index.data(Qt.UserRole+1)
+            location = index.data(Qt.ItemDataRole.UserRole+1)
             duplicated = IndexConfiguration (self.tr("Duplicated ") + location.displayName(),
                                              location.extensionsAsString(),
                                              location.directoriesAsString(),
@@ -335,16 +342,16 @@ class SettingsDialog (QDialog):
         config.sourceViewer.FontFamily = self.ui.fontComboBox.currentFont().family()
         config.sourceViewer.FontSize = self.ui.editFontSize.text()
         config.sourceViewer.TabWidth = self.ui.editTabWidth.text()
-        config.sourceViewer.showLineNumbers = self.ui.checkShowLineNumbers.checkState() == Qt.Checked
-        config.matchOverFiles = self.ui.checkMatchOverFiles.checkState() == Qt.Checked
-        config.activateFirstMatch = self.ui.checkActivateFirstMatch.checkState() == Qt.Checked
-        config.showCloseConfirmation = self.ui.checkConfirmClose.checkState() == Qt.Checked
-        config.showRegexDialog = self.ui.checkRegexDialog.checkState() == Qt.Checked
-        config.showMatchList = self.ui.checkShowMatchList.checkState() == Qt.Checked
+        config.sourceViewer.showLineNumbers = self.ui.checkShowLineNumbers.checkState() == Qt.CheckState.Checked
+        config.matchOverFiles = self.ui.checkMatchOverFiles.checkState() == Qt.CheckState.Checked
+        config.activateFirstMatch = self.ui.checkActivateFirstMatch.checkState() == Qt.CheckState.Checked
+        config.showCloseConfirmation = self.ui.checkConfirmClose.checkState() == Qt.CheckState.Checked
+        config.showRegexDialog = self.ui.checkRegexDialog.checkState() == Qt.CheckState.Checked
+        config.showMatchList = self.ui.checkShowMatchList.checkState() == Qt.CheckState.Checked
         config.defaultLocation = self.defaultLocation()
         config.previewLines = int(self.ui.editPreviewLines.text())
         theme = ""
-        if self.ui.checkDarkTheme.checkState() == Qt.Checked:
+        if self.ui.checkDarkTheme.checkState() == Qt.CheckState.Checked:
             theme = AppConfig.darkTheme
         config.theme = theme
 
@@ -399,7 +406,7 @@ def main() -> None:
     conf.sourceViewer.fontsize = 10
     conf.matchOverFiles=True
     conf.showCloseConfirmation=True
-    w = SettingsDialog(None,locations, locations, conf)
+    w = SettingsDialog(None, locations, locations, conf)
     w.show()
     sys.exit(app.exec_())
 

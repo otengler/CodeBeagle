@@ -143,7 +143,7 @@ class EmptyLayout(QLayout):
 class RecyclingVerticalScrollArea(QScrollArea):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.items: Optional[SrollAreaItemList] = None
         self.activeWidgets: Dict[int, QWidget] = {} # id to widget
         self.reservedWidgets: DefaultDict[str, list[QWidget]] = collections.defaultdict(list) # type name to widgets
@@ -213,7 +213,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
                 else:
                     # No element left, create a new one
                     w = item.generateItem (self.widget())
-                    w.setAttribute(Qt.WA_DeleteOnClose)
+                    w.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
                 item.configureItem(w)
                 w.move(self.items.spacing, itemY)
                 w.setFixedSize(width-margin, item.height)

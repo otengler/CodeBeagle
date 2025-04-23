@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sqlite3
 import threading
-from typing import List, Tuple, Iterable, Any, Dict, cast, Callable
+from typing import List, Tuple, Iterable, Any, Dict, cast, Callable, Optional
 from tools.FileTools import fopen, freadall
 from .IndexDatabase import IndexDatabase
 from .FileSearch import searchFile
@@ -85,19 +85,19 @@ def cancelableSearch(func: Callable[..., SearchResult], *args: Any) -> SearchRes
         raise
 
 class FullTextIndex (IndexDatabase):
-    def searchFile(self, query: FileQuery, perfReport: PerformanceReport=None, cancelEvent:threading.Event=None) -> SearchResult:
+    def searchFile(self, query: FileQuery, perfReport: Optional[PerformanceReport]=None, cancelEvent:Optional[threading.Event]=None) -> SearchResult:
         return cancelableSearch(self.__searchFile, query, perfReport)
 
-    def __searchFile(self, query: FileQuery, perfReport: PerformanceReport=None) -> SearchResult:
+    def __searchFile(self, query: FileQuery, perfReport: Optional[PerformanceReport]=None) -> SearchResult:
         q = self.conn.cursor()
         return searchFile(q, query, perfReport)
 
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
-    def searchContent(self, query: ContentQuery, perfReport: PerformanceReport=None, commonKeywordMap: CommonKeywordMap=None,
-                      manualIntersect: bool=True, cancelEvent:threading.Event=None) -> SearchResult:
+    def searchContent(self, query: ContentQuery, perfReport: Optional[PerformanceReport]=None, commonKeywordMap: Optional[CommonKeywordMap]=None,
+                      manualIntersect: bool=True, cancelEvent:Optional[threading.Event]=None) -> SearchResult:
         return cancelableSearch(self.__searchContent, query, perfReport, commonKeywordMap, manualIntersect, cancelEvent)
 
-    def __searchContent(self, query: ContentQuery, perfReport: PerformanceReport=None, commonKeywordMap:CommonKeywordMap=None, manualIntersect:bool=True, cancelEvent:threading.Event=None) -> SearchResult:
+    def __searchContent(self, query: ContentQuery, perfReport: Optional[PerformanceReport]=None, commonKeywordMap:Optional[CommonKeywordMap]=None, manualIntersect:bool=True, cancelEvent:Optional[threading.Event]=None) -> SearchResult:
         if not isinstance(query, ContentQuery):
             raise RuntimeError("query must be a ContentQuery derived object")
 
@@ -173,7 +173,7 @@ class FullTextIndex (IndexDatabase):
                 return []
         return result
 
-    def __filterDocsBySearchPhrase(self, action: ReportAction, results: Iterable[str], query: ContentQuery, cancelEvent: threading.Event=None) -> SearchResult:
+    def __filterDocsBySearchPhrase(self, action: ReportAction, results: Iterable[str], query: ContentQuery, cancelEvent: Optional[threading.Event]=None) -> SearchResult:
         finalResults = []
         reExpr = query.regExForMatches()
         action.addData("RegEx: %s", reExpr.pattern)
@@ -220,7 +220,7 @@ class FullTextIndex (IndexDatabase):
 
     # Receives a list of keywords which might contain wildcards. For every passed keyword a list of Keyword objects
     # is returned. If a keyword is not found an empty list is returned.
-    def __getKeywords(self, q: sqlite3.Cursor, keywordList: Iterable[str], reportAction: ReportAction=None) -> KeywordList:
+    def __getKeywords(self, q: sqlite3.Cursor, keywordList: Iterable[str], reportAction: Optional[ReportAction]=None) -> KeywordList:
         keys = []
         for kw in keywordList:
             query = "SELECT id,keyword FROM keywords WHERE"

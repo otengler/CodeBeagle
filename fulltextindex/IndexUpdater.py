@@ -22,7 +22,7 @@ import re
 import time
 import logging
 import sqlite3
-from typing import List, Iterator, Set, cast, Tuple
+from typing import List, Iterator, Set, cast, Tuple, Optional
 from tools.FileTools import freadall
 from .IndexDatabase import IndexDatabase
 from .IndexConfiguration import IndexConfiguration, IndexType, indexTypeToString
@@ -34,7 +34,7 @@ def __fixExtension(ext: str) -> str:
         return ext
     return ""
 
-def genFind(filepat: Set[str], strRootDir: str, dirExcludes: List[str]=None, ignoredExts: Set[str]=None) -> Iterator[Tuple[str,str]]:
+def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]=None, ignoredExts: Optional[Set[str]]=None) -> Iterator[Tuple[str,str]]:
     dirExcludes = dirExcludes or []
 
     filepatFixed: Set[str] = set()
@@ -83,7 +83,7 @@ class UpdateStatistics:
         return s
 
 class IndexUpdater (IndexDatabase):
-    def updateIndex(self, config: IndexConfiguration, statistics: UpdateStatistics=None) -> None:
+    def updateIndex(self, config: IndexConfiguration, statistics: Optional[UpdateStatistics]=None) -> None:
         directories = config.directories
         extensions = config.extensions
         dirExcludes = config.dirExcludes or []
@@ -108,9 +108,12 @@ class IndexUpdater (IndexDatabase):
 
                     newFile = False
                     c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
+                    docID: int
                     if c.rowcount == 1 and c.lastrowid != 0:
                         # New document must always be processed
-                        docID = c.lastrowid
+                        docID = cast(int, c.lastrowid)
+                        if docID is None:
+                            raise RuntimeError("No document ID for new document returned")
                         timestamp = 0
                         newFile = True
                     else:

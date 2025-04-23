@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from typing import Optional
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QWidget
@@ -24,7 +25,7 @@ from widgets.SyntaxHighlighter import HighlightingRules
 from .Ui_StackTraceMessageBox import Ui_StackTraceMessageBox
 
 class StackTraceMessageBox (QDialog):
-    def __init__ (self, parent: QWidget, title:str, text:str, stackTrace:str) -> None:
+    def __init__ (self, parent: Optional[QWidget], title:str, text:str, stackTrace:str) -> None:
         super().__init__(parent)
         self.ui = Ui_StackTraceMessageBox()
         self.ui.setupUi(self)
@@ -32,9 +33,9 @@ class StackTraceMessageBox (QDialog):
 
         rules = HighlightingRules(self.font())
         keywords="import,from,def,class,return,if,else,elif,for,in,while,None"
-        rules.addKeywords (keywords, QFont.Bold, Qt.darkBlue)
-        rules.addRule ("\".*\"", QFont.Normal, Qt.darkGreen) # Quotations
-        rules.addRule ("\\b[A-Za-z0-9_]+(?=\\()", QFont.Normal, Qt.blue) # Functions
+        rules.addKeywords (keywords, QFont.Bold, Qt.GlobalColor.darkBlue)
+        rules.addRule ("\".*\"", QFont.Normal, Qt.GlobalColor.darkGreen) # Quotations
+        rules.addRule ("\\b[A-Za-z0-9_]+(?=\\()", QFont.Normal, Qt.GlobalColor.blue) # Functions
         self.ui.stackTraceTextEdit.highlighter.setHighlightingRules (rules)
         self.ui.stackTraceTextEdit.setPlainText(stackTrace)
 
@@ -55,7 +56,7 @@ class StackTraceMessageBox (QDialog):
         if bShow:
             self.resize(self.width(),self.height()+200)
 
-def show (parent: QWidget, title: str, text: str) -> None:
+def show (parent: Optional[QWidget], title: str, text: str) -> None:
     stackTrace = exceptionAsString(None)
     dlg = StackTraceMessageBox(parent, title, text, stackTrace)
     dlg.exec()

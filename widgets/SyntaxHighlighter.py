@@ -23,6 +23,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.IStringMatcher import IStringMatcher
 
+foregroundType = QBrush|Qt.GlobalColor|QColor
+
 class HighlightingRules:
     def __init__(self, font: QFont) -> None:
         self.rules: List[Tuple[Pattern, QTextCharFormat]] = []
@@ -34,7 +36,7 @@ class HighlightingRules:
         self.color: Optional[QColor] = None
         self.defaultFormat: Optional[QTextCharFormat] = None
 
-    def addKeywords (self, keywords: str, fontWeight: int, foreground: QBrush) -> None:
+    def addKeywords (self, keywords: str, fontWeight: int, foreground: foregroundType) -> None:
         """Adds a list of comma separated keywords."""
         keywords = keywords.strip()
         kwList = keywords.split(",")
@@ -50,7 +52,7 @@ class HighlightingRules:
             self.multiCommentStart = re.compile(multiLineStart)
             self.multiCommentStop = re.compile(multiLineEnd)
 
-    def addRule (self, expr: str, fontWeight: int, foreground: QBrush) -> None:
+    def addRule (self, expr: str, fontWeight: int, foreground: foregroundType) -> None:
         """Adds an arbitrary highlighting rule."""
         fmt = self.__createFormat(fontWeight, foreground)
         self.__addRule (expr, fmt)
@@ -74,7 +76,7 @@ class HighlightingRules:
     def __addRule (self, expr: str, fmt: QTextCharFormat) -> None:
         self.rules.append((re.compile(expr), fmt))
 
-    def __createFormat (self, fontWeight:int, foreground: QBrush) -> QTextCharFormat:
+    def __createFormat (self, fontWeight:int, foreground: foregroundType) -> QTextCharFormat:
         fmt = QTextCharFormat()
         fmt.setFont(self.font)
         fmt.setFontWeight(fontWeight)

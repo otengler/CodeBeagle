@@ -26,8 +26,8 @@ from  . import FullTextIndex, IndexConfiguration, Query, IndexUpdater
 emptyPattern = re.compile("") # make mypy happy
 
 class ResultSet:
-    def __init__(self, matches: FullTextIndex.SearchResult = None, searchData: Query.Query = None,
-                 perfReport: FullTextIndex.PerformanceReport = None, label: str = None) -> None:
+    def __init__(self, matches: Optional[FullTextIndex.SearchResult] = None, searchData: Optional[Query.Query] = None,
+                 perfReport: Optional[FullTextIndex.PerformanceReport] = None, label: Optional[str] = None) -> None:
 
         self.matches = matches or []
         self.perfReport = perfReport
@@ -44,7 +44,7 @@ class SearchMethods:
         self.lock = threading.Lock()
 
     def searchContent(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
-                      commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: threading.Event=None) -> ResultSet:
+                      commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
 
         try:
             if indexConf.isContentIndexed():
@@ -56,7 +56,7 @@ class SearchMethods:
                 self.fti = None
 
     def __searchContentIndexed(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                               commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: threading.Event=None) -> ResultSet:
+                               commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         perfReport = FullTextIndex.PerformanceReport()
         with perfReport.newAction("Init database"):
             with self.lock:
@@ -64,7 +64,7 @@ class SearchMethods:
             result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
         return result
 
-    def __searchContentDirect(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+    def __searchContentDirect(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         matches: List[str] = []
         for directory in indexConf.directories:
             for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
@@ -78,7 +78,7 @@ class SearchMethods:
         matches = removeDupsAndSort(matches)
         return ResultSet(matches, searchData)
 
-    def searchFileName(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+    def searchFileName(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         try:
             if indexConf.isFileNameIndexed():
                 return self.__searchFileNameIndexed(searchData, indexConf, cancelEvent)
@@ -88,7 +88,7 @@ class SearchMethods:
                 del self.fti
                 self.fti = None
 
-    def __searchFileNameIndexed(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+    def __searchFileNameIndexed(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         perfReport = FullTextIndex.PerformanceReport()
         with perfReport.newAction("Init database"):
             with self.lock:
@@ -96,7 +96,7 @@ class SearchMethods:
             result = ResultSet(self.fti.searchFile(searchData, perfReport, cancelEvent=cancelEvent), searchData, perfReport)
         return result
 
-    def __searchFileNameDirect(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: threading.Event=None) -> ResultSet:
+    def __searchFileNameDirect(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         search = searchData.search
         searchLower = search.lower()
 

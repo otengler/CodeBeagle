@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtGui import QFocusEvent
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QWidget
+from typing import Optional
 from .Ui_GotoLineDialog import Ui_GotoLineDialog
 
 class GotoLineDialog (QDialog):
@@ -28,8 +29,8 @@ class GotoLineDialog (QDialog):
         self.ui.setupUi(self)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
-    def focusInEvent (self, _: QFocusEvent) -> None:
-        self.ui.editLine.setFocus(Qt.ActiveWindowFocusReason)
+    def focusInEvent (self, _: Optional[QFocusEvent]) -> None:
+        self.ui.editLine.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
     def getLine(self) -> int:
         try:
