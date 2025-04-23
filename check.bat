@@ -1,1 +1,0 @@
-mypy --ignore-missing-imports --follow-imports=silent --warn-return-any --disallow-untyped-defs @check_files.txt

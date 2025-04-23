@@ -23,7 +23,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.IStringMatcher import IStringMatcher
 
-foregroundType = QBrush|Qt.GlobalColor|QColor
+type foregroundType = QBrush|Qt.GlobalColor|QColor
 
 class HighlightingRules:
     def __init__(self, font: QFont) -> None:
