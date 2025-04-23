@@ -30,8 +30,7 @@ class HighlightStyle(IntEnum):
 
 class HighlightingTextEdit (QPlainTextEdit):
     updateNeeded = pyqtSignal()
-    parentheses = [('(',')'), ('[',']'), ('{', '}')]
-
+    
     highlightOutlineColor: QColor|Qt.GlobalColor = Qt.GlobalColor.darkGray
     highlightSolidBackgroundColor: QColor|Qt.GlobalColor = Qt.GlobalColor.lightGray
     highlightSolidForegroundColor: Optional[QColor|Qt.GlobalColor] = Qt.GlobalColor.black
@@ -41,51 +40,12 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.highlighter = SyntaxHighlighter()
         self.__highlightUpdateCounter = 0 # Increment every time the highlight changes
         self.dynamicHighlight: Optional[str] = None
-        self.parenthesisPair: Optional[Tuple[int,int]] = None
-        self.highlightParenthesis = True
         self.setUndoRedoEnabled(False)
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.setReadOnly(True)
         self.setTextInteractionFlags(cast(Qt.TextInteractionFlag, Qt.TextInteractionFlag.TextSelectableByKeyboard|Qt.TextInteractionFlag.TextSelectableByMouse))
 
         self.lineNumberArea: Optional[LineNumberArea] = None
-
-        self.cursorPositionChanged.connect (self.cursorChanged)
-        self.selectionChanged.connect (self.onSelectionChanged)
-
-    @pyqtSlot()
-    def cursorChanged(self) -> None:
-        document = self.document()
-        if not document:
-            return
-        
-        text = document.toPlainText()
-        pos = self.textCursor().position()
-        char = text[pos:pos+1]
-        paren = self.__isParenthesis(char)
-        if not paren and pos > 0:
-            pos -= 1
-            char = text[pos:pos+1]
-            paren = self.__isParenthesis(char)
-        if paren:
-            closePos = self.__findMatchingParenthesis(char, pos, paren)
-        if paren and closePos != -1:
-            self.setParenthesisPair((pos, closePos))
-        else:
-            self.setParenthesisPair(None)
-
-    @pyqtSlot()
-    def onSelectionChanged(self) -> None:
-        highlightParenthesis = not self.textCursor().selectedText()
-        if highlightParenthesis != self.highlightParenthesis:
-            self.highlightParenthesis = highlightParenthesis
-            if viewport := self.viewport():
-                viewport.update()
-
-    @pyqtSlot()
-    def jumpToMatchingBrace(self) -> None:
-        if self.parenthesisPair:
-            self.scrollToPosition(self.parenthesisPair[1], self.parenthesisPair[1] - self.parenthesisPair[0])
 
     def scrollToPosition(self, index: int, scrollDir: int) -> None:
         """scrollHint is positive for scolling down and negative for scrolling up"""
@@ -100,47 +60,13 @@ class HighlightingTextEdit (QPlainTextEdit):
         cursor.setPosition(index)
         self.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
 
-    def __findMatchingParenthesis(self, char: str, start: int, paren: Tuple[str, str]) -> int:
-        document = self.document()
-        if not document:
-            return -1
-        
-        text = document.toPlainText()
-        openCount = 1
-        if char == paren[0]:
-            direction = 1
-            end = len(text)
-            start += 1
-            openChar, closeChar = paren[0],paren[1]
-        else:
-            direction = -1
-            start -= 1
-            end = -1
-            openChar, closeChar = paren[1],paren[0]
-
-        for i in range(start, end, direction):
-            char = text[i]
-            if char == openChar and not self.highlighter.isInsideComment(i):
-                openCount += 1
-            elif char == closeChar and not self.highlighter.isInsideComment(i):
-                openCount -= 1
-                if openCount == 0:
-                    return i
-        return -1
-
-    def __isParenthesis(self, char: str) -> Optional[Tuple[str, str]]:
-        for p in self.parentheses:
-            if char in p:
-                return p
-        return None
-
     def areLineNumbersShown(self) -> bool:
         return bool(self.lineNumberArea)
 
     def showLineNumbers(self, show: bool, firstLineNumber:int=1) -> None:
         if show:
             if not self.lineNumberArea:
-                self.lineNumberArea = LineNumberArea(self, firstLineNumber)
+                self.lineNumberArea = LineNumberArea(self, firstLineNumber, enableBookmarks=True)
                 self.lineNumberArea.show()
         else:
             if self.lineNumberArea:
@@ -162,13 +88,6 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.dynamicHighlight = text
             if viewport := self.viewport():
                 viewport.update()
-
-    def setParenthesisPair(self, pair: Optional[Tuple[int,int]]) -> None:
-        if not pair and not self.parenthesisPair:
-            return
-        self.parenthesisPair = pair
-        if viewport := self.viewport():
-            viewport.update()
 
     def setFont(self, font: QFont) -> None:
         super().setFont (font)
@@ -197,22 +116,16 @@ class HighlightingTextEdit (QPlainTextEdit):
         painter = QPainter(self.viewport())
         metrics = painter.fontMetrics()
         for block, bound in self.__visibleBlocks(firstVisibleBlock):
-            bound = QRect(bound.left(), bound.top(), bound.width(), bound.height())
             # Highlight all occurrences of selected word
             if self.dynamicHighlight:
                 startIndex = 0
                 while startIndex != -1:
                     startIndex = block.text().find(self.dynamicHighlight, startIndex)
                     if startIndex != -1:
-                        self.__highlightPartOfLine(painter, metrics, block, bound, startIndex, len(self.dynamicHighlight), HighlightStyle.Outline)
+                        self._highlightPartOfLine(painter, metrics, block, bound, startIndex, len(self.dynamicHighlight), HighlightStyle.Outline)
                         startIndex += len(self.dynamicHighlight)
-            # Highlight parenthesis pair
-            if self.highlightParenthesis and self.parenthesisPair:
-                p1, p2 = self.parenthesisPair
-                if block.position() <= p1 < block.position()+block.length():
-                    self.__highlightPartOfLine(painter, metrics, block, bound, p1 - block.position(), 1, HighlightStyle.Solid)
-                if block.position() <= p2 < block.position()+block.length():
-                    self.__highlightPartOfLine(painter, metrics, block, bound, p2 - block.position(), 1, HighlightStyle.Solid)
+
+            self.applyAdditionalHighlighting(painter, metrics, block, bound)
 
         # Sometimes lines which are highlighted for the first time are not updated properly.
         # This happens regularily if the text edit is scolled using the page down key.
@@ -221,7 +134,11 @@ class HighlightingTextEdit (QPlainTextEdit):
         if bColorizedBlocks:
             self.updateNeeded.emit()
 
-    def __highlightPartOfLine(self, painter: QPainter, metrics: QFontMetrics, block: QTextBlock, bound: QRect, startIndex: int, length: int, style: HighlightStyle) -> None:
+    def applyAdditionalHighlighting(self, painter: QPainter, metrics: QFontMetrics, block: QTextBlock, bound: QRect) -> None:
+        # To be used by sub classes
+        pass
+
+    def _highlightPartOfLine(self, painter: QPainter, metrics: QFontMetrics, block: QTextBlock, bound: QRect, startIndex: int, length: int, style: HighlightStyle) -> None:
         text = block.text()[startIndex:startIndex+length]
         partBefore = block.text()[:startIndex]
         rectBefore = metrics.boundingRect(bound, Qt.TextFlag.TextExpandTabs, partBefore,  self.tabStopWidth())

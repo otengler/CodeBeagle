@@ -16,13 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt, pyqtSlot, QRect, QSize
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QRect, QSize
 from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 from typing import Optional, Iterator, Tuple
 
 class LineNumberArea (QWidget):
-    padding = 20
+    bookmarkChanged = pyqtSignal(int) # line where bookmark is set or removed
+
+    padding = 24
     areaColor = QColor(235,235,235)
     textColor = QColor(130,130,130)
 
@@ -93,11 +95,7 @@ class LineNumberArea (QWidget):
         pos = event.pos()
         for number, rect in self.__visibleBlocks(self.rect()):
             if pos.y() > rect.top() and pos.y() < rect.bottom():
-                if number in self.bookmarkLines:
-                    self.bookmarkLines.remove(number)
-                else:
-                    self.bookmarkLines.add(number)
-                self.repaint()
+                self.bookmarkChanged.emit(number)
                 break
 
     def paintEvent(self, event: Optional[QPaintEvent]) -> None:
@@ -111,8 +109,7 @@ class LineNumberArea (QWidget):
         for number, rect in self.__visibleBlocks(event.rect()):
             painter.drawText(rect.left(), rect.top(), rect.width()-self.padding//2, rect.height(), Qt.AlignmentFlag.AlignRight, str(number))
             if self.enableBookmarks and number in self.bookmarkLines:
-                painter.drawPixmap(0, rect.top() + 2, self.bookMarkPixmap)
-
+                painter.drawPixmap(2, rect.top() + 3, self.bookMarkPixmap)
 
     def __visibleBlocks (self, updateRect: QRect) -> Iterator[Tuple[int, QRect]]:
         block: QTextBlock = self.textEdit.firstVisibleBlock()
