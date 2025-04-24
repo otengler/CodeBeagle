@@ -26,7 +26,8 @@ testmodules = [
     'tools.Config',
     'tools.FileTools',
     'fulltextindex.Query',
-    'fulltextindex.testsuite'
+    'fulltextindex.testsuite',
+    'BookmarkStorage'
     ]
 
 def getModulePath() -> str:

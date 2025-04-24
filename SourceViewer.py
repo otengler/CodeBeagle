@@ -20,7 +20,7 @@ import os
 from typing import Optional, List, Tuple
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent
-from PyQt5.QtWidgets import QWidget, QAction, QListWidgetItem, QDialog, QTextEdit
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QDialog, QTextEdit
 from tools.FileTools import Encoding, freadallEx
 from AppConfig import appConfig
 from fulltextindex import FullTextIndex
@@ -73,12 +73,20 @@ class SourceViewer (QWidget):
 
         self.actionReloadFile = createQAction(self, shortcut=Qt.Key.Key_F5, triggered= self.reloadFile)
         self.addAction(self.actionReloadFile)
-        self.actionGotoLine = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_G, triggered=self.gotoLine)
+        self.actionGotoLine = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_G, triggered=self.showGotoLineDialog)
         self.addAction(self.actionGotoLine)
         self.jumpToMatchingBrace = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace)
         self.addAction(self.jumpToMatchingBrace)
         self.actionJumpToCurrentMatch = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_J, triggered=self.jumpToCurrentMatch)
         self.addAction(self.actionJumpToCurrentMatch)
+
+        # Bookmarks
+        self.actionSetBookmark = createQAction(self, shortcut=Qt.Key.Key_F2, triggered=self.setBookmark)
+        self.addAction(self.actionSetBookmark)
+        self.actionNextBookmark = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F2, triggered=self.nextBookmark)
+        self.addAction(self.actionNextBookmark)
+        self.actionPreviousBookmark = createQAction(self, shortcut=Qt.KeyboardModifier.ShiftModifier+Qt.Key.Key_F2, triggered=self.previousBookmark)
+        self.addAction(self.actionPreviousBookmark)
 
         # In document search
         self.inDocumentSearch = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F, triggered=self.toggleSearchFrame)
@@ -217,26 +225,45 @@ class SourceViewer (QWidget):
             self.restoreEditorState(editorState)
 
     @pyqtSlot()
+    def setBookmark(self) -> None:
+        self.bookmarkChanged(self.ui.textEdit.currentLineNumber())
+
+    @pyqtSlot()
+    def nextBookmark(self) -> None:
+        if bookmark := getBookmarkStorage().nextBookmark():
+            fileName, line = bookmark
+            self.showFile(fileName)
+            self.gotoLine(line)
+
+    @pyqtSlot()
+    def previousBookmark(self) -> None:
+        if bookmark := getBookmarkStorage().previousBookmark():
+            fileName, line = bookmark
+            self.showFile(fileName)
+            self.gotoLine(line)
+
+    @pyqtSlot()
     def reloadFile(self) -> None:
         if self.currentFile:
             self.showFile(self.currentFile)
 
     @pyqtSlot()
-    def gotoLine(self) -> None:
+    def showGotoLineDialog(self) -> None:
         from dialogs.GotoLineDialog import GotoLineDialog
         gotoDialog = GotoLineDialog(self)
         if gotoDialog.exec() == QDialog.Accepted:
-            line = gotoDialog.getLine()-1
-            if line < 0:
-                line = 0
-            elif line >= self.ui.textEdit.document().blockCount():
-                line = self.ui.textEdit.document().blockCount()-1
-            block = self.ui.textEdit.document().findBlockByLineNumber (line)
-            if block.isValid():
-                cursor = self.ui.textEdit.textCursor()
-                cursor.setPosition(block.position())
-                self.ui.textEdit.setTextCursor(cursor)
-                self.ui.textEdit.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
+            self.gotoLine(gotoDialog.getLine())
+
+    def gotoLine(self, line: int) -> None:
+        line -= 1 # zero numbered
+        if line < 0:
+            line = 0
+        elif line >= self.ui.textEdit.document().blockCount():
+            line = self.ui.textEdit.document().blockCount()-1
+        block = self.ui.textEdit.document().findBlockByLineNumber (line)
+        if block.isValid():
+            dir = block.position() - self.ui.textEdit.textCursor().position()
+            self.ui.textEdit.scrollToPosition(block.position(), dir)
 
     @pyqtSlot()
     def nextMatch (self) -> None:
@@ -269,7 +296,7 @@ class SourceViewer (QWidget):
 
     @pyqtSlot()
     def updateCurrentLine (self) -> None:
-        line = self.ui.textEdit.textCursor().blockNumber()+1
+        line = self.ui.textEdit.currentLineNumber()
         self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))
 
         extra = QTextEdit.ExtraSelection ()

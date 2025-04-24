@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Optional
+from typing import Optional, Callable, Any
 
 def exceptionAsString (limit: Optional[int]=5) -> str:
     """Prints the current exception into a string"""
@@ -27,3 +27,9 @@ def exceptionAsString (limit: Optional[int]=5) -> str:
     memFile = io.StringIO()
     traceback.print_exception(exc_type, exc_value, exc_traceback, limit=limit, file=memFile)
     return memFile.getvalue()
+
+def ignoreExcepion(func: Callable, defaultValue: Any, *args):
+    try:
+        return func(*args)
+    except:
+        return defaultValue

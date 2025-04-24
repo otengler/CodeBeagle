@@ -48,7 +48,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.lineNumberArea: Optional[LineNumberArea] = None
 
     def scrollToPosition(self, index: int, scrollDir: int) -> None:
-        """scrollHint is positive for scolling down and negative for scrolling up"""
+        """scrollDir is positive for scolling down and negative for scrolling up"""
         cursor = self.textCursor()
         cursor.setPosition(index)
         if scrollDir > 0:
@@ -72,6 +72,12 @@ class HighlightingTextEdit (QPlainTextEdit):
             if self.lineNumberArea:
                 self.lineNumberArea.close()
                 self.lineNumberArea = None
+
+    def currentLineNumber(self) -> int:
+        if self.lineNumberArea:
+            return self.textCursor().blockNumber() + self.lineNumberArea.firstLineNumber
+        else:
+            return self.textCursor().blockNumber() + 1
 
     def resizeEvent(self, e: Optional[QResizeEvent]) -> None:
         super().resizeEvent(e)
