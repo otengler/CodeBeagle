@@ -173,6 +173,8 @@ class BookmarkStorage:
 
     def __moveFile(self, fileName: str, forward: bool) -> Optional[Tuple[str,int]]:
         bookmarks = self.__readBookmarks().bookmarks
+        if not bookmarks:
+            return None
         names = [k for k in bookmarks.keys()]
         index = findStrInList(names, fileName)
         if index == -1:
