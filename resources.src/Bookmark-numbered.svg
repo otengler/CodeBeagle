@@ -14,12 +14,18 @@
    version="1.1"
    id="svg8"
    inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
-   sodipodi:docname="Bookmark.svg"
-   inkscape:export-filename="C:\src\CodeBeagle\resources\bookmark.png"
+   sodipodi:docname="Bookmark-numbered.svg"
+   inkscape:export-filename="C:\src\CodeBeagle\resources\bookmark-numbered.png"
    inkscape:export-xdpi="8.5959511"
    inkscape:export-ydpi="8.5959511">
   <defs
      id="defs2">
+    <rect
+       x="99.958803"
+       y="122.40944"
+       width="15.501632"
+       height="11.22532"
+       id="rect847" />
     <linearGradient
        id="linearGradient13887">
       <stop
@@ -58,6 +64,19 @@
          offset="0"
          id="stop5221" />
     </linearGradient>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter3186"
+       x="-0.0038068805"
+       width="1.0076138"
+       y="-0.0034144459"
+       height="1.0068289">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.12297069"
+         id="feGaussianBlur3188" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -66,16 +85,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.49497475"
-     inkscape:cx="551.44716"
-     inkscape:cy="535.57365"
+     inkscape:zoom="0.5"
+     inkscape:cx="473.0985"
+     inkscape:cy="570.3304"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
      showgrid="false"
      inkscape:window-width="1920"
      inkscape:window-height="1017"
-     inkscape:window-x="-8"
+     inkscape:window-x="1912"
      inkscape:window-y="-8"
      inkscape:window-maximized="1" />
   <metadata
@@ -96,8 +115,19 @@
      id="layer1">
     <path
        id="rect931"
-       style="opacity:0.996;fill:#ffff00;fill-opacity:1;stroke:#4b4b4b;stroke-width:2.92423;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="M 65.483114,82.114114 H 140.67489 V 166.216 L 103.079,143.8133 65.483114,166.216 Z"
+       style="opacity:0.996;fill:#00f000;fill-opacity:1;stroke:#4b4b4b;stroke-width:3;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter3186)"
+       d="m 64.316435,80.94739 h 77.525325 v 86.43559 L 103.0791,144.35865 64.316435,167.38298 Z"
        sodipodi:nodetypes="cccccc" />
+    <text
+       xml:space="preserve"
+       style="font-size:56.4444px;line-height:1.25;font-family:Consolas;-inkscape-font-specification:Consolas;display:none;opacity:0.997;stroke-width:0.264583"
+       x="87.3125"
+       y="129.11667"
+       id="text873"><tspan
+         sodipodi:role="line"
+         id="tspan871"
+         x="0"
+         y="0"
+         style="font-size:56.4444px;stroke-width:0.264583">9</tspan></text>
   </g>
 </svg>

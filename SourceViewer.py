@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Callable
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QDialog, QTextEdit
@@ -71,26 +71,23 @@ class SourceViewer (QWidget):
         self.ui.buttonMatchList.clicked.connect(self.ui.frameMatchList.setVisible)
         self.ui.buttonMatchCurrent.clicked.connect(self.jumpToCurrentMatch)
 
-        self.actionReloadFile = createQAction(self, shortcut=Qt.Key.Key_F5, triggered= self.reloadFile)
-        self.addAction(self.actionReloadFile)
-        self.actionGotoLine = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_G, triggered=self.showGotoLineDialog)
-        self.addAction(self.actionGotoLine)
-        self.jumpToMatchingBrace = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace)
-        self.addAction(self.jumpToMatchingBrace)
-        self.actionJumpToCurrentMatch = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_J, triggered=self.jumpToCurrentMatch)
-        self.addAction(self.actionJumpToCurrentMatch)
+        self.addAction(createQAction(self, shortcut=Qt.Key.Key_F5, triggered= self.reloadFile))
+        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_G, triggered=self.showGotoLineDialog))
+        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace))
+        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_J, triggered=self.jumpToCurrentMatch))
 
         # Bookmarks
-        self.actionSetBookmark = createQAction(self, shortcut=Qt.Key.Key_F2, triggered=self.setBookmark)
-        self.addAction(self.actionSetBookmark)
-        self.actionNextBookmark = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F2, triggered=self.nextBookmark)
-        self.addAction(self.actionNextBookmark)
-        self.actionPreviousBookmark = createQAction(self, shortcut=Qt.KeyboardModifier.ShiftModifier+Qt.Key.Key_F2, triggered=self.previousBookmark)
-        self.addAction(self.actionPreviousBookmark)
+        self.addAction(createQAction(self, shortcut=Qt.Key.Key_F2, triggered=self.setBookmark))
+        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F2, triggered=self.nextBookmark))
+        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ShiftModifier+Qt.Key.Key_F2, triggered=self.previousBookmark))
+        numberKeys = [Qt.Key.Key_1,Qt.Key.Key_2,Qt.Key.Key_3,Qt.Key.Key_4,Qt.Key.Key_5,Qt.Key.Key_6,Qt.Key.Key_7,Qt.Key.Key_8,Qt.Key.Key_9]
+        for idx, key in enumerate(numberKeys):
+            number = idx + 1
+            self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.KeyboardModifier.ShiftModifier+key, triggered=self.__createSetNumberedBookmarkFunc(number)))
+            self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+key, triggered=self.__createJumpToNumberedBookmarkFunc(number)))
 
         # In document search
-        self.inDocumentSearch = createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F, triggered=self.toggleSearchFrame)
-        self.addAction(self.inDocumentSearch)
+        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F, triggered=self.toggleSearchFrame))
         self.ui.buttonSearch.clicked.connect(self.showSearchFrame)
         self.ui.widgetInDocumentSearch.searchFinished.connect(self.inDocumentSearchFinished)
         self.ui.widgetInDocumentSearch.currentMatchChanged.connect(self.inDocumentSearchMatchChanged)
@@ -110,6 +107,11 @@ class SourceViewer (QWidget):
 
         # Encoding info label
         self.ui.labelEncoding.hide()
+
+    def __createSetNumberedBookmarkFunc(self, number: int) -> Callable:
+        return lambda: self.setNumberedBookmark(number)
+    def __createJumpToNumberedBookmarkFunc(self, number: int) -> Callable:
+        return lambda: self.jumpToNumberedBookmark(number)
 
     @pyqtSlot(int)
     def matchListRowChanged(self, row: int) -> None:
@@ -209,6 +211,8 @@ class SourceViewer (QWidget):
         if self.ui.textEdit.lineNumberArea:
             lines = getBookmarkStorage().getBookmarksForFile(self.currentFile)
             self.ui.textEdit.lineNumberArea.setBookmarks(lines)
+            numbered = getBookmarkStorage().getNumberedBookmarksByLine(self.currentFile)
+            self.ui.textEdit.lineNumberArea.setNumberedBookmarks(numbered)
 
         self.ui.widgetInDocumentSearch.setText(text)
 
@@ -241,6 +245,17 @@ class SourceViewer (QWidget):
             fileName, line = bookmark
             self.showFile(fileName)
             self.gotoLine(line)
+
+    @pyqtSlot()
+    def setNumberedBookmark(self, number: int) -> None:
+        numberedBookmarks = getBookmarkStorage().toggleNumberedBookmark(number, self.currentFile, self.ui.textEdit.currentLineNumber())
+        self.ui.textEdit.lineNumberArea.setNumberedBookmarks(numberedBookmarks)
+
+    @pyqtSlot()
+    def jumpToNumberedBookmark(self, number: int) -> None:
+        if numberedBookmark := getBookmarkStorage().getNumberedBookmark(number):
+            self.showFile(numberedBookmark.fileName)
+            self.gotoLine(numberedBookmark.line)
 
     @pyqtSlot()
     def reloadFile(self) -> None:

@@ -17,14 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QRect, QSize
-from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent
+from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent, QFont
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 from typing import Optional, Iterator, Tuple
 
 class LineNumberArea (QWidget):
     bookmarkChanged = pyqtSignal(int) # line where bookmark is set or removed
 
-    padding = 24
+    padding = 28
     areaColor = QColor(235,235,235)
     textColor = QColor(130,130,130)
 
@@ -41,20 +41,26 @@ class LineNumberArea (QWidget):
         self.textEdit.updateRequest.connect(self.scrollArea)
         self.adjustAreaWidth()
 
-        self.enableBookmarks = enableBookmarks
-        bookMarkPixmap = QPixmap("resources/bookmark.png")
-        iconHeight = self.textEdit.fontMetrics().height() - 2
-        factor = iconHeight/bookMarkPixmap.height()
-        self.bookMarkPixmap = bookMarkPixmap.scaled(int(bookMarkPixmap.width() * factor), iconHeight, 
-                                                    Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        
+        self.enableBookmarks = enableBookmarks      
         self.bookmarkLines: set[int] = set()
+        self.numberedBookmarkLines: dict[int,int] = {}
+
+        self.setFont(self.textEdit.font())
+
+    def setFont(self, font: QFont) -> None:
+        self.bookmarkPixmap = self.__getScaledPixmap("resources/bookmark.png")
+        self.numberedBookmarkPixmap = self.__getScaledPixmap("resources/bookmark-numbered.png")
 
     def setBookmarks(self, lines: Optional[set[int]]) -> None:
         if lines is None:
             lines = set()
-        else:
-            self.bookmarkLines = lines
+        self.bookmarkLines = lines
+        self.repaint()
+
+    def setNumberedBookmarks(self, lines: Optional[dict[int,int]]) -> None:
+        if lines is None:
+            lines = {}
+        self.numberedBookmarkLines = lines
         self.repaint()
 
     def close(self) -> bool:
@@ -106,10 +112,14 @@ class LineNumberArea (QWidget):
         painter.fillRect(event.rect(), self.areaColor)
         painter.setPen(self.textColor)
         
-        for number, rect in self.__visibleBlocks(event.rect()):
-            painter.drawText(rect.left(), rect.top(), rect.width()-self.padding//2, rect.height(), Qt.AlignmentFlag.AlignRight, str(number))
-            if self.enableBookmarks and number in self.bookmarkLines:
-                painter.drawPixmap(2, rect.top() + 3, self.bookMarkPixmap)
+        for line, rect in self.__visibleBlocks(event.rect()):
+            painter.drawText(rect.left(), rect.top(), rect.width()-self.padding//2, rect.height(), Qt.AlignmentFlag.AlignRight, str(line))
+            if self.enableBookmarks:
+                if line in self.bookmarkLines:
+                    painter.drawPixmap(2, rect.top() + 2, self.bookmarkPixmap)
+                if number := self.numberedBookmarkLines.get(line):
+                    painter.drawPixmap(2, rect.top() + 2, self.numberedBookmarkPixmap)
+                    painter.drawText(2, rect.top(), self.numberedBookmarkPixmap.width(), self.numberedBookmarkPixmap.height() - 2, Qt.AlignmentFlag.AlignCenter, str(number))
 
     def __visibleBlocks (self, updateRect: QRect) -> Iterator[Tuple[int, QRect]]:
         block: QTextBlock = self.textEdit.firstVisibleBlock()
@@ -126,3 +136,9 @@ class LineNumberArea (QWidget):
             top = bottom
             bottom = top + int(self.textEdit.blockBoundingRect(block).height())
             blockNumber += 1
+
+    def __getScaledPixmap(self, name: str) -> QPixmap:
+        pixmap = QPixmap(name)
+        iconHeight = self.textEdit.fontMetrics().height()
+        factor = iconHeight/pixmap.height()
+        return pixmap.scaled(int(pixmap.width() * factor), iconHeight, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)

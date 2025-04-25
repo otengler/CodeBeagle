@@ -23,25 +23,74 @@ from PyQt5.QtCore import QSettings
 from tools.ExceptionTools import ignoreExcepion
 import AppConfig
 
+class NumberedBookmark:
+    def __init__(self, number: int, fileName: str, line: int) -> None:
+        self.number = number
+        self.fileName = fileName
+        self.line = line
+
+class BookmarkData:
+    def __init__(self) -> None:
+        self.bookmarks: dict[str, list[int]] = {}
+        self.numberedBookmarks: list[NumberedBookmark] = []
+        self.initialized = False
+
+    def setData(self, bookmarks: dict[str, list[int]], numberedBookmarks: list[NumberedBookmark]) -> None:
+        self.bookmarks = bookmarks
+        self.numberedBookmarks = numberedBookmarks
+        self.initialized = True
+
+    def removeBookmarkFromLine(self, fileName: str, line: int) -> int:
+        """Returns the number of the bookmark or -1"""
+        for item in self.numberedBookmarks:
+            if item.fileName == fileName and item.line == line:
+                self.numberedBookmarks.remove(item)
+                return item.number
+        return -1
+
+    def removeNumberedBookmark(self, number: int) -> int:
+        """Returns the line number of the removed bookmark or -1"""
+        for item in self.numberedBookmarks:
+            if item.number == number:
+                self.numberedBookmarks.remove(item)
+                return item.line
+        return -1
+
 class BookmarkStorage:
     BookmarkStorageKey = "bookmarks"
     PropAll = "all"
+    PropNumbered = "numbered"
     PropName = "name"
+    PropNumber = "number"
+    PropLine = "line"
     PropLines = "lines"
     PersistenceEnabled = True
 
     def __init__(self) -> None:
-        self.bookmarks: Optional[dict[str, list[int]]] = None
+        self.bookmarkData: BookmarkData = BookmarkData()
         self.current: Optional[Tuple[str, int]] = None # (file, line)
 
     def getBookmarksForFile(self, fileName: str) -> set[int]:
-        lines = self.__readBookmarks().get(fileName)
+        lines = self.__readBookmarks().bookmarks.get(fileName)
         if lines:
             return {line for line in lines}
         return set()
     
+    def getNumberedBookmarksByLine(self, fileName: str) -> dict[int,int]:
+        lines = {}
+        for item in self.__readBookmarks().numberedBookmarks:
+            if item.fileName == fileName:
+                lines[item.line] = item.number
+        return lines
+    
+    def getNumberedBookmark(self, number: int) -> Optional[NumberedBookmark]:
+        for item in self.__readBookmarks().numberedBookmarks:
+            if item.number == number:
+                return item
+        return None
+    
     def setBookmarksForFile(self, fileName, lines: set[int]) -> None:
-        bookmarks = self.__readBookmarks()
+        bookmarks = self.__readBookmarks().bookmarks
         sortedLines = [line for line in lines]
         if sortedLines:
             sortedLines.sort()
@@ -49,9 +98,7 @@ class BookmarkStorage:
         else:
             if fileName in bookmarks:
                 del bookmarks[fileName]
-        if self.PersistenceEnabled:
-            settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-            settings.setValue(self.BookmarkStorageKey, self.__serializeBookmarks())
+        self.__storeBookmarks()
 
     def toggleBookmarkForFile(self, fileName, line: int) -> set[int]:
         lines = self.getBookmarksForFile(fileName)
@@ -62,16 +109,26 @@ class BookmarkStorage:
         self.setBookmarksForFile(fileName, lines)
         return lines
     
+    def toggleNumberedBookmark(self, number: int, fileName: str, line: int) -> dict[int,int]:
+        """ number is from 1 to 9 """
+        if number < 1 or number > 9:
+            return {}
+        # Remove numbered bookmark if it is already set. If the new bookmark if on the same line treat it as a removal
+        bookmarkData = self.__readBookmarks()
+        removedCurrent = bookmarkData.removeBookmarkFromLine(fileName, line) == number
+        if not removedCurrent:
+            bookmarkData.removeNumberedBookmark(number)
+            bookmarkData.numberedBookmarks.append(NumberedBookmark(number, fileName, line))
+        self.__storeBookmarks()
+        return self.getNumberedBookmarksByLine(fileName)
+    
     def nextBookmark(self) -> Optional[Tuple[str, int]]:
-        bookmarks = self.__readBookmarks()
-        if not bookmarks:
-            return None
         if not self.current:
             self.current = self.__initCurrentBookmark()
             return self.current
         currFile, currLine = self.current
         # Get next bookmark in file
-        lines: list[int] = bookmarks.get(currFile) # type: ignore
+        lines: list[int] = self.__readBookmarks().bookmarks.get(currFile) # type: ignore
         if not lines:
             self.current = self.__initCurrentBookmark()
             return self.current
@@ -88,15 +145,12 @@ class BookmarkStorage:
         return None
     
     def previousBookmark(self) -> Optional[Tuple[str, int]]:
-        bookmarks = self.__readBookmarks()
-        if not bookmarks:
-            return None
         if not self.current:
             self.current = self.__initCurrentBookmark()
             return self.current
         currFile, currLine = self.current
         # Get previous bookmark in file
-        lines: list[int] = bookmarks.get(currFile) # type: ignore
+        lines: list[int] = self.__readBookmarks().bookmarks.get(currFile) # type: ignore
         if not lines:
             self.current = self.__initCurrentBookmark()
             return self.current
@@ -113,21 +167,15 @@ class BookmarkStorage:
         return None
 
     def __initCurrentBookmark(self) -> Optional[Tuple[str, int]]:
-        bookmarks = self.__readBookmarks()
-        if not bookmarks:
-            self.current = None
-            return None
         if not self.current:
             self.current = self.__firstBookmark()
-        lines = bookmarks.get(self.current[0]) # type: ignore
+        lines = self.__readBookmarks().bookmarks.get(self.current[0]) # type: ignore
         if not lines:
             self.current = self.__firstBookmark()
         return self.current
 
     def __moveFile(self, fileName: str, forward: bool) -> Optional[Tuple[str,int]]:
-        bookmarks = self.__readBookmarks()
-        if not bookmarks:
-            return None
+        bookmarks = self.__readBookmarks().bookmarks
         names = [k for k in bookmarks.keys()]
         index = names.index(fileName)
         if index == -1:
@@ -148,37 +196,45 @@ class BookmarkStorage:
         return (nextName, bookmarks[nextName][lineIndex])
 
     def __firstBookmark(self) -> Optional[Tuple[str, int]]:
-        bookmarks = self.__readBookmarks()
-        if not bookmarks: 
-            return None
-        for name, lines in bookmarks.items():
+        for name, lines in self.__readBookmarks().bookmarks.items():
             return (name, lines[0])
         return None
 
-    def __readBookmarks(self) -> dict[str, list[int]]:
-        if self.bookmarks is None:
+    def __readBookmarks(self) -> BookmarkData:
+        if not self.bookmarkData.initialized:
             if self.PersistenceEnabled:
                 settings = QSettings(AppConfig.appCompany, AppConfig.appName)
-                self.bookmarks = self.__deserializeBookmarks(settings.value(self.BookmarkStorageKey))
+                self.__deserializeBookmarks(settings.value(self.BookmarkStorageKey))
             else:
-                self.bookmarks = {}
-        return self.bookmarks
+                self.bookmarkData.setData({}, [])
+        return self.bookmarkData
     
+    def __storeBookmarks(self) -> None:
+        if self.PersistenceEnabled:
+            settings = QSettings(AppConfig.appCompany, AppConfig.appName)
+            settings.setValue(self.BookmarkStorageKey, self.__serializeBookmarks())
+
     def __serializeBookmarks(self) -> str:
         data: dict = {}
-        if self.bookmarks:
+        if self.bookmarkData.bookmarks:
             all = []
-            for fileName, lines in self.bookmarks.items():
+            for fileName, lines in self.bookmarkData.bookmarks.items():
                 all.append({self.PropName: fileName, self.PropLines: lines})
             data[self.PropAll] = all
+        if self.bookmarkData.numberedBookmarks:
+            numbered = []
+            for bookmark in self.bookmarkData.numberedBookmarks:
+                numbered.append({self.PropNumber: bookmark.number, self.PropName: bookmark.fileName, self.PropLine: bookmark.line})
+            data[self.PropNumbered] = numbered
         return json.dumps(data)
     
-    def __deserializeBookmarks(self, serialized: str, removeNotExistingFiles: bool = True) -> dict[str, list[int]]:
+    def __deserializeBookmarks(self, serialized: str, removeNotExistingFiles: bool = True) -> BookmarkData:
         bookmarks = {}
+        numberedBookmarks = []
         try:
             deserialized = json.loads(serialized)
             if deserialized and isinstance(deserialized, dict):
-                all: list[Tuple[str, int]]
+                all: list
                 if all := deserialized.get(self.PropAll): 
                     for item in all:
                         name = item.get(self.PropName)
@@ -189,12 +245,39 @@ class BookmarkStorage:
                                     continue
                             lines.sort()
                             bookmarks[name] = lines
+                numbered: list
+                if numbered := deserialized.get(self.PropNumbered):
+                    for item in numbered:
+                        number = item.get(self.PropNumber)
+                        name = item.get(self.PropName)
+                        line = item.get(self.PropLine)
+                        if number and name and line:
+                            if removeNotExistingFiles:
+                                if not ignoreExcepion(os.path.isfile, False, name):
+                                    continue
+                            if number < 0 or number > 9:
+                                continue
+                            numberedBookmarks.append(NumberedBookmark(number, name, line))
         except:
             bookmarks = {}
+            numberedBookmarks = []
 
-        self.bookmarks = bookmarks
+        if self.__numberedBookmarksHaveDuplicates():
+            numberedBookmarks = []
 
-        return bookmarks
+        self.bookmarkData.setData(bookmarks, numberedBookmarks)
+
+        return self.bookmarkData
+
+    def __numberedBookmarksHaveDuplicates(self):
+        if not self.bookmarkData.numberedBookmarks:
+            return False
+        numbers = set()
+        for bm in self.bookmarkData.numberedBookmarks:
+            if bm.number in numbers:
+                return True
+            numbers.add(bm.number)
+        return False
 
 bookmarkStorage = BookmarkStorage()
 def getBookmarkStorage() -> BookmarkStorage:
@@ -210,7 +293,7 @@ class TestBookmarks(unittest.TestCase):
         storage = BookmarkStorage()
         storage.setBookmarksForFile("a", set((10,)))
         json = storage._BookmarkStorage__serializeBookmarks() # type: ignore
-        self.assertListEqual([k for k in storage.bookmarks.keys()], ["a"]) # type: ignore
+        self.assertListEqual([k for k in storage.bookmarkData.bookmarks.keys()], ["a"]) # type: ignore
         self.assertIsNone(storage.current)
 
         storage = BookmarkStorage()
@@ -221,9 +304,9 @@ class TestBookmarks(unittest.TestCase):
         
         storage = BookmarkStorage()
         storage._BookmarkStorage__deserializeBookmarks(json, False) # type: ignore
-        self.assertListEqual([k for k in storage.bookmarks.keys()], ["a", "b"]) # type: ignore
-        self.assertListEqual(storage.bookmarks["a"], [10,20,30]) # type: ignore
-        self.assertListEqual(storage.bookmarks["b"], [15]) # type: ignore
+        self.assertListEqual([k for k in storage.bookmarkData.bookmarks.keys()], ["a", "b"]) # type: ignore
+        self.assertListEqual(storage.bookmarkData.bookmarks["a"], [10,20,30]) # type: ignore
+        self.assertListEqual(storage.bookmarkData.bookmarks["b"], [15]) # type: ignore
         self.assertIsNone(storage.current)
         storage.setBookmarksForFile("c", set()) # make sure empty file is skipped in next/previous
 

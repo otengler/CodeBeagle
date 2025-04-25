@@ -101,6 +101,8 @@ class HighlightingTextEdit (QPlainTextEdit):
         if viewport:
             viewport.setFont(font)
         self.highlighter.setFont(font)
+        if self.lineNumberArea:
+            self.lineNumberArea.setFont(font)
 
     def rehighlight(self) -> None:
         """
