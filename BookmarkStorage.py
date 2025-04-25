@@ -23,6 +23,12 @@ from PyQt5.QtCore import QSettings
 from tools.ExceptionTools import ignoreExcepion
 import AppConfig
 
+def findStrInList(items: list, item: str) -> int:
+    try:
+        return items.index(item)
+    except ValueError:
+        return -1
+    
 class NumberedBookmark:
     def __init__(self, number: int, fileName: str, line: int) -> None:
         self.number = number
@@ -128,10 +134,7 @@ class BookmarkStorage:
             return self.current
         currFile, currLine = self.current
         # Get next bookmark in file
-        lines: list[int] = self.__readBookmarks().bookmarks.get(currFile) # type: ignore
-        if not lines:
-            self.current = self.__initCurrentBookmark()
-            return self.current
+        lines: list[int] = self.__readBookmarks().bookmarks.get(currFile) or []
         nextIndex = bisect_right(lines, currLine)
         if nextIndex < len(lines):
             self.current = (currFile, lines[nextIndex])
@@ -150,10 +153,7 @@ class BookmarkStorage:
             return self.current
         currFile, currLine = self.current
         # Get previous bookmark in file
-        lines: list[int] = self.__readBookmarks().bookmarks.get(currFile) # type: ignore
-        if not lines:
-            self.current = self.__initCurrentBookmark()
-            return self.current
+        lines: list[int] = self.__readBookmarks().bookmarks.get(currFile) or []
         nextIndex = bisect_left(lines, currLine) -1
         if nextIndex >= 0:
             self.current = (currFile, lines[nextIndex])
@@ -169,15 +169,12 @@ class BookmarkStorage:
     def __initCurrentBookmark(self) -> Optional[Tuple[str, int]]:
         if not self.current:
             self.current = self.__firstBookmark()
-        lines = self.__readBookmarks().bookmarks.get(self.current[0]) # type: ignore
-        if not lines:
-            self.current = self.__firstBookmark()
         return self.current
 
     def __moveFile(self, fileName: str, forward: bool) -> Optional[Tuple[str,int]]:
         bookmarks = self.__readBookmarks().bookmarks
         names = [k for k in bookmarks.keys()]
-        index = names.index(fileName)
+        index = findStrInList(names, fileName)
         if index == -1:
             nextName = names[0]
         else:
@@ -284,7 +281,7 @@ def getBookmarkStorage() -> BookmarkStorage:
     return bookmarkStorage
 
 class TestBookmarks(unittest.TestCase):
-    def test(self) -> None:
+    def testNormal(self) -> None:
         BookmarkStorage.PersistenceEnabled = False
         storage = BookmarkStorage()
         json = storage._BookmarkStorage__serializeBookmarks() # type: ignore
@@ -325,7 +322,50 @@ class TestBookmarks(unittest.TestCase):
         storage.current = ("z", 1) 
         self.assertTupleEqual(storage.nextBookmark(), ("a", 10)) # type: ignore
         storage.current = ("z", 1) 
-        self.assertTupleEqual(storage.previousBookmark(), ("a", 10)) # type: ignore
+        self.assertTupleEqual(storage.previousBookmark(), ("a", 30)) # type: ignore
+
+    def testNumbered(self) -> None:
+        BookmarkStorage.PersistenceEnabled = False
+        storage = BookmarkStorage()
+        
+        bm = storage.getNumberedBookmark(1)
+        self.assertIsNone(bm)
+
+        bms = storage.toggleNumberedBookmark(1, "a", 100)
+        self.assertEqual(1, len(bms))
+        self.assertListEqual([100], [k for k in bms.keys()])
+        self.assertListEqual([1], [v for v in bms.values()])
+
+        bms = storage.toggleNumberedBookmark(2, "a", 200)
+        self.assertEqual(2, len(bms))
+        self.assertListEqual([100, 200], [k for k in bms.keys()])
+        self.assertListEqual([1, 2], [v for v in bms.values()])
+
+        nb = storage.getNumberedBookmark(1)
+        self.assertEqual(1, nb.number) # type: ignore
+        self.assertEqual(100, nb.line) # type: ignore
+        self.assertEqual("a", nb.fileName) # type: ignore
+
+        nb = storage.getNumberedBookmark(2)
+        self.assertEqual(2, nb.number) # type: ignore
+        self.assertEqual(200, nb.line) # type: ignore
+        self.assertEqual("a", nb.fileName) # type: ignore
+        
+        # Move 2 to file "b"
+        bms = storage.toggleNumberedBookmark(2, "b", 202)
+        self.assertEqual(1, len(bms))
+        self.assertListEqual([202], [k for k in bms.keys()])
+        self.assertListEqual([2], [v for v in bms.values()])
+
+        # Move 1 inside "a"
+        bms = storage.toggleNumberedBookmark(1, "a", 150)
+        self.assertEqual(1, len(bms))
+        self.assertListEqual([150], [k for k in bms.keys()])
+        self.assertListEqual([1], [v for v in bms.values()])
+
+        # Remove 1 inside "a"
+        bms = storage.toggleNumberedBookmark(1, "a", 150)
+        self.assertEqual(0, len(bms))
 
 if __name__ == "__main__":
     unittest.main()

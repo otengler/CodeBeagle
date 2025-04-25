@@ -34,15 +34,15 @@ class StringListModel(QAbstractListModel):
     def __init__(self, filelist: List[str],  parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.filelist = filelist
-        self.editorState: Dict[QModelIndex, SourceViewer.EditorState] = {} # maps from file index to an editor state object
+        self.editorState: Dict[int, SourceViewer.EditorState] = {} # maps from file index to an editor state object
         self.sizeHint: Optional[QSize] = None
         self.cutLeft = self.__computeCutLeft()
         self.selectedFileIndex = -1
 
-    def getEditorState(self, row:QModelIndex) -> Optional[SourceViewer.EditorState]:
+    def getEditorState(self, row: int) -> Optional[SourceViewer.EditorState]:
         return self.editorState.get(row)
 
-    def setEditorState(self, row:QModelIndex, state:SourceViewer.EditorState) -> None:
+    def setEditorState(self, row: int, state:SourceViewer.EditorState) -> None:
         self.editorState[row] = state
 
     def getSelectedFileIndex (self) -> int:
@@ -53,6 +53,12 @@ class StringListModel(QAbstractListModel):
 
     def setSizeHint(self, sizeHint: QSize) -> None:
         self.sizeHint = sizeHint
+
+    def findFile(self, fileName: str) -> int:
+        for idx, name in enumerate(self.filelist):
+            if name == fileName:
+                return idx
+        return -1
 
     # If all entries in the list start with the same directory we don't need to display this prefix.
     def __computeCutLeft (self) -> int:

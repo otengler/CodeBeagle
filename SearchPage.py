@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import List, Tuple, Optional, cast
+from typing import List, Tuple, Optional, cast, Callable
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
@@ -31,12 +31,15 @@ import PathVisualizerDelegate
 from fulltextindex import FullTextIndex
 from fulltextindex import Query
 from fulltextindex.IndexConfiguration import IndexConfiguration, IndexMode
+from tools.QHelper import createQAction
 import SearchAsync
 import CustomContextMenu
 import AppConfig
+from BookmarkStorage import getBookmarkStorage
 from StringListModel import StringListModel
 from Ui_SearchPage import Ui_SearchPage
 from SearchParamHistory import getSearchParamHistory
+
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard.
@@ -152,8 +155,62 @@ class SearchPage (QWidget):
             if screenGeometry.width() < 1200:
                 self.__layoutForLowScreenWidth()
 
+        # Bookmarks
+        self.addAction(createQAction(self, shortcut=Qt.Key.Key_F2, triggered=self.setBookmark))
+        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F2, triggered=self.nextBookmark))
+        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ShiftModifier+Qt.Key.Key_F2, triggered=self.previousBookmark))
+        numberKeys = [Qt.Key.Key_1,Qt.Key.Key_2,Qt.Key.Key_3,Qt.Key.Key_4,Qt.Key.Key_5,Qt.Key.Key_6,Qt.Key.Key_7,Qt.Key.Key_8,Qt.Key.Key_9]
+        for idx, key in enumerate(numberKeys):
+            number = idx + 1
+            self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.KeyboardModifier.ShiftModifier+key, triggered=self.__createSetNumberedBookmarkFunc(number)))
+            self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+key, triggered=self.__createJumpToNumberedBookmarkFunc(number)))
+
+    def __createSetNumberedBookmarkFunc(self, number: int) -> Callable:
+        return lambda: self.setNumberedBookmark(number)
+    def __createJumpToNumberedBookmarkFunc(self, number: int) -> Callable:
+        return lambda: self.jumpToNumberedBookmark(number)
+
     def showEvent(self, _: Optional[QShowEvent]) -> None:
         self.documentShown.emit(self.ui.sourceViewer.currentFile)
+
+    @pyqtSlot()
+    def setBookmark(self) -> None:
+        self.ui.sourceViewer.setBookmark()
+
+    @pyqtSlot()
+    def setNumberedBookmark(self, number: int) -> None:
+        self.ui.sourceViewer.setNumberedBookmark(number)
+
+    @pyqtSlot()
+    def nextBookmark(self) -> None:
+        if bookmark := getBookmarkStorage().nextBookmark():
+            fileName, line = bookmark
+            self.__showBookmark(fileName, line)
+
+    @pyqtSlot()
+    def previousBookmark(self) -> None:
+        if bookmark := getBookmarkStorage().previousBookmark():
+            fileName, line = bookmark
+            self.__showBookmark(fileName, line)
+
+    @pyqtSlot()
+    def jumpToNumberedBookmark(self, number: int) -> None:
+        if numberedBookmark := getBookmarkStorage().getNumberedBookmark(number):
+            self.__showBookmark(numberedBookmark.fileName, numberedBookmark.line)
+
+    def __showBookmark(self, fileName: str, line: int) -> None:
+        # Try to find bookmark file in list and activate it
+        model = self.ui.listView.model() # type: Optional[StringListModel]
+        if model:
+            row = model.findFile(fileName)
+            if row != -1:
+                model.setSelectedFileIndex (row)
+                index = model.index(row)
+                self.ui.listView.clearSelection()
+                self.ui.listView.setCurrentIndex(index)
+        # Show file and jump to line
+        self.showFile(fileName)
+        self.ui.sourceViewer.gotoLine(line)
 
     @pyqtSlot()
     def changeSearchTypeMenu(self) -> None:
@@ -280,16 +337,18 @@ class SearchPage (QWidget):
 
     @pyqtSlot(QModelIndex)
     def fileSelected (self,  index: QModelIndex) -> None:
-        model = self.ui.listView.model()
+        model = self.ui.listView.model() # type: Optional[StringListModel]
+        if not model:
+            return
         if model.getSelectedFileIndex() != -1:
             model.setEditorState(model.getSelectedFileIndex(), self.ui.sourceViewer.saveEditorState())
         model.setSelectedFileIndex (index.row())
         name = index.data(Qt.ItemDataRole.UserRole)
-        editorState = self.ui.listView.model().getEditorState(index.row())
+        editorState = model.getEditorState(index.row())
         self.showFile (name, editorState)
         self.ui.matchesOverview.scrollToFile(index.row())
 
-    def showFile (self, name: str, editorState: EditorState) -> None:
+    def showFile (self, name: str, editorState: Optional[EditorState] = None) -> None:
         if self.ui.sourceViewer.currentFile != name:
             self.ui.sourceViewer.showFile(name, editorState)
             self.documentShown.emit(name)
@@ -336,8 +395,9 @@ class SearchPage (QWidget):
     def __prepareSearch (self) -> Tuple[SearchAsync.SearchParams, IndexConfiguration]:
         # Remember the current selected file in the current state before pushing the next state into the historx
         if self.searchStateIndex >= 0:
-            model = self.ui.listView.model()
-            self.searchStateList[self.searchStateIndex].selectedFileIndex = model.getSelectedFileIndex()
+            model = self.ui.listView.model() # type: Optional[StringListModel]
+            if model:
+                self.searchStateList[self.searchStateIndex].selectedFileIndex = model.getSelectedFileIndex()
 
         self.__updateSearchResult(SearchAsync.ResultSet()) # clear current results
         indexConf = self.__currentIndexConf()
