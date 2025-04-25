@@ -24,7 +24,9 @@ from typing import Optional, Iterator, Tuple
 class LineNumberArea (QWidget):
     bookmarkChanged = pyqtSignal(int) # line where bookmark is set or removed
 
-    padding = 28
+    paddingLeft = 18
+    paddingRight = 12
+    bookmarkIconLeft = 3
     areaColor = QColor(235,235,235)
     textColor = QColor(130,130,130)
 
@@ -92,7 +94,7 @@ class LineNumberArea (QWidget):
             newBlockCount = self.textEdit.blockCount()
         newBlockCount = self.firstLineNumber + newBlockCount
         digits = len(f"{newBlockCount}")
-        space:int = self.padding + self.textEdit.fontMetrics().horizontalAdvance("9") * digits
+        space:int = self.paddingLeft + self.paddingRight + self.textEdit.fontMetrics().horizontalAdvance("9") * digits
         return space
 
     def mouseReleaseEvent(self, event: Optional[QMouseEvent]) -> None:
@@ -113,13 +115,13 @@ class LineNumberArea (QWidget):
         painter.setPen(self.textColor)
         
         for line, rect in self.__visibleBlocks(event.rect()):
-            painter.drawText(rect.left(), rect.top(), rect.width()-self.padding//2, rect.height(), Qt.AlignmentFlag.AlignRight, str(line))
+            painter.drawText(rect.left(), rect.top(), rect.width()-self.paddingRight, rect.height(), Qt.AlignmentFlag.AlignRight, str(line))
             if self.enableBookmarks:
                 if line in self.bookmarkLines:
-                    painter.drawPixmap(2, rect.top() + 2, self.bookmarkPixmap)
+                    painter.drawPixmap(self.bookmarkIconLeft, rect.top() + 2, self.bookmarkPixmap)
                 if number := self.numberedBookmarkLines.get(line):
-                    painter.drawPixmap(2, rect.top() + 2, self.numberedBookmarkPixmap)
-                    painter.drawText(2, rect.top(), self.numberedBookmarkPixmap.width(), self.numberedBookmarkPixmap.height() - 2, Qt.AlignmentFlag.AlignCenter, str(number))
+                    painter.drawPixmap(self.bookmarkIconLeft, rect.top() + 2, self.numberedBookmarkPixmap)
+                    painter.drawText(self.bookmarkIconLeft, rect.top(), self.numberedBookmarkPixmap.width(), self.numberedBookmarkPixmap.height() - 2, Qt.AlignmentFlag.AlignCenter, str(number))
 
     def __visibleBlocks (self, updateRect: QRect) -> Iterator[Tuple[int, QRect]]:
         block: QTextBlock = self.textEdit.firstVisibleBlock()
