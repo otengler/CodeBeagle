@@ -123,6 +123,7 @@ class SourceViewer (QWidget):
             self.ui.textEdit.setFont(self.sourceFont)
 
         self.bMatchOverFiles = appConfig().matchOverFiles
+        self.__enableNextPrevious()
 
         config = appConfig().SourceViewer
         if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
@@ -271,8 +272,7 @@ class SourceViewer (QWidget):
             self.__setMatchIndex(index)
             self.__scrollToMatch (*self.matches[index], SyntaxHighlighter.matchBackgroundColor)
             self.__setInfoLabel ()
-            if not self.bMatchOverFiles:
-                self.__enableNextPrevious()
+            self.__enableNextPrevious()
 
     @pyqtSlot()
     def updateCurrentLine (self) -> None:
@@ -329,10 +329,10 @@ class SourceViewer (QWidget):
 
     def __enableNextPrevious (self) -> None:
         """Disable next/previous buttons if they don't make sense."""
-        bEnablePrevious = self.curMatch > 0
+        bEnablePrevious = self.curMatch > 0 or self.bMatchOverFiles
         if self.ui.buttonMatchPrevious.isEnabled() != bEnablePrevious:
             self.ui.buttonMatchPrevious.setEnabled(bEnablePrevious)
-        bEnableNext = self.curMatch < len(self.matches)-1
+        bEnableNext = self.curMatch < len(self.matches)-1 or self.bMatchOverFiles
         if self.ui.buttonMatchNext.isEnabled() != bEnableNext:
             self.ui.buttonMatchNext.setEnabled(bEnableNext)
 
