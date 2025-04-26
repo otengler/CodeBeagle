@@ -69,15 +69,5 @@ class SearchPageBookmarks (QObject):
             self.__navigateToBookmark(numberedBookmark.fileName, numberedBookmark.line)
 
     def __navigateToBookmark(self, fileName: str, line: int) -> None:
-        # Try to find bookmark file in list and activate it
-        model = self.searchPage.ui.listView.model() # type: Optional[StringListModel]
-        if model:
-            row = model.findFile(fileName)
-            if row != -1:
-                model.setSelectedFileIndex (row)
-                index = model.index(row)
-                self.searchPage.ui.listView.clearSelection()
-                self.searchPage.ui.listView.setCurrentIndex(index)
         # Show file and jump to line
-        self.searchPage.showFile(fileName)
-        self.searchPage.ui.sourceViewer.gotoLine(line)
+        self.searchPage.showFileLine(fileName, line)

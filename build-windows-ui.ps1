@@ -22,6 +22,7 @@ python GenerateStylesheet.py
 & $env:PYUIC -o Ui_SearchPage.py -x SearchPage.ui 
 & $env:PYUIC -o Ui_SourceViewer.py -x SourceViewer.ui 
 & $env:PYUIC -o Ui_MatchesOverview.py -x MatchesOverview.ui 
+& $env:PYUIC -o Ui_MatchesOverviewLabel.py -x MatchesOverviewLabel.ui 
 
 
 

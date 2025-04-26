@@ -108,6 +108,7 @@ class SearchPage (QWidget):
         self.ui.sourceViewer.noPreviousMatch.connect(self.previousFile)
         self.ui.sourceViewer.noNextMatch.connect(self.nextFile)
         self.ui.matchesOverview.selectionFinishedWithKeyboardModifier.connect(self.newSearchBasedOnSelection)
+        self.ui.matchesOverview.navigateToFile.connect(self.showFileLine)
         self.ui.buttonRegEx.clicked.connect(self.showRegExTester)
         self.ui.comboLocation.currentIndexChanged[str].connect(self.currentLocationChanged) # pylint: disable=unsubscriptable-object
         self.ui.buttonSwitchView.clicked.connect(self.switchView)
@@ -292,13 +293,30 @@ class SearchPage (QWidget):
         model.setSelectedFileIndex (index.row())
         name = index.data(Qt.ItemDataRole.UserRole)
         editorState = model.getEditorState(index.row())
-        self.showFile (name, editorState)
+        self.__showFile (name, editorState)
         self.ui.matchesOverview.scrollToFile(index.row())
 
-    def showFile (self, name: str, editorState: Optional[EditorState] = None) -> None:
+    def __showFile (self, name: str, editorState: Optional[EditorState] = None) -> None:
         if self.ui.sourceViewer.currentFile != name:
             self.ui.sourceViewer.showFile(name, editorState)
             self.documentShown.emit(name)
+
+    @pyqtSlot(str, int)
+    def showFileLine(self, name: str, line: int) -> None:
+        # Try to find bookmark file in list and activate it
+        model = self.ui.listView.model() # type: Optional[StringListModel]
+        if model:
+            row = model.findFile(name)
+            if row != -1:
+                model.setSelectedFileIndex (row)
+                index = model.index(row)
+                self.ui.listView.clearSelection()
+                self.ui.listView.setCurrentIndex(index)
+        if self.ui.stackedWidget.currentIndex != 0:
+            self.ui.buttonSwitchView.setChecked(False)
+            self.ui.stackedWidget.setCurrentIndex(0)
+        self.__showFile(name)
+        self.ui.sourceViewer.gotoLine(line)
 
     @pyqtSlot()
     def nextFile (self) -> None:

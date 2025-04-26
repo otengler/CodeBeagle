@@ -21,7 +21,7 @@ import bisect
 import re
 import threading
 from typing import List,Tuple,Optional
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QWidget
 from tools.FileTools import freadall
@@ -31,6 +31,7 @@ from widgets.SourceHighlightingTextEdit import SourceHighlightingTextEdit
 from widgets import RecyclingVerticalScrollArea
 from AppConfig import appConfig
 import HighlightingRulesCache
+from MatchesOverviewLabel import MatchesOverviewLabelItem
 from Ui_MatchesOverview import Ui_MatchesOverview
 
 # Accepts a list of touples each containing a start and end index. After calling the function
@@ -188,6 +189,7 @@ def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, 
 class MatchesOverview (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
     selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
+    navigateToFile = pyqtSignal(str, int) # fileName and start line
 
     def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
@@ -250,18 +252,17 @@ class MatchesOverview (QWidget):
                                                 bEnableCancel=True)
 
             for result in results:
-                index = self.__addHeader(result.name)
+                firstMatchLine = result.matches[0][0]
+                index = self.__addHeader(result.name, firstMatchLine)
                 self.matchIndexes.append(index)
                 for startLine, lines in result.matches:
                     self.__addText(result.name, startLine, lines)
 
         self.ui.scrollArea.setItems(self.scrollItems)
 
-    def __addHeader(self, text: str) -> int:
-        return self.__addLine(text,  True)
-
-    def __addLine(self, text: str,  bIsBold:bool = False) -> int:
-        labelItem = RecyclingVerticalScrollArea.Labeltem(text,  bIsBold,  20)
+    def __addHeader(self, fileName: str, startLine: int) -> int:
+        labelItem = MatchesOverviewLabelItem(fileName, startLine)
+        labelItem.navigateToCallback = self.__createNavigateToFileFunc(labelItem)
         return self.scrollItems.addItem(labelItem)
 
     def __addText(self, name: str, startLine: int, lines: List[str]) -> int:
@@ -270,6 +271,13 @@ class MatchesOverview (QWidget):
         height = len(lines)*self.lineHeight+11+scrollBarHeight
         editItem = FixedSizeSourcePreviewItem (self, startLine, text, name, height)
         return self.scrollItems.addItem(editItem)
+    
+    def __createNavigateToFileFunc(self, labelItem: MatchesOverviewLabelItem):
+        return lambda: self.emitNavigateToFile(labelItem)
+
+    @pyqtSlot(MatchesOverviewLabelItem)
+    def emitNavigateToFile(self, item: MatchesOverviewLabelItem):
+        self.navigateToFile.emit(item.fileName, item.startLine)
 
 class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
     def __init__(self, matchesOverview: MatchesOverview, startLine: int, text: str, name: str, height: int) -> None:

@@ -24,6 +24,7 @@
 "$PYUIC" -o Ui_SearchPage.py -x SearchPage.ui 
 "$PYUIC" -o Ui_SourceViewer.py -x SourceViewer.ui 
 "$PYUIC" -o Ui_MatchesOverview.py -x MatchesOverview.ui 
+"$PYUIC" -o Ui_MatchesOverviewLabel.py -x MatchesOverviewLabel.ui 
 
 
 

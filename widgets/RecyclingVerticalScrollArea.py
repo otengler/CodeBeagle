@@ -44,7 +44,7 @@ class ScrollAreaItem (ABC):
         pass
 
     @abstractmethod
-    def getType(self) -> Any:
+    def getType(self) -> str:
         pass
 
 class Labeltem (ScrollAreaItem):
@@ -64,8 +64,8 @@ class Labeltem (ScrollAreaItem):
             text = self.text
         item.setText(text)
 
-    def getType(self) -> Any:
-        return QLabel
+    def getType(self) -> str:
+        return "QLabel"
 
 class SrollAreaItemList:
     def __init__(self,  spacing:int = 7) -> None:
@@ -198,21 +198,23 @@ class RecyclingVerticalScrollArea(QScrollArea):
         inactive: List[int] = []
         for ident, w in self.activeWidgets.items():
             wg = w.geometry()
-            if  not doLinesIntersect (y, height,  wg.top(),  wg.height()):
-                self.reservedWidgets[str(w.__class__)].append(w)
+            if not doLinesIntersect (y, height,  wg.top(),  wg.height()):
+                self.reservedWidgets[str(w.__itemTypeName__)].append(w)
                 inactive.append(ident)
         for ident in inactive:
             del self.activeWidgets[ident]
 
-        for itemY,  item in self.items.visibleItems (y, height):
+        for itemY, item in self.items.visibleItems (y, height):
             margin = self.__getScrollViewWidthMargin()
             if not item.id in self.activeWidgets:
-                reserve = self.reservedWidgets[item.getType()]
+                typeName = item.getType()
+                reserve = self.reservedWidgets[typeName]
                 if reserve:
                     w = reserve.pop()
                 else:
                     # No element left, create a new one
                     w = item.generateItem (self.widget())
+                    w.__itemTypeName__ = typeName
                     w.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
                 item.configureItem(w)
                 w.move(self.items.spacing, itemY)

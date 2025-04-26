@@ -50,7 +50,7 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="SearchPage.qrc">
+         <iconset>
           <normaloff>resources/arrow-left.png</normaloff>resources/arrow-left.png</iconset>
         </property>
         <property name="flat">
@@ -67,7 +67,7 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="SearchPage.qrc">
+         <iconset>
           <normaloff>resources/arrow-right.png</normaloff>resources/arrow-right.png</iconset>
         </property>
         <property name="flat">
@@ -157,7 +157,7 @@ p, li { white-space: pre-wrap; }
             <string>Find content</string>
            </property>
            <property name="icon">
-            <iconset resource="SearchPage.qrc">
+            <iconset>
              <normaloff>resources/Find.png</normaloff>resources/Find.png</iconset>
            </property>
           </widget>
@@ -168,7 +168,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="SearchPage.qrc">
+            <iconset>
              <normaloff>resources/angle-down.png</normaloff>resources/angle-down.png</iconset>
            </property>
            <property name="checkable">
@@ -195,7 +195,7 @@ p, li { white-space: pre-wrap; }
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="SearchPage.qrc">
+         <iconset>
           <normaloff>resources/CustomSearch.png</normaloff>resources/CustomSearch.png</iconset>
         </property>
         <property name="flat">
@@ -213,7 +213,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Search in the current search results. After clicking this button all further searches will return only matches from the current search results.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="icon">
-         <iconset resource="SearchPage.qrc">
+         <iconset>
           <normaloff>resources/Lock.png</normaloff>resources/Lock.png</iconset>
         </property>
         <property name="checkable">
@@ -233,7 +233,7 @@ p, li { white-space: pre-wrap; }
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="SearchPage.qrc">
+         <iconset>
           <normaloff>resources/regex.png</normaloff>resources/regex.png</iconset>
         </property>
         <property name="flat">
@@ -467,7 +467,7 @@ p, li { white-space: pre-wrap; }
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="SearchPage.qrc">
+               <iconset>
                 <normaloff>resources/Export.png</normaloff>resources/Export.png</iconset>
               </property>
               <property name="flat">
@@ -485,7 +485,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Switch between viewing the matches in a single file and viewing the matches in all files&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="icon">
-               <iconset resource="SearchPage.qrc">
+               <iconset>
                 <normaloff>resources/Overview.png</normaloff>resources/Overview.png</iconset>
               </property>
               <property name="checkable">
@@ -502,7 +502,7 @@ p, li { white-space: pre-wrap; }
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="SearchPage.qrc">
+               <iconset>
                 <normaloff>resources/PerfInfo.png</normaloff>resources/PerfInfo.png</iconset>
               </property>
               <property name="flat">
