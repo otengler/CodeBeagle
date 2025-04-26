@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, Optional, Iterator, cast
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF
-from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor, QColor
+from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor, QColor, QWheelEvent
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 from .LineNumberArea import LineNumberArea
 from .SyntaxHighlighter import SyntaxHighlighter
@@ -103,6 +103,13 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.highlighter.setFont(font)
         if self.lineNumberArea:
             self.lineNumberArea.setFont(font)
+
+    def wheelEvent(self, event: Optional[QWheelEvent]):
+        # Qt automatically supports channging the font size using CTRL+mouse wheel. We need to intercept this to propagate the font change to all components
+        if event and event.modifiers() and Qt.KeyboardModifier.ControlModifier:
+            self.setFont(self.font())
+            self.rehighlight()
+        super().wheelEvent(event)
 
     def rehighlight(self) -> None:
         """

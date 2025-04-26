@@ -118,9 +118,9 @@ class LineNumberArea (QWidget):
             painter.drawText(rect.left(), rect.top(), rect.width()-self.paddingRight, rect.height(), Qt.AlignmentFlag.AlignRight, str(line))
             if self.enableBookmarks:
                 if line in self.bookmarkLines:
-                    painter.drawPixmap(self.bookmarkIconLeft, rect.top() + 2, self.bookmarkPixmap)
+                    painter.drawPixmap(self.bookmarkIconLeft, rect.top(), self.bookmarkPixmap)
                 if number := self.numberedBookmarkLines.get(line):
-                    painter.drawPixmap(self.bookmarkIconLeft, rect.top() + 2, self.numberedBookmarkPixmap)
+                    painter.drawPixmap(self.bookmarkIconLeft, rect.top(), self.numberedBookmarkPixmap)
                     painter.drawText(self.bookmarkIconLeft, rect.top(), self.numberedBookmarkPixmap.width(), self.numberedBookmarkPixmap.height() - 2, Qt.AlignmentFlag.AlignCenter, str(number))
 
     def __visibleBlocks (self, updateRect: QRect) -> Iterator[Tuple[int, QRect]]:
