@@ -17,15 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QRect, QSize
-from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent, QFont
+from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent, QFont, QFontMetrics
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 from typing import Optional, Iterator, Tuple
 
 class LineNumberArea (QWidget):
     bookmarkChanged = pyqtSignal(int) # line where bookmark is set or removed
 
-    paddingLeft = 18
-    paddingRight = 12
+    padding = 12
     bookmarkIconLeft = 3
     areaColor = QColor(235,235,235)
     textColor = QColor(130,130,130)
@@ -41,8 +40,7 @@ class LineNumberArea (QWidget):
 
         self.textEdit.blockCountChanged.connect(self.adjustAreaWidth)
         self.textEdit.updateRequest.connect(self.scrollArea)
-        self.adjustAreaWidth()
-
+        
         self.enableBookmarks = enableBookmarks      
         self.bookmarkLines: set[int] = set()
         self.numberedBookmarkLines: dict[int,int] = {}
@@ -50,8 +48,10 @@ class LineNumberArea (QWidget):
         self.setFont(self.textEdit.font())
 
     def setFont(self, font: QFont) -> None:
+        super().setFont(font)
         self.bookmarkPixmap = self.__getScaledPixmap("resources/bookmark.png")
         self.numberedBookmarkPixmap = self.__getScaledPixmap("resources/bookmark-numbered.png")
+        self.adjustAreaWidth()
 
     def setBookmarks(self, lines: Optional[set[int]]) -> None:
         if lines is None:
@@ -93,8 +93,8 @@ class LineNumberArea (QWidget):
         if not newBlockCount:
             newBlockCount = self.textEdit.blockCount()
         newBlockCount = self.firstLineNumber + newBlockCount
-        digits = len(f"{newBlockCount}")
-        space:int = self.paddingLeft + self.paddingRight + self.textEdit.fontMetrics().horizontalAdvance("9") * digits
+        width = self.fontMetrics().horizontalAdvance(f"{newBlockCount}")
+        space:int = self.padding + self.bookmarkPixmap.width() + self.padding + width
         return space
 
     def mouseReleaseEvent(self, event: Optional[QMouseEvent]) -> None:
@@ -115,12 +115,12 @@ class LineNumberArea (QWidget):
         painter.setPen(self.textColor)
         
         for line, rect in self.__visibleBlocks(event.rect()):
-            painter.drawText(rect.left(), rect.top(), rect.width()-self.paddingRight, rect.height(), Qt.AlignmentFlag.AlignRight, str(line))
+            painter.drawText(rect.left(), rect.top(), rect.width()-self.padding, rect.height(), Qt.AlignmentFlag.AlignRight, str(line))
             if self.enableBookmarks:
                 if line in self.bookmarkLines:
-                    painter.drawPixmap(self.bookmarkIconLeft, rect.top(), self.bookmarkPixmap)
+                    painter.drawPixmap(self.bookmarkIconLeft, rect.top()+2, self.bookmarkPixmap)
                 if number := self.numberedBookmarkLines.get(line):
-                    painter.drawPixmap(self.bookmarkIconLeft, rect.top(), self.numberedBookmarkPixmap)
+                    painter.drawPixmap(self.bookmarkIconLeft, rect.top()+2, self.numberedBookmarkPixmap)
                     painter.drawText(self.bookmarkIconLeft, rect.top(), self.numberedBookmarkPixmap.width(), self.numberedBookmarkPixmap.height() - 2, Qt.AlignmentFlag.AlignCenter, str(number))
 
     def __visibleBlocks (self, updateRect: QRect) -> Iterator[Tuple[int, QRect]]:

@@ -103,13 +103,13 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.highlighter.setFont(font)
         if self.lineNumberArea:
             self.lineNumberArea.setFont(font)
+        self.rehighlight()
 
     def wheelEvent(self, event: Optional[QWheelEvent]):
+        super().wheelEvent(event)
         # Qt automatically supports channging the font size using CTRL+mouse wheel. We need to intercept this to propagate the font change to all components
         if event and event.modifiers() and Qt.KeyboardModifier.ControlModifier:
-            self.setFont(self.font())
-            self.rehighlight()
-        super().wheelEvent(event)
+            self.setFont(self.font())           
 
     def rehighlight(self) -> None:
         """
