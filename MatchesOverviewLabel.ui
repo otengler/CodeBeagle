@@ -42,6 +42,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="buttonJumpTo">
+     <property name="toolTip">
+      <string>Switch to full file view</string>
+     </property>
      <property name="text">
       <string/>
      </property>
