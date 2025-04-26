@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import List, Tuple, Optional, cast, Callable
+from typing import List, Tuple, Optional, cast
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
@@ -31,15 +31,13 @@ import PathVisualizerDelegate
 from fulltextindex import FullTextIndex
 from fulltextindex import Query
 from fulltextindex.IndexConfiguration import IndexConfiguration, IndexMode
-from tools.QHelper import createQAction
 import SearchAsync
 import CustomContextMenu
 import AppConfig
-from BookmarkStorage import getBookmarkStorage
+from SearchPageBookmarks import SearchPageBookmarks
 from StringListModel import StringListModel
 from Ui_SearchPage import Ui_SearchPage
 from SearchParamHistory import getSearchParamHistory
-
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard.
@@ -155,62 +153,11 @@ class SearchPage (QWidget):
             if screenGeometry.width() < 1200:
                 self.__layoutForLowScreenWidth()
 
-        # Bookmarks
-        self.addAction(createQAction(self, shortcut=Qt.Key.Key_F2, triggered=self.setBookmark))
-        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F2, triggered=self.nextBookmark))
-        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ShiftModifier+Qt.Key.Key_F2, triggered=self.previousBookmark))
-        numberKeys = [Qt.Key.Key_1,Qt.Key.Key_2,Qt.Key.Key_3,Qt.Key.Key_4,Qt.Key.Key_5,Qt.Key.Key_6,Qt.Key.Key_7,Qt.Key.Key_8,Qt.Key.Key_9]
-        for idx, key in enumerate(numberKeys):
-            number = idx + 1
-            self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.KeyboardModifier.ShiftModifier+key, triggered=self.__createSetNumberedBookmarkFunc(number)))
-            self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+key, triggered=self.__createJumpToNumberedBookmarkFunc(number)))
-
-    def __createSetNumberedBookmarkFunc(self, number: int) -> Callable:
-        return lambda: self.setNumberedBookmark(number)
-    def __createJumpToNumberedBookmarkFunc(self, number: int) -> Callable:
-        return lambda: self.jumpToNumberedBookmark(number)
+        # Register keyboard hotkeys for bookmars and handling navigation
+        self.searchPageBookmarks = SearchPageBookmarks(self)
 
     def showEvent(self, _: Optional[QShowEvent]) -> None:
         self.documentShown.emit(self.ui.sourceViewer.currentFile)
-
-    @pyqtSlot()
-    def setBookmark(self) -> None:
-        self.ui.sourceViewer.setBookmark()
-
-    @pyqtSlot()
-    def setNumberedBookmark(self, number: int) -> None:
-        self.ui.sourceViewer.setNumberedBookmark(number)
-
-    @pyqtSlot()
-    def nextBookmark(self) -> None:
-        if bookmark := getBookmarkStorage().nextBookmark():
-            fileName, line = bookmark
-            self.__showBookmark(fileName, line)
-
-    @pyqtSlot()
-    def previousBookmark(self) -> None:
-        if bookmark := getBookmarkStorage().previousBookmark():
-            fileName, line = bookmark
-            self.__showBookmark(fileName, line)
-
-    @pyqtSlot()
-    def jumpToNumberedBookmark(self, number: int) -> None:
-        if numberedBookmark := getBookmarkStorage().getNumberedBookmark(number):
-            self.__showBookmark(numberedBookmark.fileName, numberedBookmark.line)
-
-    def __showBookmark(self, fileName: str, line: int) -> None:
-        # Try to find bookmark file in list and activate it
-        model = self.ui.listView.model() # type: Optional[StringListModel]
-        if model:
-            row = model.findFile(fileName)
-            if row != -1:
-                model.setSelectedFileIndex (row)
-                index = model.index(row)
-                self.ui.listView.clearSelection()
-                self.ui.listView.setCurrentIndex(index)
-        # Show file and jump to line
-        self.showFile(fileName)
-        self.ui.sourceViewer.gotoLine(line)
 
     @pyqtSlot()
     def changeSearchTypeMenu(self) -> None:

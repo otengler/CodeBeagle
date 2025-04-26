@@ -2,7 +2,8 @@
     "files.exclude": {
         "**/*_rc.py": true,
         "**/Ui_*.py": true,
-        "__pycache__": true
+        "__pycache__": true,
+        ".venv": true
     },
     "python.linting.mypyEnabled": false,
     "python.linting.mypyArgs": [
