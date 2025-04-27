@@ -89,9 +89,12 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
         if self.parenthesisPair:
             self.scrollToPosition(self.parenthesisPair[1], self.parenthesisPair[1] - self.parenthesisPair[0])
 
+    def additionalHighlightingNeeded(self) -> bool:
+        return self.highlightParenthesis and not self.parenthesisPair is None
+
     def applyAdditionalHighlighting(self, painter: QPainter, metrics: QFontMetrics, block: QTextBlock, bound: QRect) -> None:
         # Highlight parenthesis pair
-        if self.highlightParenthesis and self.parenthesisPair:
+        if self.highlightParenthesis and not self.parenthesisPair is None:
             p1, p2 = self.parenthesisPair
             if block.position() <= p1 < block.position()+block.length():
                 self._highlightPartOfLine(painter, metrics, block, bound, p1 - block.position(), 1, HighlightStyle.Solid)

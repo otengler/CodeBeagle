@@ -125,22 +125,20 @@ class HighlightingTextEdit (QPlainTextEdit):
 
         super().paintEvent(event)
 
-        if not self.dynamicHighlight and not self.parenthesisPair:
-            return
+        if self.dynamicHighlight or self.additionalHighlightingNeeded():
+            painter = QPainter(self.viewport())
+            metrics = painter.fontMetrics()
+            for block, bound in self.__visibleBlocks(firstVisibleBlock):
+                # Highlight all occurrences of selected word
+                if self.dynamicHighlight:
+                    startIndex = 0
+                    while startIndex != -1:
+                        startIndex = block.text().find(self.dynamicHighlight, startIndex)
+                        if startIndex != -1:
+                            self._highlightPartOfLine(painter, metrics, block, bound, startIndex, len(self.dynamicHighlight), HighlightStyle.Outline)
+                            startIndex += len(self.dynamicHighlight)
 
-        painter = QPainter(self.viewport())
-        metrics = painter.fontMetrics()
-        for block, bound in self.__visibleBlocks(firstVisibleBlock):
-            # Highlight all occurrences of selected word
-            if self.dynamicHighlight:
-                startIndex = 0
-                while startIndex != -1:
-                    startIndex = block.text().find(self.dynamicHighlight, startIndex)
-                    if startIndex != -1:
-                        self._highlightPartOfLine(painter, metrics, block, bound, startIndex, len(self.dynamicHighlight), HighlightStyle.Outline)
-                        startIndex += len(self.dynamicHighlight)
-
-            self.applyAdditionalHighlighting(painter, metrics, block, bound)
+                self.applyAdditionalHighlighting(painter, metrics, block, bound)
 
         # Sometimes lines which are highlighted for the first time are not updated properly.
         # This happens regularily if the text edit is scolled using the page down key.
@@ -148,6 +146,9 @@ class HighlightingTextEdit (QPlainTextEdit):
         # is expected to call "update" on the control. Not nice but it works...
         if bColorizedBlocks:
             self.updateNeeded.emit()
+
+    def additionalHighlightingNeeded(self) -> bool:
+        return False
 
     def applyAdditionalHighlighting(self, painter: QPainter, metrics: QFontMetrics, block: QTextBlock, bound: QRect) -> None:
         # To be used by sub classes
