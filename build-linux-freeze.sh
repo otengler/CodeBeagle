@@ -28,13 +28,11 @@ LIB=$BUILDDIR/lib
 rm -r -f $LIB/themes/dark/qss
 rm -r -f $LIB/themes/dark/svg
 
-mkdir -p $BUILDDIR/scripts
-mkdir -p $BUILDDIR/config
 cp config.txt $BUILDDIR
 cp help.html $BUILDDIR
 cp LICENSE $BUILDDIR
-cp scripts/* $BUILDDIR/scripts/
-cp config/* $BUILDDIR/config/
-cp resources/* $BUILDDIR/resources/
+mkdir -p $BUILDDIR/scripts && cp scripts/* $BUILDDIR/scripts/
+mkdir -p $BUILDDIR/config && cp config/* $BUILDDIR/config/
+mkdir -p $BUILDDIR/resources && cp resources/* $BUILDDIR/resources/
 
 mv $BUILDDIR build/CodeBeagle

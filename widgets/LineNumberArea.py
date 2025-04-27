@@ -142,5 +142,8 @@ class LineNumberArea (QWidget):
     def __getScaledPixmap(self, name: str) -> QPixmap:
         pixmap = QPixmap(name)
         iconHeight = self.textEdit.fontMetrics().height()
+        if pixmap.height() == 0: # means it couldn't be loaded
+            self.enableBookmarks = False
+            return pixmap
         factor = iconHeight/pixmap.height()
         return pixmap.scaled(int(pixmap.width() * factor), iconHeight, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
