@@ -20,9 +20,14 @@ import os, json
 from typing import Optional, Tuple, Callable, cast
 from tools import Config, FileTools
 
+def readVersion():
+    if os.path.isfile("VERSION"):
+        return json.load(open("VERSION", "r"))["version"]
+    return "1.0.0"
+
 appName = "CodeBeagle"
 appCompany = "OTE"
-appVersion = json.load(open("VERSION", "r"))["version"]
+appVersion = readVersion()
 configName = "config.txt"
 darkTheme = "dark"
 
