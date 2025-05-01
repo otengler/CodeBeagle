@@ -31,6 +31,7 @@ rm -r -f $LIB/themes/dark/svg
 cp config.txt $BUILDDIR
 cp help.html $BUILDDIR
 cp LICENSE $BUILDDIR
+cp VERSION $BUILDDIR
 mkdir -p $BUILDDIR/scripts && cp scripts/* $BUILDDIR/scripts/
 mkdir -p $BUILDDIR/config && cp config/* $BUILDDIR/config/
 mkdir -p $BUILDDIR/resources && cp resources/* $BUILDDIR/resources/

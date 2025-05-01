@@ -39,7 +39,7 @@ UpdateIndex=Executable(
 setup(
     options=options,
     name = AppConfig.appName,
-    version = AppConfig.appVersion,
+    version = AppConfig.appVersion + ".0",
     description = "CodeBeagle - A tool to search source code based on a full text index",
     executables = [CodeBeagle, UpdateIndex]
 )

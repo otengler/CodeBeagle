@@ -70,9 +70,12 @@ class SearchMethods:
             for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
                 file = os.path.join(dirName, fileName)
                 if searchData.matchFolderAndExtensionFilter(file):
-                    for _ in searchData.matches(freadall(file)):
-                        matches.append(file)
-                        break
+                    try:
+                        for _ in searchData.matches(freadall(file)):
+                            matches.append(file)
+                            break
+                    except:
+                        pass
                 if cancelEvent and cancelEvent.is_set():
                     return ResultSet([], searchData)
         matches = removeDupsAndSort(matches)

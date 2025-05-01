@@ -64,6 +64,7 @@ del "$LIB\libcrypto-3.dll" -Force
 xcopy config.txt $BUILDDIR
 xcopy help.html $BUILDDIR
 xcopy LICENSE $BUILDDIR
+xcopy VERSION $BUILDDIR
 xcopy scripts\* $BUILDDIR\scripts\
 xcopy config\* $BUILDDIR\config\
 xcopy resources\* $BUILDDIR\resources\

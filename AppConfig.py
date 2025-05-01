@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
+import os, json
 from typing import Optional, Tuple, Callable, cast
 from tools import Config, FileTools
 
 appName = "CodeBeagle"
 appCompany = "OTE"
-appVersion = "1.3.11.0"
+appVersion = json.load(open("VERSION", "r"))["version"]
 configName = "config.txt"
 darkTheme = "dark"
 
