@@ -490,6 +490,7 @@ class SearchPage (QWidget):
         state = self.searchStateList[self.searchStateIndex]
         if state.configName != self.currentConfigName:
             self.setCurrentSearchLocation(state.configName)
+        self.setSearchType(state.searchType)
         self.ui.comboSearch.setEditText(state.searchParams.search)
         self.ui.comboFolderFilter.setEditText(state.searchParams.folderFilter)
         self.ui.comboExtensionFilter.setEditText(state.searchParams.extensionFilter)
