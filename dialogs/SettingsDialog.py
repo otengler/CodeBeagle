@@ -276,7 +276,8 @@ class SettingsDialog (QDialog):
     def __defaultLocationChanged(self, listviewCurrent: QListView, listviewOther: QListView, newDefaultRow: int) -> None:
         if itemDelegate := cast(Optional[SettingsEditorDelegate], listviewCurrent.itemDelegate()):
             itemDelegate.setDefaultLocationRow(newDefaultRow)
-            itemDelegate.setDefaultLocationRow(-1)
+        if itemDelegateOther := cast(Optional[SettingsEditorDelegate], listviewOther.itemDelegate()):
+            itemDelegateOther.setDefaultLocationRow(-1)
         # Refresh the listview
         model = listviewCurrent.model()
         if model:
