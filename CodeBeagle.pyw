@@ -33,6 +33,7 @@ from UpdateCheck import UpdateCheck
 from SourceViewer import SourceViewer
 from Ui_MainWindow import Ui_MainWindow
 from typing import Optional
+from tools.CustomFont import installCustomFont
 
 userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
@@ -44,6 +45,7 @@ def main() -> None:
     # executed from a different working directory.
     FileTools.switchToAppDir()
 
+    installCustomFont()
     configureTheme(app)
 
     wnd = MainWindow()

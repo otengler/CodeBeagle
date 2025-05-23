@@ -106,7 +106,7 @@ def __loadUserConfig (config: Config.Config) -> Config.Config:
 
 def sourceViewerConfig() -> Config.Config:
     sourceviewer = Config.Config()
-    sourceviewer.setType ("FontFamily",  Config.typeDefaultString("Consolas"))
+    sourceviewer.setType ("FontFamily",  Config.typeDefaultString("Cascadia Mono"))
     sourceviewer.setType ("FontSize",  Config.typeDefaultInt(10))
     sourceviewer.setType ("TabWidth",  Config.typeDefaultInt(4))
     sourceviewer.setType ("showLineNumbers", Config.typeDefaultBool(True))

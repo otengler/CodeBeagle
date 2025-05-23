@@ -20,7 +20,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tabSearchLocations">
       <attribute name="title">
@@ -306,6 +306,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="fontFilters">
+          <set>QFontComboBox::MonospacedFonts</set>
+         </property>
         </widget>
        </item>
        <item row="1" column="0">
@@ -475,6 +478,7 @@
   <tabstop>buttonOK</tabstop>
   <tabstop>buttonCancel</tabstop>
  </tabstops>
+ <resources/>
  <connections>
   <connection>
    <sender>buttonAdd</sender>

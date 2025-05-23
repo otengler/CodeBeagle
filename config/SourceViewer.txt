@@ -1,4 +1,4 @@
-fontFamily=Consolas
+fontFamily=Cascadia Mono
 fontSize=11
 tabWidth=4
 
