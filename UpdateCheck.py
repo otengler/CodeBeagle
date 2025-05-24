@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import json
+import os, json
 from typing import Optional
 from urllib.request import urlopen
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, QDateTime
@@ -39,7 +39,14 @@ class UpdateCheckThread (QThread):
             print(exceptionAsString())
 
     def __runInternal(self) -> None:
-        versionStr = str (urlopen("https://raw.githubusercontent.com/otengler/CodeBeagle/main/VERSION").read(), "utf8")
+        if os.name != "nt":
+            # MAC and Linux: Use the certificates provided by the certifi package
+            import ssl, certifi
+            url = urlopen("https://raw.githubusercontent.com/otengler/CodeBeagle/main/VERSION", context=ssl.create_default_context(cafile=certifi.where()))
+        else:
+            # Under Windows Python seems to use the certificate store
+            url = urlopen("https://raw.githubusercontent.com/otengler/CodeBeagle/main/VERSION")
+        versionStr = str (url.read(), "utf8")
         versionDoc = json.loads(versionStr)
         if "version" in versionDoc:
             self.latestVersion = versionDoc["version"]
@@ -66,7 +73,7 @@ class UpdateCheck (QObject):
         if self.lastUpdateCheck:
             nextCheck = QDateTime.fromMSecsSinceEpoch (self.lastUpdateCheck).addDays(updateCheckPeriod)
             if now < nextCheck:
-                return
+                pass #return
         self.lastUpdateCheck = now.toMSecsSinceEpoch()
 
         self.updateThread = UpdateCheckThread ()

@@ -67,7 +67,7 @@ xcopy LICENSE $BUILDDIR
 xcopy VERSION $BUILDDIR
 xcopy scripts\* $BUILDDIR\scripts\
 xcopy config\* $BUILDDIR\config\
-xcopy resources\* $BUILDDIR\resources\
+xcopy /S resources\* $BUILDDIR\resources\
 
 # %mt% -manifest CodeBeagleManifest.xml "-outputresource:%BUILDDIR%\CodeBeagle.exe;#1"
 # %mt% -manifest UpdateIndexManifest.xml "-outputresource:%BUILDDIR%\UpdateIndex.exe;#1"
