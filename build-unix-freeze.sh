@@ -8,8 +8,8 @@ npm ci
 #
 # Set vars and Compile interface definitions
 # 
-. ./build-linux-vars.sh
-./build-linux-ui.sh
+. ./build-unix-vars.sh
+./build-unix-ui.sh
 
 #
 # Run Cx_freeze
@@ -24,6 +24,13 @@ echo Build done
 BUILDDIR="build/"`ls build`
 echo Build directory is $BUILDDIR
 LIB=$BUILDDIR/lib
+
+if [ "$1" == "linux" ]; then
+  echo "Cleanup Linux"
+fi
+if [ "$1" == "mac" ]; then
+  echo "Cleanup MAC"
+fi
 
 rm -r -f $LIB/themes/dark/qss
 rm -r -f $LIB/themes/dark/svg

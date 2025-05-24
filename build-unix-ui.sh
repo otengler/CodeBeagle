@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ./build-linux-vars.sh
+. ./build-unix-vars.sh
 
 #
 # Compile interface definitions

@@ -32,8 +32,8 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
     - name: Run build
       run: |
-        chmod +x build-linux-*.sh
-        ./build-linux-freeze.sh
+        chmod +x build-*.sh
+        ./build-unix-freeze.sh linux
         chmod +x ./build/CodeBeagle/CodeBeagle
         chmod +x ./build/CodeBeagle/UpdateIndex
     - name: Linux build result
