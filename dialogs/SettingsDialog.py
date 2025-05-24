@@ -198,9 +198,11 @@ class SettingsDialog (QDialog):
 
         self.searchLocations = searchLocations
 
-        self.ui.fontComboBox.setCurrentFont(QFont(config.SourceViewer.FontFamily))
-        self.ui.editFontSize.setText(str(config.SourceViewer.FontSize))
-        self.ui.editTabWidth.setText(str(config.SourceViewer.TabWidth))
+        self.ui.editAppFontSize.setText(str(config.fontSize))
+        self.ui.editFontSize.setText(str(config.SourceViewer.fontSize))
+        self.ui.fontComboBox.setCurrentFont(QFont(config.SourceViewer.fontFamily))
+        self.ui.editFontSize.setText(str(config.SourceViewer.fontSize))
+        self.ui.editTabWidth.setText(str(config.SourceViewer.tabWidth))
         self.ui.editPreviewLines.setText(str(config.previewLines))
         setCheckBox (self.ui.checkActivateFirstMatch, config.activateFirstMatch)
         setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
@@ -344,6 +346,7 @@ class SettingsDialog (QDialog):
         config.sourceViewer.FontSize = self.ui.editFontSize.text()
         config.sourceViewer.TabWidth = self.ui.editTabWidth.text()
         config.sourceViewer.showLineNumbers = self.ui.checkShowLineNumbers.checkState() == Qt.CheckState.Checked
+        config.fontSize = self.ui.editAppFontSize.text()
         config.matchOverFiles = self.ui.checkMatchOverFiles.checkState() == Qt.CheckState.Checked
         config.activateFirstMatch = self.ui.checkActivateFirstMatch.checkState() == Qt.CheckState.Checked
         config.showCloseConfirmation = self.ui.checkConfirmClose.checkState() == Qt.CheckState.Checked

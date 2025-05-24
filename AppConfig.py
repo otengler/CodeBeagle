@@ -106,9 +106,9 @@ def __loadUserConfig (config: Config.Config) -> Config.Config:
 
 def sourceViewerConfig() -> Config.Config:
     sourceviewer = Config.Config()
-    sourceviewer.setType ("FontFamily",  Config.typeDefaultString("Cascadia Mono"))
-    sourceviewer.setType ("FontSize",  Config.typeDefaultInt(10))
-    sourceviewer.setType ("TabWidth",  Config.typeDefaultInt(4))
+    sourceviewer.setType ("fontFamily",  Config.typeDefaultString("Cascadia Mono"))
+    sourceviewer.setType ("fontSize",  Config.typeDefaultInt(10))
+    sourceviewer.setType ("tabWidth",  Config.typeDefaultInt(4))
     sourceviewer.setType ("showLineNumbers", Config.typeDefaultBool(True))
     return sourceviewer
 
@@ -117,6 +117,7 @@ def typeSourceViewerDefaults () -> Tuple[Callable, Callable, Callable]:
 
 def configTypeInfo (config: Config.Config) -> None:
     """Configurates the default values and types."""
+    config.setType("fontSize", Config.typeDefaultInt(-1))
     config.setType("profileUpdate",  Config.typeDefaultBool(False))
     config.setType("showCloseConfirmation",  Config.typeDefaultBool(False))
     config.setType("showRegexDialog", Config.typeDefaultBool(False))

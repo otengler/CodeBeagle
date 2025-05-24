@@ -48,6 +48,11 @@ def main() -> None:
     installCustomFont()
     configureTheme(app)
 
+    if AppConfig.appConfig().fontSize != -1:
+        font = app.font()
+        font.setPointSize(AppConfig.appConfig().fontSize)
+        app.setFont(font)
+
     wnd = MainWindow()
     wnd.show()
     sys.exit(app.exec_())
