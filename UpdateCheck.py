@@ -73,7 +73,7 @@ class UpdateCheck (QObject):
         if self.lastUpdateCheck:
             nextCheck = QDateTime.fromMSecsSinceEpoch (self.lastUpdateCheck).addDays(updateCheckPeriod)
             if now < nextCheck:
-                pass #return
+                return
         self.lastUpdateCheck = now.toMSecsSinceEpoch()
 
         self.updateThread = UpdateCheckThread ()
