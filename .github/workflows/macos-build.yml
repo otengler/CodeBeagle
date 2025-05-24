@@ -33,7 +33,7 @@ jobs:
     - name: Run build
       run: |
         chmod +x build-*.sh
-        ./build-linux-freeze.sh mac
+        ./build-unix-freeze.sh mac
         chmod +x ./build/CodeBeagle/CodeBeagle
         chmod +x ./build/CodeBeagle/UpdateIndex
     - name: MacOS build result
