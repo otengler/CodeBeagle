@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
+import os, sys
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -40,6 +40,10 @@ userHintNewVersionAvailable = """
 """
 
 def main() -> None:
+    if AppConfig.appConfig().theme == AppConfig.darkTheme:
+        # https://www.qt.io/blog/dark-mode-on-windows-11-with-qt-6.5
+        os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=1"
+
     app = QApplication(sys.argv)
     # Switch to application directory to be able to load the configuration and search scripts even if we are
     # executed from a different working directory.
