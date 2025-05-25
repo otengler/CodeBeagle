@@ -62,7 +62,7 @@ class SourceViewer (QWidget):
 
         self.sourceFont: QFont = self.font()
         self.searchData: Optional[FullTextIndex.ContentQuery] = None
-        self.__reset()
+        self.reset()
         self.__processConfig(None)
 
         self.ui.textEdit.cursorPositionChanged.connect(self.updateCurrentLine)
@@ -139,13 +139,13 @@ class SourceViewer (QWidget):
             lines = getBookmarkStorage().toggleBookmarkForFile(self.currentFile, line)
             self.ui.textEdit.lineNumberArea.setBookmarks(lines)
 
-    def __reset (self) -> None:
+    def reset (self) -> None:
         self.currentFile = ""
         self.matches = [] # touples with position and length
         self.__setMatchIndex(-1)
         self.ui.labelCursor.setText("")
         self.ui.labelFile.setText(self.tr("No document loaded"))
-        self.ui.textEdit.setPlainText("")
+        self.ui.textEdit.clear()
         self.__resetTextCursor()
         self.__setInfoLabel()
         self.ui.textEdit.setDynamicHighlight(None)
@@ -160,7 +160,7 @@ class SourceViewer (QWidget):
         self.ui.listMatchesWidget.setCurrentRow(index)
 
     def setSearchData (self, searchData: FullTextIndex.ContentQuery) -> None:
-        self.__reset()
+        self.reset()
         self.searchData = searchData
         self.ui.textEdit.highlighter.setSearchData (searchData)
 
@@ -185,7 +185,7 @@ class SourceViewer (QWidget):
         return text
 
     def showFile (self, name: str, editorState: Optional[EditorState] = None) -> None:
-        self.__reset()
+        self.reset()
         self.ui.labelFile.setText(name)
         self.currentFile = name
 

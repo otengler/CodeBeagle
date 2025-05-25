@@ -358,12 +358,8 @@ class SearchPage (QWidget):
 
     # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
     def __prepareSearch (self) -> Tuple[SearchAsync.SearchParams, IndexConfiguration]:
-        # Remember the current selected file in the current state before pushing the next state into the historx
-        if self.searchStateIndex >= 0:
-            model = self.ui.listView.model() # type: Optional[StringListModel]
-            if model:
-                self.searchStateList[self.searchStateIndex].selectedFileIndex = model.getSelectedFileIndex()
-
+        # Remember the current selected file in the current state before pushing the next state into the history
+        self.__rememberSelectedFileInState()
         self.__updateSearchResult(SearchAsync.ResultSet()) # clear current results
         indexConf = self.__currentIndexConf()
         params = self.getSearchParameterFromUI()
@@ -472,6 +468,7 @@ class SearchPage (QWidget):
 
     @pyqtSlot()
     def backwardClicked(self):
+        self.__rememberSelectedFileInState()
         self.searchStateIndex -= 1
         if self.searchStateIndex < 0:
             self.searchStateIndex = 0
@@ -479,10 +476,19 @@ class SearchPage (QWidget):
 
     @pyqtSlot()
     def forwardClicked(self):
+        self.__rememberSelectedFileInState()
         self.searchStateIndex += 1
         if self.searchStateIndex + 1 > len(self.searchStateList):
             self.searchStateIndex = len(self.searchStateIndex) - 1
         self.__updateUIFromSearchState()
+
+    def __rememberSelectedFileInState(self) -> None:
+        if self.searchStateIndex <= -1:
+            return
+        model = self.ui.listView.model() # type: Optional[StringListModel]
+        if not model:
+            return
+        self.searchStateList[self.searchStateIndex].selectedFileIndex = model.getSelectedFileIndex()
 
     def __updateUIFromSearchState(self):
         if self.searchStateIndex >= len(self.searchStateList):
@@ -502,6 +508,8 @@ class SearchPage (QWidget):
             selectedIndex = self.ui.listView.model().index(state.selectedFileIndex, 0)
             self.ui.listView.setCurrentIndex(selectedIndex)
             self.ui.listView.activated.emit(selectedIndex)
+        else:
+            self.ui.sourceViewer.reset()
 
         self.__updateBackForwardButtons()
 
