@@ -28,7 +28,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="StackTraceMessageBox.qrc">resources/Critical.png</pixmap>
+        <pixmap>../resources/Critical.png</pixmap>
        </property>
       </widget>
      </item>
@@ -58,8 +58,8 @@
         <string>Show details</string>
        </property>
        <property name="icon">
-        <iconset resource="StackTraceMessageBox.qrc">
-         <normaloff>resources/Expand.png</normaloff>resources/Expand.png</iconset>
+        <iconset>
+         <normaloff>../resources/Expand.png</normaloff>../resources/Expand.png</iconset>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -131,6 +131,9 @@
    <header>widgets.HighlightingTextEdit</header>
   </customwidget>
  </customwidgets>
+ <resources>
+  <include location="StackTraceMessageBox.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonExpand</sender>
