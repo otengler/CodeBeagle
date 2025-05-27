@@ -10,11 +10,13 @@ Download here: https://github.com/otengler/CodeBeagle/releases/latest
 Visual Studio 2015 C++ runtime (x64) is a prerequisite. Fetch it from here if needed: https://www.microsoft.com/en-us/download/details.aspx?id=48145
 
 # Features
+- Lightning fast code search
 - Indexes multiple directories, lets you choose file extensions to index
 - Search in file content or for file name
 - Search indexed and not indexed locations
 - Source viewer with customizable syntax highlighting
 - Tabbed searching
+- Bookmark support
 - Custom search scripts allow to automate search tasks
 - Supports ANSI,UTF8 and UTF16
 - Dark theme
@@ -29,14 +31,4 @@ Visual Studio 2015 C++ runtime (x64) is a prerequisite. Fetch it from here if ne
 
 ![main-dark](/../screenshots/screenshots/main-dark.png?raw=true "Main windows (dark theme)")
 
-# Building
 
-First the prerequisites (that's what I used to build the binary distribution):
-- NodeJs to be able to use npm
-- Python 3.10.5 (www.python.org)
-- PyQt GPL v5.15.2 (install with "pip install PyQt5")
-- Cx_Freeze (install with "pip install Cx_freeze==6.11"):
-    Only needed if you want convert the python scripts into executables
-
-Compile the user interface and resource files by calling "build-windows-ui.bat". The user interface is launched via "CodeBeagle.pyw". The script to update the index is called "UpdateIndex.py".
-To build the executables call "build-windows-freeze.bat". To be able to compile the dark theme style sheet you need the sass compiler in your path.
