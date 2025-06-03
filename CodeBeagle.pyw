@@ -40,14 +40,15 @@ userHintNewVersionAvailable = """
 """
 
 def main() -> None:
+    # Switch to application directory to be able to load the configuration and search scripts even if we are
+    # executed from a different working directory.
+    FileTools.switchToAppDir()
+
     if AppConfig.appConfig().theme == AppConfig.darkTheme:
         # https://www.qt.io/blog/dark-mode-on-windows-11-with-qt-6.5
         os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=1"
 
     app = QApplication(sys.argv)
-    # Switch to application directory to be able to load the configuration and search scripts even if we are
-    # executed from a different working directory.
-    FileTools.switchToAppDir()
 
     installCustomFont()
     configureTheme(app)
