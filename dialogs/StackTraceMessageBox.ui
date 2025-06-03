@@ -131,9 +131,6 @@
    <header>widgets.HighlightingTextEdit</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="StackTraceMessageBox.qrc"/>
- </resources>
  <connections>
   <connection>
    <sender>buttonExpand</sender>
