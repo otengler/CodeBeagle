@@ -1,10 +1,55 @@
-from PyQt5.QtCore import Qt, QAbstractItemModel, QSettings, QModelIndex, QStringListModel
+from PyQt5.QtCore import Qt, QAbstractItemModel, QAbstractListModel, QSettings, QModelIndex, QVariant
 import AppConfig
+   
+# This is like QStringListModel with the only exception that setData does not raise signals.
+# This caused combox boxes to change selection.
+class MyStringListModel(QAbstractListModel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._data = []  # list of strings
+
+    def rowCount(self, parent=QModelIndex()):
+        if parent.isValid():
+            return 0  # No children for any row (flat list)
+        return len(self._data)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return QVariant()
+        if role in [Qt.DisplayRole, Qt.EditRole]:
+            return self._data[index.row()]
+        return QVariant()
+
+    def flags(self, index):
+        if not index.isValid():
+            return Qt.NoItemFlags
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+    def removeRows(self, row: int, count: int, parent: QModelIndex = QModelIndex()) -> bool:
+        if row < 0:
+            return False
+        self._data = self._data[0:row] + self._data[row+count:]
+        return True
+
+    def insertRows(self, row: int, count: int, parent: QModelIndex = QModelIndex()) -> bool:
+        if row < 0:
+            return False
+        self._data = self._data[0:row] + [""] * count + self._data[row:]
+        return True
+
+    def setData(self, index, value, role=Qt.DisplayRole):
+        if index.isValid() and role in [Qt.DisplayRole, Qt.EditRole]:
+            self._data[index.row()] = value
+            # Normally we should now raise "dataChanged". But we explicitly do not do this because it changes the selected item
+            # for combo boxes on other tabs.
+            # self.dataChanged.emit(index, index, [Qt.DisplayRole])
+            return True
+        return False
 
 class SearchParamHistory:
     def __init__(self, storageKey: str, maxItems: int = 20):
         self.storageKey = storageKey
-        self.itemModel = QStringListModel()
+        self.itemModel = MyStringListModel()
         self.maxItems = maxItems
         self.__restoreItems()
 
