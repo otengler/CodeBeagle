@@ -18,14 +18,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Optional, Callable
 from PyQt5.QtWidgets import QWidget
+from PyQt5.QtGui import QIcon, QPixmap
 from widgets.RecyclingVerticalScrollArea import ScrollAreaItem
 from Ui_MatchesOverviewLabel import Ui_MatchesOverviewLabel
+import AppConfig
 
 class MatchesOverviewLabel (QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.ui = Ui_MatchesOverviewLabel()
         self.ui.setupUi(self)
+        if AppConfig.appConfig().theme == AppConfig.darkTheme:
+            icon = QIcon()
+            icon.addPixmap(QPixmap("resources/currentLighter.png"))
+            self.ui.buttonJumpTo.setIcon(icon)
 
 class MatchesOverviewLabelItem (ScrollAreaItem):
     def __init__(self, fileName: str, startLine: int) -> None:

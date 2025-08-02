@@ -20,7 +20,7 @@ import os
 from typing import List, Tuple, Optional, cast
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex
-from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent
+from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent, QPixmap, QIcon
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy, QComboBox
 from SourceViewer import EditorState
 from tools import AsynchronousTask
@@ -94,6 +94,10 @@ class SearchPage (QWidget):
         super ().__init__(parent)
         self.ui = Ui_SearchPage()
         self.ui.setupUi(self)
+        if AppConfig.appConfig().theme == AppConfig.darkTheme:
+            icon = QIcon()
+            icon.addPixmap(QPixmap("resources/angle-downLighter.png"))
+            self.ui.buttonChangeSearchType.setIcon(icon)
         self.ui.frameSearch.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.frameResult.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.listView.setItemDelegate(PathVisualizerDelegate.PathVisualizerDelegate(self.ui.listView))

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from typing import Optional, List
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent
+from PyQt5.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent, QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QDialog, QTextEdit
 from tools.FileTools import Encoding, freadallEx
 from AppConfig import appConfig
@@ -30,6 +30,7 @@ from widgets.SyntaxHighlighter import SyntaxHighlighter
 from widgets.InDocumentSearchWidget import InDocumentSearchResult
 from Ui_SourceViewer import Ui_SourceViewer
 from tools.QHelper import createQAction
+import AppConfig
 
 class EditorState:
     def __init__(self, scrollPosition: int, currentMatch: int) -> None:
@@ -58,6 +59,10 @@ class SourceViewer (QWidget):
         super ().__init__(parent)
         self.ui = Ui_SourceViewer()
         self.ui.setupUi(self)
+        if AppConfig.appConfig().theme == AppConfig.darkTheme:
+            icon = QIcon()
+            icon.addPixmap(QPixmap("resources/currentLighter.png"))
+            self.ui.buttonMatchCurrent.setIcon(icon)
         self.ui.widgetInDocumentSearch.hide()
 
         self.sourceFont: QFont = self.font()
