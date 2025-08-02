@@ -17,13 +17,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Optional, List, Tuple, Callable
+from typing import Optional, List
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QDialog, QTextEdit
 from tools.FileTools import Encoding, freadallEx
 from AppConfig import appConfig
-from fulltextindex import FullTextIndex
+from fulltextindex import FullTextIndex, IStringMatcher
 import HighlightingRulesCache
 from BookmarkStorage import getBookmarkStorage
 from widgets.SyntaxHighlighter import SyntaxHighlighter
@@ -48,7 +48,7 @@ class SourceViewer (QWidget):
     currentMatchLineBackgroundColor = QColor(170,255,127)
 
     def __init__ (self, parent: Optional[QWidget]) -> None:
-        self.matches: List[Tuple[int,int]]
+        self.matches: List[IStringMatcher.MatchPosition]
         self.curMatch: int
         self.currentFile: str
         self.encoding: Encoding = Encoding.Default
@@ -265,12 +265,15 @@ class SourceViewer (QWidget):
     @pyqtSlot()
     def jumpToCurrentMatch(self) -> None:
         if self.curMatch >= 0:
-            self.__scrollToMatch (*self.matches[self.curMatch], SyntaxHighlighter.matchBackgroundColor)
+            match = self.matches[self.curMatch]
+            self.__scrollToMatch (match.index, match.length, SyntaxHighlighter.matchBackgroundColor)
 
     def setCurrentMatch(self, index: int, forceSet: bool=False) -> None:
         if index>=0 and index<len(self.matches) and (index != self.curMatch or forceSet):
+            match = self.matches[index]
+            self.__clearExtraSelections()
             self.__setMatchIndex(index)
-            self.__scrollToMatch (*self.matches[index], SyntaxHighlighter.matchBackgroundColor)
+            self.__scrollToMatch (match.index, match.length, SyntaxHighlighter.matchBackgroundColor)
             self.__setInfoLabel ()
             self.__enableNextPrevious()
 
@@ -279,12 +282,44 @@ class SourceViewer (QWidget):
         line = self.ui.textEdit.currentLineNumber()
         self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))
 
+        lineStart, lineEnd, lineText = self.ui.textEdit.getLineByLineNumber(line)
+        
+        # Do not highlight anything if we are on the line of the current match. It has its own highlighting.
+        # Just remove the current line highlight
+        if self.curMatch >= 0 and self.curMatch < len(self.matches):
+            curMatchPos = self.matches[self.curMatch].index 
+            if curMatchPos >= lineStart and curMatchPos <= lineEnd:
+                self.__updateCurrentLineExtraSelections([])
+                return
+
+        # Highlight full line to easily see where the cursor is
+        extras = []
         extra = QTextEdit.ExtraSelection ()
         extra.cursor = self.ui.textEdit.textCursor()
         extra.cursor.setPosition (self.ui.textEdit.textCursor().position())
         extra.format.setProperty (QTextFormat.FullWidthSelection, True)
         extra.format.setBackground (SourceViewer.currentLineBackgroundColor)
-        self.__updateCurrentLineExtraSelections([extra])
+        extras.append(extra)
+        # Highlighing the full line removed the match and in document search highlights which 
+        # means we need to restore them here.
+        extras.extend(self.__setCurrentLineSearchHighlights(lineStart, lineText))
+
+        self.__updateCurrentLineExtraSelections(extras)
+
+    def __setCurrentLineSearchHighlights(self, lineStart, lineText):
+        extras = []
+        if formats := self.ui.textEdit.highlighter.getSearchDataMatches(lineText):
+            for type, position, length in formats:
+                extra = QTextEdit.ExtraSelection ()
+                extra.cursor = self.ui.textEdit.textCursor()
+                extra.cursor.setPosition (lineStart + position)
+                extra.cursor.setPosition (lineStart + position + length,  QTextCursor.KeepAnchor)
+                if type == 0: # 0 = match highliht, 1 = in document search highlight
+                    extra.format.setBackground (SyntaxHighlighter.matchBackgroundColor)
+                else:
+                    extra.format.setBackground (SyntaxHighlighter.match2BackgroundColor)
+                extras.append(extra)
+        return extras
 
     @pyqtSlot()
     def toggleSearchFrame(self) -> None:
@@ -353,11 +388,13 @@ class SourceViewer (QWidget):
     def __scrollToMatch (self, index: int, length: int, highlightColor: QColor|Qt.GlobalColor) -> None:
         scrollDir = index - self.ui.textEdit.textCursor().position() # Determine if we need to scroll down or up
 
+        lineStart, _, lineText = self.ui.textEdit.getLineByIndex(index)
+
         extras = []
         extra1 = QTextEdit.ExtraSelection ()
         extra1.cursor = self.ui.textEdit.textCursor()
         extra1.cursor.setPosition (index)
-        extra1.format.setProperty (QTextFormat.FullWidthSelection,  True)
+        extra1.format.setProperty (QTextFormat.FullWidthSelection, True)
         extra1.format.setBackground (SourceViewer.currentMatchLineBackgroundColor)
         extras.append(extra1)
 
@@ -367,6 +404,8 @@ class SourceViewer (QWidget):
         extra2.cursor.setPosition (index+length,  QTextCursor.KeepAnchor)
         extra2.format.setBackground (highlightColor)
         extras.append(extra2)
+
+        extras.extend(self.__setCurrentLineSearchHighlights(lineStart, lineText))
 
         self.__updateMatchExtraSelections(extras)
         self.ui.textEdit.scrollToPosition(index, scrollDir)
@@ -407,6 +446,10 @@ class SourceViewer (QWidget):
         self.setCurrentMatch(state.currentMatch)
         self.ui.textEdit.verticalScrollBar ().setSliderPosition (state.scrollPosition)
 
+    def __clearExtraSelections(self) -> None:
+        self.currentMatchExtras = []
+        self.currentLineExtras = []
+        self.__updateExtraSelections()
     def __updateMatchExtraSelections(self, extras: List[QTextEdit.ExtraSelection]) -> None:
         self.currentMatchExtras = extras
         self.__updateExtraSelections()

@@ -60,6 +60,26 @@ class HighlightingTextEdit (QPlainTextEdit):
         cursor.setPosition(index)
         self.setTextCursor(cursor) # jump back to match to make sure the line number of the match is correct
 
+    def getLineByLineNumber(self, line: int) -> Optional[Tuple[int, int, str]]:
+        """
+        Returns tuple with start position, end position and text given an index within the document.
+        """
+        if line > 0:
+            line -= 1
+        if doc := self.document():
+            if block := doc.findBlockByLineNumber(line):
+                return (block.position(), block.position() + block.length() - 1, block.text())
+        return None
+    
+    def getLineByIndex(self, index: int) -> Optional[Tuple[int, int, str]]:
+        """
+        Returns tuple with start position, end position and text given an index within the document.
+        """
+        if doc := self.document():
+            if block := doc.findBlock(index):
+                return (block.position(), block.position() + block.length() - 1, block.text())
+        return None
+
     def areLineNumbersShown(self) -> bool:
         return bool(self.lineNumberArea)
 
@@ -155,6 +175,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         pass
 
     def _highlightPartOfLine(self, painter: QPainter, metrics: QFontMetrics, block: QTextBlock, bound: QRect, startIndex: int, length: int, style: HighlightStyle) -> None:
+        # Can be used by sub classes
         text = block.text()[startIndex:startIndex+length]
         partBefore = block.text()[:startIndex]
         rectBefore = metrics.boundingRect(bound, Qt.TextFlag.TextExpandTabs, partBefore,  self.tabStopWidth())

@@ -21,7 +21,7 @@ import time
 import re
 import unittest
 from enum import Enum
-from .IStringMatcher import IStringMatcher
+from .IStringMatcher import IStringMatcher, MatchPosition
 from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal
 
 reQueryToken = re.compile(r"[\w#*]+|<!.*!>")
@@ -30,7 +30,7 @@ reMatchRegEx = re.compile(r"<!(.*)!>")
 
 regexEscape = r"[\^$.|?*+()"
 
-SearchResult = List[str]
+SearchResult = List[str] # List of matching files
 
 # Return tokens which are in the index
 def getTokens(text: str) -> List[Tuple[int,int]]:
@@ -290,7 +290,7 @@ class ContentQuery(Query):
         return reExpr
 
     # Yields all matches in str. Each match is returned as the touple (position,length)
-    def matches(self, data: str) -> Iterable[Tuple[int,int]]:
+    def matches(self, data: str) -> Iterable[MatchPosition]:
         reExpr = self.regExForMatches()
         if not reExpr:
             return
@@ -299,7 +299,7 @@ class ContentQuery(Query):
             result = reExpr.search(data, cur)
             if result:
                 startPos, endPos = result.span()
-                yield (startPos, endPos-startPos)
+                yield MatchPosition(startPos, endPos-startPos)
                 cur = endPos
             else:
                 return
@@ -359,7 +359,7 @@ class FileQuery(Query):
             extensionFilter = strExtensionFilter
         super().__init__(search, strFolderFilter, extensionFilter, bCaseSensitive)
 
-    def matches(self, data: str) -> Iterable[Tuple[int,int]]:
+    def matches(self, data: str) -> Iterable[MatchPosition]:
         return []
 
 class ReportAction:

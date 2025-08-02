@@ -222,11 +222,21 @@ class SyntaxHighlighter:
                 pos += 1
 
         # Highlight search match
+        for index, matchPos, length in self.getSearchDataMatches(text):
+            formats.append((self.searchStringFormats[index], matchPos, length))
+
+        return formats
+    
+    def getSearchDataMatches(self, text: str) -> List[Tuple[int, int, int]]:
+        # Return tuple of highlight search matches. Each tuple contains:
+        # [0]: index of match 0 = match, 1 = in document search
+        # [1]: match position
+        # [2]: match length
+        formats: List[Tuple[int, int, int]] = []
         for index, searchData in enumerate(self.searchDatas):
             if searchData:
                 for matchPos, length in searchData.matches (text):
-                    formats.append((self.searchStringFormats[index], matchPos, length))
-
+                    formats.append((index, matchPos, length))
         return formats
 
     def isInsideComment(self, position: int) -> bool:

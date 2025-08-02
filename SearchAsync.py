@@ -23,6 +23,7 @@ from PyQt5.QtCore import QObject
 from tools import AsynchronousTask
 from tools.FileTools import fopen
 from fulltextindex import FullTextIndex, IndexConfiguration
+from fulltextindex.IStringMatcher import IStringMatcher, MatchPosition
 from fulltextindex.SearchMethods import SearchMethods, ResultSet, removeDupsAndSort
 
 class SearchParams:
@@ -77,11 +78,11 @@ def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: 
     result: ResultSet = AsynchronousTask.execute(parent, __customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
     return result
 
-class ScriptSearchData:
+class ScriptSearchData (IStringMatcher): 
     def __init__(self, reExpr: Pattern) -> None:
         self.reExpr = reExpr
 
-    def matches(self, data: str) -> Iterator[Tuple[int,int]]:
+    def matches(self, data: str) -> Iterator[MatchPosition]:
         """Yields all matches in str. Each match is returned as the touple (position,length)."""
         if not self.reExpr:
             return
@@ -90,7 +91,7 @@ class ScriptSearchData:
             result = self.reExpr.search(data, cur)
             if result:
                 startPos, endPos = result.span()
-                yield (startPos, endPos-startPos)
+                yield MatchPosition(startPos, endPos-startPos)
                 cur = endPos
             else:
                 return

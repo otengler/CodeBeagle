@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QFocusEvent, QColor
 from tools.AsynchronousTask import AsynchronousTask
 from .Ui_InDocumentSearchWidget import Ui_InDocumentSearchWidget
-from fulltextindex.IStringMatcher import IStringMatcher
+from fulltextindex.IStringMatcher import IStringMatcher, MatchPosition
 
 class StringMatcher (IStringMatcher):
     def __init__(self) -> None:
@@ -33,7 +33,7 @@ class StringMatcher (IStringMatcher):
     def setRegex(self, expr: Pattern) -> None:
         self.regex = expr
 
-    def matches(self, data: str) -> Iterable[Tuple[int,int]]:
+    def matches(self, data: str) -> Iterable[MatchPosition]:
         if not self.regex:
             return
 
@@ -42,13 +42,13 @@ class StringMatcher (IStringMatcher):
             result = self.regex.search(data, cur)
             if result:
                 startPos, endPos = result.span()
-                yield (startPos, endPos-startPos)
+                yield MatchPosition(startPos, endPos-startPos)
                 cur = endPos
             else:
                 return
 
 class InDocumentSearchResult:
-    def __init__(self, results: List[Tuple[int,int]], matcher: Optional[IStringMatcher]) -> None:
+    def __init__(self, results: List[MatchPosition], matcher: Optional[IStringMatcher]) -> None:
         self.results = results
         self.matcher = matcher
 
@@ -59,7 +59,7 @@ def findAllMatches(text: str, searchRegex: Pattern, cancelEvent: threading.Event
     matcher = StringMatcher()
     matcher.setRegex(searchRegex)
 
-    results: List[Tuple[int,int]] = []
+    results: List[MatchPosition] = []
     for match in matcher.matches(text):
         results.append(match)
         if cancelEvent and cancelEvent.is_set():
@@ -97,7 +97,7 @@ class InDocumentSearchWidget(QWidget):
         self.text = ""
         self.searchRegex: Optional[Pattern] = None
         self.currentMatch = -1
-        self.matches: List[Tuple[int,int]] = []
+        self.matches: List[MatchPosition] = []
         self.ui.labelCurrentMatch.setText("")
 
     def setSearch(self, search: str) -> None:
@@ -127,7 +127,7 @@ class InDocumentSearchWidget(QWidget):
         self.__updateCurrentMatch(num)
         self.__enableButtons()
 
-    def __setMatches(self, results: List[Tuple[int,int]]) -> None:
+    def __setMatches(self, results: List[MatchPosition]) -> None:
         self.matches = results
         self.currentMatch = -1
         self.__updateCurrentMatch(0)
@@ -143,7 +143,8 @@ class InDocumentSearchWidget(QWidget):
         else:
             self.ui.labelCurrentMatch.setText(f"{num+1}/{len(self.matches)}")
             if numChanged and 0 <= num < len(self.matches):
-                self.currentMatchChanged.emit(num, *self.matches[num])
+                match = self.matches[num]
+                self.currentMatchChanged.emit(num, match.index, match.length)
 
     def __textEdited(self, _: str) -> None:
         self.__resetColor()
