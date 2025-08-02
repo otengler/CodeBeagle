@@ -93,6 +93,7 @@ class CommentRange:
 
 class SyntaxHighlighter:
     matchBackgroundColor = Qt.GlobalColor.yellow
+    matchBackgroundColorLigher  = QColor.lighter(QColor(Qt.GlobalColor.yellow))
     matchForegroundColor = Qt.GlobalColor.black
     match2BackgroundColor = QColor(194, 217, 255)
     match2ForegroundColor = Qt.GlobalColor.black

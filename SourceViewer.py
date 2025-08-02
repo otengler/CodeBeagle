@@ -271,14 +271,13 @@ class SourceViewer (QWidget):
     def jumpToCurrentMatch(self) -> None:
         if self.curMatch >= 0:
             match = self.matches[self.curMatch]
-            self.__scrollToMatch (match.index, match.length, SyntaxHighlighter.matchBackgroundColor)
+            self.__scrollToMatch (match.index, match.length)
 
     def setCurrentMatch(self, index: int, forceSet: bool=False) -> None:
         if index>=0 and index<len(self.matches) and (index != self.curMatch or forceSet):
             match = self.matches[index]
-            self.__clearExtraSelections()
             self.__setMatchIndex(index)
-            self.__scrollToMatch (match.index, match.length, SyntaxHighlighter.matchBackgroundColor)
+            self.__scrollToMatch (match.index, match.length)
             self.__setInfoLabel ()
             self.__enableNextPrevious()
 
@@ -307,12 +306,15 @@ class SourceViewer (QWidget):
         extras.append(extra)
         # Highlighing the full line removed the match and in document search highlights which 
         # means we need to restore them here.
-        extras.extend(self.__setCurrentLineSearchHighlights(lineStart, lineText))
+        matchFormats, _ = self.__setCurrentLineSearchHighlights(lineStart, lineText)
+        extras.extend(matchFormats)
 
         self.__updateCurrentLineExtraSelections(extras)
 
-    def __setCurrentLineSearchHighlights(self, lineStart, lineText):
+    def __setCurrentLineSearchHighlights(self, lineStart, lineText) -> tuple[list, int]:
+        """Returns a tuple of List[ExtraSelection],int. The int contains the nunber of search matches highlighted (not in document searches)"""
         extras = []
+        matchCount = 0
         if formats := self.ui.textEdit.highlighter.getSearchDataMatches(lineText):
             for type, position, length in formats:
                 extra = QTextEdit.ExtraSelection ()
@@ -320,11 +322,12 @@ class SourceViewer (QWidget):
                 extra.cursor.setPosition (lineStart + position)
                 extra.cursor.setPosition (lineStart + position + length,  QTextCursor.KeepAnchor)
                 if type == 0: # 0 = match highliht, 1 = in document search highlight
+                    matchCount += 1
                     extra.format.setBackground (SyntaxHighlighter.matchBackgroundColor)
                 else:
                     extra.format.setBackground (SyntaxHighlighter.match2BackgroundColor)
                 extras.append(extra)
-        return extras
+        return (extras, matchCount)
 
     @pyqtSlot()
     def toggleSearchFrame(self) -> None:
@@ -338,7 +341,7 @@ class SourceViewer (QWidget):
 
     @pyqtSlot(int, int, int)
     def inDocumentSearchMatchChanged(self, _: int, index: int, length: int) -> None:
-        self.__scrollToMatch(index, length, SyntaxHighlighter.match2BackgroundColor)
+        self.__scrollToMatch(index, length)
 
     @pyqtSlot()
     def showSearchFrame(self) -> None:
@@ -390,12 +393,14 @@ class SourceViewer (QWidget):
             text = text + "%u/%u " % (self.curMatch+1, len(self.matches))
         self.ui.labelInfo.setText (text)
 
-    def __scrollToMatch (self, index: int, length: int, highlightColor: QColor|Qt.GlobalColor) -> None:
+    def __scrollToMatch (self, index: int, length: int) -> None:
         scrollDir = index - self.ui.textEdit.textCursor().position() # Determine if we need to scroll down or up
 
         lineStart, _, lineText = self.ui.textEdit.getLineByIndex(index)
 
         extras = []
+
+        # Line background
         extra1 = QTextEdit.ExtraSelection ()
         extra1.cursor = self.ui.textEdit.textCursor()
         extra1.cursor.setPosition (index)
@@ -403,15 +408,20 @@ class SourceViewer (QWidget):
         extra1.format.setBackground (SourceViewer.currentMatchLineBackgroundColor)
         extras.append(extra1)
 
-        extra2 = QTextEdit.ExtraSelection ()
-        extra2.cursor = self.ui.textEdit.textCursor()
-        extra2.cursor.setPosition (index)
-        extra2.cursor.setPosition (index+length,  QTextCursor.KeepAnchor)
-        extra2.format.setBackground (highlightColor)
-        extras.append(extra2)
+        # All matches and in documenent searches
+        matchFormat, matchCount = self.__setCurrentLineSearchHighlights(lineStart, lineText)
+        extras.extend(matchFormat)
+        
+        # If there are multiple matches on the same line render the selected match a little bit brighter
+        if matchCount > 1: 
+            extra2 = QTextEdit.ExtraSelection ()
+            extra2.cursor = self.ui.textEdit.textCursor()
+            extra2.cursor.setPosition (index)
+            extra2.cursor.setPosition (index+length,  QTextCursor.KeepAnchor)
+            extra2.format.setBackground (SyntaxHighlighter.matchBackgroundColorLigher)
+            extras.append(extra2)
 
-        extras.extend(self.__setCurrentLineSearchHighlights(lineStart, lineText))
-
+        self.__clearExtraSelections()
         self.__updateMatchExtraSelections(extras)
         self.ui.textEdit.scrollToPosition(index, scrollDir)
 
