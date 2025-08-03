@@ -23,6 +23,7 @@ else:
     targetBase = None
     targetCodeBeagle = "CodeBeagle"
     targetUpdateIndex = "UpdateIndex"
+    #options["build_exe"]["bin_includes"] = ["libxcb-xinerama.so.0"]
 
 CodeBeagle=Executable(
     script = codeBeagleScript,

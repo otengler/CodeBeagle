@@ -17,11 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from tools import FileTools
+# Switch to application directory to be able to load the configuration and search scripts even 
+# if we are executed from a different working directory. This must even be done before other imports. 
+FileTools.switchToAppDir()
+
 import os, sys
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-from tools import FileTools
 from dialogs.UserHintDialog import ButtonType, showUserHint
 from dialogs.RegExTesterDlg import RegExTesterDlg
 import AppConfig
@@ -40,10 +44,6 @@ userHintNewVersionAvailable = """
 """
 
 def main() -> None:
-    # Switch to application directory to be able to load the configuration and search scripts even if we are
-    # executed from a different working directory.
-    FileTools.switchToAppDir()
-
     if AppConfig.appConfig().theme == AppConfig.darkTheme:
         # https://www.qt.io/blog/dark-mode-on-windows-11-with-qt-6.5
         os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=1"

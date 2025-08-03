@@ -39,8 +39,13 @@ cp config.txt $BUILDDIR
 cp help.html $BUILDDIR
 cp LICENSE $BUILDDIR
 cp VERSION $BUILDDIR
+cp install.sh $BUILDDIR
 mkdir -p $BUILDDIR/scripts && cp scripts/* $BUILDDIR/scripts/
 mkdir -p $BUILDDIR/config && cp config/* $BUILDDIR/config/
 mkdir -p $BUILDDIR/resources && cp -r resources/* $BUILDDIR/resources/
+
+chmod +x $BUILDDIR/CodeBeagle
+chmod +x $BUILDDIR/UpdateIndex
+chmod +x $BUILDDIR/install.sh
 
 mv $BUILDDIR build/CodeBeagle
