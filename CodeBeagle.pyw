@@ -22,7 +22,7 @@ from tools import FileTools
 # if we are executed from a different working directory. This must even be done before other imports. 
 FileTools.switchToAppDir()
 
-import os, sys
+import os, sys, subprocess, shutil
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -170,12 +170,15 @@ def installDesktopFile():
         targetFile = os.path.join(targetDir, "CodeBeagle.desktop")
         if os.path.isfile(targetFile):
             return
-        print(f"Installing Desktop file to {targetFile}")
+        print(f"Installing .desktop file to {targetFile}")
         with open("resources/CodeBeagle.desktop","r") as input:
-            desktopFile = input.read()
-        desktopFile = desktopFile.replace("{InstallDir}", FileTools.getAppDir())
+            desktopFile = input.read()        
+        desktopFile = desktopFile.replace("{InstallDir}", os.getcwd())
         with open(targetFile, "w") as output:
             output.write(desktopFile)
+        if shutil.which("update-desktop-database"):
+            print("Updating desktop database")
+            subprocess.Popen (["update-desktop-database", targetDir])
     except Exception as e:
         print("Failed to install Desktop file: " + str(e))
 

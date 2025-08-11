@@ -129,18 +129,11 @@ def getTempPath () -> str:
 def switchToAppDir () -> None:
     """Switch to application directory. This helps to locate files by a relative path."""
     try:
-        dirName = getAppDir()
+        dirName = os.path.dirname(sys.argv[0])
         if dirName:
             os.chdir(dirName)
     except Exception as  e:
         print ("Failed to switch to application directory: " + str(e))
-
-def getAppDir() -> str:
-    try:
-        return os.path.dirname(sys.argv[0])
-    except Exception as  e:
-        print ("Failed to get app dir:" + str(e))
-        return ""
 
 class LockDir:
     """
