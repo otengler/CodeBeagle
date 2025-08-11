@@ -29,9 +29,7 @@ if [ "$1" == "linux" ]; then
   echo "Cleanup Linux"
   PYVER=`python3 build-GetPyVer.py`
   rm $BUILDDIR/lib/liblzma-004595ca.so.5.2.2
-  rm $BUILDDIR/lib/libcrypto-01df93e2.so.3
   rm $BUILDDIR/lib/libreadline-2c5f7b8d.so.6.2
-  rm $BUILDDIR/lib/libssl-b5c98e44.so.3
   rm $BUILDDIR/lib/libffi-af4ed708.so.6.0.1
   rm $BUILDDIR/lib/libbz2-a273e504.so.1.0.6
   rm $BUILDDIR/lib/_bz2.cpython-$PYVER-x86_64-linux-gnu.so
@@ -60,13 +58,11 @@ if [ "$1" == "linux" ]; then
   rm $BUILDDIR/lib/_bisect.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/termios.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/mmap.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_ssl.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_codecs_iso2022.cpython-$PYVER-x86_64-linux-gnu.so
   rm -r $BUILDDIR/lib/ctypes
   rm -r $BUILDDIR/lib/multiprocessing
   rm -r $BUILDDIR/lib/xml
   rm -r $BUILDDIR/lib/xmlrpc
-  rm -r $BUILDDIR/lib/zipfile
   # PyQt
   rm -r $BUILDDIR/lib/PyQt5/Qt5/translations
   # Clean all files in lib from the other directories. They are duplicates

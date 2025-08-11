@@ -49,6 +49,8 @@ def main() -> None:
         if AppConfig.appConfig().theme == AppConfig.darkTheme:
             # https://www.qt.io/blog/dark-mode-on-windows-11-with-qt-6.5
             os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=1"
+    elif os.name == "linux":
+        installDesktopFile()
 
     app = QApplication(sys.argv)
 
@@ -159,6 +161,23 @@ class MainWindow(QMainWindow):
             self.setWindowTitle(self.initialWindowTitle + "  -  " + name)
         else:
             self.setWindowTitle(self.initialWindowTitle)
+
+def installDesktopFile():
+    try:
+        targetDir = os.path.join(os.environ["HOME"], ".local/share/applications")
+        if not os.path.isdir(targetDir):
+            os.makedirs(targetDir)
+        targetFile = os.path.join(targetDir, "CodeBeagle.desktop")
+        if os.path.isfile(targetFile):
+            return
+        print(f"Installing Desktop file to {targetFile}")
+        with open("resources/CodeBeagle.desktop","r") as input:
+            desktopFile = input.read()
+        desktopFile = desktopFile.replace("{InstallDir}", FileTools.getAppDir())
+        with open(targetFile, "w") as output:
+            output.write(desktopFile)
+    except Exception as e:
+        print("Failed to install Desktop file: " + str(e))
 
 if __name__ == "__main__":
     main()
