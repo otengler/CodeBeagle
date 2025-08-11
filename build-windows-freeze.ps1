@@ -1,6 +1,4 @@
-#!/bin/bash
-
-# 
+#
 # Update dependencies (for Sass) 
 #
 npm ci
@@ -8,97 +6,70 @@ npm ci
 #
 # Set vars and Compile interface definitions
 # 
-. ./build-unix-vars.sh
-./build-unix-ui.sh
+.\build-windows-vars.ps1
+.\build-windows-ui.ps1
 
 #
 # Run Cx_freeze
 # 
 
-rm -r -f build
+if (Test-Path -Path "build") {
+    rmdir ".\build\" -Recurse -Force
+}
+python setup.py build_exe 
+echo "Build done"
 
-cp CodeBeagle.pyw CodeBeagle.py
-$PYTHON setup.py build_exe 
-echo Build done
+$BUILDDIR="build\" + (Get-ChildItem "build").Name
+echo "Build directory is $BUILDDIR"
+$LIB="$BUILDDIR\lib"
 
-BUILDDIR="build/"`ls build`
-echo Build directory is $BUILDDIR
-LIB=$BUILDDIR/lib
 
-if [ "$1" == "linux" ]; then
-  echo "Cleanup Linux"
-  PYVER=`python3 build-GetPyVer.py`
-  rm $BUILDDIR/lib/liblzma-004595ca.so.5.2.2
-  rm $BUILDDIR/lib/libcrypto-01df93e2.so.3
-  rm $BUILDDIR/lib/libreadline-2c5f7b8d.so.6.2
-  rm $BUILDDIR/lib/libssl-b5c98e44.so.3
-  rm $BUILDDIR/lib/libffi-af4ed708.so.6.0.1
-  rm $BUILDDIR/lib/libbz2-a273e504.so.1.0.6
-  rm $BUILDDIR/lib/_bz2.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_kr.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_tw.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_posixshmem.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_jp.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_hk.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/fcntl.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/pyexpat.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_cn.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/grp.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_queue.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_heapq.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_blake2.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_ctypes.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_json.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_csv.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/readline.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_pickle.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_statistics.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_contextvars.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_multiprocessing.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_hashlib.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_decimal.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_bisect.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/termios.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/mmap.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_ssl.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_iso2022.cpython-$PYVER-x86_64-linux-gnu.so
-  rm -r $BUILDDIR/lib/ctypes
-  rm -r $BUILDDIR/lib/multiprocessing
-  rm -r $BUILDDIR/lib/xml
-  rm -r $BUILDDIR/lib/xmlrpc
-  rm -r $BUILDDIR/lib/zipfile
-  # PyQt
-  rm -r $BUILDDIR/lib/PyQt5/Qt5/translations
-  # Clean all files in lib from the other directories. They are duplicates
-  SOURCE_LIB_DIR="$BUILDDIR/lib/PyQt5/Qt5/lib"
-  PLUGIN_DIR="$BUILDDIR/lib/PyQt5/Qt5/plugins"
-  # Ensure both directories exist
-  if [[ ! -d "$SOURCE_LIB_DIR" || ! -d "$PLUGIN_DIR" ]]; then
-    echo "Error: lib or plugins directory does not exist"
-    exit 1
-  fi
-  # Get unique filenames from SOURCE_DIR
-  find "$SOURCE_LIB_DIR" -type f -printf "%f\n" | sort -u | while read -r filename; do
-    # Find and delete all matching filenames in TARGET_DIR
-    find "$PLUGIN_DIR" -type f -name "$filename" -exec rm -f {} \;
-  done  
-fi
-if [ "$1" == "mac" ]; then
-  echo "Cleanup MAC"
-fi
+del "$BUILDDIR\api-ms-*.dll" -Force
+if (Test-Path "$BUILDDIR\vcruntime140.dll") 
+{
+  del "$BUILDDIR\vcruntime140.dll" -Force 
+}
+if (Test-Path "$LIB\unicodedata.pyd") 
+{
+    del "$LIB\unicodedata.pyd" -Force
+}
 
-rm -r -f $LIB/themes/dark/qss
-rm -r -f $LIB/themes/dark/svg
+mkdir $LIB\PyQt5.new\Qt5\bin
+mkdir $LIB\PyQt5.new\Qt5\plugins\imageformats
+mkdir $LIB\PyQt5.new\Qt5\plugins\platforms
+mkdir $LIB\PyQt5.new\Qt5\plugins\styles
 
-cp config.txt $BUILDDIR
-cp help.html $BUILDDIR
-cp LICENSE $BUILDDIR
-cp VERSION $BUILDDIR
-mkdir -p $BUILDDIR/scripts && cp scripts/* $BUILDDIR/scripts/
-mkdir -p $BUILDDIR/config && cp config/* $BUILDDIR/config/
-mkdir -p $BUILDDIR/resources && cp -r resources/* $BUILDDIR/resources/
+copy $LIB\PyQt5\__init__.pyc $LIB\PyQt5.new 
+copy $LIB\PyQt5\_cx_freeze_debug.pyc $LIB\PyQt5.new 
+copy $LIB\PyQt5\QtCore.pyd $LIB\PyQt5.new
+copy $LIB\PyQt5\QtWidgets.pyd $LIB\PyQt5.new
+copy $LIB\PyQt5\QtGui.pyd $LIB\PyQt5.new
+copy $LIB\PyQt5\sip.cp* $LIB\PyQt5.new
+copy $LIB\PyQt5\Qt5\bin\Qt5Core.dll $LIB\PyQt5.new\Qt5\bin\
+copy $LIB\PyQt5\Qt5\bin\Qt5Widgets.dll $LIB\PyQt5.new\Qt5\bin\
+copy $LIB\PyQt5\Qt5\bin\Qt5Gui.dll $LIB\PyQt5.new\Qt5\bin\
+copy $LIB\PyQt5\Qt5\plugins\imageformats\qgif.dll $LIB\PyQt5.new\Qt5\plugins\imageformats\
+copy $LIB\PyQt5\Qt5\plugins\platforms\qwindows.dll $LIB\PyQt5.new\Qt5\plugins\platforms\
+copy $LIB\PyQt5\Qt5\plugins\styles\qwindowsvistastyle.dll $LIB\PyQt5.new\Qt5\plugins\styles\
 
-mv $BUILDDIR build/CodeBeagle
+rmdir "$LIB\PyQt5" -Recurse -Force
+move $LIB\PyQt5.new $LIB\PyQt5
 
-chmod +x ./build/CodeBeagle/CodeBeagle
-chmod +x ./build/CodeBeagle/UpdateIndex
+rmdir "$LIB\themes\dark\qss" -Recurse -Force
+rmdir "$LIB\themes\dark\svg" -Recurse -Force
+
+rmdir "$LIB\_pyrepl" -Recurse -Force
+del "$LIB\libcrypto-3.dll" -Force
+
+xcopy config.txt $BUILDDIR
+xcopy help.html $BUILDDIR
+xcopy LICENSE $BUILDDIR
+xcopy VERSION $BUILDDIR
+xcopy scripts\* $BUILDDIR\scripts\
+xcopy config\* $BUILDDIR\config\
+xcopy /S resources\* $BUILDDIR\resources\
+
+# %mt% -manifest CodeBeagleManifest.xml "-outputresource:%BUILDDIR%\CodeBeagle.exe;#1"
+# %mt% -manifest UpdateIndexManifest.xml "-outputresource:%BUILDDIR%\UpdateIndex.exe;#1"
+
+move $BUILDDIR build\CodeBeagle
