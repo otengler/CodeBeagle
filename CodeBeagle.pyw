@@ -49,7 +49,7 @@ def main() -> None:
         if AppConfig.appConfig().theme == AppConfig.darkTheme:
             # https://www.qt.io/blog/dark-mode-on-windows-11-with-qt-6.5
             os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=1"
-    elif os.name == "linux":
+    elif os.name == "posix":
         installDesktopFile()
 
     app = QApplication(sys.argv)

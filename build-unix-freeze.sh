@@ -44,7 +44,6 @@ if [ "$1" == "linux" ]; then
   rm $BUILDDIR/lib/grp.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_queue.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_heapq.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_blake2.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_ctypes.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_json.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_csv.cpython-$PYVER-x86_64-linux-gnu.so
