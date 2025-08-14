@@ -21,6 +21,7 @@ import os
 from typing import cast
 
 testmodules = [
+    'widgets.SyntaxHighlighter',
     'HighlighterConfiguration',
     'MatchesOverview',
     'tools.Config',

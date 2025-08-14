@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, List, Optional, Pattern
 import bisect
 import re
+import unittest
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.IStringMatcher import IStringMatcher
@@ -250,3 +251,65 @@ class SyntaxHighlighter:
         if comment.index <= position < comment.index + comment.length:
             return True
         return False
+
+reQuote = re.compile("[\"\']")
+
+def findAllStrings(line: str) -> list[tuple[int,int]]:
+    """Returns the position of all strings in a line as a list of (start,end)"""
+    strings: list[tuple[int,int]] = []
+    startPos = -1
+    type = None # None, ", '
+    quotes = reQuote.finditer(line)
+    for quote in quotes:
+        # Check if quote is escaped. It counts as a valid quote if the number of backslashes is equal
+        if __backSlashesBefore(line, quote.start()) % 2 == 0:
+            quoteChar = quote.group(0) 
+            if type is None:
+                # type != quoteChar handles corrupt strings: ' "  or " ', use new char as type
+                type = quoteChar
+                startPos = quote.start()
+            elif type == quoteChar:
+                # Found valid string
+                strings.append((startPos, quote.start()))
+                type = None
+    return strings
+
+def __backSlashesBefore(line: str, pos: int) -> int:
+    pos -= 1
+    backslashes = 0
+    while pos >= 0:
+        if line[pos] == '\\':
+            backslashes += 1
+            pos -= 1
+        else: 
+            break
+    return backslashes
+
+class TestGetAllStrings(unittest.TestCase):
+    def test(self) -> None:
+        import os
+        r = findAllStrings("no string")
+        self.assertEqual(r, [])
+
+        testFile = os.path.join(os.getcwd(), "quoted_strings.txt")
+        for fullLine in open(testFile,"r"):
+            pos = fullLine.find("|")
+            if pos == -1:
+                continue
+            quotedStrings = []
+            line = fullLine[0:pos]
+            parts = fullLine[pos+1:].strip().split(";")
+            for part in parts:
+                part = part.strip()
+                range = part.split(",")
+                start = int(range[0].replace("(", ""))
+                stop = int(range[1].replace(")", ""))
+                quotedStrings.append((start,stop))
+            findAllStringTest(self, line, quotedStrings)
+
+def findAllStringTest(test: unittest.TestCase, line: str, expected: list):
+    r = findAllStrings(line)
+    test.assertListEqual(r, expected)
+    
+if __name__ == "__main__":
+    unittest.main()
