@@ -52,9 +52,9 @@ class HighlightingTextEdit (QPlainTextEdit):
         cursor = self.textCursor()
         cursor.setPosition(index)
         if scrollDir > 0:
-            cursor.movePosition(QTextCursor.Down, QTextCursor.MoveAnchor,  5)
+            cursor.movePosition(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.MoveAnchor,  5)
         elif scrollDir < 0:
-            cursor.movePosition(QTextCursor.Up, QTextCursor.MoveAnchor,  5)
+            cursor.movePosition(QTextCursor.MoveOperation.Up, QTextCursor.MoveMode.MoveAnchor,  5)
         self.setTextCursor (cursor) # otherwise 'ensureCursorVisible' doesn't work
         self.ensureCursorVisible ()
         cursor.setPosition(index)

@@ -102,8 +102,8 @@ class InDocumentSearchWidget(QWidget):
 
     def setSearch(self, search: str) -> None:
         self.ui.editSearch.setText(search)
-        self.__resetColor()
         self.__updateSearchRegex()
+        self.__resetColor()
         self.__startSearch()
 
     def setText(self, text: str) -> None:
@@ -187,8 +187,8 @@ class InDocumentSearchWidget(QWidget):
         searchResult: InDocumentSearchResult = self.__searchTask.result
         if not searchResult.results:
             self.__nothingFoundColor()       
-        self.__setMatches(searchResult.results)
         self.searchFinished.emit(searchResult)
+        self.__setMatches(searchResult.results)
 
     def __updateSearchRegex(self) -> None:
         reFlags: int = re.IGNORECASE

@@ -301,7 +301,7 @@ class SourceViewer (QWidget):
         extra = QTextEdit.ExtraSelection ()
         extra.cursor = self.ui.textEdit.textCursor()
         extra.cursor.setPosition (self.ui.textEdit.textCursor().position())
-        extra.format.setProperty (QTextFormat.FullWidthSelection, True)
+        extra.format.setProperty (QTextFormat.Property.FullWidthSelection, True)
         extra.format.setBackground (SourceViewer.currentLineBackgroundColor)
         extras.append(extra)
         # Highlighing the full line removed the match and in document search highlights which 
@@ -320,8 +320,8 @@ class SourceViewer (QWidget):
                 extra = QTextEdit.ExtraSelection ()
                 extra.cursor = self.ui.textEdit.textCursor()
                 extra.cursor.setPosition (lineStart + position)
-                extra.cursor.setPosition (lineStart + position + length,  QTextCursor.KeepAnchor)
-                if type == 0: # 0 = match highliht, 1 = in document search highlight
+                extra.cursor.setPosition (lineStart + position + length,  QTextCursor.MoveMode.KeepAnchor)
+                if type == 0: # 0 = match highlight, 1 = in document search highlight
                     matchCount += 1
                     extra.format.setBackground (SyntaxHighlighter.matchBackgroundColor)
                 else:
@@ -363,8 +363,9 @@ class SourceViewer (QWidget):
 
     def __clearInDocumentSearchHighlighting(self) -> None:
         self.ui.textEdit.highlighter.setSearchData2 (None)
-        self.__updateMatchExtraSelections([]) # remove line highlight
         self.ui.textEdit.rehighlight()
+        self.__updateMatchExtraSelections([]) # remove line highlight
+        self.updateCurrentLine()
 
     def __hideInDocumentSearch(self) -> None:
         self.ui.buttonSearch.setChecked(False)
@@ -404,7 +405,7 @@ class SourceViewer (QWidget):
         extra1 = QTextEdit.ExtraSelection ()
         extra1.cursor = self.ui.textEdit.textCursor()
         extra1.cursor.setPosition (index)
-        extra1.format.setProperty (QTextFormat.FullWidthSelection, True)
+        extra1.format.setProperty (QTextFormat.Property.FullWidthSelection, True)
         extra1.format.setBackground (SourceViewer.currentMatchLineBackgroundColor)
         extras.append(extra1)
 
@@ -417,11 +418,10 @@ class SourceViewer (QWidget):
             extra2 = QTextEdit.ExtraSelection ()
             extra2.cursor = self.ui.textEdit.textCursor()
             extra2.cursor.setPosition (index)
-            extra2.cursor.setPosition (index+length,  QTextCursor.KeepAnchor)
+            extra2.cursor.setPosition (index+length,  QTextCursor.MoveMode.KeepAnchor)
             extra2.format.setBackground (SyntaxHighlighter.matchBackgroundColorLigher)
             extras.append(extra2)
 
-        self.__clearExtraSelections()
         self.__updateMatchExtraSelections(extras)
         self.ui.textEdit.scrollToPosition(index, scrollDir)
 
@@ -461,10 +461,6 @@ class SourceViewer (QWidget):
         self.setCurrentMatch(state.currentMatch)
         self.ui.textEdit.verticalScrollBar ().setSliderPosition (state.scrollPosition)
 
-    def __clearExtraSelections(self) -> None:
-        self.currentMatchExtras = []
-        self.currentLineExtras = []
-        self.__updateExtraSelections()
     def __updateMatchExtraSelections(self, extras: List[QTextEdit.ExtraSelection]) -> None:
         self.currentMatchExtras = extras
         self.__updateExtraSelections()
