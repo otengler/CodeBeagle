@@ -51,6 +51,7 @@ class SourceViewer (QWidget):
     def __init__ (self, parent: Optional[QWidget]) -> None:
         self.matches: List[IStringMatcher.MatchPosition]
         self.curMatch: int
+        self.scrollToMatchLine = -1 # Line of current match (normal search or in document search)
         self.currentFile: str
         self.encoding: Encoding = Encoding.Default
         self.currentLineExtras: List[QTextEdit.ExtraSelection] = []
@@ -290,11 +291,9 @@ class SourceViewer (QWidget):
         
         # Do not highlight anything if we are on the line of the current match. It has its own highlighting.
         # Just remove the current line highlight
-        if self.curMatch >= 0 and self.curMatch < len(self.matches):
-            curMatchPos = self.matches[self.curMatch].index 
-            if curMatchPos >= lineStart and curMatchPos <= lineEnd:
-                self.__updateCurrentLineExtraSelections([])
-                return
+        if lineStart == self.scrollToMatchLine:
+            self.__updateCurrentLineExtraSelections([])
+            return
 
         # Highlight full line to easily see where the cursor is
         extras = []
@@ -397,7 +396,7 @@ class SourceViewer (QWidget):
     def __scrollToMatch (self, index: int, length: int) -> None:
         scrollDir = index - self.ui.textEdit.textCursor().position() # Determine if we need to scroll down or up
 
-        lineStart, _, lineText = self.ui.textEdit.getLineByIndex(index)
+        self.scrollToMatchLine, _, lineText = self.ui.textEdit.getLineByIndex(index)
 
         extras = []
 
@@ -410,7 +409,7 @@ class SourceViewer (QWidget):
         extras.append(extra1)
 
         # All matches and in documenent searches
-        matchFormat, matchCount = self.__setCurrentLineSearchHighlights(lineStart, lineText)
+        matchFormat, matchCount = self.__setCurrentLineSearchHighlights(self.scrollToMatchLine, lineText)
         extras.extend(matchFormat)
         
         # If there are multiple matches on the same line render the selected match a little bit brighter
