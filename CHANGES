@@ -10,7 +10,7 @@
 - Bundle 'Cascadia Mono' as default source viewer font 
 
 1.3.12
-- Support bookmarks. Set bookmark with F2. Jump to bookmark with CTRL+F2. In addition there are 9 numbered bookmarks. They can be set 
+- Support bookmarks. Set bookmark with CTRL-F2. Jump to bookmark with F2. In addition there are 9 numbered bookmarks. They can be set 
   with CTRL+Shift+<number> and navigated to with CTRL+<number>.
 - Add icon button to matches overview which allows to jump back to full document
 - Properly handle changing font size using CTRL+"mouse wheel"

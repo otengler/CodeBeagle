@@ -29,8 +29,8 @@ class SearchPageBookmarks (QObject):
         self.searchPage = searchPage # type: SearchPage
     
         # Bookmarks
-        self.searchPage.addAction(createQAction(self, shortcut=Qt.Key.Key_F2, triggered=self.setBookmark))
-        self.searchPage.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F2, triggered=self.nextBookmark))
+        self.searchPage.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F2, triggered=self.setBookmark))
+        self.searchPage.addAction(createQAction(self, shortcut=Qt.Key.Key_F2, triggered=self.nextBookmark))
         self.searchPage.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ShiftModifier+Qt.Key.Key_F2, triggered=self.previousBookmark))
         numberKeys = [Qt.Key.Key_1,Qt.Key.Key_2,Qt.Key.Key_3,Qt.Key.Key_4,Qt.Key.Key_5,Qt.Key.Key_6,Qt.Key.Key_7,Qt.Key.Key_8,Qt.Key.Key_9]
         for idx, key in enumerate(numberKeys):
