@@ -22,16 +22,35 @@ from PyQt5 import QtCore
 import AppConfig
 from typing import Optional
 from .Ui_AboutDialog import Ui_AboutDialog
+from UpdateCheck import UpdateCheck
 
 class AboutDialog(QDialog):
     def __init__(self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
         self.ui = Ui_AboutDialog()
         self.ui.setupUi(self)
+        self.ui.labelUpdateAvailable.hide()
         version = sys.version_info
         pythonAndQt = " (Python %u.%u.%u, Qt %s)" % (version.major, version.minor, version.micro, QtCore.qVersion())
         self.ui.labelVersion.setText(self.tr("Version") + " " + AppConfig.appVersion + pythonAndQt)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
+        self.__checkForUpdate()
+
+    def __checkForUpdate(self):
+        self.updateCheck = UpdateCheck(self)
+        self.updateCheck.newerVersionFound.connect(self.__newerVersionFound)
+        self.updateCheck.checkForUpdates(forceCheck=True)
+
+    def __newerVersionFound(self, version: str):
+        
+        text = self.ui.labelUpdateAvailable.text()
+        text = text.replace("{version}", version)
+        if AppConfig.appConfig().theme == AppConfig.darkTheme:
+            text = text.replace("{linkColor}", "#8888FF")
+        else:
+            text = text.replace("{linkColor}", "#2222FF")
+        self.ui.labelUpdateAvailable.setText(text)
+        self.ui.labelUpdateAvailable.show()
 
 def main() -> None:
     app = QApplication(sys.argv)

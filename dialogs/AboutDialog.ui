@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>450</width>
-    <height>210</height>
+    <height>224</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -42,6 +42,19 @@ by the Free Software Foundation, either version 3 of the License, or
        <widget class="QLabel" name="labelVersion">
         <property name="text">
          <string>Version X.Y.Z</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelUpdateAvailable">
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Update to version {version} available: &lt;/p&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/otengler/CodeBeagle/releases&quot;&gt;&lt;span style='color: {linkColor}'&gt;https://github.com/otengler/CodeBeagle/releases&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::TextBrowserInteraction</set>
         </property>
        </widget>
       </item>

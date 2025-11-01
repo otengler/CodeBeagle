@@ -107,10 +107,10 @@ class MainWindow(QMainWindow):
         self.ui.tabWidget.requestWindowTitleChange.connect(self.changeWindowTitle)
         self.__restoreGeometryAndState()
         # Finally prepare and launch the update check
-        self.updateCheck = UpdateCheck(self)
+        lastUpdateCheck: Optional[int] = None
         if self.appSettings.value("lastUpdateCheck"):
-            self.updateCheck.lastUpdateCheck = int(
-                self.appSettings.value("lastUpdateCheck"))
+            lastUpdateCheck = int(self.appSettings.value("lastUpdateCheck"))
+        self.updateCheck = UpdateCheck(lastUpdateCheck, self)
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
 
@@ -130,8 +130,7 @@ class MainWindow(QMainWindow):
         # this waits for the update check thread to complete
         self.updateCheck.shutdownUpdateCheck()
         if self.updateCheck.lastUpdateCheck:
-            self.appSettings.setValue(
-                "lastUpdateCheck", self.updateCheck.lastUpdateCheck)
+            self.appSettings.setValue("lastUpdateCheck", self.updateCheck.lastUpdateCheck)
         self.appSettings.setValue(
             "lastUsedSearchLocation", AppConfig.lastUsedConfigName())
         self.__saveGeometryAndState()

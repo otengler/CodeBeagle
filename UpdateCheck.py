@@ -57,24 +57,25 @@ class UpdateCheck (QObject):
     """
     newerVersionFound = pyqtSignal('QString')
 
-    def __init__ (self,  parent: Optional[QObject] = None) -> None:
+    def __init__ (self,  lastUpdateCheck: Optional[int] = None, parent: Optional[QObject] = None) -> None:
         super().__init__(parent)
-        self.lastUpdateCheck: Optional[int] = None
+        self.lastUpdateCheck: Optional[int] = lastUpdateCheck
         self.updateThread: Optional[UpdateCheckThread] = None
 
-    def checkForUpdates(self) -> None:
+    def checkForUpdates(self, forceCheck: bool = False) -> None:
         """Initiates a check if there is a newer version of CodeBeagle available."""
         updateCheckPeriod = AppConfig.appConfig().updateCheckPeriod
         # 0 disables the update check
         if updateCheckPeriod == 0:
             return
 
-        now = QDateTime.currentDateTime()
-        if self.lastUpdateCheck:
-            nextCheck = QDateTime.fromMSecsSinceEpoch (self.lastUpdateCheck).addDays(updateCheckPeriod)
-            if now < nextCheck:
-                return
-        self.lastUpdateCheck = now.toMSecsSinceEpoch()
+        if not forceCheck:
+            now = QDateTime.currentDateTime()
+            if self.lastUpdateCheck:
+                nextCheck = QDateTime.fromMSecsSinceEpoch (self.lastUpdateCheck).addDays(updateCheckPeriod)
+                if now < nextCheck:
+                    return
+            self.lastUpdateCheck = now.toMSecsSinceEpoch()
 
         self.updateThread = UpdateCheckThread ()
         self.updateThread.finished.connect(self.__checkFinished)
