@@ -24,7 +24,7 @@ from enum import Enum
 from .IStringMatcher import IStringMatcher, MatchPosition
 from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal
 
-reQueryToken = re.compile(r"[\w#*]+|<!.*!>")
+reQueryToken = re.compile(r"[\w#*]+|<!.*?!>")
 reMatchWords = re.compile(r"(\*\*)([0-9]+)")
 reMatchRegEx = re.compile(r"<!(.*)!>")
 
