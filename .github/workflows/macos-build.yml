@@ -36,9 +36,12 @@ jobs:
         ./build-unix-freeze.sh mac
         chmod +x ./build/CodeBeagle/CodeBeagle
         chmod +x ./build/CodeBeagle/UpdateIndex
+    - name: Read version number
+      id: get_version
+      run: echo "version=$(node -p "require('./VERSION').version")" >> $GITHUB_OUTPUT
     - name: MacOS build result
       uses: actions/upload-artifact@v4
       with:
-        name: CodeBeagle.MacOS
+        name: CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}"
         path: build/CodeBeagle
 

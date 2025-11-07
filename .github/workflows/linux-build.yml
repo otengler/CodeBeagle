@@ -34,9 +34,12 @@ jobs:
       run: |
         chmod +x build-*.sh
         ./build-unix-freeze.sh linux
+    - name: Read version number
+      id: get_version
+      run: echo "version=$(node -p "require('./VERSION').version")" >> $GITHUB_OUTPUT
     - name: Linux build result
       uses: actions/upload-artifact@v4
       with:
-        name: CodeBeagle.Linux
+        name: CodeBeagle.Linux.${{ steps.get_version.outputs.version }}"
         path: build/CodeBeagle
 
