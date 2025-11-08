@@ -36,7 +36,7 @@ jobs:
         ./build-unix-freeze.sh linux
     - name: Read version number
       id: get_version
-      run: echo "version=$(node -p "require('./VERSION').version")" >> $GITHUB_OUTPUT
+      run: echo "version=$(node -p "JSON.parse(fs.readFileSync('./VERSION', 'utf8')).version")" >> $GITHUB_OUTPUT
     - name: Linux build result
       uses: actions/upload-artifact@v4
       with:
