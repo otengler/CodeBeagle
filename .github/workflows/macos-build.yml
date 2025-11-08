@@ -42,6 +42,6 @@ jobs:
     - name: MacOS build result
       uses: actions/upload-artifact@v4
       with:
-        name: CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}"
+        name: CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}
         path: build/CodeBeagle
 

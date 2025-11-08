@@ -39,6 +39,6 @@ jobs:
     - uses: actions/upload-artifact@v4
       name: Windows build result
       with:
-        name: CodeBeagle.Windows.${{ steps.get_version.outputs.version }}"
+        name: CodeBeagle.Windows.${{ steps.get_version.outputs.version }}
         path: build/CodeBeagle
 
