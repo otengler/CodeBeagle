@@ -35,9 +35,10 @@ jobs:
       run: .\build-windows-freeze.ps1
     - name: Read version number
       id: get_version
+      shell: bash
       run: echo "version=$(node -p "JSON.parse(fs.readFileSync('./VERSION', 'utf8')).version")" >> $GITHUB_OUTPUT
-    - uses: actions/upload-artifact@v4
-      name: Windows build result
+    - name: Windows build result
+      uses: actions/upload-artifact@v4
       with:
         name: CodeBeagle.Windows.${{ steps.get_version.outputs.version }}
         path: build/CodeBeagle
