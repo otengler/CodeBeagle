@@ -131,6 +131,9 @@ class SyntaxHighlighter:
             self.comments = []
             return
 
+        # First, find all string literals to exclude them from comment detection
+        stringRanges = findAllStrings(text)
+
         comments: List[CommentRange] = []
 
         # Collect all single line comments
@@ -142,7 +145,9 @@ class SyntaxHighlighter:
                 if not beginMatch:
                     break
                 start,end = beginMatch.span()
-                comments.append (CommentRange(start, end - start))
+                # Only add comment if it's not inside a string literal
+                if not self._isInsideString(start, stringRanges):
+                    comments.append (CommentRange(start, end - start))
 
         self.comments = comments
 
@@ -158,7 +163,8 @@ class SyntaxHighlighter:
                 if not beginMatch:
                     break
                 beginStart,end = beginMatch.span()
-                if not self.isInsideComment(beginStart):
+                # Only process if not inside a string literal or existing comment
+                if not self._isInsideString(beginStart, stringRanges) and not self.isInsideComment(beginStart):
                     while True:
                         endMatch = regEnd.search(text, end)
                         if not endMatch:
@@ -184,6 +190,23 @@ class SyntaxHighlighter:
                 i += 1
 
         self.comments = comments
+
+    def _isInsideString(self, position: int, stringRanges: List[Tuple[int, int]]) -> bool:
+        """Check if position is inside a string literal using bisect for efficiency."""
+        if not stringRanges:
+            return False
+
+        # Use bisect to find the position efficiently
+        # We search for where this position would be inserted based on string start positions
+        idx = bisect.bisect_right(stringRanges, (position, float('inf')))
+
+        # Check the string range before this position
+        if idx > 0:
+            start, end = stringRanges[idx - 1]
+            if start <= position <= end:
+                return True
+
+        return False
 
     def setSearchData (self, searchData: Optional[IStringMatcher]) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""
@@ -310,6 +333,110 @@ class TestGetAllStrings(unittest.TestCase):
 def findAllStringTest(test: unittest.TestCase, line: str, expected: list):
     r = findAllStrings(line)
     test.assertListEqual(r, expected)
-    
+
+class TestCommentDetectionWithStrings(unittest.TestCase):
+    """Test that comment markers inside strings are not treated as comments."""
+
+    def setUp(self) -> None:
+        """Set up a highlighter with C-style comment rules."""
+        from PyQt5.QtGui import QFont, QBrush
+        from PyQt5.QtCore import Qt
+
+        self.rules = HighlightingRules(QFont())
+        self.rules.addCommentRule(r'//.*', r'/\*', r'\*/', 400, QBrush(Qt.GlobalColor.darkGreen))
+
+        self.highlighter = SyntaxHighlighter()
+        self.highlighter.setHighlightingRules(self.rules)
+
+    def test_multiline_comment_inside_string_ignored(self) -> None:
+        """Test that /* */ inside a string is not treated as a comment."""
+        text = 'char* pattern = "/* not a comment */";'
+        self.highlighter.setText(text)
+
+        # Should find no comments
+        self.assertEqual(len(self.highlighter.comments), 0,
+                        "Comment markers inside strings should be ignored")
+
+    def test_single_line_comment_inside_string_ignored(self) -> None:
+        """Test that // inside a string is not treated as a comment."""
+        text = 'char* url = "https://example.com";'
+        self.highlighter.setText(text)
+
+        # Should find no comments
+        self.assertEqual(len(self.highlighter.comments), 0,
+                        "Single-line comment markers inside strings should be ignored")
+
+    def test_real_comments_still_detected(self) -> None:
+        """Test that real comments outside strings are still detected."""
+        text = '''char* url = "https://example.com";
+/* real comment */
+char* pattern = "/* not a comment */";
+// real line comment'''
+
+        self.highlighter.setText(text)
+
+        # Should find exactly 2 comments (the real ones)
+        self.assertEqual(len(self.highlighter.comments), 2,
+                        "Should detect exactly 2 real comments")
+
+        # Verify the real multiline comment
+        comment1 = self.highlighter.comments[0]
+        self.assertEqual(text[comment1.index:comment1.index + comment1.length],
+                        "/* real comment */",
+                        "First comment should be the real multiline comment")
+
+        # Verify the real line comment
+        comment2 = self.highlighter.comments[1]
+        self.assertEqual(text[comment2.index:comment2.index + comment2.length],
+                        "// real line comment",
+                        "Second comment should be the real line comment")
+
+    def test_escaped_quotes_with_comments(self) -> None:
+        """Test that escaped quotes don't confuse the comment detection."""
+        text = r'char* s = "He said \"hello /* world */\""; /* real comment */'
+        self.highlighter.setText(text)
+
+        # Should find exactly 1 comment (the real one at the end)
+        self.assertEqual(len(self.highlighter.comments), 1,
+                        "Should detect only the real comment outside the string")
+
+        comment = self.highlighter.comments[0]
+        self.assertEqual(text[comment.index:comment.index + comment.length],
+                        "/* real comment */",
+                        "Should detect the real comment at the end")
+
+    def test_multiple_strings_and_comments(self) -> None:
+        """Test complex scenario with multiple strings and comments."""
+        text = '''// First comment
+char* s1 = "// not a comment";
+/* Second comment */
+char* s2 = "/* also not a comment */";
+// Third comment'''
+
+        self.highlighter.setText(text)
+
+        # Should find exactly 3 real comments
+        self.assertEqual(len(self.highlighter.comments), 3,
+                        "Should detect exactly 3 real comments")
+
+        # Verify each comment
+        self.assertTrue(text[self.highlighter.comments[0].index:].startswith("// First comment"))
+        self.assertTrue(text[self.highlighter.comments[1].index:].startswith("/* Second comment */"))
+        self.assertTrue(text[self.highlighter.comments[2].index:].startswith("// Third comment"))
+
+    def test_single_quote_strings(self) -> None:
+        """Test that comment markers in single-quoted strings are also ignored."""
+        text = "char c = '/*'; /* real comment */ char d = '//';"
+        self.highlighter.setText(text)
+
+        # Should find exactly 1 comment (the real multiline comment)
+        self.assertEqual(len(self.highlighter.comments), 1,
+                        "Should detect only the real comment, not markers in single-quoted strings")
+
+        comment = self.highlighter.comments[0]
+        self.assertEqual(text[comment.index:comment.index + comment.length],
+                        "/* real comment */",
+                        "Should detect the real comment")
+
 if __name__ == "__main__":
     unittest.main()
