@@ -61,8 +61,7 @@ class AsynchronousTask (QThread):
         if self.cancelAction:
             self.cancelAction()
 
-def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None, 
-            reportProgress: Optional[ProgressFunction]=None) -> Any:
+def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> Any:
     """
     Executes the action performed by the callable 'func' called with *args in a seperate thread.
     During the action a progress bar is shown. If 'bEnableCancel' is true the callable is
@@ -76,7 +75,11 @@ def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=Fals
 
         progress = ProgressBar(parentWidget, bEnableCancel)
 
-        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction, reportProgress=reportProgress)
+        def progressHandler(percent: int) -> None:
+            #TODO: Update UI with progress here
+            pass
+
+        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction, reportProgress=progressHandler)
         searchTask.finished.connect(cast(Callable, progress.close))
         progress.onCancelClicked.connect(searchTask.cancel)
         progress.show()
