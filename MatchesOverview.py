@@ -248,7 +248,7 @@ class MatchesOverview (QWidget):
         self.matchIndexes = []
 
         if self.matches:
-            results = AsynchronousTask.execute (self, extractMatches,  self.matches,  self.searchData,  self.linesOfContext,
+            results = AsynchronousTask.execute (self, extractMatches, self.matches, self.searchData, self.linesOfContext,
                                                 bEnableCancel=True)
 
             for result in results:

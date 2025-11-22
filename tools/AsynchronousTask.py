@@ -30,12 +30,13 @@ ProgressFunction = Callable[[int], None]
 class AsynchronousTask (QThread):
     progressChanged = pyqtSignal(int)
 
-    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> None:
+    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None, emitProgress=False) -> None:
         super().__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.function = function
         self.args = args
         self.bEnableCancel = bEnableCancel
         self.cancelAction = cancelAction
+        self.emitProgress = emitProgress
         self.result: Any = None
         self.exception: Exception
         self.hasException = False
@@ -45,10 +46,11 @@ class AsynchronousTask (QThread):
 
     def run(self) -> None:
         try:
-            kwArgs = {
-                "cancelEvent": self.cancelEvent,
-                "reportProgress": self._emitProgress
+            kwArgs: dict  = {
+                "cancelEvent": self.cancelEvent
             }
+            if self.emitProgress:
+                kwArgs["reportProgress"] = self._emitProgress
             self.result = self.function(*self.args, **kwArgs)
         except Exception as e:
             self.exception = e
@@ -65,12 +67,14 @@ class AsynchronousTask (QThread):
         """Emit progress signal - Qt will marshal to main thread."""
         self.progressChanged.emit(percent)
 
-def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> Any:
+def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None, hasProgress=False) -> Any:
     """
     Executes the action performed by the callable 'func' called with *args in a seperate thread.
     During the action a progress bar is shown. If 'bEnableCancel' is true the callable is
     passed the named parameter 'cancelEvent'. It contains an event object whose 'is_set' function
     can be used to test if it is signalled.
+    If 'hasProgress' is True then 'func' needs a keyword argument 'reportProgress' which is passed a 
+    'ProgressFunction' callable.
     """
     try:
         parentWidget = None
@@ -79,7 +83,7 @@ def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=Fals
 
         progress = ProgressBar(parentWidget, bEnableCancel)
 
-        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction)
+        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction, emitProgress=hasProgress)
         searchTask.finished.connect(cast(Callable, progress.close))
         searchTask.progressChanged.connect(progress.setProgress)
         progress.onCancelClicked.connect(searchTask.cancel)

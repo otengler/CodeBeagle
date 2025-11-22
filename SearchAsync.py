@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
-from typing import Pattern, Iterator, Tuple, cast, Optional
+from typing import Pattern, Iterator, cast, Optional
 from PyQt5.QtCore import QObject
 from tools import AsynchronousTask
 from tools.FileTools import fopen
@@ -39,7 +39,7 @@ def searchContent(parent: QObject, params: QueryParams, indexConf: IndexConfigur
     result: ResultSet
 
     ftiSearch = SearchMethods()
-    result = AsynchronousTask.execute(parent, ftiSearch.searchContent, searchData, indexConf, commonKeywordMap, bEnableCancel=True, cancelAction=ftiSearch.cancel)
+    result = AsynchronousTask.execute(parent, ftiSearch.searchContent, searchData, indexConf, commonKeywordMap, bEnableCancel=True, cancelAction=ftiSearch.cancel, hasProgress=True)
     result.label = params.strSearch
 
     return result
