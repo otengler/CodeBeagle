@@ -186,7 +186,7 @@ class FullTextIndex (IndexDatabase):
         action.addData("RegEx: %s", reExpr.pattern)
         bHasFilters = query.folderFilter or query.extensionFilter
         lastProgress = None
-        idx=1
+        idx = 1
         for fullpath in results:
             if bHasFilters:
                 if not query.matchFolderAndExtensionFilter(fullpath):

@@ -154,8 +154,12 @@ class MatchesInFile:
 
 # Returns a list of all matches in all files
 # This reads all files and retrieves the matches with some lines surounding them
-def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, linesOfContext: int, cancelEvent: Optional[threading.Event]=None) -> List[MatchesInFile]:
+def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, linesOfContext: int, 
+                    cancelEvent: Optional[threading.Event]=None, reportProgress: Optional[FullTextIndex.ProgressFunction]=None) -> List[MatchesInFile]:
     results: List[MatchesInFile] = []
+    lenMatches = len(matches)
+    lastProgress = None
+    idx = 1
     for name in matches:
         matchList = MatchesInFile(name)
         try:
@@ -184,6 +188,12 @@ def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, 
             results.append(matchList)
         if cancelEvent and cancelEvent.is_set():
             return results
+        if reportProgress:
+            progress = (int((idx*100)/lenMatches))
+            idx += 1
+            if lastProgress != progress:
+                lastProgress = progress
+                reportProgress(progress)
     return results
 
 class MatchesOverview (QWidget):
@@ -249,7 +259,7 @@ class MatchesOverview (QWidget):
 
         if self.matches:
             results = AsynchronousTask.execute (self, extractMatches, self.matches, self.searchData, self.linesOfContext,
-                                                bEnableCancel=True)
+                                                bEnableCancel=True, hasProgress=True)
 
             for result in results:
                 firstMatchLine = result.matches[0][0]
