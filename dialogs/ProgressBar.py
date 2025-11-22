@@ -44,3 +44,12 @@ class ProgressBar (QDialog):
     def cancelClicked(self) -> None:
         self.ui.buttonCancel.setEnabled(False)
         self.onCancelClicked.emit()
+
+    @pyqtSlot(int)
+    def setProgress(self, percent: int) -> None:
+        """Update the progress bar to show the given percentage (0-100)."""
+        if self.ui.progressBar.maximum() != 100:
+            self.ui.progressBar.setMaximum(100)
+        if not self.ui.progressBar.isTextVisible():
+            self.ui.progressBar.setTextVisible(True)
+        self.ui.progressBar.setValue(percent)

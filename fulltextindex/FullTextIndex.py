@@ -186,7 +186,8 @@ class FullTextIndex (IndexDatabase):
         action.addData("RegEx: %s", reExpr.pattern)
         bHasFilters = query.folderFilter or query.extensionFilter
         lastProgress = None
-        for idx, fullpath in enumerate(results):
+        idx=1
+        for fullpath in results:
             if bHasFilters:
                 if not query.matchFolderAndExtensionFilter(fullpath):
                     continue
@@ -200,7 +201,8 @@ class FullTextIndex (IndexDatabase):
                 return []
             
             if reportProgress:
-                progress = (int((idx+1)/lenResults))
+                progress = (int((idx*100)/lenResults))
+                idx += 1
                 if lastProgress != progress:
                     lastProgress = progress
                     reportProgress(progress)

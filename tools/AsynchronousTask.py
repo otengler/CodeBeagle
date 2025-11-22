@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import threading
 from typing import Callable, Any, Optional, cast
-from PyQt5.QtCore import QThread, pyqtSlot, QObject
+from PyQt5.QtCore import QThread, pyqtSlot, QObject, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 from dialogs.ProgressBar import ProgressBar
 
@@ -28,14 +28,14 @@ ProgressFunction = Callable[[int], None]
 
 
 class AsynchronousTask (QThread):
-    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None,
-                 reportProgress: Optional[ProgressFunction]=None) -> None:
+    progressChanged = pyqtSignal(int)
+
+    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> None:
         super().__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.function = function
         self.args = args
         self.bEnableCancel = bEnableCancel
         self.cancelAction = cancelAction
-        self.reportProgress = reportProgress
         self.result: Any = None
         self.exception: Exception
         self.hasException = False
@@ -47,7 +47,7 @@ class AsynchronousTask (QThread):
         try:
             kwArgs = {
                 "cancelEvent": self.cancelEvent,
-                "reportProgress": self.reportProgress
+                "reportProgress": self._emitProgress
             }
             self.result = self.function(*self.args, **kwArgs)
         except Exception as e:
@@ -60,6 +60,10 @@ class AsynchronousTask (QThread):
             self.cancelEvent.set()
         if self.cancelAction:
             self.cancelAction()
+
+    def _emitProgress(self, percent: int) -> None:
+        """Emit progress signal - Qt will marshal to main thread."""
+        self.progressChanged.emit(percent)
 
 def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> Any:
     """
@@ -75,12 +79,9 @@ def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=Fals
 
         progress = ProgressBar(parentWidget, bEnableCancel)
 
-        def progressHandler(percent: int) -> None:
-            #TODO: Update UI with progress here
-            pass
-
-        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction, reportProgress=progressHandler)
+        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction)
         searchTask.finished.connect(cast(Callable, progress.close))
+        searchTask.progressChanged.connect(progress.setProgress)
         progress.onCancelClicked.connect(searchTask.cancel)
         progress.show()
 
