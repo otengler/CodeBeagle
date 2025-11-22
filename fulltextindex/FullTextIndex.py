@@ -22,7 +22,7 @@ from typing import List, Tuple, Iterable, Any, Dict, cast, Callable, Optional
 from tools.FileTools import fopen, freadall
 from .IndexDatabase import IndexDatabase
 from .FileSearch import searchFile
-from .Query import ContentQuery, FileQuery, PerformanceReport, ReportAction, safeLen, SearchResult
+from .Query import ContentQuery, FileQuery, QueryParams, PerformanceReport, ReportAction, safeLen, SearchResult
 
 def intersectSortedLists(l1: List[str], l2: List[str]) -> List[str]:
     l = 0

@@ -25,48 +25,42 @@ from tools.FileTools import fopen
 from fulltextindex import FullTextIndex, IndexConfiguration
 from fulltextindex.IStringMatcher import IStringMatcher, MatchPosition
 from fulltextindex.SearchMethods import SearchMethods, ResultSet, removeDupsAndSort
+from fulltextindex.Query import QueryParams
 
-class SearchParams:
-    def __init__(self, search: str, folderFilter: str = "", extensionFilter: str = "", caseSensitive: bool = False):
-        self.search = search
-        self.folderFilter = folderFilter
-        self.extensionFilter = extensionFilter
-        self.caseSensitive = caseSensitive
-
-def searchContent(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: Optional[FullTextIndex.CommonKeywordMap] = None) -> ResultSet:
+def searchContent(parent: QObject, params: QueryParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: Optional[FullTextIndex.CommonKeywordMap] = None) -> ResultSet:
     """This executes an indexed or a direct search in the file content. This depends on the IndexConfiguration
        setting "indexUpdateMode" and "indexType"."""
     commonKeywordMap = commonKeywordMap or {}
 
-    if not params.search:
+    if not params.strSearch:
         return ResultSet()
 
-    searchData = FullTextIndex.ContentQuery(params.search, params.folderFilter, params.extensionFilter, params.caseSensitive)
+    searchData = FullTextIndex.ContentQuery(params)
     result: ResultSet
 
     ftiSearch = SearchMethods()
     result = AsynchronousTask.execute(parent, ftiSearch.searchContent, searchData, indexConf, commonKeywordMap, bEnableCancel=True, cancelAction=ftiSearch.cancel)
-    result.label = params.search
+    result.label = params.strSearch
 
     return result
 
-def searchFileName(parent: QObject, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
+def searchFileName(parent: QObject, params: QueryParams, indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
     """This executes an indexed or a direct search for the file name. This depends on the IndexConfiguration
        setting "indexUpdateMode" and "indexType"."""
 
-    if not params.search:
+    if not params.strSearch:
         return ResultSet()
 
-    searchData = FullTextIndex.FileQuery(params.search, params.folderFilter, params.extensionFilter, params.caseSensitive)
+    searchData = FullTextIndex.FileQuery(params)
     result: ResultSet
 
     ftiSearch = SearchMethods()
     result = AsynchronousTask.execute(parent, ftiSearch.searchFileName, searchData, indexConf, bEnableCancel=True, cancelAction=ftiSearch.cancel)
-    result.label = params.search
+    result.label = params.strSearch
 
     return result
 
-def customSearch(parent: QObject, script: str, params: SearchParams, indexConf: IndexConfiguration.IndexConfiguration,
+def customSearch(parent: QObject, script: str, params: QueryParams, indexConf: IndexConfiguration.IndexConfiguration,
                  commonKeywordMap: Optional[FullTextIndex.CommonKeywordMap] = None) -> ResultSet:
 
     """
@@ -96,23 +90,25 @@ class ScriptSearchData (IStringMatcher):
             else:
                 return
 
-def __customSearchAsync(script: str, params: SearchParams, commonKeywordMap: FullTextIndex.CommonKeywordMap,
+def __customSearchAsync(script: str, params: QueryParams, commonKeywordMap: FullTextIndex.CommonKeywordMap,
                         indexConf: IndexConfiguration.IndexConfiguration) -> ResultSet:
 
-    query = params.search
-    folders = params.folderFilter
-    extensions = params.extensionFilter
-    caseSensitive = params.caseSensitive
+    query = params.strSearch
+    folders = params.strFolderFilter
+    extensions = params.strExtensionFilter
+    caseSensitive = params.bCaseSensitive
 
     def performSearch(strSearch: str, strFolderFilter: str="", strExtensionFilter:str="", bCaseSensitive: bool=False) -> FullTextIndex.SearchResult:
         if not strSearch:
             return []
-        searchData = FullTextIndex.ContentQuery(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+        queryParams = FullTextIndex.QueryParams(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+        searchData = FullTextIndex.ContentQuery(queryParams)
         ftiSearch = SearchMethods()
         return ftiSearch.searchContent(searchData, indexConf, commonKeywordMap).matches
 
     def regexFromText(strQuery: str, bCaseSensitive: bool) -> Pattern:
-        query = FullTextIndex.ContentQuery(strQuery, "", "", bCaseSensitive)
+        queryParams = FullTextIndex.QueryParams(strQuery, "", "", bCaseSensitive)
+        query = FullTextIndex.ContentQuery(queryParams)
         return query.regExForMatches()
 
     class Result:
@@ -160,6 +156,7 @@ def __customSearchAsync(script: str, params: SearchParams, commonKeywordMap: Ful
         searchData = ScriptSearchData(highlight)
     else:
         # Highlight by default the query
-        searchData = FullTextIndex.ContentQuery(query, "", "", caseSensitive)
+        queryParams = FullTextIndex.QueryParams(query, "", "", caseSensitive)
+        searchData = FullTextIndex.ContentQuery(queryParams)
 
     return ResultSet(matches, searchData, label=label)

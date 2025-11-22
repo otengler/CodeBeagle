@@ -22,7 +22,7 @@ import shutil
 import stat
 from typing import Callable, List, cast
 from .FullTextIndex import FullTextIndex, Keyword, buildMapFromCommonKeywordFile
-from .Query import ContentQuery, FileQuery
+from .Query import ContentQuery, FileQuery, QueryParams
 from .IndexUpdater import IndexUpdater, UpdateStatistics
 from .IndexConfiguration import IndexConfiguration, IndexType, IndexMode
 from .SearchMethods import SearchMethods
@@ -110,66 +110,66 @@ class TestFullTextIndex(unittest.TestCase):
         search = SearchMethods()
 
         print("\n================== NameSearch Test1 ==================")
-        q = FileQuery ("test.cpp")
+        q = FileQuery (QueryParams("test.cpp"))
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, ["data\\test.cpp"])
 
         print("\n================== NameSearch Test2 ==================")
-        q = FileQuery ("test")
+        q = FileQuery (QueryParams("test"))
         result = search.searchFileName(q, config).matches
         exp = ["data\\Test.cpp", "data\\test"]
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test3 ==================")
-        q = FileQuery ("test*.*")
+        q = FileQuery (QueryParams("test*.*"))
         result = search.searchFileName(q, config).matches
         exp = ["data\\TEst2.c", "data\\Test.cpp", "data\\test", "data\\test1.c", "data\\tester.CP", "data\\tester3.c"]
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test4 ==================")
-        q = FileQuery ("test", "", ".") # no extension
+        q = FileQuery (QueryParams("test", "", ".")) # no extension
         result = search.searchFileName(q, config).matches
         exp = ["data\\test"]
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test5 ==================")
-        q = FileQuery ("tes") # no match
+        q = FileQuery (QueryParams("tes")) # no match
         result = search.searchFileName(q, config).matches
         exp = []
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test6 ==================")
-        q = FileQuery ("*est?")
+        q = FileQuery (QueryParams("*est?"))
         result = search.searchFileName(q, config).matches
         exp = ["data\\TEst2.c", "data\\test1.c"]
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test7 ==================")
-        q = FileQuery ("test*")
+        q = FileQuery (QueryParams("test*"))
         result = search.searchFileName(q, config).matches
         exp = ["data\\TEst2.c", "data\\Test.cpp", "data\\test", "data\\test1.c", "data\\tester.cp", "data\\tester3.c"]
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test8 ==================")
-        q = FileQuery ("test*", "", ".c*,-.cpp") # .c* but no files with .cpp extension
+        q = FileQuery (QueryParams("test*", "", ".c*,-.cpp")) # .c* but no files with .cpp extension
         result = search.searchFileName(q, config).matches
         exp = ["data\\TEst2.c", "data\\test1.c", "data\\tester.cp", "data\\tester3.c"]
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test9 ==================")
-        q = FileQuery ("test*", "", ".cp*,-.c") # .cp* but no files with .c extension / useless but most work
+        q = FileQuery (QueryParams("test*", "", ".cp*,-.c")) # .cp* but no files with .c extension / useless but most work
         result = search.searchFileName(q, config).matches
         exp = ["data\\Test.cpp", "data\\tester.cp"]
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test10 ==================")
-        q = FileQuery ("test*", "-test2,-tester?", ".c")
+        q = FileQuery (QueryParams("test*", "-test2,-tester?", ".c"))
         result = search.searchFileName(q, config).matches
         exp = ["data\\test1.c"]
         self.__assertTestFiles(testPath, result, exp)
 
         print("\n================== NameSearch Test11 ==================")
-        q = FileQuery ("test*", "er*,-e?3", ".c,.cp")
+        q = FileQuery (QueryParams("test*", "er*,-e?3", ".c,.cp"))
         result = search.searchFileName(q, config).matches
         exp = ["data\\tester.cp"]
         self.__assertTestFiles(testPath, result, exp)
@@ -178,37 +178,37 @@ class TestFullTextIndex(unittest.TestCase):
         search = SearchMethods()
 
         print("\n================== NameSearch case insensitive Test1 ==================")
-        q = FileQuery ("TEst.cpp", bCaseSensitive=True)
+        q = FileQuery (QueryParams("TEst.cpp", bCaseSensitive=True))
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, [])
 
         print("\n================== NameSearch case insensitive Test2 ==================")
-        q = FileQuery ("Test.cpp", bCaseSensitive=True)
+        q = FileQuery (QueryParams("Test.cpp", bCaseSensitive=True))
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, ["data\\Test.cpp"])
 
         print("\n================== NameSearch case insensitive Test3 ==================")
-        q = FileQuery ("T*", bCaseSensitive=True)
+        q = FileQuery (QueryParams("T*", bCaseSensitive=True))
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, ["data\\TEst2.c", "data\\Test.cpp"])
 
         print("\n================== NameSearch case insensitive Test4 ==================")
-        q = FileQuery ("tester.cP", bCaseSensitive=True) # extensions are not treated case sensitive
+        q = FileQuery (QueryParams("tester.cP", bCaseSensitive=True)) # extensions are not treated case sensitive
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
 
         print("\n================== NameSearch case insensitive Test5 ==================")
-        q = FileQuery ("tester", ".cp", bCaseSensitive=True) # extensions are not treated case sensitive
+        q = FileQuery (QueryParams("tester", ".cp", bCaseSensitive=True)) # extensions are not treated case sensitive
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
 
         print("\n================== NameSearch case insensitive Test6 ==================")
-        q = FileQuery ("tester", ".cP", bCaseSensitive=True) # extensions are not treated case sensitive
+        q = FileQuery (QueryParams("tester", ".cP", bCaseSensitive=True)) # extensions are not treated case sensitive
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
 
         print("\n================== NameSearch case insensitive Test7 ==================")
-        q = FileQuery ("tester", "CP", bCaseSensitive=True) # extensions are not treated case sensitive
+        q = FileQuery (QueryParams("tester", "CP", bCaseSensitive=True)) # extensions are not treated case sensitive
         result = search.searchFileName(q, config).matches
         self.__assertTestFiles(testPath, result, ["data\\tester.CP"])
 
@@ -246,37 +246,37 @@ class TestFullTextIndex(unittest.TestCase):
         fti = FullTextIndex("test.dat")
 
         print("\n================== ContentSearch Test2 ==================")
-        q = ContentQuery ("conversion table")
+        q = ContentQuery (QueryParams("conversion table"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\latin_1\ebcdic.c")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test3 ==================")
-        q = ContentQuery ("äöüß")
+        q = ContentQuery (QueryParams("äöüß"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\utf16\utf16.txt"), os.path.join(testPath, r"data\utf8\utf8.txt")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test4 ==================")
-        q = ContentQuery ("dschungelbuch")
+        q = ContentQuery (QueryParams("dschungelbuch"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test5 ==================")
-        q = ContentQuery ("BamBi")
+        q = ContentQuery (QueryParams("BamBi"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test2.cxx")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test6 ==================")
-        q = ContentQuery ("Tom & cherry")
+        q = ContentQuery (QueryParams("Tom & cherry"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test3.c")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test6.1 ==================")
-        q = ContentQuery ("Whatever#")
+        q = ContentQuery (QueryParams("Whatever#"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.cpp")]
         self.assertEqual (result, exp)
@@ -311,64 +311,64 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual (stats[1], 7)
 
         print("\n================== ContentSearch Test8 ==================")
-        q = ContentQuery ("conversion table")
+        q = ContentQuery (QueryParams("conversion table"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\latin_1\ebcdic.c")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test9 ==================")
-        q = ContentQuery ("äöüß")
+        q = ContentQuery (QueryParams("äöüß"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\utf16\utf16.txt"), os.path.join(testPath, r"data\utf8\utf8.txt")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test10 ==================")
-        q = ContentQuery ("DschungelbUch")
+        q = ContentQuery (QueryParams("DschungelbUch"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx"), os.path.join(testPath, r"data\utf16\utf16.txt")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test11 ==================")
-        q = ContentQuery ("Neuer Text")
+        q = ContentQuery (QueryParams("Neuer Text"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.cpp")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test12 ==================")
-        q = ContentQuery ("Bambi")
+        q = ContentQuery (QueryParams("Bambi"))
         result = fti.searchContent(q)
         exp = []
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test13 ==================")
-        q = ContentQuery ("Tom & Cherry")
+        q = ContentQuery (QueryParams("Tom & Cherry"))
         result = fti.searchContent(q)
         exp = []
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test14 ==================")
-        q = ContentQuery ("speedy gonzales")
+        q = ContentQuery (QueryParams("speedy gonzales"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test4.c")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test15 ==================")
         # Test folder filter
-        q = ContentQuery ("Dschungelbuch",  "utf16")
+        q = ContentQuery (QueryParams("Dschungelbuch",  "utf16"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\utf16\utf16.txt")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test16 ==================")
         # Test extension filter
-        q = ContentQuery ("Dschungelbuch",  "", "*.c*")
+        q = ContentQuery (QueryParams("Dschungelbuch",  "", "*.c*"))
         result = fti.searchContent(q)
         exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test17 ==================")
         # Test case sensitivity
-        q = ContentQuery ("speedy gonzales",  "", "",  True)
+        q = ContentQuery (QueryParams("speedy gonzales",  "", "",  True))
         result = fti.searchContent(q,)
         exp = []
         self.assertEqual (result, exp)
@@ -387,19 +387,19 @@ class TestFullTextIndex(unittest.TestCase):
 
         print("\n================== ContentSearch Test19 ==================")
         # Test file search
-        q2 = FileQuery("utf8.txt") # test search specific file
+        q2 = FileQuery(QueryParams("utf8.txt")) # test search specific file
         result = fti.searchFile(q2)
         exp = [os.path.join(testPath, r"data\utf8\utf8.txt")]
         self.assertEqual(exp, result)
 
         print("\n================== ContentSearch Test20 ==================")
-        q2 = FileQuery("test*", "", "c??") # test extension filter
+        q2 = FileQuery(QueryParams("test*", "", "c??")) # test extension filter
         result = fti.searchFile(q2)
         exp = [os.path.join(testPath, r"data\test1.cpp"), os.path.join(testPath, r"data\test2.cxx")]
         self.assertEqual (result, exp)
 
         print("\n================== ContentSearch Test21 ==================")
-        q2 = FileQuery("*", "latin_?", "c") # test folder filter
+        q2 = FileQuery(QueryParams("*", "latin_?", "c")) # test folder filter
         result = fti.searchFile(q2)
         exp = [os.path.join(testPath, r"data\latin_1\ebcdic.c")]
         self.assertEqual (result, exp)

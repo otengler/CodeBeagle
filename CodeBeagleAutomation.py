@@ -33,7 +33,8 @@ class CodeBeagleAutomation:
         if not indexName in indexMap:
             return []
 
-        query = FullTextIndex.ContentQuery(searchPhrase, filterDirectories, filterExtensions, caseSensitive)
+        queryParams = FullTextIndex.QueryParams(searchPhrase, filterDirectories, filterExtensions, caseSensitive)
+        query = FullTextIndex.ContentQuery(queryParams)
 
         fti = FullTextIndex.FullTextIndex(indexMap[indexName])
 

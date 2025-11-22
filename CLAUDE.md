@@ -58,12 +58,7 @@ This generates `Ui_*.py` files from Qt Designer `.ui` files.
 ### Linting
 
 ```bash
-flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-```
-
-For more thorough linting:
-```bash
-pylint --rcfile=.pylintrc <file.py>
+flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude '.venv'
 ```
 
 ### Testing
@@ -71,6 +66,13 @@ pylint --rcfile=.pylintrc <file.py>
 Run unit tests:
 ```bash
 python UnitTests.py
+```
+
+### Verification
+
+mypy should be run after changes to see that the code has no problems:
+```
+check.ps1
 ```
 
 Test modules include: SyntaxHighlighter, HighlighterConfiguration, MatchesOverview, Config, FileTools, Query, fulltextindex testsuite, and BookmarkStorage.
@@ -107,7 +109,7 @@ npm ci
 
 ### Full-Text Index Architecture
 
-The `fulltextindex/` package contains the core search engine:
+The `fulltextindex/` package contains the core search engine. It is indepedent of any UI classes and does not use PyQt:
 
 - **IndexDatabase.py**: SQLite database schema and operations. Tables: `keywords`, `documents`, `kw2doc` (keyword-to-document mapping), `documentInIndex`, `fileName`, `fileName2doc`
 - **FullTextIndex.py**: High-level search interface. Implements `searchContent()` for full-text search and `searchFile()` for filename search. Uses keyword intersection for multi-term queries.

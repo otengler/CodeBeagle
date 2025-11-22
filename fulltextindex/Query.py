@@ -210,20 +210,27 @@ def createFolderFilter(strFilter: str) -> List[Tuple[str,bool]]:
 class QueryError(RuntimeError):
     pass
 
+class QueryParams:
+    def __init__(self, strSearch: str, strFolderFilter: str = "", strExtensionFilter: str = "", bCaseSensitive: bool = False) -> None:
+        self.strSearch = strSearch
+        self.strFolderFilter = strFolderFilter
+        self.strExtensionFilter = strExtensionFilter
+        self.bCaseSensitive = bCaseSensitive
+
 class Query (IStringMatcher):
-    def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
-        self.search = strSearch
-        self.folderFilterString = strFolderFilter
-        self.extensionFilterString =  strExtensionFilter
-        self.folderFilter = createFolderFilter(strFolderFilter)
-        self.extensionFilter = createExtensionFilter(strExtensionFilter)
+    def __init__(self, params: QueryParams) -> None:
+        self.search = params.strSearch
+        self.folderFilterString = params.strFolderFilter
+        self.extensionFilterString = params.strExtensionFilter
+        self.folderFilter = createFolderFilter(params.strFolderFilter)
+        self.extensionFilter = createExtensionFilter(params.strExtensionFilter)
         self.__folderFilterExpression = IncludeExcludePattern(self.folderFilter)
         self.__extensionFilterExpression = IncludeExcludePattern(self.extensionFilter, matchAll=True)
         self.__hasFilters = False
         if self.folderFilter or self.extensionFilter:
             self.__hasFilters = True
 
-        self.bCaseSensitive = bCaseSensitive
+        self.bCaseSensitive = params.bCaseSensitive
 
     def getFolderFilterExpression(self) -> IncludeExcludePattern:
         return self.__folderFilterExpression
@@ -253,13 +260,13 @@ def kwExpr(kw: str) -> str:
     return kw.replace("*", r"\w*")
 
 class ContentQuery(Query):
-    def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
-        super().__init__(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+    def __init__(self, params: QueryParams) -> None:
+        super().__init__(params)
 
         self.reFlags = 0
         if not self.bCaseSensitive:
             self.reFlags = re.IGNORECASE
-        self.parts = splitSearchParts(strSearch)
+        self.parts = splitSearchParts(self.search)
         # Check that the search contains at least one indexed part.
         if not self.hasPartTypeEqualTo(TokenType.IndexPart):
             raise QueryError("Sorry, you can't search for that.")
@@ -333,31 +340,29 @@ class ContentQuery(Query):
 
 class TestQuery(unittest.TestCase):
     def test(self) -> None:
-        self.assertRaises(RuntimeError, ContentQuery, "!")
-        s1 = ContentQuery("a < b")
+        self.assertRaises(RuntimeError, ContentQuery, QueryParams("!"))
+        s1 = ContentQuery(QueryParams("a < b"))
         self.assertEqual(s1.parts, [(TokenType.IndexPart, "a"), (TokenType.ScanPart, "<"), (TokenType.IndexPart, "b")])
         self.assertEqual(s1.bCaseSensitive, False)
-        s3 = ContentQuery("linux *")
+        s3 = ContentQuery(QueryParams("linux *"))
         self.assertEqual(s3.regExForMatches().pattern, r"\blinux\b\s*\*")
-        s4 = ContentQuery("createNode ( CComVariant")
+        s4 = ContentQuery(QueryParams("createNode ( CComVariant"))
         self.assertEqual(s4.regExForMatches().pattern, r"\bcreateNode\b\s*\(\s*\bCComVariant\b")
-        s5 = ContentQuery("unknown **4")
+        s5 = ContentQuery(QueryParams("unknown **4"))
         self.assertEqual(s5.regExForMatches().pattern, r"\bunknown\b\s*\S+(?:\s+\S+){0,3}")
-        s6 = ContentQuery("regex <!abc!>")
+        s6 = ContentQuery(QueryParams("regex <!abc!>"))
         self.assertEqual(s6.regExForMatches().pattern, r"\bregex\b\s*(?:abc)")
 
 class FileQuery(Query):
-    def __init__(self, strSearch: str, strFolderFilter:str="", strExtensionFilter: str="", bCaseSensitive: bool=False) -> None:
+    def __init__(self, params: QueryParams) -> None:
         # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
         # not specified as that takes precedance.
-        if strSearch.find('.') != -1 and not strExtensionFilter:
-            search, extensionFilter = os.path.splitext(strSearch)
+        if params.strSearch.find('.') != -1 and not params.strExtensionFilter:
+            search, extensionFilter = os.path.splitext(params.strSearch)
             if extensionFilter == ".*":
                 extensionFilter = ""
-        else:
-            search = strSearch
-            extensionFilter = strExtensionFilter
-        super().__init__(search, strFolderFilter, extensionFilter, bCaseSensitive)
+            params = QueryParams(search, params.strFolderFilter, extensionFilter, params.bCaseSensitive)
+        super().__init__(params)
 
     def matches(self, data: str) -> Iterable[MatchPosition]:
         return []

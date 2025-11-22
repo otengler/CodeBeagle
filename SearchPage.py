@@ -31,6 +31,7 @@ import PathVisualizerDelegate
 from fulltextindex import FullTextIndex
 from fulltextindex import Query
 from fulltextindex.IndexConfiguration import IndexConfiguration, IndexMode
+from fulltextindex.Query import QueryParams
 import SearchAsync
 import CustomContextMenu
 import AppConfig
@@ -73,10 +74,10 @@ class SearchType(IntEnum):
     SearchName = 2
 
 class SearchState:
-    def __init__(self, searchType: SearchType, configName: str, searchParams: SearchAsync.SearchParams, resultSet: SearchAsync.ResultSet, lockedResultSet: Optional[FullTextIndex.SearchResult]):
+    def __init__(self, searchType: SearchType, configName: str, searchParams: QueryParams, resultSet: SearchAsync.ResultSet, lockedResultSet: Optional[FullTextIndex.SearchResult]):
         self.searchType: SearchType = searchType
         self.configName: str = configName
-        self.searchParams: SearchAsync.SearchParams = searchParams
+        self.searchParams: QueryParams = searchParams
         self.resultSet: SearchAsync.ResultSet = resultSet
         self.lockedResultSet: Optional[FullTextIndex.SearchResult] = lockedResultSet
         self.selectedFileIndex: int = -1
@@ -348,12 +349,12 @@ class SearchPage (QWidget):
                 # Search in a new tab
                 self.newSearchRequested.emit(text,  self.ui.comboLocation.currentText())
 
-    def getSearchParameterFromUI (self) -> SearchAsync.SearchParams:
+    def getSearchParameterFromUI (self) -> QueryParams:
         strSearch = self.ui.comboSearch.currentText().strip()
         strFolderFilter = self.ui.comboFolderFilter.currentText().strip()
         strExtensionFilter = self.ui.comboExtensionFilter.currentText().strip()
         bCaseSensitive = self.ui.checkCaseSensitive.checkState() == Qt.CheckState.Checked
-        return SearchAsync.SearchParams(strSearch, strFolderFilter,  strExtensionFilter,  bCaseSensitive)
+        return QueryParams(strSearch, strFolderFilter,  strExtensionFilter,  bCaseSensitive)
 
     def __currentIndexConf(self) -> IndexConfiguration:
         i = self.ui.comboLocation.currentIndex()
@@ -361,7 +362,7 @@ class SearchPage (QWidget):
         return config
 
     # Returns the search parameters from the UI and the current search configuration (IndexConfiguration) object
-    def __prepareSearch (self) -> Tuple[SearchAsync.SearchParams, IndexConfiguration]:
+    def __prepareSearch (self) -> Tuple[QueryParams, IndexConfiguration]:
         # Remember the current selected file in the current state before pushing the next state into the history
         self.__rememberSelectedFileInState()
         self.__updateSearchResult(SearchAsync.ResultSet()) # clear current results
@@ -461,7 +462,7 @@ class SearchPage (QWidget):
                     self.ui.listView.setCurrentIndex(index)
                     self.ui.listView.activated.emit(index)
 
-    def __rememberSearchState(self, params: SearchAsync.SearchParams, resultSet: SearchAsync.ResultSet) -> None:
+    def __rememberSearchState(self, params: QueryParams, resultSet: SearchAsync.ResultSet) -> None:
         self.searchStateList.append(SearchState(self.searchType, self.currentConfigName, params, resultSet, self.lockedResultSet))
         self.searchStateIndex = len(self.searchStateList) - 1
         self.__updateBackForwardButtons()
@@ -501,10 +502,10 @@ class SearchPage (QWidget):
         if state.configName != self.currentConfigName:
             self.setCurrentSearchLocation(state.configName)
         self.setSearchType(state.searchType)
-        self.ui.comboSearch.setEditText(state.searchParams.search)
-        self.ui.comboFolderFilter.setEditText(state.searchParams.folderFilter)
-        self.ui.comboExtensionFilter.setEditText(state.searchParams.extensionFilter)
-        self.ui.checkCaseSensitive.setChecked(state.searchParams.caseSensitive)
+        self.ui.comboSearch.setEditText(state.searchParams.strSearch)
+        self.ui.comboFolderFilter.setEditText(state.searchParams.strFolderFilter)
+        self.ui.comboExtensionFilter.setEditText(state.searchParams.strExtensionFilter)
+        self.ui.checkCaseSensitive.setChecked(state.searchParams.bCaseSensitive)
         self.ui.buttonLockResultSet.setChecked(state.lockedResultSet != None)
         self.lockedResultSet = state.lockedResultSet
         self.__updateSearchResult(state.resultSet)
@@ -656,10 +657,10 @@ class SearchPage (QWidget):
         restoreSearchItem("FolderHistory_" + self.currentConfigName, self.ui.comboFolderFilter)
         restoreSearchItem("ExtensionHistory_" + self.currentConfigName, self.ui.comboExtensionFilter)
 
-    def __rememberSearchParams(self, searchParams: SearchAsync.SearchParams) -> None:
-        rememberSearchItem("SearchTerms_" + self.currentConfigName, searchParams.search, self.ui.comboSearch)
-        rememberSearchItem("FolderHistory_" + self.currentConfigName, searchParams.folderFilter, self.ui.comboFolderFilter)
-        rememberSearchItem("ExtensionHistory_" + self.currentConfigName, searchParams.extensionFilter, self.ui.comboExtensionFilter)
+    def __rememberSearchParams(self, searchParams: QueryParams) -> None:
+        rememberSearchItem("SearchTerms_" + self.currentConfigName, searchParams.strSearch, self.ui.comboSearch)
+        rememberSearchItem("FolderHistory_" + self.currentConfigName, searchParams.strFolderFilter, self.ui.comboFolderFilter)
+        rememberSearchItem("ExtensionHistory_" + self.currentConfigName, searchParams.strExtensionFilter, self.ui.comboExtensionFilter)
 
     @pyqtSlot(CustomContextMenu.ContextMenuError)
     def reportCustomContextMenuFailed (self, contextMenuError: CustomContextMenu.ContextMenuError) -> None:
