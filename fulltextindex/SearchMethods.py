@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import re
 import threading
-from typing import Optional, List
-from tools.FileTools import fopen, freadall
+from typing import Optional, List, Callable
+from tools.FileTools import freadall
 from  . import FullTextIndex, IndexConfiguration, Query, IndexUpdater
 
 emptyPattern = re.compile("") # make mypy happy
@@ -44,11 +44,12 @@ class SearchMethods:
         self.lock = threading.Lock()
 
     def searchContent(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
-                      commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
+                      commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: Optional[threading.Event]=None,
+                      reportProgress: Optional[FullTextIndex.ProgressFunction]=None) -> ResultSet:
 
         try:
             if indexConf.isContentIndexed():
-                return self.__searchContentIndexed(searchData, indexConf, commonKeywordMap, cancelEvent)
+                return self.__searchContentIndexed(searchData, indexConf, commonKeywordMap, cancelEvent, reportProgress)
             return self.__searchContentDirect(searchData, indexConf, cancelEvent)
         finally:
             with self.lock:
@@ -56,15 +57,17 @@ class SearchMethods:
                 self.fti = None
 
     def __searchContentIndexed(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                               commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
+                               commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: Optional[threading.Event]=None,
+                               reportProgress: Optional[FullTextIndex.ProgressFunction]=None) -> ResultSet:
         perfReport = FullTextIndex.PerformanceReport()
         with perfReport.newAction("Init database"):
             with self.lock:
                 self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
-            result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent), searchData, perfReport)
+            result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent, reportProgress=reportProgress), searchData, perfReport)
         return result
 
-    def __searchContentDirect(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
+    def __searchContentDirect(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
+                              cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         matches: List[str] = []
         for directory in indexConf.directories:
             for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):

@@ -24,6 +24,8 @@ from .IndexDatabase import IndexDatabase
 from .FileSearch import searchFile
 from .Query import ContentQuery, FileQuery, QueryParams, PerformanceReport, ReportAction, safeLen, SearchResult
 
+ProgressFunction = Callable[[int], None]
+
 def intersectSortedLists(l1: List[str], l2: List[str]) -> List[str]:
     l = 0
     r = 0
@@ -94,10 +96,13 @@ class FullTextIndex (IndexDatabase):
 
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
     def searchContent(self, query: ContentQuery, perfReport: Optional[PerformanceReport]=None, commonKeywordMap: Optional[CommonKeywordMap]=None,
-                      manualIntersect: bool=True, cancelEvent:Optional[threading.Event]=None) -> SearchResult:
-        return cancelableSearch(self.__searchContent, query, perfReport, commonKeywordMap, manualIntersect, cancelEvent)
+                      manualIntersect: bool=True, cancelEvent: Optional[threading.Event]=None,
+                      reportProgress: Optional[ProgressFunction]=None) -> SearchResult:
+        return cancelableSearch(self.__searchContent, query, perfReport, commonKeywordMap, manualIntersect, cancelEvent, reportProgress)
 
-    def __searchContent(self, query: ContentQuery, perfReport: Optional[PerformanceReport]=None, commonKeywordMap:Optional[CommonKeywordMap]=None, manualIntersect:bool=True, cancelEvent:Optional[threading.Event]=None) -> SearchResult:
+    def __searchContent(self, query: ContentQuery, perfReport: Optional[PerformanceReport]=None, commonKeywordMap: Optional[CommonKeywordMap]=None, 
+                        manualIntersect:bool=True, cancelEvent: Optional[threading.Event]=None,
+                        reportProgress: Optional[ProgressFunction]=None) -> SearchResult:
         if not isinstance(query, ContentQuery):
             raise RuntimeError("query must be a ContentQuery derived object")
 
@@ -127,7 +132,7 @@ class FullTextIndex (IndexDatabase):
 
         if query.requiresRegex():
             with perfReport.newAction("Filtering results") as action:
-                return self.__filterDocsBySearchPhrase(action, (r[0] for r in result), query, cancelEvent)
+                return self.__filterDocsBySearchPhrase(action, (r[0] for r in result), query, cancelEvent, reportProgress, len(result))
         else:
             with perfReport.newAction("Returning results"):
                 if not query.folderFilter and not query.extensionFilter:
@@ -173,12 +178,15 @@ class FullTextIndex (IndexDatabase):
                 return []
         return result
 
-    def __filterDocsBySearchPhrase(self, action: ReportAction, results: Iterable[str], query: ContentQuery, cancelEvent: Optional[threading.Event]=None) -> SearchResult:
+    def __filterDocsBySearchPhrase(self, action: ReportAction, results: Iterable[str], query: ContentQuery, 
+                                   cancelEvent: Optional[threading.Event]=None, 
+                                   reportProgress: Optional[ProgressFunction]=None, lenResults=0) -> SearchResult:
         finalResults = []
         reExpr = query.regExForMatches()
         action.addData("RegEx: %s", reExpr.pattern)
         bHasFilters = query.folderFilter or query.extensionFilter
-        for fullpath in results:
+        lastProgress = None
+        for idx, fullpath in enumerate(results):
             if bHasFilters:
                 if not query.matchFolderAndExtensionFilter(fullpath):
                     continue
@@ -190,6 +198,12 @@ class FullTextIndex (IndexDatabase):
 
             if cancelEvent and cancelEvent.is_set():
                 return []
+            
+            if reportProgress:
+                progress = (int((idx+1)/lenResults))
+                if lastProgress != progress:
+                    lastProgress = progress
+                    reportProgress(progress)
 
         return finalResults
 

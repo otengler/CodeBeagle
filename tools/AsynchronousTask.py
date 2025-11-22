@@ -17,20 +17,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import threading
-from typing import Callable, Any, Optional, cast, Union
+from typing import Callable, Any, Optional, cast
 from PyQt5.QtCore import QThread, pyqtSlot, QObject
 from PyQt5.QtWidgets import QWidget
 from dialogs.ProgressBar import ProgressBar
 
+
 CancelFunction = Callable[[],None]
+ProgressFunction = Callable[[int], None]
+
 
 class AsynchronousTask (QThread):
-    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> None:
+    def __init__(self, function: Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None,
+                 reportProgress: Optional[ProgressFunction]=None) -> None:
         super().__init__(None) # Called with None to get rid of the thread once the python object is destroyed
         self.function = function
         self.args = args
         self.bEnableCancel = bEnableCancel
         self.cancelAction = cancelAction
+        self.reportProgress = reportProgress
         self.result: Any = None
         self.exception: Exception
         self.hasException = False
@@ -40,10 +45,11 @@ class AsynchronousTask (QThread):
 
     def run(self) -> None:
         try:
-            if self.cancelEvent:
-                self.result = self.function(*self.args, cancelEvent=self.cancelEvent)
-            else:
-                self.result = self.function(*self.args)
+            kwArgs = {
+                "cancelEvent": self.cancelEvent,
+                "reportProgress": self.reportProgress
+            }
+            self.result = self.function(*self.args, **kwArgs)
         except Exception as e:
             self.exception = e
             self.hasException = True
@@ -55,7 +61,8 @@ class AsynchronousTask (QThread):
         if self.cancelAction:
             self.cancelAction()
 
-def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None) -> Any:
+def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None, 
+            reportProgress: Optional[ProgressFunction]=None) -> Any:
     """
     Executes the action performed by the callable 'func' called with *args in a seperate thread.
     During the action a progress bar is shown. If 'bEnableCancel' is true the callable is
@@ -69,7 +76,7 @@ def execute(parent: QObject, func:Callable, *args: Any, bEnableCancel: bool=Fals
 
         progress = ProgressBar(parentWidget, bEnableCancel)
 
-        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction)
+        searchTask = AsynchronousTask(func, *args, bEnableCancel=bEnableCancel, cancelAction=cancelAction, reportProgress=reportProgress)
         searchTask.finished.connect(cast(Callable, progress.close))
         progress.onCancelClicked.connect(searchTask.cancel)
         progress.show()
