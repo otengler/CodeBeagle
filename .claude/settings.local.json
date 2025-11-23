@@ -4,7 +4,9 @@
       "Bash(python:*)",
       "Bash(powershell:*)"
     ],
-    "deny": [],
+    "deny": [
+      "Read(./.venv/**)"
+    ],
     "ask": []
   }
 }
