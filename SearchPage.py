@@ -19,9 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from typing import List, Tuple, Optional, cast
 from enum import IntEnum
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex
-from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent, QPixmap, QIcon
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex, QPropertyAnimation, QEasingCurve
+from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent, QPixmap, QIcon, QKeySequence
 from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy, QComboBox
+from tools.QHelper import createQAction
 from SourceViewer import EditorState
 from tools import AsynchronousTask
 from dialogs.UserHintDialog import showUserHint, ButtonType
@@ -100,6 +101,7 @@ class SearchPage (QWidget):
             icon.addPixmap(QPixmap("resources/angle-downLighter.png"))
             self.ui.buttonChangeSearchType.setIcon(icon)
         self.ui.frameSearch.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
+        self.ui.frameFilterControls.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.frameResult.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.listView.setItemDelegate(PathVisualizerDelegate.PathVisualizerDelegate(self.ui.listView))
         self.ui.listView.activated.connect(self.fileSelected)
@@ -125,6 +127,30 @@ class SearchPage (QWidget):
         self.ui.buttonChangeSearchType.clicked.connect(self.changeSearchTypeMenu)
         self.ui.buttonBackward.clicked.connect(self.backwardClicked)
         self.ui.buttonForward.clicked.connect(self.forwardClicked)
+        self.ui.buttonToggleFilters.clicked.connect(self.toggleFilterPanel)
+        self.ui.comboFolderFilter.currentTextChanged.connect(self.updateFilterPreview)
+        self.ui.comboExtensionFilter.currentTextChanged.connect(self.updateFilterPreview)
+        self.ui.checkCaseSensitive.stateChanged.connect(self.updateFilterPreview)
+
+        # Initialize filter panel state (collapsed by default)
+        self.filterPanelExpanded = False
+        self.ui.frameFilterControls.hide()
+        self.ui.labelFilterPreview.setTextFormat(Qt.TextFormat.PlainText)
+
+        # Set up animation for filter panel
+        self.filterPanelAnimation = QPropertyAnimation(self.ui.frameFilterControls, b"maximumHeight")
+        self.filterPanelAnimation.setDuration(250)  # 250ms animation
+        self.filterPanelAnimation.setEasingCurve(QEasingCurve.Type.InOutCubic)
+
+        # Store the natural height of the filter panel for animation
+        self.ui.frameFilterControls.show()  # Temporarily show to measure
+        self.ui.frameFilterControls.adjustSize()
+        self.filterPanelNaturalHeight = self.ui.frameFilterControls.sizeHint().height()
+        self.ui.frameFilterControls.setMaximumHeight(0)  # Start collapsed
+        self.ui.frameFilterControls.hide()
+
+        # Add keyboard shortcut Ctrl+D for toggling filter panel
+        self.addAction(createQAction(self, QKeySequence("Ctrl+D"), self.toggleFilterPanel))
 
         self.__showRegexDialogIcon()
 
@@ -152,15 +178,11 @@ class SearchPage (QWidget):
         if not AppConfig.appConfig().showPerformanceButton:
             self.ui.buttonInfo.hide()
 
-        # Move some elements of the search bar to a second row if the screen width is too small. This avoid
-        # clipping errors if the widget has to paint below minimum size.
-        if desktop := QApplication.desktop():
-            screenGeometry = desktop.screenGeometry()
-            if screenGeometry.width() < 1200:
-                self.__layoutForLowScreenWidth()
-
         # Register keyboard hotkeys for bookmars and handling navigation
         self.searchPageBookmarks = SearchPageBookmarks(self)
+
+        # Initialize filter preview
+        self.updateFilterPreview()
 
     def showEvent(self, _: Optional[QShowEvent]) -> None:
         self.documentShown.emit(self.ui.sourceViewer.currentFile)
@@ -631,25 +653,6 @@ class SearchPage (QWidget):
                 filenames.append (index.data(Qt.ItemDataRole.UserRole))
         return filenames
 
-    def __layoutForLowScreenWidth (self) -> None:
-        self.ui.frameSearch2 = QFrame(self) # type: ignore
-        self.ui.frameSearch2.setProperty("shadeBackground", True) # type: ignore
-        self.ui.horizontalLayout2 = QHBoxLayout(self.ui.frameSearch2) # type: ignore
-        self.ui.horizontalLayout2.setContentsMargins(22, 0, 22, -1) # type: ignore
-        layout = self.ui.horizontalLayout2 # type: ignore
-        layout.removeWidget(self.ui.labelFolderFilter)
-        layout.removeWidget(self.ui.comboFolderFilter)
-        layout.removeWidget(self.ui.labelExtensionFilter)
-        layout.removeWidget(self.ui.comboExtensionFilter)
-        layout.removeWidget(self.ui.checkCaseSensitive)
-        layout.addWidget(self.ui.labelFolderFilter)
-        layout.addWidget(self.ui.comboFolderFilter)
-        layout.addWidget(self.ui.labelExtensionFilter)
-        layout.addWidget(self.ui.comboExtensionFilter)
-        layout.addWidget(self.ui.checkCaseSensitive)
-        layout.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
-        self.layout().insertWidget(1, self.ui.frameSearch2) # type: ignore
-
     def __restoreSearchParams(self) -> None:
         if not self.currentConfigName:
             return
@@ -695,3 +698,72 @@ class SearchPage (QWidget):
         StackTraceMessageBox.show(self,
                                   self.tr("Custom search failed"),
                                   self.tr("Custom search scripts are written in Python. Click on 'Show details' to display the stack trace."))
+
+    @pyqtSlot()
+    def toggleFilterPanel(self) -> None:
+        """Toggle the visibility of filter controls with smooth animation."""
+        self.filterPanelExpanded = not self.filterPanelExpanded
+
+        if self.filterPanelExpanded:
+            # Expanding: show the widget first, then animate height from 0 to natural height
+            self.ui.frameFilterControls.show()
+            self.ui.labelFilterPreview.hide()
+            self.ui.buttonToggleFilters.setChecked(True)
+
+            self.filterPanelAnimation.setStartValue(0)
+            self.filterPanelAnimation.setEndValue(self.filterPanelNaturalHeight)
+            self.filterPanelAnimation.start()
+        else:
+            # Collapsing: animate height from natural height to 0, then hide the widget
+            self.ui.buttonToggleFilters.setChecked(False)
+
+            self.filterPanelAnimation.setStartValue(self.filterPanelNaturalHeight)
+            self.filterPanelAnimation.setEndValue(0)
+
+            # Hide the widget and show preview after animation finishes
+            try:
+                self.filterPanelAnimation.finished.disconnect(self.__onFilterPanelCollapseFinished)
+            except:
+                pass
+            self.filterPanelAnimation.finished.connect(self.__onFilterPanelCollapseFinished)
+            self.filterPanelAnimation.start()
+
+    def __onFilterPanelCollapseFinished(self) -> None:
+        """Called when the filter panel collapse animation finishes."""
+        if not self.filterPanelExpanded:
+            self.ui.frameFilterControls.hide()
+            self.updateFilterPreview()
+            self.ui.labelFilterPreview.show()
+
+    @pyqtSlot()
+    def updateFilterPreview(self) -> None:
+        """Update the filter preview label with concatenated non-empty values."""
+        if self.filterPanelExpanded:
+            return  # Don't show preview when expanded
+
+        preview_parts = []
+
+        # Folder filter
+        folder_filter = self.ui.comboFolderFilter.currentText().strip()
+        if folder_filter:
+            preview_parts.append(f"Folder: {folder_filter}")
+
+        # Extension filter
+        ext_filter = self.ui.comboExtensionFilter.currentText().strip()
+        if ext_filter:
+            preview_parts.append(f"Ext: {ext_filter}")
+
+        # Case sensitive
+        if self.ui.checkCaseSensitive.isChecked():
+            preview_parts.append("Case sensitive")
+
+        # Join with separator and set with tooltip
+        if preview_parts:
+            preview_text = " | ".join(preview_parts)
+            self.ui.labelFilterPreview.setText(preview_text)
+            self.ui.labelFilterPreview.setToolTip(preview_text)  # Full text on hover
+        else:
+            self.ui.labelFilterPreview.setText("")
+            self.ui.labelFilterPreview.setToolTip("")
+
+        self.ui.labelFilterPreview.setVisible(not self.filterPanelExpanded)
