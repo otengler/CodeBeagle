@@ -68,6 +68,8 @@ Run unit tests:
 python UnitTests.py
 ```
 
+Test modules include: SyntaxHighlighter, HighlighterConfiguration, MatchesOverview, Config, FileTools, Query, fulltextindex testsuite, and BookmarkStorage.
+
 ### Verification
 
 mypy should be run after changes to see that the code has no problems:
@@ -75,9 +77,9 @@ mypy should be run after changes to see that the code has no problems:
 check.ps1
 ```
 
-Test modules include: SyntaxHighlighter, HighlighterConfiguration, MatchesOverview, Config, FileTools, Query, fulltextindex testsuite, and BookmarkStorage.
-
 ### Dependencies
+
+The application uses a virtual environemt under .venv.
 
 Install Python dependencies:
 ```bash
@@ -205,6 +207,7 @@ setup.py                    # cx_Freeze build configuration
 1. Edit `.ui` files in Qt Designer
 2. Run build UI script to regenerate `Ui_*.py` files
 3. Never manually edit `Ui_*.py` files - they are auto-generated
+4. Keyboard shortcuts must be documented in help.html
 
 ### Adding a New Dialog
 
