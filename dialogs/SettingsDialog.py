@@ -342,9 +342,9 @@ class SettingsDialog (QDialog):
             locConf.indexType = location.indexType
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
-        config.sourceViewer.FontFamily = self.ui.fontComboBox.currentFont().family()
-        config.sourceViewer.FontSize = self.ui.editFontSize.text()
-        config.sourceViewer.TabWidth = self.ui.editTabWidth.text()
+        config.sourceViewer.fontFamily = self.ui.fontComboBox.currentFont().family()
+        config.sourceViewer.fontSize = self.ui.editFontSize.text()
+        config.sourceViewer.tabWidth = self.ui.editTabWidth.text()
         config.sourceViewer.showLineNumbers = self.ui.checkShowLineNumbers.checkState() == Qt.CheckState.Checked
         config.fontSize = self.ui.editAppFontSize.text()
         config.matchOverFiles = self.ui.checkMatchOverFiles.checkState() == Qt.CheckState.Checked

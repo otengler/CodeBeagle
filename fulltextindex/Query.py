@@ -212,7 +212,7 @@ def createFolderFilter(strFilter: str) -> List[Tuple[str,bool]]:
 class QueryError(RuntimeError):
     pass
 
-CommentRuleFetcher = Callable[[str], CommentRule]
+CommentRuleFetcher = Callable[[str], Optional[CommentRule]]
 
 class QueryParams:
     def __init__(self, strSearch: str, strFolderFilter: str = "", strExtensionFilter: str = "", bCaseSensitive: bool = False, bExcludeComments: bool = False, commentRuleFetcher: Optional[CommentRuleFetcher] = None) -> None:
@@ -316,20 +316,12 @@ class ContentQuery(Query):
             commentRule = self.commentRuleFetcher(filename)
         
         commentRanges = None
-        if self.bExcludeComments and commentRules and filename:
-            # Extract file extension
-            ext = os.path.splitext(filename)[1]
-            if ext.startswith('.'):
-                ext = ext[1:]
-            ext = ext.lower()
-
+        if self.bExcludeComments and commentRule is not None and filename:
             # Find all comments in the data
-            commentRanges = findAllComments(
-                data,
+            commentRanges = findAllComments(data,
                 commentRule.lineComment,
                 commentRule.multiCommentStart,
-                commentRule.multiCommentStop
-            )
+                commentRule.multiCommentStop)
 
         cur = 0
         while True:

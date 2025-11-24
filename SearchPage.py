@@ -252,9 +252,9 @@ class SearchPage (QWidget):
         config = AppConfig.appConfig().SourceViewer
 
         # Apply font and tab changes (if any)
-        if self.sourceFont.family().lower() != config.FontFamily.lower() or self.sourceFont.pointSize() != config.FontSize:
-            self.sourceFont.setFamily(config.FontFamily)
-            self.sourceFont.setPointSize(config.FontSize)
+        if self.sourceFont.family().lower() != config.fontFamily.lower() or self.sourceFont.pointSize() != config.fontSize:
+            self.sourceFont.setFamily(config.fontFamily)
+            self.sourceFont.setPointSize(config.fontSize)
 
         return self.sourceFont
 

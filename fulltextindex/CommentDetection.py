@@ -368,7 +368,6 @@ class TestIsInsideComment(unittest.TestCase):
         self.assertTrue(isInsideComment(55, comments))
         self.assertFalse(isInsideComment(65, comments))
 
-
 class TestCommentExclusionInQueries(unittest.TestCase):
     """Test that queries correctly exclude matches in comments."""
 
@@ -380,13 +379,10 @@ class TestCommentExclusionInQueries(unittest.TestCase):
     return 42;  // foo in comment
 }"""
         # Create comment rules for C++
-        commentRules = {
-            'cpp': CommentRule(
-                lineComment=re.compile(r'//[^\n]*'),
-                multiCommentStart=re.compile(r'/\*'),
-                multiCommentStop=re.compile(r'\*/')
-            )
-        }
+        def getCommentRule(_: str) -> Optional[CommentRule]:
+            return CommentRule(lineComment=re.compile(r'//[^\n]*'),
+                               multiCommentStart=re.compile(r'/\*'),
+                               multiCommentStop=re.compile(r'\*/'))
 
         # Search without comment exclusion
         params = QueryParams("foo", bExcludeComments=False)
@@ -395,7 +391,7 @@ class TestCommentExclusionInQueries(unittest.TestCase):
         self.assertEqual(len(matches), 2)  # Both "foo" matches
 
         # Search with comment exclusion
-        params = QueryParams("foo", bExcludeComments=True, commentRules=commentRules)
+        params = QueryParams("foo", bExcludeComments=True, commentRuleFetcher=getCommentRule)
         query = ContentQuery(params)
         matches = list(query.matches(text, "test.cpp"))
         self.assertEqual(len(matches), 1)  # Only the function name, not the comment
@@ -410,13 +406,12 @@ int main() {
     // Another TODO
     return 0;  // TODO fix this
 }"""
-        commentRules = {
-            'cpp': CommentRule(
-                lineComment=re.compile(r'//[^\n]*'),
-                multiCommentStart=re.compile(r'/\*'),
-                multiCommentStop=re.compile(r'\*/')
-            )
-        }
+
+        # Create comment rules for C++
+        def getCommentRule(_: str) -> Optional[CommentRule]:
+            return CommentRule(lineComment=re.compile(r'//[^\n]*'),
+                               multiCommentStart=re.compile(r'/\*'),
+                               multiCommentStop=re.compile(r'\*/'))
 
         # Without exclusion: should find 3 TODOs
         params = QueryParams("TODO", bExcludeComments=False)
@@ -425,7 +420,7 @@ int main() {
         self.assertEqual(len(matches), 3)
 
         # With exclusion: should find 0 TODOs (all in comments)
-        params = QueryParams("TODO", bExcludeComments=True, commentRules=commentRules)
+        params = QueryParams("TODO", bExcludeComments=True, commentRuleFetcher=getCommentRule)
         query = ContentQuery(params)
         matches = list(query.matches(text, "test.cpp"))
         self.assertEqual(len(matches), 0)
@@ -435,16 +430,14 @@ int main() {
         from .CommentRule import CommentRule
 
         text = "# TODO fix this\nprint('hello')"
-        commentRules = {
-            'cpp': CommentRule(
-                lineComment=re.compile(r'//[^\n]*'),
-                multiCommentStart=None,
-                multiCommentStop=None
-            )
-        }
-
+        
+        def getCommentRule(_: str) -> Optional[CommentRule]:
+            return CommentRule(lineComment=re.compile(r'//[^\n]*'),
+                               multiCommentStart=None,
+                               multiCommentStop=None)
+        
         # No rules for .txt extension, should show all matches
-        params = QueryParams("TODO", bExcludeComments=True, commentRules=commentRules)
+        params = QueryParams("TODO", bExcludeComments=True, commentRuleFetcher=getCommentRule)
         query = ContentQuery(params)
         matches = list(query.matches(text, "test.txt"))
         self.assertEqual(len(matches), 1)
