@@ -22,6 +22,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
 from tools.FileTools import freadall
 from widgets.SyntaxHighlighter import HighlightingRules
+from fulltextindex.CommentRule import CommentRule
 import HighlighterConfiguration
 import AppConfig
 
@@ -48,7 +49,7 @@ class RulesCache:
         self.highlighterConfig = HighlighterConfiguration.highlighter(AppConfig.appConfig().SourceViewer)
         # A dict mapping a file extension to a HighlightingRules object
         self.highlightingRulesCache: Dict[str, HighlightingRules] = {}
-        self.extensionsToRulesFile: Dict[str, str] = {}
+        self.extensionsToRulesFile: Dict[str, str] = {} 
 
     def getRulesByFileName(self,  name: str,  font: QFont) -> Optional[HighlightingRules]:
         """Choose a set of highlighting rules depending on the file extension."""

@@ -169,7 +169,7 @@ def extractMatches (matches: List[str], searchData: FullTextIndex.ContentQuery, 
         else:
             lineIndex = LineMapping(text)
             ranges = []
-            for startPos, _ in searchData.matches(text):
+            for startPos, _ in searchData.matches(text, name):
                 lineNumber = lineIndex.findLineNumber(startPos)
                 startLine = lineNumber-linesOfContext
                 if startLine < 1:

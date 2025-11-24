@@ -33,7 +33,7 @@ class StringMatcher (IStringMatcher):
     def setRegex(self, expr: Pattern) -> None:
         self.regex = expr
 
-    def matches(self, data: str) -> Iterable[MatchPosition]:
+    def matches(self, data: str, filename: str = "") -> Iterable[MatchPosition]:
         if not self.regex:
             return
 

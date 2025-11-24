@@ -22,7 +22,9 @@ import re
 import unittest
 from enum import Enum
 from .IStringMatcher import IStringMatcher, MatchPosition
-from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal
+from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal, Dict, Callable
+from .CommentRule import CommentRule
+from .CommentDetection import isInsideComment, findAllComments
 
 reQueryToken = re.compile(r"[\w#*]+|<!.*?!>")
 reMatchWords = re.compile(r"(\*\*)([0-9]+)")
@@ -210,12 +212,16 @@ def createFolderFilter(strFilter: str) -> List[Tuple[str,bool]]:
 class QueryError(RuntimeError):
     pass
 
+CommentRuleFetcher = Callable[[str], CommentRule]
+
 class QueryParams:
-    def __init__(self, strSearch: str, strFolderFilter: str = "", strExtensionFilter: str = "", bCaseSensitive: bool = False) -> None:
+    def __init__(self, strSearch: str, strFolderFilter: str = "", strExtensionFilter: str = "", bCaseSensitive: bool = False, bExcludeComments: bool = False, commentRuleFetcher: Optional[CommentRuleFetcher] = None) -> None:
         self.strSearch = strSearch
         self.strFolderFilter = strFolderFilter
         self.strExtensionFilter = strExtensionFilter
         self.bCaseSensitive = bCaseSensitive
+        self.bExcludeComments = bExcludeComments
+        self.commentRuleFetcher = commentRuleFetcher
 
 class Query (IStringMatcher):
     def __init__(self, params: QueryParams) -> None:
@@ -231,6 +237,8 @@ class Query (IStringMatcher):
             self.__hasFilters = True
 
         self.bCaseSensitive = params.bCaseSensitive
+        self.bExcludeComments = params.bExcludeComments
+        self.commentRuleFetcher = params.commentRuleFetcher
 
     def getFolderFilterExpression(self) -> IncludeExcludePattern:
         return self.__folderFilterExpression
@@ -297,16 +305,45 @@ class ContentQuery(Query):
         return reExpr
 
     # Yields all matches in str. Each match is returned as the touple (position,length)
-    def matches(self, data: str) -> Iterable[MatchPosition]:
+    def matches(self, data: str, filename: str = "") -> Iterable[MatchPosition]:
         reExpr = self.regExForMatches()
         if not reExpr:
             return
+
+        # Determine if we should filter comments
+        commentRules: Optional[CommentRule] = None
+        if self.commentRuleFetcher:
+            commentRule = self.commentRuleFetcher(filename)
+        
+        commentRanges = None
+        if self.bExcludeComments and commentRules and filename:
+            # Extract file extension
+            ext = os.path.splitext(filename)[1]
+            if ext.startswith('.'):
+                ext = ext[1:]
+            ext = ext.lower()
+
+            # Find all comments in the data
+            commentRanges = findAllComments(
+                data,
+                commentRule.lineComment,
+                commentRule.multiCommentStart,
+                commentRule.multiCommentStop
+            )
+
         cur = 0
         while True:
             result = reExpr.search(data, cur)
             if result:
                 startPos, endPos = result.span()
-                yield MatchPosition(startPos, endPos-startPos)
+                # Check if match is inside a comment
+                if commentRanges:
+                    # Check if the start of the match is inside a comment
+                    if not isInsideComment(startPos, commentRanges):
+                        yield MatchPosition(startPos, endPos-startPos)
+                else:
+                    yield MatchPosition(startPos, endPos-startPos)
+
                 cur = endPos
             else:
                 return
@@ -364,7 +401,7 @@ class FileQuery(Query):
             params = QueryParams(search, params.strFolderFilter, extensionFilter, params.bCaseSensitive)
         super().__init__(params)
 
-    def matches(self, data: str) -> Iterable[MatchPosition]:
+    def matches(self, data: str, filename: str = "") -> Iterable[MatchPosition]:
         return []
 
 class ReportAction:

@@ -27,6 +27,7 @@ testmodules = [
     'tools.Config',
     'tools.FileTools',
     'fulltextindex.Query',
+    'fulltextindex.CommentDetection',
     'fulltextindex.testsuite',
     'BookmarkStorage'
     ]

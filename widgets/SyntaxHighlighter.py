@@ -23,6 +23,7 @@ import unittest
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.IStringMatcher import IStringMatcher
+from fulltextindex.CommentDetection import CommentRange, findAllComments, isInsideComment as isInsideCommentImpl
 
 type foregroundType = QBrush|Qt.GlobalColor|QColor
 
@@ -84,14 +85,6 @@ class HighlightingRules:
         fmt.setForeground(foreground)
         return fmt
 
-class CommentRange:
-    def __init__(self, index: int, length: int=0) -> None:
-        self.index = index
-        self.length = length
-
-    def __lt__ (self, other: 'CommentRange') -> bool:
-        return self.index < other.index
-
 class SyntaxHighlighter:
     matchBackgroundColor = Qt.GlobalColor.yellow
     matchBackgroundColorLigher  = QColor.lighter(QColor(Qt.GlobalColor.yellow))
@@ -131,82 +124,13 @@ class SyntaxHighlighter:
             self.comments = []
             return
 
-        # First, find all string literals to exclude them from comment detection
-        stringRanges = findAllStrings(text)
-
-        comments: List[CommentRange] = []
-
-        # Collect all single line comments
-        if self.highlightingRules.lineComment:
-            regLine = self.highlightingRules.lineComment
-            end = 0
-            while True:
-                beginMatch = regLine.search(text, end)
-                if not beginMatch:
-                    break
-                start,end = beginMatch.span()
-                # Only add comment if it's not inside a string literal
-                if not self._isInsideString(start, stringRanges):
-                    comments.append (CommentRange(start, end - start))
-
-        self.comments = comments
-
-        multiComments: List[CommentRange] = []
-
-        # Now all multi line comments
-        if self.highlightingRules.multiCommentStart and self.highlightingRules.multiCommentStop:
-            regStart = self.highlightingRules.multiCommentStart
-            regEnd = self.highlightingRules.multiCommentStop
-            end = 0
-            while True:
-                beginMatch = regStart.search(text, end)
-                if not beginMatch:
-                    break
-                beginStart,end = beginMatch.span()
-                # Only process if not inside a string literal or existing comment
-                if not self._isInsideString(beginStart, stringRanges) and not self.isInsideComment(beginStart):
-                    while True:
-                        endMatch = regEnd.search(text, end)
-                        if not endMatch:
-                            multiComments.append (CommentRange(beginStart, len(text) - beginStart))
-                            break
-                        endStart,end = endMatch.span()
-                        multiComments.append (CommentRange(beginStart, end - beginStart))
-                        break
-
-        comments.extend(multiComments)
-        comments.sort()
-
-        # Remove comments which are completely included in other comments
-        i = 1
-        while True:
-            if i >= len(comments):
-                break
-            prevComment = comments[i-1]
-            comment = comments[i]
-            if comment.index >= prevComment.index and comment.index + comment.length < prevComment.index + prevComment.length:
-                del comments[i]
-            else:
-                i += 1
-
-        self.comments = comments
-
-    def _isInsideString(self, position: int, stringRanges: List[Tuple[int, int]]) -> bool:
-        """Check if position is inside a string literal using bisect for efficiency."""
-        if not stringRanges:
-            return False
-
-        # Use bisect to find the position efficiently
-        # We search for where this position would be inserted based on string start positions
-        idx = bisect.bisect_right(stringRanges, (position, float('inf')))
-
-        # Check the string range before this position
-        if idx > 0:
-            start, end = stringRanges[idx - 1]
-            if start <= position <= end:
-                return True
-
-        return False
+        # Use the shared comment detection logic from CommentDetection module
+        self.comments = findAllComments(
+            text,
+            self.highlightingRules.lineComment,
+            self.highlightingRules.multiCommentStart,
+            self.highlightingRules.multiCommentStop
+        )
 
     def setSearchData (self, searchData: Optional[IStringMatcher]) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""
@@ -265,75 +189,8 @@ class SyntaxHighlighter:
         return formats
 
     def isInsideComment(self, position: int) -> bool:
-        if not self.comments:
-            return False
-        pos = bisect.bisect_right (self.comments,  CommentRange(position))
-        if pos > 0:
-            pos -= 1
-        comment = self.comments[pos]
-        if comment.index <= position < comment.index + comment.length:
-            return True
-        return False
-
-reQuote = re.compile("[\"\']")
-
-def findAllStrings(line: str) -> list[tuple[int,int]]:
-    """Returns the position of all strings in a line as a list of (start,end)"""
-    strings: list[tuple[int,int]] = []
-    startPos = -1
-    type = None # None, ", '
-    quotes = reQuote.finditer(line)
-    for quote in quotes:
-        # Check if quote is escaped. It counts as a valid quote if the number of backslashes is equal
-        if __backSlashesBefore(line, quote.start()) % 2 == 0:
-            quoteChar = quote.group(0) 
-            if type is None:
-                # type != quoteChar handles corrupt strings: ' "  or " ', use new char as type
-                type = quoteChar
-                startPos = quote.start()
-            elif type == quoteChar:
-                # Found valid string
-                strings.append((startPos, quote.start()))
-                type = None
-    return strings
-
-def __backSlashesBefore(line: str, pos: int) -> int:
-    pos -= 1
-    backslashes = 0
-    while pos >= 0:
-        if line[pos] == '\\':
-            backslashes += 1
-            pos -= 1
-        else: 
-            break
-    return backslashes
-
-class TestGetAllStrings(unittest.TestCase):
-    def test(self) -> None:
-        import os
-        r = findAllStrings("no string")
-        self.assertEqual(r, [])
-
-        testFile = os.path.join(os.getcwd(), "quoted_strings.txt")
-        for fullLine in open(testFile,"r"):
-            pos = fullLine.find("|")
-            if pos == -1:
-                continue
-            quotedStrings = []
-            line = fullLine[0:pos]
-            parts = fullLine[pos+1:].strip().split(";")
-            for part in parts:
-                part = part.strip()
-                range = part.split(",")
-                start = int(range[0].replace("(", ""))
-                stop = int(range[1].replace(")", ""))
-                quotedStrings.append((start,stop))
-            findAllStringTest(self, line, quotedStrings)
-
-def findAllStringTest(test: unittest.TestCase, line: str, expected: list):
-    r = findAllStrings(line)
-    test.assertListEqual(r, expected)
-
+        return isInsideCommentImpl(position, self.comments)
+    
 class TestCommentDetectionWithStrings(unittest.TestCase):
     """Test that comment markers inside strings are not treated as comments."""
 

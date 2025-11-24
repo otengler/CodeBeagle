@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from abc import ABC,abstractmethod
-from typing import Iterable
+from typing import Iterable, List
 import bisect
 
 class MatchPosition:
@@ -39,9 +39,9 @@ class IStringMatcher(ABC):
     def matches(self, data: str) -> Iterable[MatchPosition]:
         pass
 
-def findAllMatchesInRange(startPos: int, endPos: int, matches: list[MatchPosition]) -> list[MatchPosition]:
+def findAllMatchesInRange(startPos: int, endPos: int, matches: List[MatchPosition]) -> List[MatchPosition]:
     """Find all matches in a range."""
-    matchesInRange: list[MatchPosition] = []
+    matchesInRange: List[MatchPosition] = []
     pos = bisect.bisect_right (matches, MatchPosition(startPos))
     if pos > 0:
         pos -= 1

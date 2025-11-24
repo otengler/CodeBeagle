@@ -192,8 +192,12 @@ class FullTextIndex (IndexDatabase):
                 if not query.matchFolderAndExtensionFilter(fullpath):
                     continue
             try:
-                if reExpr.search(freadall(fullpath)):
+                # Use query.matches() to support comment filtering
+                fileContent = freadall(fullpath)
+                # Check if there are any matches (respecting comment exclusion if enabled)
+                for _ in query.matches(fileContent, fullpath):
                     finalResults.append(fullpath)
+                    break
             except:
                 pass
 

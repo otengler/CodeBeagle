@@ -209,7 +209,7 @@ class SourceViewer (QWidget):
         self.ui.widgetInDocumentSearch.setText(text)
 
         if self.searchData:
-            self.matches = [match for match in self.searchData.matches (text)]
+            self.matches = [match for match in self.searchData.matches(text, self.currentFile)]
             self.ui.listMatchesWidget.clear()
             for i in range(len(self.matches)):
                 item = "%u" % (i+1,)

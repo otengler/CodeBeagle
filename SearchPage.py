@@ -21,7 +21,7 @@ from typing import List, Tuple, Optional, cast
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent, QPixmap, QIcon, QKeySequence
-from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy, QComboBox
+from PyQt5.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QComboBox
 from tools.QHelper import createQAction
 from SourceViewer import EditorState
 from tools import AsynchronousTask
@@ -33,9 +33,11 @@ from fulltextindex import FullTextIndex
 from fulltextindex import Query
 from fulltextindex.IndexConfiguration import IndexConfiguration, IndexMode
 from fulltextindex.Query import QueryParams
+from fulltextindex.CommentRule import CommentRule
 import SearchAsync
 import CustomContextMenu
 import AppConfig
+import HighlightingRulesCache
 from SearchPageBookmarks import SearchPageBookmarks
 from StringListModel import StringListModel
 from Ui_SearchPage import Ui_SearchPage
@@ -131,6 +133,7 @@ class SearchPage (QWidget):
         self.ui.comboFolderFilter.currentTextChanged.connect(self.updateFilterPreview)
         self.ui.comboExtensionFilter.currentTextChanged.connect(self.updateFilterPreview)
         self.ui.checkCaseSensitive.stateChanged.connect(self.updateFilterPreview)
+        self.ui.checkExcludeComments.stateChanged.connect(self.updateFilterPreview)
 
         # Initialize filter panel state (collapsed by default)
         self.filterPanelExpanded = False
@@ -376,7 +379,14 @@ class SearchPage (QWidget):
         strFolderFilter = self.ui.comboFolderFilter.currentText().strip()
         strExtensionFilter = self.ui.comboExtensionFilter.currentText().strip()
         bCaseSensitive = self.ui.checkCaseSensitive.checkState() == Qt.CheckState.Checked
-        return QueryParams(strSearch, strFolderFilter,  strExtensionFilter,  bCaseSensitive)
+        bExcludeComments = self.ui.checkExcludeComments.checkState() == Qt.CheckState.Checked
+        return QueryParams(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive, bExcludeComments, self.__getCommentRuleFromHighlightingCache)
+
+    def __getCommentRuleFromHighlightingCache(self, filename: str) -> Optional[CommentRule]:
+        rule = HighlightingRulesCache.rules().getRulesByFileName(filename, self.font())
+        if not rule:
+            return None
+        return CommentRule(rule.lineComment, rule.multiCommentStart, rule.multiCommentStop)
 
     def __currentIndexConf(self) -> IndexConfiguration:
         i = self.ui.comboLocation.currentIndex()
@@ -528,6 +538,7 @@ class SearchPage (QWidget):
         self.ui.comboFolderFilter.setEditText(state.searchParams.strFolderFilter)
         self.ui.comboExtensionFilter.setEditText(state.searchParams.strExtensionFilter)
         self.ui.checkCaseSensitive.setChecked(state.searchParams.bCaseSensitive)
+        self.ui.checkExcludeComments.setChecked(state.searchParams.bExcludeComments)
         self.ui.buttonLockResultSet.setChecked(state.lockedResultSet != None)
         self.lockedResultSet = state.lockedResultSet
         self.__updateSearchResult(state.resultSet)
@@ -756,6 +767,11 @@ class SearchPage (QWidget):
         # Case sensitive
         if self.ui.checkCaseSensitive.isChecked():
             preview_parts.append("Case sensitive")
+
+        # Case sensitive
+        if self.ui.checkExcludeComments.isChecked():
+            preview_parts.append("No comments")
+
 
         # Join with separator and set with tooltip
         if preview_parts:

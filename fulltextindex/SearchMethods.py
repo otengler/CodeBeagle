@@ -74,7 +74,7 @@ class SearchMethods:
                 file = os.path.join(dirName, fileName)
                 if searchData.matchFolderAndExtensionFilter(file):
                     try:
-                        for _ in searchData.matches(freadall(file)):
+                        for _ in searchData.matches(freadall(file), file):
                             matches.append(file)
                             break
                     except:
