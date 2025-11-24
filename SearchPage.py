@@ -383,7 +383,7 @@ class SearchPage (QWidget):
         return QueryParams(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive, bExcludeComments, self.__getCommentRuleFromHighlightingCache)
 
     def __getCommentRuleFromHighlightingCache(self, filename: str) -> Optional[CommentRule]:
-        rule = HighlightingRulesCache.rules().getRulesByFileName(filename, self.font())
+        rule = HighlightingRulesCache.rules().getRulesByFileName(filename, self.sourceFont)
         if not rule:
             return None
         return CommentRule(rule.lineComment, rule.multiCommentStart, rule.multiCommentStop)
