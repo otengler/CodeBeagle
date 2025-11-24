@@ -125,12 +125,10 @@ class SyntaxHighlighter:
             return
 
         # Use the shared comment detection logic from CommentDetection module
-        self.comments = findAllComments(
-            text,
+        self.comments = findAllComments(text,
             self.highlightingRules.lineComment,
             self.highlightingRules.multiCommentStart,
-            self.highlightingRules.multiCommentStop
-        )
+            self.highlightingRules.multiCommentStop)
 
     def setSearchData (self, searchData: Optional[IStringMatcher]) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""

@@ -311,7 +311,7 @@ class ContentQuery(Query):
             return
 
         # Determine if we should filter comments
-        commentRules: Optional[CommentRule] = None
+        commentRule: Optional[CommentRule] = None
         if self.commentRuleFetcher:
             commentRule = self.commentRuleFetcher(filename)
         
@@ -344,11 +344,11 @@ class ContentQuery(Query):
     def indexedPartsLower(self) -> Iterator[str]:
         return (part[1].lower() for part in self.parts if part[0] == TokenType.IndexPart)
 
-    def requiresRegex(self) -> bool:
+    def requiresReadingFile(self) -> bool:
         """True if the query relies on a regex. That is e.g. true if you search for more than one keyword or case sensitive."""
         if self.partCount() > 1 and self.hasPartTypeUnequalTo(TokenType.IndexPart):
             return True
-        if self.bCaseSensitive:
+        if self.bCaseSensitive or self.bExcludeComments:
             return True
         return False
 

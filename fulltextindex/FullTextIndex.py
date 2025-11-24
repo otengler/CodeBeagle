@@ -130,7 +130,7 @@ class FullTextIndex (IndexDatabase):
             if not result:
                 return []
 
-        if query.requiresRegex():
+        if query.requiresReadingFile():
             with perfReport.newAction("Filtering results") as action:
                 return self.__filterDocsBySearchPhrase(action, (r[0] for r in result), query, cancelEvent, reportProgress, len(result))
         else:
@@ -194,7 +194,6 @@ class FullTextIndex (IndexDatabase):
             try:
                 # Use query.matches() to support comment filtering
                 fileContent = freadall(fullpath)
-                # Check if there are any matches (respecting comment exclusion if enabled)
                 for _ in query.matches(fileContent, fullpath):
                     finalResults.append(fullpath)
                     break
