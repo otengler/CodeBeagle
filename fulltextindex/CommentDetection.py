@@ -16,46 +16,51 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import List, Tuple, Optional, Pattern
+from typing import List, Optional, Pattern
 import bisect
 import re
 import unittest
 
-class CommentRange:
+class TextSpan:
     """Represents a comment range in text with start index and length."""
     def __init__(self, index: int, length: int = 0) -> None:
         self.index = index
         self.length = length
 
-    def __lt__(self, other: 'CommentRange') -> bool:
+    def __lt__(self, other: 'TextSpan') -> bool:
         return self.index < other.index
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, TextSpan):
+            return NotImplemented
+        return self.index == other.index and self.length == other.length
 
 reQuote = re.compile("[\"\']")
 reTripleQuote = re.compile(r'"""|\'\'\'')
 
-def findAllStrings(line: str) -> List[Tuple[int, int]]:
-    """Returns the position of all strings in a line as a list of (start,end) with 'start' pointing to the opening quote and 'end' pointing
-       to the closing quote."""
-    strings: List[Tuple[int, int]] = []
+def findAllStrings(line: str) -> List[TextSpan]:
+    """Returns the position of all strings in a line as a list of TextSpan."""
 
     # First, find all triple-quoted strings (Python docstrings)
-    # We need to process these first to avoid treating them as three separate quotes
-    tripleQuoteRanges = findTripleQuotedStrings(line)
-    
     # NOTE: We DON'T add tripleQuoteRanges to strings, because triple-quoted strings
     # in Python are docstrings (comments), not regular string literals.
     # We only use tripleQuoteRanges to skip individual quotes inside them.
 
-    # Now find regular single and double quoted strings, excluding positions inside triple quotes
+    #TODO: collect triple quotes range only if the language demands it (Python)
+    tripleQuoteRanges = __findAllStrings(line, reTripleQuote)
+    singleQuoteRanges = __findAllStrings(line, reQuote)
+    
+    return [span for span in singleQuoteRanges if not isInsideTextSpan(span.index, tripleQuoteRanges)]
+
+def __findAllStrings(line: str, reQuote: Pattern) -> List[TextSpan]:
+    """Returns the position of all strings in a line as a list of TextSpan."""
+    strings: List[TextSpan] = []
+
     startPos = -1
     type = None  # None, ", '
     quotes = reQuote.finditer(line)
     for quote in quotes:
         quotePos = quote.start()
-
-        # Skip if this quote is inside a triple-quoted string (use bisect for efficiency)
-        if __isInsideString(quotePos, tripleQuoteRanges):
-            continue
 
         # Check if quote is escaped. It counts as a valid quote if the number of backslashes is equal
         if __backSlashesBefore(line, quotePos) % 2 == 0:
@@ -66,56 +71,15 @@ def findAllStrings(line: str) -> List[Tuple[int, int]]:
                 startPos = quotePos
             elif type == quoteChar:
                 # Found valid string
-                endPos = quotePos
                 # Empty strings ("") or single quotes followed immediately by another quote
                 # should not be treated as string ranges
-                if endPos > startPos:
-                    strings.append((startPos, endPos))
+                if quotePos > startPos:
+                    strings.append(TextSpan(startPos, quote.end()-startPos))
                 type = None
 
     # Sort strings by start position
     strings.sort()
     return strings
-
-def findTripleQuotedStrings(line: str) -> List[Tuple[int, int]]:
-    tripleQuoteRanges: List[Tuple[int, int]] = []
-    pos = 0
-    while pos < len(line):
-        match = reTripleQuote.search(line, pos)
-        if not match:
-            break
-
-        startPos = match.start()
-        quoteType = match.group(0)
-
-        # Check if the opening triple quote is escaped
-        if __backSlashesBefore(line, startPos) % 2 == 0:
-            # Look for closing triple quote
-            searchStart = match.end()
-            while searchStart < len(line):
-                endMatch = line.find(quoteType, searchStart)
-                if endMatch == -1:
-                    # No closing triple quote found, skip this one
-                    pos = match.end()
-                    break
-
-                # Check if the closing triple quote is escaped
-                if __backSlashesBefore(line, endMatch) % 2 == 0:
-                    # Found valid triple-quoted string
-                    # startPos points to first quote, endMatch + 2 points to last quote of closing triple
-                    tripleQuoteRanges.append((startPos, endMatch + 2))
-                    pos = endMatch + 3
-                    break
-                else:
-                    # This triple quote was escaped, keep searching
-                    searchStart = endMatch + 3
-            else:
-                # Reached end of line without finding closing triple quote
-                pos = match.end()
-        else:
-            # Opening triple quote was escaped, skip it
-            pos = match.end()
-    return  tripleQuoteRanges
 
 def __backSlashesBefore(line: str, pos: int) -> int:
     """Count backslashes before a position."""
@@ -129,29 +93,12 @@ def __backSlashesBefore(line: str, pos: int) -> int:
             break
     return backslashes
 
-def __isInsideString(position: int, stringRanges: List[Tuple[int, int]]) -> bool:
-    """Check if position is inside a string literal using bisect for efficiency."""
-    if not stringRanges:
-        return False
-
-    # Use bisect to find the position efficiently
-    # We search for where this position would be inserted based on string start positions
-    idx = bisect.bisect_right(stringRanges, (position, float('inf')))
-
-    # Check the string range before this position
-    if idx > 0:
-        start, end = stringRanges[idx - 1]
-        if start <= position <= end:
-            return True
-
-    return False
-
 def findAllComments(text: str,
                     lineCommentPattern: Optional[Pattern],
                     multiCommentStart: Optional[Pattern],
-                    multiCommentStop: Optional[Pattern]) -> List[CommentRange]:
+                    multiCommentStop: Optional[Pattern]) -> List[TextSpan]:
     r"""
-    Find all comments in the document and return them as CommentRange objects.
+    Find all comments in the document and return them as TextSpan objects.
 
     Args:
         text: The text to analyze
@@ -160,12 +107,12 @@ def findAllComments(text: str,
         multiCommentStop: Compiled regex pattern for multiline comment end (e.g., r'\*/')
 
     Returns:
-        List of CommentRange objects representing all comments in the text
+        List of TextSpan objects representing all comments in the text
     """
     # First, find all string literals to exclude them from comment detection
     stringRanges = findAllStrings(text)
 
-    comments: List[CommentRange] = []
+    comments: List[TextSpan] = []
 
     # Collect all single line comments
     if lineCommentPattern:
@@ -177,13 +124,13 @@ def findAllComments(text: str,
                 break
             start, end = beginMatch.span()
             # Only add comment if it's not inside a string literal
-            if not __isInsideString(start, stringRanges):
-                comments.append(CommentRange(start, end - start))
+            if not isInsideTextSpan(start, stringRanges):
+                comments.append(TextSpan(start, end - start))
 
     # Store single-line comments for checking during multiline processing
     singleLineComments = comments.copy()
 
-    multiComments: List[CommentRange] = []
+    multiComments: List[TextSpan] = []
 
     # Now all multi line comments
     if multiCommentStart and multiCommentStop:
@@ -196,14 +143,14 @@ def findAllComments(text: str,
                 break
             beginStart, end = beginMatch.span()
             # Only process if not inside a string literal or existing comment
-            if not __isInsideString(beginStart, stringRanges) and not isInsideComment(beginStart, singleLineComments):
+            if not isInsideTextSpan(beginStart, stringRanges) and not isInsideTextSpan(beginStart, singleLineComments):
                 while True:
                     endMatch = regEnd.search(text, end)
                     if not endMatch:
-                        multiComments.append(CommentRange(beginStart, len(text) - beginStart))
+                        multiComments.append(TextSpan(beginStart, len(text) - beginStart))
                         break
                     endStart, end = endMatch.span()
-                    multiComments.append(CommentRange(beginStart, end - beginStart))
+                    multiComments.append(TextSpan(beginStart, end - beginStart))
                     break
 
     comments.extend(multiComments)
@@ -223,24 +170,23 @@ def findAllComments(text: str,
 
     return comments
 
-
-def isInsideComment(position: int, comments: List[CommentRange]) -> bool:
+def isInsideTextSpan(position: int, textSpans: List[TextSpan]) -> bool:
     """
-    Check if a position is inside a comment.
+    Check if a position is inside a TextSpan.
 
     Args:
         position: The position to check
-        comments: List of CommentRange objects (must be sorted by index)
+        comments: List of TextSpan objects (must be sorted by index)
 
     Returns:
-        True if the position is inside a comment, False otherwise
+        True if the position is inside a TextSpan, False otherwise
     """
-    if not comments:
+    if not textSpans:
         return False
-    pos = bisect.bisect_right(comments, CommentRange(position))
+    pos = bisect.bisect_right(textSpans, TextSpan(position))
     if pos > 0:
         pos -= 1
-    comment = comments[pos]
+    comment = textSpans[pos]
     if comment.index <= position < comment.index + comment.length:
         return True
     return False
@@ -261,7 +207,7 @@ class TestGetAllStrings(unittest.TestCase):
             pos = fullLine.find("|")
             if pos == -1:
                 continue
-            quotedStrings = []
+            quotedStrings: List[TextSpan] = []
             line = fullLine[0:pos]
             parts = fullLine[pos+1:].strip().split(";")
             for part in parts:
@@ -269,7 +215,7 @@ class TestGetAllStrings(unittest.TestCase):
                 range = part.split(",")
                 start = int(range[0].replace("(", ""))
                 stop = int(range[1].replace(")", ""))
-                quotedStrings.append((start,stop))
+                quotedStrings.append(TextSpan(start,stop-start+1))
             findAllStringTest(self, line, quotedStrings)
 
 def findAllStringTest(test: unittest.TestCase, line: str, expected: list):
@@ -347,26 +293,27 @@ class TestIsInsideComment(unittest.TestCase):
     """Test position checking within comments."""
 
     def test_empty_comments(self) -> None:
-        self.assertFalse(isInsideComment(0, []))
-        self.assertFalse(isInsideComment(100, []))
+        self.assertFalse(isInsideTextSpan(0, []))
+        self.assertFalse(isInsideTextSpan(100, []))
 
     def test_inside_single_comment(self) -> None:
-        comments = [CommentRange(10, 20)]
-        self.assertFalse(isInsideComment(5, comments))
-        self.assertTrue(isInsideComment(10, comments))
-        self.assertTrue(isInsideComment(20, comments))
-        self.assertFalse(isInsideComment(30, comments))
-        self.assertFalse(isInsideComment(35, comments))
+        comments = [TextSpan(10, 10)]
+        self.assertFalse(isInsideTextSpan(9, comments))
+        self.assertTrue(isInsideTextSpan(10, comments))
+        self.assertTrue(isInsideTextSpan(19, comments))
+        self.assertFalse(isInsideTextSpan(20, comments))
+        self.assertFalse(isInsideTextSpan(35, comments))
 
     def test_multiple_comments(self) -> None:
-        comments = [CommentRange(10, 10), CommentRange(30, 10), CommentRange(50, 10)]
-        self.assertFalse(isInsideComment(5, comments))
-        self.assertTrue(isInsideComment(15, comments))
-        self.assertFalse(isInsideComment(25, comments))
-        self.assertTrue(isInsideComment(35, comments))
-        self.assertFalse(isInsideComment(45, comments))
-        self.assertTrue(isInsideComment(55, comments))
-        self.assertFalse(isInsideComment(65, comments))
+        comments = [TextSpan(10, 2), TextSpan(30, 10), TextSpan(50, 10)]
+        self.assertFalse(isInsideTextSpan(5, comments))
+        self.assertTrue(isInsideTextSpan(11, comments))
+        self.assertFalse(isInsideTextSpan(25, comments))
+        self.assertTrue(isInsideTextSpan(35, comments))
+        self.assertTrue(isInsideTextSpan(39, comments))
+        self.assertFalse(isInsideTextSpan(45, comments))
+        self.assertTrue(isInsideTextSpan(55, comments))
+        self.assertFalse(isInsideTextSpan(65, comments))
 
 class TestCommentExclusionInQueries(unittest.TestCase):
     """Test that queries correctly exclude matches in comments."""
@@ -432,9 +379,7 @@ int main() {
         text = "# TODO fix this\nprint('hello')"
         
         def getCommentRule(_: str) -> Optional[CommentRule]:
-            return CommentRule(lineComment=re.compile(r'//[^\n]*'),
-                               multiCommentStart=None,
-                               multiCommentStop=None)
+            return None
         
         # No rules for .txt extension, should show all matches
         params = QueryParams("TODO", bExcludeComments=True, commentRuleFetcher=getCommentRule)

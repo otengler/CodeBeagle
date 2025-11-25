@@ -119,6 +119,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
             end = -1
             openChar, closeChar = paren[1],paren[0]
 
+        #TODO parentheses inside strings are matched but shouldn't
         for i in range(start, end, direction):
             char = text[i]
             if char == openChar and not self.highlighter.isInsideComment(i):

@@ -2,10 +2,10 @@
 # addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)
 # addRule (expr,  fontWeight,  foreground)
 
-keywords="import,from,def,class,return,if,else,elif,for,in,while,None"
+keywords="import,from,def,class,return,if,else,elif,for,in,while,None,async,await"
 addKeywords (keywords, Bold, darkBlue)
 
 addCommentRule ("#[^\n]*", "\"\"\"", "\"\"\"", Normal, darkGreen)
 
-addRule ("\".*\"", Normal, darkGreen) # Quotations
+addRule ("\".*?\"", Normal, darkGreen) # Quotations
 addRule ("\\b[A-Za-z0-9_]+(?=\\()", Normal, blue) # Functions

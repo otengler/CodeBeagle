@@ -24,7 +24,7 @@ from enum import Enum
 from .IStringMatcher import IStringMatcher, MatchPosition
 from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal, Dict, Callable
 from .CommentRule import CommentRule
-from .CommentDetection import isInsideComment, findAllComments
+from .CommentDetection import isInsideTextSpan, findAllComments
 
 reQueryToken = re.compile(r"[\w#*]+|<!.*?!>")
 reMatchWords = re.compile(r"(\*\*)([0-9]+)")
@@ -331,7 +331,7 @@ class ContentQuery(Query):
                 # Check if match is inside a comment
                 if commentRanges:
                     # Check if the start of the match is inside a comment
-                    if not isInsideComment(startPos, commentRanges):
+                    if not isInsideTextSpan(startPos, commentRanges):
                         yield MatchPosition(startPos, endPos-startPos)
                 else:
                     yield MatchPosition(startPos, endPos-startPos)

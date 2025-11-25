@@ -23,7 +23,7 @@ import unittest
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.IStringMatcher import IStringMatcher
-from fulltextindex.CommentDetection import CommentRange, findAllComments, isInsideComment as isInsideCommentImpl
+from fulltextindex.CommentDetection import TextSpan, findAllComments, isInsideTextSpan
 
 type foregroundType = QBrush|Qt.GlobalColor|QColor
 
@@ -102,7 +102,7 @@ class SyntaxHighlighter:
         self.searchStringFormats[1].setBackground(SyntaxHighlighter.match2BackgroundColor)
         self.searchStringFormats[1].setForeground(SyntaxHighlighter.match2ForegroundColor)
 
-        self.comments: List[CommentRange]  = []
+        self.comments: List[TextSpan]  = []
         self.searchDatas: List[Optional[IStringMatcher]] = [None, None]
 
     def setFont (self, font: QFont) -> None:
@@ -118,7 +118,7 @@ class SyntaxHighlighter:
                 strFormat.setFont(rules.font)
             strFormat.setFontWeight(QFont.Bold)
 
-    # Find all comments in the document and store them as CommentRange objects in self.comments
+    # Find all comments in the document and store them as TextSpan objects in self.comments
     def setText(self, text: str) -> None:
         if not self.highlightingRules:
             self.comments = []
@@ -156,7 +156,7 @@ class SyntaxHighlighter:
 
         # Colorize comments
         if commentFormat := self.highlightingRules.commentFormat:
-            pos = bisect.bisect_right (self.comments,  CommentRange(position))
+            pos = bisect.bisect_right (self.comments,  TextSpan(position))
             if pos > 0:
                 pos -= 1
             while pos < len(self.comments):
@@ -187,7 +187,7 @@ class SyntaxHighlighter:
         return formats
 
     def isInsideComment(self, position: int) -> bool:
-        return isInsideCommentImpl(position, self.comments)
+        return isInsideTextSpan(position, self.comments)
     
 class TestCommentDetectionWithStrings(unittest.TestCase):
     """Test that comment markers inside strings are not treated as comments."""
