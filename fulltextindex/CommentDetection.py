@@ -47,12 +47,12 @@ def findAllStrings(line: str) -> List[TextSpan]:
     # We only use tripleQuoteRanges to skip individual quotes inside them.
 
     #TODO: collect triple quotes range only if the language demands it (Python)
-    tripleQuoteRanges = __findAllStrings(line, reTripleQuote)
-    singleQuoteRanges = __findAllStrings(line, reQuote)
-    
+    tripleQuoteRanges = __findAllStrings(line, reTripleQuote, allowMultiline=True)
+    singleQuoteRanges = __findAllStrings(line, reQuote, allowMultiline=False)
+
     return [span for span in singleQuoteRanges if not isInsideTextSpan(span.index, tripleQuoteRanges)]
 
-def __findAllStrings(line: str, reQuote: Pattern) -> List[TextSpan]:
+def __findAllStrings(line: str, reQuote: Pattern, allowMultiline: bool = False) -> List[TextSpan]:
     """Returns the position of all strings in a line as a list of TextSpan."""
     strings: List[TextSpan] = []
 
@@ -70,12 +70,18 @@ def __findAllStrings(line: str, reQuote: Pattern) -> List[TextSpan]:
                 type = quoteChar
                 startPos = quotePos
             elif type == quoteChar:
-                # Found valid string
-                # Empty strings ("") or single quotes followed immediately by another quote
-                # should not be treated as string ranges
-                if quotePos > startPos:
-                    strings.append(TextSpan(startPos, quote.end()-startPos))
-                type = None
+                # Check if there's a newline between start and end quote (only for single-line strings)
+                if not allowMultiline and (line.find('\n', startPos, quotePos) != -1 or line.find('\r', startPos, quotePos) != -1):
+                    # Not a valid single-line string - reset and treat current quote as new start
+                    type = quoteChar
+                    startPos = quotePos
+                else:
+                    # Found valid string
+                    # Empty strings ("") or single quotes followed immediately by another quote
+                    # should not be treated as string ranges
+                    if quotePos > startPos:
+                        strings.append(TextSpan(startPos, quote.end()-startPos))
+                    type = None
 
     # Sort strings by start position
     strings.sort()

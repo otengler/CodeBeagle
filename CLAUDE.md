@@ -202,6 +202,11 @@ setup.py                    # cx_Freeze build configuration
 
 ## Development Notes
 
+### Notes before changing code
+
+1. Do not copy and paste code. Try to reuse existing code.
+2. Think carefully if a change is efficient with large documents. Documents can have 500k lines or more.
+
 ### UI Development
 
 1. Edit `.ui` files in Qt Designer
