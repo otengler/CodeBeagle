@@ -321,7 +321,8 @@ class ContentQuery(Query):
             commentRanges = findAllComments(data,
                 commentRule.lineComment,
                 commentRule.multiCommentStart,
-                commentRule.multiCommentStop)
+                commentRule.multiCommentStop,
+                commentRule.hasTripleQuoteComments)
 
         cur = 0
         while True:

@@ -37,6 +37,10 @@ class HighlightingRules:
         self.font = font
         self.color: Optional[QColor] = None
         self.defaultFormat: Optional[QTextCharFormat] = None
+        self.hasTripleQuoteComments = False
+
+    def supportTripleQuoteComments(self):
+        self.hasTripleQuoteComments = True
 
     def addKeywords (self, keywords: str, fontWeight: int, foreground: foregroundType) -> None:
         """Adds a list of comma separated keywords."""
@@ -130,7 +134,8 @@ class SyntaxHighlighter:
         self.comments = findAllComments(text,
             self.highlightingRules.lineComment,
             self.highlightingRules.multiCommentStart,
-            self.highlightingRules.multiCommentStop)
+            self.highlightingRules.multiCommentStop,
+            self.highlightingRules.hasTripleQuoteComments)
 
     def setSearchData (self, searchData: Optional[IStringMatcher]) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""

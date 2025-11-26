@@ -5,7 +5,9 @@
 keywords="import,from,def,class,return,if,else,elif,for,in,while,None,async,await"
 addKeywords (keywords, Bold, darkBlue)
 
-addCommentRule ("#[^\n]*", "\"\"\"", "\"\"\"", Normal, darkGreen)
+addCommentRule ("#[^\n]*", None, None, Normal, darkGreen)
 
 addRule ("\".*?\"", Normal, darkGreen) # Quotations
 addRule ("\\b[A-Za-z0-9_]+(?=\\()", Normal, blue) # Functions
+
+supportTripleQuoteComments() # Treat triple quotes as comments

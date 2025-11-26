@@ -109,6 +109,7 @@ class RulesCache:
                        "rgba": rgba,
 
                        "setColor": newRules.setColor,
+                       "supportTripleQuoteComments": newRules.supportTripleQuoteComments,
                        "addKeywords" : newRules.addKeywords,
                        "addCommentRule" : newRules.addCommentRule,
                        "addRule" : newRules.addRule}
