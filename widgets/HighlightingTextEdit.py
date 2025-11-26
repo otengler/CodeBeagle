@@ -105,8 +105,11 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.lineNumberArea.reactOnResize(e)
 
     def setPlainText(self, text: Optional[str]) -> None:
+        self.setTextDocument(text, "")
+
+    def setTextDocument(self, text: Optional[str], filename: Optional[str]) -> None:
         if text:
-            self.highlighter.setText(text)
+            self.highlighter.setTextDocument(text, filename)
             super().setPlainText(text)
 
     def setDynamicHighlight(self, text: str) -> None:

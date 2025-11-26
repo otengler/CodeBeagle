@@ -37,7 +37,7 @@ class StackTraceMessageBox (QDialog):
         rules.addRule ("\".*\"", QFont.Normal, Qt.GlobalColor.darkGreen) # Quotations
         rules.addRule ("\\b[A-Za-z0-9_]+(?=\\()", QFont.Normal, Qt.GlobalColor.blue) # Functions
         self.ui.stackTraceTextEdit.highlighter.setHighlightingRules (rules)
-        self.ui.stackTraceTextEdit.setPlainText(stackTrace)
+        self.ui.stackTraceTextEdit.setTextDocument(stackTrace)
 
         self.setTitle(title)
         self.setText(text)

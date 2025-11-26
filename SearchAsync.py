@@ -76,7 +76,7 @@ class ScriptSearchData (IStringMatcher):
     def __init__(self, reExpr: Pattern) -> None:
         self.reExpr = reExpr
 
-    def matches(self, data: str) -> Iterator[MatchPosition]:
+    def matches(self, data: str, filename: str = "") -> Iterator[MatchPosition]:
         """Yields all matches in str. Each match is returned as the touple (position,length)."""
         if not self.reExpr:
             return

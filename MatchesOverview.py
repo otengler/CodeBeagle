@@ -309,7 +309,7 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         item.setTabStopWidth(self.matchesOverview.tabWidth*10)
         item.highlighter.setHighlightingRules (rules)
         item.highlighter.setSearchData (self.matchesOverview.searchData)
-        item.setPlainText(self.text)
+        item.setTextDocument(self.text, self.name)
         item.showLineNumbers(True, self.startLine)
 
     def getType(self) -> str:

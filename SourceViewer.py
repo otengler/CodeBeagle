@@ -199,7 +199,7 @@ class SourceViewer (QWidget):
 
         rules = HighlightingRulesCache.rules().getRulesByFileName(name,  self.sourceFont)
         self.ui.textEdit.highlighter.setHighlightingRules (rules)
-        self.ui.textEdit.setPlainText(text)
+        self.ui.textEdit.setTextDocument(text, name)
         if self.ui.textEdit.lineNumberArea:
             lines = getBookmarkStorage().getBookmarksForFile(self.currentFile)
             self.ui.textEdit.lineNumberArea.setBookmarks(lines)

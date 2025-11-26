@@ -36,19 +36,5 @@ class MatchPosition:
 class IStringMatcher(ABC):
     # Yields all matches in data. Each match is returned as the touple (position,length)
     @abstractmethod
-    def matches(self, data: str) -> Iterable[MatchPosition]:
+    def matches(self, data: str, filename: str = "") -> Iterable[MatchPosition]:
         pass
-
-def findAllMatchesInRange(startPos: int, endPos: int, matches: List[MatchPosition]) -> List[MatchPosition]:
-    """Find all matches in a range."""
-    matchesInRange: List[MatchPosition] = []
-    pos = bisect.bisect_right (matches, MatchPosition(startPos))
-    if pos > 0:
-        pos -= 1
-    for i in range(pos, len(matches)):
-        match = matches[i]
-        if match.index >= startPos:
-            if match.index >= endPos:
-                break
-            matchesInRange.append(match)
-    return matchesInRange

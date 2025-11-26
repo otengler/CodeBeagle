@@ -104,6 +104,7 @@ class SyntaxHighlighter:
 
         self.comments: List[TextSpan]  = []
         self.searchDatas: List[Optional[IStringMatcher]] = [None, None]
+        self.filename = ""
 
     def setFont (self, font: QFont) -> None:
         if self.highlightingRules:
@@ -119,7 +120,8 @@ class SyntaxHighlighter:
             strFormat.setFontWeight(QFont.Bold)
 
     # Find all comments in the document and store them as TextSpan objects in self.comments
-    def setText(self, text: str) -> None:
+    def setTextDocument(self, text: str, filename = "") -> None:
+        self.filename = filename
         if not self.highlightingRules:
             self.comments = []
             return
@@ -182,7 +184,7 @@ class SyntaxHighlighter:
         formats: List[Tuple[int, int, int]] = []
         for index, searchData in enumerate(self.searchDatas):
             if searchData:
-                for matchPos, length in searchData.matches (text):
+                for matchPos, length in searchData.matches (text, self.filename):
                     formats.append((index, matchPos, length))
         return formats
 
@@ -206,7 +208,7 @@ class TestCommentDetectionWithStrings(unittest.TestCase):
     def test_multiline_comment_inside_string_ignored(self) -> None:
         """Test that /* */ inside a string is not treated as a comment."""
         text = 'char* pattern = "/* not a comment */";'
-        self.highlighter.setText(text)
+        self.highlighter.setTextDocument(text)
 
         # Should find no comments
         self.assertEqual(len(self.highlighter.comments), 0,
@@ -215,7 +217,7 @@ class TestCommentDetectionWithStrings(unittest.TestCase):
     def test_single_line_comment_inside_string_ignored(self) -> None:
         """Test that // inside a string is not treated as a comment."""
         text = 'char* url = "https://example.com";'
-        self.highlighter.setText(text)
+        self.highlighter.setTextDocument(text)
 
         # Should find no comments
         self.assertEqual(len(self.highlighter.comments), 0,
@@ -228,7 +230,7 @@ class TestCommentDetectionWithStrings(unittest.TestCase):
 char* pattern = "/* not a comment */";
 // real line comment'''
 
-        self.highlighter.setText(text)
+        self.highlighter.setTextDocument(text)
 
         # Should find exactly 2 comments (the real ones)
         self.assertEqual(len(self.highlighter.comments), 2,
@@ -249,7 +251,7 @@ char* pattern = "/* not a comment */";
     def test_escaped_quotes_with_comments(self) -> None:
         """Test that escaped quotes don't confuse the comment detection."""
         text = r'char* s = "He said \"hello /* world */\""; /* real comment */'
-        self.highlighter.setText(text)
+        self.highlighter.setTextDocument(text)
 
         # Should find exactly 1 comment (the real one at the end)
         self.assertEqual(len(self.highlighter.comments), 1,
@@ -268,7 +270,7 @@ char* s1 = "// not a comment";
 char* s2 = "/* also not a comment */";
 // Third comment'''
 
-        self.highlighter.setText(text)
+        self.highlighter.setTextDocument(text)
 
         # Should find exactly 3 real comments
         self.assertEqual(len(self.highlighter.comments), 3,
@@ -282,7 +284,7 @@ char* s2 = "/* also not a comment */";
     def test_single_quote_strings(self) -> None:
         """Test that comment markers in single-quoted strings are also ignored."""
         text = "char c = '/*'; /* real comment */ char d = '//';"
-        self.highlighter.setText(text)
+        self.highlighter.setTextDocument(text)
 
         # Should find exactly 1 comment (the real multiline comment)
         self.assertEqual(len(self.highlighter.comments), 1,
