@@ -5,11 +5,9 @@
 keywords="import,from,def,class,return,if,else,elif,for,in,while,None"
 addKeywords (keywords, Bold, rgb(197,134,192))
 
-addCommentRule ("#[^\n]*", None, None, Normal, rgb(82,153,73))
+addCommentRule ("#[^\n]*", None, None, Normal, rgb(82,153,73), supportTripleQuotes = True)
 
 addRule ("\".*\"", Normal, rgb(206,145,120)) # Quotations
 addRule ("\\b[A-Za-z0-9_]+(?=\\()", Normal, rgb(220,220,170)) # Functions
 
 setColor(rgb(212,212,212)) # Default font color
-
-supportTripleQuoteComments() # Treat triple quotes as comments

@@ -38,10 +38,7 @@ class HighlightingRules:
         self.color: Optional[QColor] = None
         self.defaultFormat: Optional[QTextCharFormat] = None
         self.hasTripleQuoteComments = False
-
-    def supportTripleQuoteComments(self):
-        self.hasTripleQuoteComments = True
-
+      
     def addKeywords (self, keywords: str, fontWeight: int, foreground: foregroundType) -> None:
         """Adds a list of comma separated keywords."""
         keywords = keywords.strip()
@@ -50,13 +47,14 @@ class HighlightingRules:
         expr = "|".join(("\\b" + kw + "\\b" for kw in kwList))
         self.addRule (expr, fontWeight, foreground)
 
-    def addCommentRule (self, singleLine: str, multiLineStart: str, multiLineEnd: str, fontWeight: int, foreground: QBrush) -> None:
+    def addCommentRule (self, singleLine: str, multiLineStart: str, multiLineEnd: str, fontWeight: int, foreground: QBrush, supportTripleQuotes: bool = False) -> None:
         """Adds comment rules. Each parameter is a regular expression  string. The multi line parameter are optional and can be empty."""
         self.commentFormat = self.__createFormat(fontWeight,  foreground)
         self.lineComment = re.compile(singleLine)
         if multiLineStart and multiLineEnd:
             self.multiCommentStart = re.compile(multiLineStart)
             self.multiCommentStop = re.compile(multiLineEnd)
+        self.hasTripleQuoteComments = True
 
     def addRule (self, expr: str, fontWeight: int, foreground: foregroundType) -> None:
         """Adds an arbitrary highlighting rule."""
