@@ -20,7 +20,7 @@ import unittest
 import bisect
 import re
 import threading
-from typing import List,Tuple,Optional
+from typing import List, Tuple, Optional
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QWidget
@@ -212,7 +212,7 @@ class MatchesOverview (QWidget):
         self.lineHeight = 0
         self.tabWidth = 4
         self.linesOfContext = 2
-        self.scrollItems = RecyclingVerticalScrollArea.SrollAreaItemList()
+        self.scrollItems = RecyclingVerticalScrollArea.ScrollAreaItemList()
         self.matchIndexes: List[int] = []
 
     def reloadConfig (self, font: QFont) -> None:

@@ -67,7 +67,7 @@ class Labeltem (ScrollAreaItem):
     def getType(self) -> str:
         return "QLabel"
 
-class SrollAreaItemList:
+class ScrollAreaItemList:
     def __init__(self,  spacing:int = 7) -> None:
         self.spacing = spacing
         self.clear()
@@ -144,7 +144,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.items: Optional[SrollAreaItemList] = None
+        self.items: Optional[ScrollAreaItemList] = None
         self.activeWidgets: Dict[int, QWidget] = {} # id to widget
         self.reservedWidgets: DefaultDict[str, list[QWidget]] = collections.defaultdict(list) # type name to widgets
         w = QWidget(self)
@@ -163,7 +163,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
         super().scrollContentsBy(dx, dy)
         self.__refreshItems()
 
-    def setItems (self, items: SrollAreaItemList) -> None:
+    def setItems (self, items: ScrollAreaItemList) -> None:
         self.__reset()
         self.items = items
         widget = self.widget()
@@ -241,7 +241,7 @@ def main() -> None:
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
 
-    items = SrollAreaItemList()
+    items = ScrollAreaItemList()
     for i in range(1000):
         labelItem = Labeltem("%u" % (i+1, ),  False,  14)
         items.addItem(labelItem)
