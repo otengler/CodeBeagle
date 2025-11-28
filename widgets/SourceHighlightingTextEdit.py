@@ -119,12 +119,11 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
             end = -1
             openChar, closeChar = paren[1],paren[0]
 
-        #TODO parentheses inside strings are matched but shouldn't
         for i in range(start, end, direction):
             char = text[i]
-            if char == openChar and not self.highlighter.isInsideComment(i):
+            if char == openChar and not self.highlighter.isInsideComment(i) and not self.highlighter.isInsideString(i):
                 openCount += 1
-            elif char == closeChar and not self.highlighter.isInsideComment(i):
+            elif char == closeChar and not self.highlighter.isInsideComment(i) and not self.highlighter.isInsideString(i):
                 openCount -= 1
                 if openCount == 0:
                     return i
@@ -135,3 +134,153 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
             if char in p:
                 return p
         return None
+
+
+import unittest
+
+class TestBraceMatchingWithStrings(unittest.TestCase):
+    """Test that brace matching correctly ignores braces inside strings."""
+
+    def setUp(self) -> None:
+        """Set up a text edit widget with syntax highlighting."""
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtGui import QFont, QBrush
+        from PyQt5.QtCore import Qt, QCoreApplication
+        from widgets.SyntaxHighlighter import HighlightingRules
+        import sys
+
+        # Create QApplication if it doesn't exist
+        self.app: Optional[QCoreApplication]
+        if not QApplication.instance():
+            self.app = QApplication(sys.argv)
+        else:
+            self.app = QApplication.instance()
+
+        # Create the text edit
+        self.textEdit = SourceHighlightingTextEdit()
+
+        # Set up highlighting rules for C-style syntax
+        self.rules = HighlightingRules(QFont())
+        self.rules.addCommentRule(r'//.*', r'/\*', r'\*/', 400, QBrush(Qt.GlobalColor.darkGreen))
+        self.rules.setStrings(400, QBrush(Qt.GlobalColor.darkRed))
+
+        self.textEdit.highlighter.setHighlightingRules(self.rules)
+
+    def test_brace_in_double_quote_string_ignored(self) -> None:
+        """Test that braces inside double-quoted strings are ignored."""
+        # Example from user: '{ "test }" }' should match outer braces
+        text = '{ "test }" }'
+        self.textEdit.setPlainText(text)
+        self.textEdit.highlighter.setTextDocument(text)
+
+        # Position cursor at first brace (position 0)
+        cursor = self.textEdit.textCursor()
+        cursor.setPosition(0)
+        self.textEdit.setTextCursor(cursor)
+
+        # Trigger brace matching
+        self.textEdit.cursorChanged()
+
+        # Should match the first { at position 0 with the last } at position 11
+        # NOT with the } inside the string at position 8
+        self.assertIsNotNone(self.textEdit.parenthesisPair,
+                            "Should find a matching brace pair")
+        if self.textEdit.parenthesisPair:
+            pos1, pos2 = self.textEdit.parenthesisPair
+            self.assertEqual(pos1, 0, "First brace should be at position 0")
+            self.assertEqual(pos2, 11, "Matching brace should be at position 11 (outer closing brace)")
+            # Verify the matched characters
+            self.assertEqual(text[pos1], '{', "First position should be opening brace")
+            self.assertEqual(text[pos2], '}', "Second position should be closing brace")
+
+    def test_brace_in_single_quote_string_ignored(self) -> None:
+        """Test that braces inside single-quoted strings are ignored."""
+        text = "{ '}' }"
+        self.textEdit.setPlainText(text)
+        self.textEdit.highlighter.setTextDocument(text)
+
+        # Position cursor at first brace
+        cursor = self.textEdit.textCursor()
+        cursor.setPosition(0)
+        self.textEdit.setTextCursor(cursor)
+
+        self.textEdit.cursorChanged()
+
+        self.assertIsNotNone(self.textEdit.parenthesisPair)
+        if self.textEdit.parenthesisPair:
+            pos1, pos2 = self.textEdit.parenthesisPair
+            self.assertEqual(pos1, 0)
+            self.assertEqual(pos2, 6, "Should match outer closing brace, not the one in the string")
+
+    def test_nested_braces_with_string(self) -> None:
+        """Test nested braces with strings containing braces."""
+        text = '{ foo("{"); }'
+        self.textEdit.setPlainText(text)
+        self.textEdit.highlighter.setTextDocument(text)
+
+        # Position cursor at first brace
+        cursor = self.textEdit.textCursor()
+        cursor.setPosition(0)
+        self.textEdit.setTextCursor(cursor)
+
+        self.textEdit.cursorChanged()
+
+        self.assertIsNotNone(self.textEdit.parenthesisPair)
+        if self.textEdit.parenthesisPair:
+            pos1, pos2 = self.textEdit.parenthesisPair
+            self.assertEqual(pos1, 0)
+            self.assertEqual(pos2, 12, "Should match the outer braces, ignoring string content")
+
+    def test_multiple_strings_with_braces(self) -> None:
+        """Test multiple strings with braces."""
+        text = '{ "}" + "{" }'
+        self.textEdit.setPlainText(text)
+        self.textEdit.highlighter.setTextDocument(text)
+
+        cursor = self.textEdit.textCursor()
+        cursor.setPosition(0)
+        self.textEdit.setTextCursor(cursor)
+
+        self.textEdit.cursorChanged()
+
+        self.assertIsNotNone(self.textEdit.parenthesisPair)
+        if self.textEdit.parenthesisPair:
+            pos1, pos2 = self.textEdit.parenthesisPair
+            self.assertEqual(pos1, 0)
+            self.assertEqual(pos2, 12, "Should match outer braces, ignoring both strings")
+
+    def test_escaped_quote_in_string(self) -> None:
+        """Test that escaped quotes don't break string detection."""
+        text = r'{ "test \"}" }'
+        self.textEdit.setPlainText(text)
+        self.textEdit.highlighter.setTextDocument(text)
+
+        cursor = self.textEdit.textCursor()
+        cursor.setPosition(0)
+        self.textEdit.setTextCursor(cursor)
+
+        self.textEdit.cursorChanged()
+
+        self.assertIsNotNone(self.textEdit.parenthesisPair)
+        if self.textEdit.parenthesisPair:
+            pos1, pos2 = self.textEdit.parenthesisPair
+            self.assertEqual(pos1, 0)
+            self.assertEqual(pos2, 13, "Should match outer braces even with escaped quotes")
+
+    def test_brace_in_comment_ignored(self) -> None:
+        """Test that braces in comments are already being ignored (existing functionality)."""
+        text = "{ // }\n}"
+        self.textEdit.setPlainText(text)
+        self.textEdit.highlighter.setTextDocument(text)
+
+        cursor = self.textEdit.textCursor()
+        cursor.setPosition(0)
+        self.textEdit.setTextCursor(cursor)
+
+        self.textEdit.cursorChanged()
+
+        self.assertIsNotNone(self.textEdit.parenthesisPair)
+        if self.textEdit.parenthesisPair:
+            pos1, pos2 = self.textEdit.parenthesisPair
+            self.assertEqual(pos1, 0)
+            self.assertEqual(pos2, 7, "Should match braces ignoring the one in the comment")

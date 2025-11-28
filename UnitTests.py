@@ -22,6 +22,7 @@ from typing import cast
 
 testmodules = [
     'widgets.SyntaxHighlighter',
+    'widgets.SourceHighlightingTextEdit',
     'HighlighterConfiguration',
     'MatchesOverview',
     'tools.Config',

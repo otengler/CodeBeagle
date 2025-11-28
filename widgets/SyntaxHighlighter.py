@@ -205,6 +205,9 @@ class SyntaxHighlighter:
 
     def isInsideComment(self, position: int) -> bool:
         return isInsideTextSpan(position, self.comments)
+
+    def isInsideString(self, position: int) -> bool:
+        return isInsideTextSpan(position, self.strings)
     
 class TestCommentDetectionWithStrings(unittest.TestCase):
     """Test that comment markers inside strings are not treated as comments."""
