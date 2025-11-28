@@ -232,7 +232,11 @@ class MatchesOverview (QWidget):
         config = appConfig().SourceViewer
         self.tabWidth = config.TabWidth
 
-        # TODO: rebuild self.scrollItems if the font changed or tab width changed...
+        self.__rebuildScrollItems()
+
+    def __rebuildScrollItems(self) -> None:
+        if self.matches and self.isVisible():
+            self.__handleResult()
 
     def setSearchResult(self, matches: List[str], searchData: FullTextIndex.ContentQuery) -> None:
         self.matches = matches
