@@ -24,7 +24,7 @@ from enum import Enum
 from .IStringMatcher import IStringMatcher, MatchPosition
 from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optional, Literal, Dict, Callable
 from .CommentRule import CommentRule
-from .CommentDetection import isInsideTextSpan, findAllComments
+from .CommentDetection import isInsideTextSpan, analyzeText
 
 reQueryToken = re.compile(r"[\w#*]+|<!.*?!>")
 reMatchWords = re.compile(r"(\*\*)([0-9]+)")
@@ -318,11 +318,11 @@ class ContentQuery(Query):
         commentRanges = None
         if self.bExcludeComments and commentRule is not None and filename:
             # Find all comments in the data
-            commentRanges = findAllComments(data,
+            _, commentRanges = analyzeText(data,
                 commentRule.lineComment,
                 commentRule.multiCommentStart,
                 commentRule.multiCommentStop,
-                commentRule.hasTripleQuoteComments)
+                commentRule.hasTripleQuotes)
 
         cur = 0
         while True:

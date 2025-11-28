@@ -110,6 +110,7 @@ class RulesCache:
 
                        "setColor": newRules.setColor,
                        "addKeywords" : newRules.addKeywords,
+                       "setStrings": newRules.setStrings,
                        "addCommentRule" : newRules.addCommentRule,
                        "addRule" : newRules.addRule}
 

@@ -20,6 +20,7 @@ from typing import List, Optional, Pattern
 import bisect
 import re
 import unittest
+from dataclasses import dataclass
 
 class TextSpan:
     """Represents a comment range in text with start index and length."""
@@ -35,19 +36,32 @@ class TextSpan:
             return NotImplemented
         return self.index == other.index and self.length == other.length
 
+@dataclass
+class TextSegments:
+    strings: List[TextSpan] 
+    comments: List[TextSpan]
+
+    def __iter__(self):
+        # return values in order you want to unpack
+        yield self.strings
+        yield self.comments
+
+
 reQuote = re.compile("[\"\']")
 reTripleQuote = re.compile(r'"""|\'\'\'')
 
-def findAllStrings(line: str, findTripleQuotes: bool) -> tuple[List[TextSpan], List[TextSpan]]:
+def findAllStrings(line: str, findTripleQuotes: bool) -> List[TextSpan]:
     """Returns the position of all strings in a line as a list of TextSpan."""
 
     quotes = __findAllStrings(line, reQuote, allowMultiline=False)
     if not findTripleQuotes:
-        return (quotes, [])
+        return quotes
     
     tripleQuoteRanges = __findAllStrings(line, reTripleQuote, allowMultiline=True)
     quotes = [span for span in quotes if not isInsideTextSpan(span.index, tripleQuoteRanges)]
-    return (quotes, tripleQuoteRanges)
+    quotes.extend(tripleQuoteRanges)
+    quotes.sort()
+    return quotes
 
 def __findAllStrings(line: str, reQuote: Pattern, allowMultiline: bool = False) -> List[TextSpan]:
     """Returns the position of all strings in a line as a list of TextSpan."""
@@ -96,29 +110,29 @@ def __backSlashesBefore(line: str, pos: int) -> int:
             break
     return backslashes
 
-def findAllComments(text: str,
-                    lineCommentPattern: Optional[Pattern],
-                    multiCommentStart: Optional[Pattern],
-                    multiCommentStop: Optional[Pattern],
-                    hasTripleQuoteComments: bool) -> List[TextSpan]:
+def analyzeText(text: str,
+                lineCommentPattern: Optional[Pattern],
+                multiCommentStart: Optional[Pattern],
+                multiCommentStop: Optional[Pattern],
+                hasTripleQuotes: bool) -> TextSegments:
     r"""
-    Find all comments in the document and return them as TextSpan objects.
+    Find all comments and string ranges in the document and return them as TextSpan objects.
 
     Args:
         text: The text to analyze
         lineCommentPattern: Compiled regex pattern for single-line comments (e.g., r'//[^\n]*')
         multiCommentStart: Compiled regex pattern for multiline comment start (e.g., r'/\*')
         multiCommentStop: Compiled regex pattern for multiline comment end (e.g., r'\*/')
-        hasTripleQuoteComments: True if the language has triple quote strings that are handled as comments. The expressions
+        hasTripleQuotes: True if the language has triple quote strings that are handled as comments. The expressions
           for multiCommentStart and multiCommentStop are left to None then.
 
     Returns:
         List of TextSpan objects representing all comments in the text
     """
     # First, find all string literals to exclude them from comment detection
-    stringRanges, stringRangesTriple = findAllStrings(text, hasTripleQuoteComments)
+    stringRanges = findAllStrings(text, hasTripleQuotes)
 
-    comments: List[TextSpan] = []
+    commentRanges: List[TextSpan] = []
 
     # Collect all single line comments
     if lineCommentPattern:
@@ -130,15 +144,13 @@ def findAllComments(text: str,
                 break
             start, end = beginMatch.span()
             # Only add comment if it's not inside a string literal
-            if not isInsideTextSpan(start, stringRanges) and not isInsideTextSpan(start, stringRangesTriple):
-                comments.append(TextSpan(start, end - start))
+            if not isInsideTextSpan(start, stringRanges):
+                commentRanges.append(TextSpan(start, end - start))
 
     multiComments: List[TextSpan] = []
 
     # Now all multi line comments
-    if hasTripleQuoteComments:
-        multiComments = stringRangesTriple
-    elif multiCommentStart and multiCommentStop:
+    if multiCommentStart and multiCommentStop:
         regStart = multiCommentStart
         regEnd = multiCommentStop
         end = 0
@@ -148,7 +160,7 @@ def findAllComments(text: str,
                 break
             beginStart, end = beginMatch.span()
             # Only process if not inside a string literal or existing comment
-            if not isInsideTextSpan(beginStart, stringRanges) and not isInsideTextSpan(beginStart, comments):
+            if not isInsideTextSpan(beginStart, stringRanges) and not isInsideTextSpan(beginStart, commentRanges):
                 while True:
                     endMatch = regEnd.search(text, end)
                     if not endMatch:
@@ -158,22 +170,22 @@ def findAllComments(text: str,
                     multiComments.append(TextSpan(beginStart, end - beginStart))
                     break
 
-    comments.extend(multiComments)
-    comments.sort()
+    commentRanges.extend(multiComments)
+    commentRanges.sort()
 
     # Remove comments which are completely included in other comments
     i = 1
     while True:
-        if i >= len(comments):
+        if i >= len(commentRanges):
             break
-        prevComment = comments[i - 1]
-        comment = comments[i]
+        prevComment = commentRanges[i - 1]
+        comment = commentRanges[i]
         if comment.index >= prevComment.index and comment.index + comment.length < prevComment.index + prevComment.length:
-            del comments[i]
+            del commentRanges[i]
         else:
             i += 1
 
-    return comments
+    return TextSegments(stringRanges, commentRanges)
 
 def isInsideTextSpan(position: int, textSpans: List[TextSpan]) -> bool:
     """
@@ -205,7 +217,7 @@ class TestGetAllStrings(unittest.TestCase):
     def test(self) -> None:
         import os
         r = findAllStrings("no string", False)
-        self.assertEqual(r, ([],[]))
+        self.assertEqual(r, [])
 
         testFile = os.path.join(os.getcwd(), "quoted_strings.txt")
         for fullLine in open(testFile,"r"):
@@ -214,17 +226,21 @@ class TestGetAllStrings(unittest.TestCase):
                 continue
             quotedStrings: List[TextSpan] = []
             line = fullLine[0:pos]
-            parts = fullLine[pos+1:].strip().split(";")
+            segments = fullLine[pos+1:].strip()
+            findTripleQuotes = segments.startswith("T") # triple quotes
+            if findTripleQuotes:
+                segments = segments[1:]
+            parts = segments.strip().split(";")
             for part in parts:
                 part = part.strip()
                 range = part.split(",")
                 start = int(range[0].replace("(", ""))
                 stop = int(range[1].replace(")", ""))
                 quotedStrings.append(TextSpan(start,stop-start+1))
-            findAllStringTest(self, line, quotedStrings)
+            findAllStringTest(self, line, quotedStrings, findTripleQuotes=findTripleQuotes)
 
-def findAllStringTest(test: unittest.TestCase, line: str, expected: list):
-    r = findAllStrings(line, False)[0]
+def findAllStringTest(test: unittest.TestCase, line: str, expected: list, findTripleQuotes = False):
+    r = findAllStrings(line, findTripleQuotes)
     test.assertListEqual(r, expected)
 
 class TestFindAllComments(unittest.TestCase):
@@ -235,7 +251,7 @@ class TestFindAllComments(unittest.TestCase):
     // This is a comment
     return 0;
 }"""
-        comments = findAllComments(text, re.compile(r'//[^\n]*'), None, None, False)
+        strings, comments = analyzeText(text, re.compile(r'//[^\n]*'), None, None, False)
         self.assertEqual(len(comments), 1)
         self.assertTrue("// This is a comment" in text[comments[0].index:comments[0].index + comments[0].length])
 
@@ -245,7 +261,7 @@ class TestFindAllComments(unittest.TestCase):
        multiline comment */
     return 0;
 }"""
-        comments = findAllComments(text, None, re.compile(r'/\*'), re.compile(r'\*/'), False)
+        strings, comments = analyzeText(text, None, re.compile(r'/\*'), re.compile(r'\*/'), False)
         self.assertEqual(len(comments), 1)
         self.assertTrue("/* This is a" in text[comments[0].index:comments[0].index + comments[0].length])
 
@@ -255,27 +271,17 @@ class TestFindAllComments(unittest.TestCase):
     print("hello")
     # Another comment
 """
-        comments = findAllComments(text, re.compile(r'#[^\n]*'), None, None, False)
+        strings, comments = analyzeText(text, re.compile(r'#[^\n]*'), None, None, False)
         self.assertEqual(len(comments), 2)
-
-    def test_python_docstrings(self) -> None:
-        text = '''def hello():
-    """This is a
-    # no comment
-    docstring"""
-    print("hello")
-'''
-        comments = findAllComments(text, None, None, None, True)
-        self.assertEqual(len(comments), 1)
 
     def test_comments_inside_strings_ignored(self) -> None:
         text = 'char* s = "// not a comment";'
-        comments = findAllComments(text, re.compile(r'//[^\n]*'), None, None, False)
+        string, comments = analyzeText(text, re.compile(r'//[^\n]*'), None, None, False)
         self.assertEqual(len(comments), 0)
 
     def test_multiline_comment_inside_string_ignored(self) -> None:
         text = 'char* s = "/* not a comment */";'
-        comments = findAllComments(text, None, re.compile(r'/\*'), re.compile(r'\*/'), False)
+        strings, comments = analyzeText(text, None, re.compile(r'/\*'), re.compile(r'\*/'), False)
         self.assertEqual(len(comments), 0)
 
     def test_mixed_comments_and_strings(self) -> None:
@@ -285,12 +291,12 @@ char* s1 = "// not a comment";
 char* s2 = "/* also not a comment */";
 // Third comment'''
 
-        comments = findAllComments(text, re.compile(r'//[^\n]*'), re.compile(r'/\*'), re.compile(r'\*/'), False)
+        strings, comments = analyzeText(text, re.compile(r'//[^\n]*'), re.compile(r'/\*'), re.compile(r'\*/'), False)
         self.assertEqual(len(comments), 3)
 
     def test_unclosed_multiline_comment(self) -> None:
         text = "/* This comment never closes"
-        comments = findAllComments(text, None, re.compile(r'/\*'), re.compile(r'\*/'), False)
+        strings, comments = analyzeText(text, None, re.compile(r'/\*'), re.compile(r'\*/'), False)
         self.assertEqual(len(comments), 1)
         self.assertEqual(comments[0].length, len(text))
 
@@ -336,7 +342,7 @@ class TestCommentExclusionInQueries(unittest.TestCase):
             return CommentRule(lineComment=re.compile(r'//[^\n]*'),
                                multiCommentStart=re.compile(r'/\*'),
                                multiCommentStop=re.compile(r'\*/'),
-                               hasTripleQuoteComments=False)
+                               hasTripleQuotes=False)
 
         # Search without comment exclusion
         params = QueryParams("foo", bExcludeComments=False)
@@ -366,7 +372,7 @@ int main() {
             return CommentRule(lineComment=re.compile(r'//[^\n]*'),
                                multiCommentStart=re.compile(r'/\*'),
                                multiCommentStop=re.compile(r'\*/'),
-                               hasTripleQuoteComments=False)
+                               hasTripleQuotes=False)
 
         # Without exclusion: should find 3 BLUBs
         params = QueryParams("BLUB", bExcludeComments=False)

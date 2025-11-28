@@ -29,4 +29,4 @@ class CommentRule:
     lineComment: Optional[Pattern]
     multiCommentStart: Optional[Pattern]
     multiCommentStop: Optional[Pattern]
-    hasTripleQuoteComments: bool 
+    hasTripleQuotes: bool 

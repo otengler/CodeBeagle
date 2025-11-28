@@ -386,7 +386,7 @@ class SearchPage (QWidget):
         rule = HighlightingRulesCache.rules().getRulesByFileName(filename, self.sourceFont)
         if not rule:
             return None
-        return CommentRule(rule.lineComment, rule.multiCommentStart, rule.multiCommentStop, rule.hasTripleQuoteComments)
+        return CommentRule(rule.lineComment, rule.multiCommentStart, rule.multiCommentStop, rule.hasTripleQuotes)
 
     def __currentIndexConf(self) -> IndexConfiguration:
         i = self.ui.comboLocation.currentIndex()

@@ -23,7 +23,7 @@ import unittest
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.IStringMatcher import IStringMatcher
-from fulltextindex.CommentDetection import TextSpan, findAllComments, isInsideTextSpan
+from fulltextindex.CommentDetection import TextSpan, analyzeText, isInsideTextSpan
 
 type foregroundType = QBrush|Qt.GlobalColor|QColor
 
@@ -37,7 +37,7 @@ class HighlightingRules:
         self.font = font
         self.color: Optional[QColor] = None
         self.defaultFormat: Optional[QTextCharFormat] = None
-        self.hasTripleQuoteComments = False
+        self.hasTripleQuotes = False
       
     def addKeywords (self, keywords: str, fontWeight: int, foreground: foregroundType) -> None:
         """Adds a list of comma separated keywords."""
@@ -47,14 +47,17 @@ class HighlightingRules:
         expr = "|".join(("\\b" + kw + "\\b" for kw in kwList))
         self.addRule (expr, fontWeight, foreground)
 
-    def addCommentRule (self, singleLine: str, multiLineStart: str, multiLineEnd: str, fontWeight: int, foreground: QBrush, supportTripleQuotes: bool = False) -> None:
+    def setStrings(self, fontWeight: int, foreground: foregroundType, supportTripleQuotes: bool = False) -> None:
+        self.hasTripleQuotes = supportTripleQuotes
+        self.stringFormat = self.__createFormat(fontWeight, foreground)
+
+    def addCommentRule (self, singleLine: str, multiLineStart: str, multiLineEnd: str, fontWeight: int, foreground: QBrush) -> None:
         """Adds comment rules. Each parameter is a regular expression  string. The multi line parameter are optional and can be empty."""
         self.commentFormat = self.__createFormat(fontWeight,  foreground)
         self.lineComment = re.compile(singleLine)
         if multiLineStart and multiLineEnd:
             self.multiCommentStart = re.compile(multiLineStart)
             self.multiCommentStop = re.compile(multiLineEnd)
-        self.hasTripleQuoteComments = True
 
     def addRule (self, expr: str, fontWeight: int, foreground: foregroundType) -> None:
         """Adds an arbitrary highlighting rule."""
@@ -104,6 +107,7 @@ class SyntaxHighlighter:
         self.searchStringFormats[1].setBackground(SyntaxHighlighter.match2BackgroundColor)
         self.searchStringFormats[1].setForeground(SyntaxHighlighter.match2ForegroundColor)
 
+        self.strings: List[TextSpan]  = []
         self.comments: List[TextSpan]  = []
         self.searchDatas: List[Optional[IStringMatcher]] = [None, None]
         self.filename = ""
@@ -129,11 +133,11 @@ class SyntaxHighlighter:
             return
 
         # Use the shared comment detection logic from CommentDetection module
-        self.comments = findAllComments(text,
+        self.strings, self.comments = analyzeText(text,
             self.highlightingRules.lineComment,
             self.highlightingRules.multiCommentStart,
             self.highlightingRules.multiCommentStop,
-            self.highlightingRules.hasTripleQuoteComments)
+            self.highlightingRules.hasTripleQuotes)
 
     def setSearchData (self, searchData: Optional[IStringMatcher]) -> None:
         """searchData must support the function 'matches' which yields the tuple (start, length) for each match."""
@@ -159,19 +163,13 @@ class SyntaxHighlighter:
                 formats.append((fmt, start, end-start))
                 match = expression.search(text, end)
 
+        # Colorize strings
+        if formatStrings := self.highlightingRules.stringFormat:
+            SyntaxHighlighter.__colorizeTextSpans(text, position, self.strings, formatStrings, formats)
+
         # Colorize comments
-        if commentFormat := self.highlightingRules.commentFormat:
-            pos = bisect.bisect_right (self.comments,  TextSpan(position))
-            if pos > 0:
-                pos -= 1
-            while pos < len(self.comments):
-                comment = self.comments[pos]
-                # Comment starts before end of line
-                if comment.index < position+len(text):
-                    formats.append((commentFormat, comment.index-position, comment.length))
-                else:
-                    break
-                pos += 1
+        if formatComments := self.highlightingRules.commentFormat:
+            SyntaxHighlighter.__colorizeTextSpans(text, position, self.comments, formatComments, formats)
 
         # Highlight search match
         for index, matchPos, length in self.getSearchDataMatches(text):
@@ -179,6 +177,20 @@ class SyntaxHighlighter:
 
         return formats
     
+    @staticmethod
+    def __colorizeTextSpans(text: str, position: int, textSpans: List[TextSpan], format: QTextCharFormat, formats: List[Tuple[QTextCharFormat, int, int]]) -> None:
+        pos = bisect.bisect_right (textSpans,  TextSpan(position))
+        if pos > 0:
+            pos -= 1
+        while pos < len(textSpans):
+            textSpan = textSpans[pos]
+            # Comment or string starts before end of line
+            if textSpan.index < position+len(text):
+                formats.append((format, textSpan.index-position, textSpan.length))
+            else:
+                break
+            pos += 1
+
     def getSearchDataMatches(self, text: str) -> List[Tuple[int, int, int]]:
         # Return tuple of highlight search matches. Each tuple contains:
         # [0]: index of match 0 = match, 1 = in document search
