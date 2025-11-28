@@ -39,17 +39,19 @@ from Ui_MatchesOverview import Ui_MatchesOverview
 # ranges = [(1,3),(2,5),(7,2)]
 # Result is [(1,5),(7,2)]
 def collapseAdjoiningRanges(ranges: List[Tuple[int,int]]) -> None:
-    i=0
-    while i+1 < len(ranges):
-        r1 = ranges[i]
-        r2 = ranges[i+1]
-        if r1[1]+1>=r2[0]:
-            rn = (r1[0],r2[1])
-            del ranges[i]
-            del ranges[i]
-            ranges.insert(i,rn)
+    if len(ranges) <= 1:
+        return
+
+    result = [ranges[0]]
+
+    for r2 in ranges[1:]:
+        r1 = result[-1]
+        if r1[1] + 1 >= r2[0]:
+            result[-1] = (r1[0], r2[1])
         else:
-            i+= 1
+            result.append(r2)
+
+    ranges[:] = result
 
 class TestCollapseOverlappingRanges(unittest.TestCase):
     def test(self) -> None:
