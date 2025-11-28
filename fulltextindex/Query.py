@@ -245,7 +245,7 @@ class Query (IStringMatcher):
     def getExtensionFilterExpression(self) -> IncludeExcludePattern:
         return self.__extensionFilterExpression
 
-    def matchFolderAndExtensionFilter(self, strFileName: str, runFolderFilter: bool=True, runExtensionFilter: bool=True) -> bool:
+    def matchFolderAndExtensionFilter(self, strFileName: str, runFolderFilter: bool=True, runExtensionFilter: bool=True, ext: Optional[str]=None) -> bool:
         if not self.__hasFilters:
             return True
 
@@ -254,7 +254,8 @@ class Query (IStringMatcher):
                 return False
 
         if runExtensionFilter:
-            ext = os.path.splitext(strFileName)[1]
+            if ext is None:
+                ext = os.path.splitext(strFileName)[1]
             if not self.__extensionFilterExpression.match(ext):
                 return False
 

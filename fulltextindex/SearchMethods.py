@@ -120,7 +120,7 @@ class SearchMethods:
         for directory in indexConf.directories:
             for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
                 fullPath = os.path.join(dirName, fileName)
-                name,_ = os.path.splitext(fileName)
+                name, ext = os.path.splitext(fileName)
                 if not hasWildcards:
                     if bCaseSensitive:
                         if name != search:
@@ -130,7 +130,7 @@ class SearchMethods:
                             continue
                 elif not searchPattern.match(name):
                     continue
-                if searchData.matchFolderAndExtensionFilter(fullPath): # TODO: splits file name again
+                if searchData.matchFolderAndExtensionFilter(fullPath, ext=ext):
                     matches.append(fullPath)
                 if cancelEvent and cancelEvent.is_set():
                     return ResultSet([], searchData)
