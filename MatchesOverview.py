@@ -22,7 +22,7 @@ import re
 import threading
 from typing import List, Tuple, Optional
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QFontMetrics, QFont
+from PyQt5.QtGui import QFontMetrics, QFont, QWheelEvent
 from PyQt5.QtWidgets import QWidget
 from tools.FileTools import freadall
 from tools import AsynchronousTask
@@ -71,8 +71,10 @@ class TestCollapseOverlappingRanges(unittest.TestCase):
 class FixedSizeSourcePreview(SourceHighlightingTextEdit):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        # Scrolling should not be needed and is not wanted. This is just a way to make it 100% sure that it is switched off:
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.wheelEvent = lambda event: None  # type: ignore
 
 class Line:
     def __init__(self, charPos: int, lineNumber: int) -> None:
@@ -283,8 +285,9 @@ class MatchesOverview (QWidget):
 
     def __addText(self, name: str, startLine: int, lines: List[str]) -> int:
         text = "\n".join(lines)
-        scrollBarHeight = 24
-        height = len(lines)*self.lineHeight+11+scrollBarHeight
+        # Calculate height: line height * number of lines + top/bottom document margins (4+4) + frame (2+2) + padding (1)
+        # Needed to add 2 because the are item still scrolled.
+        height = len(lines)*self.lineHeight + 15
         editItem = FixedSizeSourcePreviewItem (self, startLine, text, name, height)
         return self.scrollItems.addItem(editItem)
     
