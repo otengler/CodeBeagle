@@ -20,7 +20,7 @@ import os
 import unittest
 import shutil
 import stat
-from typing import Callable, List, cast
+from typing import Callable, List, Tuple, cast
 from .FullTextIndex import FullTextIndex, Keyword, buildMapFromCommonKeywordFile
 from .Query import ContentQuery, FileQuery, QueryParams
 from .IndexUpdater import IndexUpdater, UpdateStatistics
@@ -447,6 +447,149 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual(good[0], [Keyword(50, "func")])
         self.assertEqual(good[1], [Keyword(102, "true")])
         self.assertEqual(bad[0], [Keyword(100, "whi"), Keyword(101, "while")])
+
+    def testExcludedExtensions(self) -> None:
+        """Test that excluded file extensions are correctly tracked in the database."""
+        testPath = os.getcwd()
+        testDb = "test-excluded.dat"
+        testDir = "data_excluded"
+
+        # Clean up from previous runs
+        delFile(testDb)
+        if os.path.exists(testDir):
+            delDir(testDir)
+
+        # Create test directory structure with various file types
+        os.mkdir(testDir)
+
+        # Create files with included extensions (.c, .cpp, .txt)
+        with open(os.path.join(testDir, "source1.c"), "w") as f:
+            f.write("int main() { return 0; }")
+        with open(os.path.join(testDir, "source2.cpp"), "w") as f:
+            f.write("int main() { return 0; }")
+        with open(os.path.join(testDir, "readme.txt"), "w") as f:
+            f.write("This is a readme file.")
+
+        # Create files with excluded extensions
+        # 3 .jpg files
+        for i in range(1, 4):
+            with open(os.path.join(testDir, f"image{i}.jpg"), "w") as f:
+                f.write(f"fake image {i}")
+
+        # 2 .png files
+        for i in range(1, 3):
+            with open(os.path.join(testDir, f"picture{i}.png"), "w") as f:
+                f.write(f"fake picture {i}")
+
+        # 1 .log file
+        with open(os.path.join(testDir, "debug.log"), "w") as f:
+            f.write("log data")
+
+        # 1 file with no extension
+        with open(os.path.join(testDir, "Makefile"), "w") as f:
+            f.write("all: build")
+
+        # 4 .xml files
+        for i in range(1, 5):
+            with open(os.path.join(testDir, f"config{i}.xml"), "w") as f:
+                f.write(f"<config>{i}</config>")
+
+        forAllFiles(testDir, setTime)
+
+        print("\n================== Excluded Extensions Test1 ==================")
+        # Create index configuration that only indexes .c, .cpp, .txt files
+        config = IndexConfiguration("test", ".c,.cpp,.txt", os.path.join(testPath, testDir), indexdb=testDb)
+
+        # Create updater and run index update
+        updateStats = UpdateStatistics()
+        updater = IndexUpdater(testDb)
+        updater.updateIndex(config, updateStats)
+
+        # Verify that 3 files were indexed (source1.c, source2.cpp, readme.txt)
+        self.assertEqual(updateStats.nNew, 3)
+        self.assertEqual(updateStats.nUpdated, 0)
+        self.assertEqual(updateStats.nUnchanged, 0)
+
+        print("\n================== Excluded Extensions Test2 ==================")
+        # Use getExcludedExtensions to retrieve the data
+        results = updater.getExcludedExtensions()
+        self.assertIsNotNone(results)
+        assert results is not None  # Type guard for mypy
+
+        # Convert to dictionary for easier verification
+        excludedExts: dict[str, int] = {ext: count for ext, count in results}
+
+        # Verify excluded extensions and counts
+        self.assertEqual(len(excludedExts), 5)  # .jpg, .png, .log, .xml, and no extension
+        self.assertEqual(excludedExts.get(""), 1)       # Makefile (no extension)
+        self.assertEqual(excludedExts.get(".jpg"), 3)   # 3 jpg files
+        self.assertEqual(excludedExts.get(".log"), 1)   # 1 log file
+        self.assertEqual(excludedExts.get(".png"), 2)   # 2 png files
+        self.assertEqual(excludedExts.get(".xml"), 4)   # 4 xml files
+
+        print(f"Excluded extensions found: {excludedExts}")
+
+        print("\n================== Excluded Extensions Test3 ==================")
+        # Test that updating the index again doesn't duplicate excluded extensions
+        # Add one more .jpg file
+        with open(os.path.join(testDir, "image4.jpg"), "w") as f:
+            f.write("fake image 4")
+        setTime(os.path.join(testDir, "image4.jpg"))
+
+        # Run update again
+        updateStats2 = UpdateStatistics()
+        updater.updateIndex(config, updateStats2)
+
+        # Should have no new indexed files (only excluded files added)
+        self.assertEqual(updateStats2.nNew, 0)
+        self.assertEqual(updateStats2.nUpdated, 0)
+        self.assertEqual(updateStats2.nUnchanged, 3)
+
+        # Use getExcludedExtensions to retrieve the data from the new index run
+        newResults = updater.getExcludedExtensions()
+        self.assertIsNotNone(newResults)
+        assert newResults is not None  # Type guard for mypy
+        newExcludedExts: dict[str, int] = {ext: count for ext, count in newResults}
+
+        # Verify .jpg count increased to 4
+        self.assertEqual(newExcludedExts.get(".jpg"), 4)
+        self.assertEqual(newExcludedExts.get(".png"), 2)
+        self.assertEqual(newExcludedExts.get(".log"), 1)
+        self.assertEqual(newExcludedExts.get(".xml"), 4)
+        self.assertEqual(newExcludedExts.get(""), 1)
+
+        print(f"New excluded extensions found: {newExcludedExts}")
+
+        print("\n================== Excluded Extensions Test4 ==================")
+        # Test with no excluded files
+        delDir(testDir)
+        os.mkdir(testDir)
+
+        # Create only files with included extensions
+        with open(os.path.join(testDir, "test.c"), "w") as f:
+            f.write("int x;")
+        with open(os.path.join(testDir, "test.cpp"), "w") as f:
+            f.write("int y;")
+
+        forAllFiles(testDir, setTime)
+
+        updateStats3 = UpdateStatistics()
+        updater.updateIndex(config, updateStats3)
+
+        # Verify files were indexed
+        self.assertEqual(updateStats3.nNew, 2)
+
+        # Use getExcludedExtensions - should return empty list
+        finalResults = updater.getExcludedExtensions()
+        self.assertIsNotNone(finalResults)
+        assert finalResults is not None  # Type guard for mypy
+        self.assertEqual(len(finalResults), 0)  # No excluded extensions
+
+        # Clean up
+        delDir(testDir)
+        delFile(testDb)
+
+        print("All excluded extensions tests passed!")
 
 if __name__ == "__main__":
     unittest.main()

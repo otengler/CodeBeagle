@@ -77,6 +77,12 @@ mypy should be run after changes to see that the code has no problems:
 check.ps1
 ```
 
+The project uses strict mypy settings configured in `mypy.ini`:
+- `disallow_untyped_defs`: All functions must have type annotations
+- `warn_return_any`: Warns when returning Any from typed functions
+- `ignore_missing_imports`: Ignores missing stubs for third-party libraries
+- Auto-generated files (`Ui_*.py`, `*_rc.py`) are excluded from type checking
+
 ### Dependencies
 
 The application uses a virtual environemt under .venv.
@@ -206,6 +212,7 @@ setup.py                    # cx_Freeze build configuration
 
 1. Do not copy and paste code. Try to reuse existing code.
 2. Think carefully if a change is efficient with large documents. Documents can have 500k lines or more.
+3. Code interfacing with SqLite must be in the "fulltextindex" directory. The UI can then use this code.
 
 ### UI Development
 

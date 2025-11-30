@@ -107,7 +107,7 @@ class HighlightingTextEdit (QPlainTextEdit):
     def setPlainText(self, text: Optional[str]) -> None:
         self.setTextDocument(text, "")
 
-    def setTextDocument(self, text: Optional[str], filename: Optional[str]) -> None:
+    def setTextDocument(self, text: Optional[str], filename: Optional[str] = None) -> None:
         if text:
             self.highlighter.setTextDocument(text, filename)
             super().setPlainText(text)

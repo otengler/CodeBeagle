@@ -28,6 +28,7 @@ from .Ui_SettingsItem import Ui_SettingsItem
 
 class SettingsItem (QWidget):
     dataChanged = pyqtSignal()
+    showExcludedExtensionsClicked = pyqtSignal()
 
     def __init__ (self, parent: QWidget) -> None:
         super ().__init__(parent)
@@ -184,9 +185,15 @@ class SettingsItem (QWidget):
         self.ui.editIndexDB.setEnabled(bEnable)
         self.ui.buttonBrowseIndexLocation.setEnabled(bEnable)
         self.ui.comboIndexType.setEnabled(bEnable)
+        # Note: buttonShowExcluded visibility is controlled by LocationControl.__updateShowExcludedButtonVisibility
 
     def __enableBasedOnUpdateModeSetting(self, indexMode: IndexMode) -> None:
         indexWanted = (indexMode != IndexMode.NoIndexWanted)
         self.ui.editIndexDB.setEnabled(indexWanted)
         self.ui.comboIndexType.setEnabled(indexWanted)
         self.ui.buttonBrowseIndexLocation.setEnabled(indexWanted)
+
+    @pyqtSlot()
+    def showExcludedExtensions(self) -> None:
+        """Emit signal to show excluded extensions dialog."""
+        self.showExcludedExtensionsClicked.emit()

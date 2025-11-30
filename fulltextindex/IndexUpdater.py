@@ -22,7 +22,7 @@ import re
 import time
 import logging
 import sqlite3
-from typing import List, Iterator, Set, cast, Tuple, Optional
+from typing import List, Iterator, Set, cast, Tuple, Optional, Dict
 from tools.FileTools import freadall
 from .IndexDatabase import IndexDatabase
 from .IndexConfiguration import IndexConfiguration, IndexType, indexTypeToString
@@ -34,7 +34,7 @@ def __fixExtension(ext: str) -> str:
         return ext
     return ""
 
-def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]=None, ignoredExts: Optional[Set[str]]=None) -> Iterator[Tuple[str,str]]:
+def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]=None, ignoredExts: Optional[Dict[str, int]]=None) -> Iterator[Tuple[str,str]]:
     dirExcludes = dirExcludes or []
 
     filepatFixed: Set[str] = set()
@@ -57,7 +57,7 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]
             if ext in filepatFixed:
                 yield (path, name)
             elif ignoredExts is not None:
-                ignoredExts.add(ext)
+                ignoredExts[ext] = ignoredExts.get(ext, 0) + 1
 
 def genTokens(text: str) -> Iterator[str]:
     for token in reTokenize.findall(text):
@@ -101,8 +101,8 @@ class IndexUpdater (IndexDatabase):
 
             for strRootDir in directories:
                 logging.info("Updating index in %s. Indexing %s", strRootDir, indexTypeToString(indexType))
-                ignoredExt: Set[str] = set()
-                for dirName, fileName in genFind(extensions, strRootDir, dirExcludes, ignoredExt):
+                ignoredExtCount: Dict[str, int] = {}
+                for dirName, fileName in genFind(extensions, strRootDir, dirExcludes, ignoredExtCount):
                     strFullPath = os.path.join(dirName, fileName)
                     mTime = os.stat(strFullPath).st_mtime
 
@@ -143,10 +143,18 @@ class IndexUpdater (IndexDatabase):
                         c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, nextIndexID))
                         if statistics and newFile:
                             statistics.incNew()
-                if ignoredExt:
-                    logging.info("Ignored files with these extensions: %s", sorted(ignoredExt))
+                if ignoredExtCount:
+                    logging.info("Ignored files with these extensions: %s", sorted(ignoredExtCount.keys()))
+                    self.__saveExcludedExtensions(c, nextIndexID, ignoredExtCount)
+                    logging.info("Saved %d excluded extension types", len(ignoredExtCount))
             self.__cleanup(c, nextIndexID)
         logging.info("Done")
+
+    def __saveExcludedExtensions(self, c: sqlite3.Cursor, indexID: int, extCounts: Dict[str, int]) -> None:
+        """Save excluded extension statistics to database."""
+        for ext, count in extCounts.items():
+            c.execute("INSERT INTO excludedExtensions (id,indexID,extension,fileCount) VALUES (NULL,?,?,?)",
+                     (indexID, ext, count))
 
     def __cleanup(self, c: sqlite3.Cursor, nextIndexID:int) -> None:
         logging.info("Cleaning associations")
@@ -163,6 +171,8 @@ class IndexUpdater (IndexDatabase):
         c.execute("DELETE FROM fileName WHERE id NOT IN (SELECT fileNameID FROM fileName2doc)")
         logging.info("Removing old indexInfo entry")
         c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
+        logging.info("Cleaning excluded extensions")
+        c.execute("DELETE FROM excludedExtensions WHERE indexID < :index", {"index":nextIndexID})
 
     def __updateFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, strFullPath: str) -> None:
         # Delete old associations
@@ -196,3 +206,34 @@ class IndexUpdater (IndexDatabase):
     def __getNextIndexRun(self, c: sqlite3.Cursor) -> int:
         c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
         return cast(int,c.lastrowid)
+
+    def getExcludedExtensions(self) -> List[Tuple[str, int]]:
+        """
+        Read excluded extensions from the index database.
+
+        Returns:
+            List of tuples (extension, fileCount) sorted by count descending,
+            or None if no data is available
+
+        Raises:
+            sqlite3.Error: If there's a database error
+        """
+        cursor = self.conn.cursor()
+
+        # Get the most recent index run
+        cursor.execute("SELECT MAX(id) FROM indexInfo")
+        result = cursor.fetchone()
+        if not result or result[0] is None:
+            return None
+
+        mostRecentIndexID = result[0]
+
+        # Get excluded extensions for that run, sorted by count descending
+        cursor.execute("""
+            SELECT extension, fileCount
+            FROM excludedExtensions
+            WHERE indexID = ?
+            ORDER BY fileCount DESC, extension ASC
+        """, (mostRecentIndexID,))
+
+        return cursor.fetchall() or []

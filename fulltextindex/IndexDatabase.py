@@ -70,6 +70,17 @@ CREATE TABLE IF NOT EXISTS fileName2doc(
 CREATE INDEX IF NOT EXISTS i_fileName2doc_fileNameID ON fileName2doc (fileNameID);
 """
 
+strExcludedExtensionsTable = """
+CREATE TABLE IF NOT EXISTS excludedExtensions(
+    id INTEGER PRIMARY KEY,
+    indexID INTEGER,
+    extension TEXT,
+    fileCount INTEGER
+);
+CREATE INDEX IF NOT EXISTS i_excludedExtensions_indexID ON excludedExtensions (indexID);
+CREATE INDEX IF NOT EXISTS i_excludedExtensions_extension ON excludedExtensions (extension);
+"""
+
 
 class IndexDatabase:
     def __init__(self, strDbLocation: str) -> None:
@@ -107,4 +118,5 @@ class IndexDatabase:
             c = self.conn.cursor()
             c.executescript(strSetup)
             c.executescript(strTablesForFileNames)
-            
+            c.executescript(strExcludedExtensionsTable)
+

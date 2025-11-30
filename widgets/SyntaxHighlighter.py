@@ -34,6 +34,7 @@ class HighlightingRules:
         self.multiCommentStart: Optional[Pattern] = None
         self.multiCommentStop: Optional[Pattern] = None
         self.commentFormat: Optional[QTextCharFormat] = None
+        self.stringFormat: Optional[QTextCharFormat] = None
         self.font = font
         self.color: Optional[QColor] = None
         self.defaultFormat: Optional[QTextCharFormat] = None

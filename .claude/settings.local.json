@@ -3,7 +3,11 @@
     "allow": [
       "Bash(python:*)",
       "Bash(powershell:*)",
-      "Bash(.venv/Scripts/activate.bat)"
+      "Bash(.venv/Scripts/activate.bat)",
+      "Bash(dir:*)",
+      "Bash(flake8:*)",
+      "Bash(.\\.venv\\Scripts\\python.exe:*)",
+      "Bash(.build-windows-ui.ps1)"
     ],
     "deny": [
       "Read(./.venv/**)"

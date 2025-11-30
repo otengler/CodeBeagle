@@ -54,6 +54,22 @@
      </property>
     </widget>
    </item>
+   <item row="2" column="3">
+    <widget class="QPushButton" name="buttonShowExcluded">
+     <property name="maximumSize">
+      <size>
+       <width>30</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Show extensions excluded from current index</string>
+     </property>
+     <property name="text">
+      <string>...</string>
+     </property>
+    </widget>
+   </item>
    <item row="5" column="0">
     <widget class="QLabel" name="label_3">
      <property name="text">
@@ -191,10 +207,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>buttonShowExcluded</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsItem</receiver>
+   <slot>showExcludedExtensions()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>451</x>
+     <y>97</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>238</x>
+     <y>130</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>browseForDirectory()</slot>
   <slot>browseForIndexDB()</slot>
   <slot>updateIndex()</slot>
+  <slot>showExcludedExtensions()</slot>
  </slots>
 </ui>

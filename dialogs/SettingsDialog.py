@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import List, Set, Optional, cast
+import os
 from PyQt5.QtCore import Qt, QRect, QSize, pyqtSignal, pyqtSlot, QModelIndex, QObject
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QPainter
 from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QMessageBox, QWidget, QCheckBox, QListView
@@ -128,6 +129,7 @@ class LocationControl (QObject):
             self.listView.setCurrentIndex(index)
         else:
             self.settingsItem.resetAndDisable()
+            self.__updateShowExcludedButtonVisibility(None)
 
     @pyqtSlot()
     def updateDisplayRole(self) -> None:
@@ -139,6 +141,10 @@ class LocationControl (QObject):
     def selectionChanged(self, current: QModelIndex, previous: QModelIndex) -> None:
         self.saveDataForItem(previous)
         self.loadDataFromItem(current)
+
+        # Update button visibility based on new selection
+        location = current.data(Qt.ItemDataRole.UserRole+1) if current.isValid() else None
+        self.__updateShowExcludedButtonVisibility(location)
 
     def saveDataForItem(self, index: QModelIndex) -> None:
         if not index.isValid():
@@ -167,6 +173,15 @@ class LocationControl (QObject):
                        location.indexdb,
                        location.indexType)
         editor.enable(not self.readOnly)
+
+    def __updateShowExcludedButtonVisibility(self, location: Optional[IndexConfiguration]) -> None:
+        """Update visibility of Show Excluded Extensions button based on index mode."""
+        # Button should be visible only if location generates an index (has a database)
+        if location and location.generatesIndex():
+            if location.indexdb and os.path.exists(location.indexdb):
+                self.settingsItem.ui.buttonShowExcluded.setVisible(True)
+                return
+        self.settingsItem.ui.buttonShowExcluded.setVisible(False)
 
     def addLocation(self, location: IndexConfiguration, activateLocation:bool=False) -> None:
         rows = self.model.rowCount()
@@ -215,6 +230,9 @@ class SettingsDialog (QDialog):
 
         self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
+
+        # Connect the show excluded extensions button signal from settingsItem
+        self.ui.settingsItem.showExcludedExtensionsClicked.connect(self.showExcludedExtensions)
 
         # Check which location is the current default location
         defaultLocation = config.defaultLocation
@@ -274,6 +292,35 @@ class SettingsDialog (QDialog):
             self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations, index.row())
         else:
             self.__defaultLocationChanged (self.ui.listViewGlobalLocations, self.ui.listViewLocations,  -1)
+
+    @pyqtSlot()
+    def showExcludedExtensions(self) -> None:
+        """Show dialog with excluded extensions analysis."""
+        index = self.ui.listViewLocations.currentIndex()
+        if not index.isValid():
+            return
+
+        location: IndexConfiguration = index.data(Qt.ItemDataRole.UserRole+1)
+        
+        try:
+            from dialogs.ExcludedExtensionsDialog import ExcludedExtensionsDialog
+            dialog = ExcludedExtensionsDialog(self, location)
+            if dialog.exec():
+                selectedExts = dialog.getSelectedExtensions()
+                if selectedExts:
+                    self.__addExtensionsToLocation(selectedExts)
+        except Exception as e:
+            StackTraceMessageBox.show(self,
+                self.tr("Error showing excluded extensions"),
+                str(e))
+
+    def __addExtensionsToLocation(self, extensions: List[str]) -> None:
+        """Add selected extensions to current location configuration."""
+        currentExts = self.ui.settingsItem.extensions()
+        extSet = set(ext.strip() for ext in currentExts.split(",") if ext.strip())
+        extSet.update(extensions)
+        self.ui.settingsItem.ui.comboExtensions.lineEdit().setText(",".join(sorted(extSet)))
+        self.ui.settingsItem.dataChanged.emit()
 
     def __defaultLocationChanged(self, listviewCurrent: QListView, listviewOther: QListView, newDefaultRow: int) -> None:
         if itemDelegate := cast(Optional[SettingsEditorDelegate], listviewCurrent.itemDelegate()):
