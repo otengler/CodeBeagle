@@ -45,11 +45,11 @@ userHintNewVersionAvailable = """
 
 def main() -> None:
     # dark title bar on Win
-    if os.name == "nt":
+    if sys.platform == "win32":
         if AppConfig.appConfig().theme == AppConfig.darkTheme:
             # https://www.qt.io/blog/dark-mode-on-windows-11-with-qt-6.5
             os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=1"
-    elif os.name == "posix":
+    elif sys.platform == "linux":
         installDesktopFile()
 
     app = QApplication(sys.argv)

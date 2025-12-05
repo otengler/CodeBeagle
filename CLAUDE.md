@@ -236,9 +236,10 @@ Search logic is in `fulltextindex/FullTextIndex.py`. The search uses a keyword-b
 
 ### Platform-Specific Code
 
-Check `os.name`:
-- `"nt"` for Windows
-- `"posix"` for Linux/Mac
+Check `sys.platform`:
+- `"win32"` for Windows
+- `"linux"` for Linux
+- `"darwin"` for Mac OS X
 
 Example: Windows uses `.pyw` extension and `Win32GUI` base for cx_Freeze, Linux/Mac use `.py` and no base.
 

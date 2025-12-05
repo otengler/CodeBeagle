@@ -1,4 +1,4 @@
-import os
+import sys
 from cx_Freeze import setup, Executable
 import AppConfig
 
@@ -10,7 +10,7 @@ options = {
 
 targetBase = None
 codeBeagleScript = None
-if os.name == "nt":
+if sys.platform == "win32":
     print("Using Windows settings")
     codeBeagleScript = "CodeBeagle.pyw"
     targetBase = "Win32GUI"

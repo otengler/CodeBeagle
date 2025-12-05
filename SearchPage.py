@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
+import os, sys
 from typing import List, Tuple, Optional, cast
 from enum import IntEnum
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint, QUrl, QModelIndex, QPropertyAnimation, QEasingCurve
@@ -646,7 +646,7 @@ class SearchPage (QWidget):
             clipboard.setText(text)
 
     def __browseToFolder (self,  name: str) -> None:
-        if os.name != "nt":
+        if sys.platform != "win32":
             url = QUrl.fromLocalFile (os.path.split(name)[0])
             QDesktopServices.openUrl (url)
         else:

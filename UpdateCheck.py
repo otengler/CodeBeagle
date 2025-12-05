@@ -39,7 +39,7 @@ class UpdateCheckThread (QThread):
             print(exceptionAsString())
 
     def __runInternal(self) -> None:
-        if os.name != "nt":
+        if sys.platform != "win32":
             # MAC and Linux: Use the certificates provided by the certifi package
             import ssl, certifi
             url = urlopen("https://raw.githubusercontent.com/otengler/CodeBeagle/main/VERSION", context=ssl.create_default_context(cafile=certifi.where()))

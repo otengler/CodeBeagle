@@ -231,7 +231,7 @@ class PidFile:
 
 def isProcessAlive(pid: int) -> bool:
     """Check whether pid exists in the current process table."""
-    if os.name == 'posix':
+    if sys.platform != "win32":
         import errno
         if pid < 0:
             return False
