@@ -26,12 +26,12 @@ jobs:
         pip install -r requirements.txt
     - name: Setup Node.js environment
       uses: actions/setup-node@v3.2.0
+    - name: Run build
+      run: .\build-windows-freeze.ps1
     - name: Run mypy
       run: |
         # stop the build if there are Python syntax errors or undefined names
         mypy
-    - name: Run build
-      run: .\build-windows-freeze.ps1
     - name: Read version number
       id: get_version
       shell: bash

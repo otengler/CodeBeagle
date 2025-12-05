@@ -26,14 +26,14 @@ jobs:
         pip install -r requirements.txt
     - name: Setup Node.js environment
       uses: actions/setup-node@v3.2.0
-    - name: Run mypy
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        mypy
     - name: Run build
       run: |
         chmod +x build-*.sh
         ./build-unix-freeze.sh linux
+    - name: Run mypy
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        mypy
     - name: Read version number
       id: get_version
       run: echo "version=$(node -p "JSON.parse(fs.readFileSync('./VERSION', 'utf8')).version")" >> $GITHUB_OUTPUT
