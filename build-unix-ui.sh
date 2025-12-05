@@ -16,6 +16,7 @@
 "$PYUIC" --from-imports -o dialogs/Ui_StackTraceMessageBox.py -x dialogs/StackTraceMessageBox.ui
 "$PYUIC" --from-imports -o dialogs/Ui_ProgressBar.py -x dialogs/ProgressBar.ui 
 "$PYUIC" --from-imports -o dialogs/Ui_CheckableItemsDialog.py -x dialogs/CheckableItemsDialog.ui 
+"$PYUIC" --from-imports -o dialogs/Ui_ExcludedExtensionsDialog.py -x dialogs/ExcludedExtensionsDialog.ui 
 "$PYUIC" --from-imports -o dialogs/Ui_UserHintDialog.py -x dialogs/UserHintDialog.ui 
 "$PYUIC" --from-imports -o dialogs/Ui_GotoLineDialog.py -x dialogs/GotoLineDialog.ui
 "$PYUIC" --from-imports -o dialogs/Ui_HelpViewerDialog.py -x dialogs/HelpViewerDialog.ui 
