@@ -55,12 +55,6 @@ UI files (`.ui`) must be compiled to Python after changes:
 
 This generates `Ui_*.py` files from Qt Designer `.ui` files.
 
-### Linting
-
-```bash
-flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude '.venv'
-```
-
 ### Testing
 
 Run unit tests:
