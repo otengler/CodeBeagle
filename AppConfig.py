@@ -22,7 +22,7 @@ from tools import Config, FileTools
 
 def readVersion() -> str:
     if os.path.isfile("VERSION"):
-        return str(json.load(open("VERSION", "r"))["version"])
+        return str(json.load(open("VERSION", "r"))["local"])
     return "1.0.0"
 
 appName = "CodeBeagle"
