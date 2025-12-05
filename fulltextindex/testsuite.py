@@ -20,7 +20,7 @@ import os
 import unittest
 import shutil
 import stat
-from typing import Callable, List, Tuple, cast
+from typing import Callable, List
 from .FullTextIndex import FullTextIndex, Keyword, buildMapFromCommonKeywordFile
 from .Query import ContentQuery, FileQuery, QueryParams
 from .IndexUpdater import IndexUpdater, UpdateStatistics
@@ -38,7 +38,7 @@ def delDir (name: str) -> None:
     try:
         removeReadOnly (name)
         shutil.rmtree(name)
-    except WindowsError as e:
+    except WindowsError as e: # type: ignore
         if e.winerror != 3:
             raise
 

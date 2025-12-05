@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
+import os, sys
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from PyQt5.QtCore import QObject, pyqtSignal
@@ -88,12 +88,16 @@ class ExecuteProgramTask (ContextMenuTask):
     def __executeProgram(self) -> bool:
         args = os.path.expandvars(self.args)
         argList = shlex.split(args)
-        si = subprocess.STARTUPINFO()
-        if not self.bShowWindow:
-            si.dwFlags = subprocess.STARTF_USESHOWWINDOW
-            si.wShowWindow = subprocess.SW_HIDE
+        
         try:
-            subprocess.Popen ([self.program] + argList,  startupinfo=si)
+            if sys.platform == "win32":
+                si = subprocess.STARTUPINFO()
+                if not self.bShowWindow:
+                    si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+                    si.wShowWindow = subprocess.SW_HIDE
+                subprocess.Popen ([self.program] + argList,  startupinfo=si)
+            else:
+                subprocess.Popen ([self.program] + argList)
             return True
         except:
             return False

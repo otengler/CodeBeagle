@@ -231,16 +231,14 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         if runningInInterpreter:
             subprocess.Popen ([sys.executable, "UpdateIndex.py"] + args)
         else:
-            if os.path.exists("UpdateIndex.exe"):
+            if sys.platform == "win32":
                 si = subprocess.STARTUPINFO()
                 si.dwFlags = subprocess.STARTF_USESHOWWINDOW
                 si.wShowWindow = subprocess.SW_HIDE
                 subprocess.Popen (["UpdateIndex.exe"] + args,  startupinfo=si)
-            elif os.path.exists("UpdateIndex"):
+            else:
                 updateIndex = os.path.join(os.getcwd(), "UpdateIndex")
                 subprocess.Popen ([updateIndex] + args)
-            else:
-                raise RuntimeError("UpdateIndex executable not found")
 
         self.__watchForIndexUpdate()
 
@@ -371,13 +369,13 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         if runningInInterpreter:
             subprocess.Popen ([sys.executable, "CodeBeagle.pyw"])
         else:
-            if os.path.exists("CodeBeagle.exe"):
+            if sys.platform == "win32":
                 si = subprocess.STARTUPINFO()
                 si.dwFlags = subprocess.STARTF_USESHOWWINDOW
                 si.wShowWindow = subprocess.SW_HIDE
                 subprocess.Popen (["CodeBeagle.exe"], startupinfo=si)
             else:
-                raise RuntimeError("CodeBeagle.exe not found")
+                subprocess.Popen (["CodeBeagle"])
 
     def userConfigFailedToLoadMessage(self) -> None:
         StackTraceMessageBox.show(self,
