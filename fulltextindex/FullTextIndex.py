@@ -178,9 +178,9 @@ class FullTextIndex (IndexDatabase):
                 return []
         return result
 
-    def __filterDocsBySearchPhrase(self, action: ReportAction, results: Iterable[str], query: ContentQuery, 
-                                   cancelEvent: Optional[threading.Event]=None, 
-                                   reportProgress: Optional[ProgressFunction]=None, lenResults=0) -> SearchResult:
+    def __filterDocsBySearchPhrase(self, action: ReportAction, results: Iterable[str], query: ContentQuery,
+                                   cancelEvent: Optional[threading.Event]=None,
+                                   reportProgress: Optional[ProgressFunction]=None, lenResults: int = 0) -> SearchResult:
         finalResults = []
         reExpr = query.regExForMatches()
         action.addData("RegEx: %s", reExpr.pattern)

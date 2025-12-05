@@ -20,9 +20,9 @@ import os, json
 from typing import Optional, Tuple, Callable, cast
 from tools import Config, FileTools
 
-def readVersion():
+def readVersion() -> str:
     if os.path.isfile("VERSION"):
-        return json.load(open("VERSION", "r"))["version"]
+        return str(json.load(open("VERSION", "r"))["version"])
     return "1.0.0"
 
 appName = "CodeBeagle"

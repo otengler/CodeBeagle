@@ -513,8 +513,6 @@ class TestFullTextIndex(unittest.TestCase):
         print("\n================== Excluded Extensions Test2 ==================")
         # Use getExcludedExtensions to retrieve the data
         results = updater.getExcludedExtensions()
-        self.assertIsNotNone(results)
-        assert results is not None  # Type guard for mypy
 
         # Convert to dictionary for easier verification
         excludedExts: dict[str, int] = {ext: count for ext, count in results}
@@ -547,8 +545,6 @@ class TestFullTextIndex(unittest.TestCase):
 
         # Use getExcludedExtensions to retrieve the data from the new index run
         newResults = updater.getExcludedExtensions()
-        self.assertIsNotNone(newResults)
-        assert newResults is not None  # Type guard for mypy
         newExcludedExts: dict[str, int] = {ext: count for ext, count in newResults}
 
         # Verify .jpg count increased to 4
@@ -581,8 +577,6 @@ class TestFullTextIndex(unittest.TestCase):
 
         # Use getExcludedExtensions - should return empty list
         finalResults = updater.getExcludedExtensions()
-        self.assertIsNotNone(finalResults)
-        assert finalResults is not None  # Type guard for mypy
         self.assertEqual(len(finalResults), 0)  # No excluded extensions
 
         # Clean up

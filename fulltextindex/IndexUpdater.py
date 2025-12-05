@@ -213,7 +213,7 @@ class IndexUpdater (IndexDatabase):
 
         Returns:
             List of tuples (extension, fileCount) sorted by count descending,
-            or None if no data is available
+            or empty list if no data is available
 
         Raises:
             sqlite3.Error: If there's a database error
@@ -224,7 +224,7 @@ class IndexUpdater (IndexDatabase):
         cursor.execute("SELECT MAX(id) FROM indexInfo")
         result = cursor.fetchone()
         if not result or result[0] is None:
-            return None
+            return []
 
         mostRecentIndexID = result[0]
 

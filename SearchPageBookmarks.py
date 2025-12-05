@@ -16,14 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, Callable
+from typing import Optional, Callable, TYPE_CHECKING
 from StringListModel import StringListModel
 from PyQt5.QtCore import Qt, QObject, pyqtSlot
 from tools.QHelper import createQAction
 from BookmarkStorage import getBookmarkStorage
 
+if TYPE_CHECKING:
+    from SearchPage import SearchPage
+
 class SearchPageBookmarks (QObject):
-    def __init__(self, searchPage) -> None:
+    def __init__(self, searchPage: "SearchPage") -> None:
         from SearchPage import SearchPage # avoid circular import
         super().__init__(searchPage)
         self.searchPage = searchPage # type: SearchPage

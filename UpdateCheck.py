@@ -57,7 +57,7 @@ class UpdateCheck (QObject):
     """
     newerVersionFound = pyqtSignal('QString')
 
-    def __init__ (self,  lastUpdateCheck: Optional[int] = None, parent: Optional[QObject] = None) -> None:
+    def __init__ (self,  parent: Optional[QObject] = None, lastUpdateCheck: Optional[int] = None) -> None:
         super().__init__(parent)
         self.lastUpdateCheck: Optional[int] = lastUpdateCheck
         self.updateThread: Optional[UpdateCheckThread] = None
@@ -73,7 +73,7 @@ class UpdateCheck (QObject):
             now = QDateTime.currentDateTime()
             if self.lastUpdateCheck:
                 nextCheck = QDateTime.fromMSecsSinceEpoch (self.lastUpdateCheck).addDays(updateCheckPeriod)
-                if now < nextCheck:
+                if now.secsTo(nextCheck) > 0:
                     return
             self.lastUpdateCheck = now.toMSecsSinceEpoch()
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Tuple, List, Optional, Pattern
+from typing import Tuple, List, Optional, Pattern, Union
 import bisect
 import re
 import unittest
@@ -92,9 +92,9 @@ class HighlightingRules:
         return fmt
 
 class SyntaxHighlighter:
-    matchBackgroundColor = Qt.GlobalColor.yellow
-    matchBackgroundColorLigher  = QColor.lighter(QColor(Qt.GlobalColor.yellow))
-    matchForegroundColor = Qt.GlobalColor.black
+    matchBackgroundColor: Union[QColor, Qt.GlobalColor] = Qt.GlobalColor.yellow
+    matchBackgroundColorLigher: QColor = QColor.lighter(QColor(Qt.GlobalColor.yellow))
+    matchForegroundColor: Union[QColor, Qt.GlobalColor] = Qt.GlobalColor.black
     match2BackgroundColor = QColor(194, 217, 255)
     match2ForegroundColor = Qt.GlobalColor.black
 
@@ -127,7 +127,7 @@ class SyntaxHighlighter:
             strFormat.setFontWeight(QFont.Bold)
 
     # Find all comments in the document and store them as TextSpan objects in self.comments
-    def setTextDocument(self, text: str, filename = "") -> None:
+    def setTextDocument(self, text: str, filename: str = "") -> None:
         self.filename = filename
         if not self.highlightingRules:
             self.comments = []

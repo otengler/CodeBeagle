@@ -7,7 +7,8 @@
       "Bash(dir:*)",
       "Bash(flake8:*)",
       "Bash(.\\.venv\\Scripts\\python.exe:*)",
-      "Bash(.build-windows-ui.ps1)"
+      "Bash(.build-windows-ui.ps1)",
+      "Bash(findstr:*)"
     ],
     "deny": [
       "Read(./.venv/**)"

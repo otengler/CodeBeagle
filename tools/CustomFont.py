@@ -1,7 +1,7 @@
 import os
 from PyQt5.QtGui import QFontDatabase
 
-def installCustomFont():
+def installCustomFont() -> None:
     fontDir = os.path.join("resources", "font")
     try:
         for name in os.listdir(fontDir):

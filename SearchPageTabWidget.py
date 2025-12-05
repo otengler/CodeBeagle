@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
-from typing import List, Optional
+from typing import List, Optional, cast
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPushButton
@@ -54,7 +54,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         self.indexOfUpdateButton:int
         self.buttonHelp: QPushButton
         self.buttonAbout: QPushButton
-        self.labelUpdate: Optional[QLabel]
+        self.labelUpdate: Optional[AnimatedProgressWidget]
 
         super().__init__(parent)
 
@@ -291,7 +291,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     pos.setX(pos.x())
                     QToolTip.showText (pos, text,  self)
 
-    def __addAnimatedUpdateLabel (self,  hbox: QHBoxLayout,  text: str) -> QWidget:
+    def __addAnimatedUpdateLabel (self,  hbox: QHBoxLayout,  text: str) -> AnimatedProgressWidget:
         widget = AnimatedProgressWidget (self, text)
         widget.hide()
         hbox.insertWidget(self.indexOfUpdateButton,  widget)
@@ -311,28 +311,31 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             self.labelUpdate.hide()
             self.buttonSettings.setEnabled(True)
 
-    def newTabAdded(self,  prevTabWidget:Optional[SearchPage], newTabWidget:SearchPage) -> None:
+    def newTabAdded(self, prevTabWidget: Optional[QWidget], newTabWidget: QWidget) -> None:
         """
         This is called by the base class when a new tab is added. We use this to connect the request for a new search
         to open up in a new tab.
         """
-        newTabWidget.newSearchRequested.connect (self.searchInNewTab)
-        newTabWidget.searchFinished.connect (self.changeTabName)
-        newTabWidget.documentShown.connect (self.requestWindowTitleChange)
+        newTab = cast(SearchPage, newTabWidget)
+        newTab.newSearchRequested.connect (self.searchInNewTab)
+        newTab.searchFinished.connect (self.changeTabName)
+        newTab.documentShown.connect (self.requestWindowTitleChange)
         self.requestWindowTitleChange.emit("")
-        newTabWidget.ui.sourceViewer.directoryDropped.connect(self.addSearchLocationFromPath)
-        self.configChanged.connect (newTabWidget.reloadConfig)
+        newTab.ui.sourceViewer.directoryDropped.connect(self.addSearchLocationFromPath)
+        self.configChanged.connect (newTab.reloadConfig)
         # Initially reload the config to pass the current search locations to the search page
-        newTabWidget.reloadConfig(IndexConfiguration.readConfig(AppConfig.appConfig()))
+        newTab.reloadConfig(IndexConfiguration.readConfig(AppConfig.appConfig()))
 
         # Copy search location from previous search page
         if prevTabWidget:
-            newTabWidget.setCurrentSearchLocation(prevTabWidget.currentConfigName)
+            prevTab = cast(SearchPage, prevTabWidget)
+            newTab.setCurrentSearchLocation(prevTab.currentConfigName)
 
     @pyqtSlot(str, str)
     def searchInNewTab (self, text: str, searchLocationName: str) -> None:
-        searchPage = self.addNewTab ()
-        if searchPage:
+        widget = self.addNewTab ()
+        if widget:
+            searchPage = cast(SearchPage, widget)
             searchPage.setCurrentSearchLocation(searchLocationName)
             searchPage.searchForText(text)
 

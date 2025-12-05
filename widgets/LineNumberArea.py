@@ -29,7 +29,7 @@ class LineNumberArea (QWidget):
     areaColor = QColor(235,235,235)
     textColor = QColor(130,130,130)
 
-    def __init__(self, textEdit: QPlainTextEdit, firstLineNumber:int = 1, enableBookmarks = False) -> None:
+    def __init__(self, textEdit: QPlainTextEdit, firstLineNumber: int = 1, enableBookmarks: bool = False) -> None:
         super().__init__(textEdit)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.textEdit: QPlainTextEdit = textEdit

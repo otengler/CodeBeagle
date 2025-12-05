@@ -242,7 +242,7 @@ class SearchPage (QWidget):
         else:
             self.ui.stackedWidget.setCurrentIndex(0)
 
-    def __showRegexDialogIcon(self):
+    def __showRegexDialogIcon(self) -> None:
         self.ui.buttonRegEx.setVisible(AppConfig.appConfig().showRegexDialog)
 
     def __updateSourceFont (self) -> QFont:
@@ -499,12 +499,12 @@ class SearchPage (QWidget):
         self.searchStateIndex = len(self.searchStateList) - 1
         self.__updateBackForwardButtons()
 
-    def __updateBackForwardButtons(self):
+    def __updateBackForwardButtons(self) -> None:
         self.ui.buttonBackward.setEnabled(self.searchStateIndex > 0)
         self.ui.buttonForward.setEnabled(self.searchStateIndex + 1 < len(self.searchStateList))
 
     @pyqtSlot()
-    def backwardClicked(self):
+    def backwardClicked(self) -> None:
         self.__rememberSelectedFileInState()
         self.searchStateIndex -= 1
         if self.searchStateIndex < 0:
@@ -512,11 +512,11 @@ class SearchPage (QWidget):
         self.__updateUIFromSearchState()
 
     @pyqtSlot()
-    def forwardClicked(self):
+    def forwardClicked(self) -> None:
         self.__rememberSelectedFileInState()
         self.searchStateIndex += 1
         if self.searchStateIndex + 1 > len(self.searchStateList):
-            self.searchStateIndex = len(self.searchStateIndex) - 1
+            self.searchStateIndex = len(self.searchStateList) - 1
         self.__updateUIFromSearchState()
 
     def __rememberSelectedFileInState(self) -> None:
@@ -527,7 +527,7 @@ class SearchPage (QWidget):
             return
         self.searchStateList[self.searchStateIndex].selectedFileIndex = model.getSelectedFileIndex()
 
-    def __updateUIFromSearchState(self):
+    def __updateUIFromSearchState(self) -> None:
         if self.searchStateIndex >= len(self.searchStateList):
             return
         state = self.searchStateList[self.searchStateIndex]

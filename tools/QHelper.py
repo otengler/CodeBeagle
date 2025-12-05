@@ -22,9 +22,10 @@ from PyQt5.QtGui import QKeySequence
 from typing import Optional, Union, Callable, Any
 
 def createQAction(parent: Optional[QObject],
-                  shortcut: Union[QKeySequence, QKeySequence.StandardKey, Optional[str], int], 
+                  shortcut: Optional[Union[QKeySequence, QKeySequence.StandardKey, str, int]],
                   triggered: Union[Callable[..., Any], pyqtBoundSignal]) -> QAction:
     action = QAction(parent)
-    action.setShortcut(shortcut)
+    if shortcut is not None:
+        action.setShortcut(shortcut)
     action.triggered.connect(triggered)
     return action

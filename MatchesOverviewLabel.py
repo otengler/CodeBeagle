@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, Callable
+from typing import Optional, Callable, cast
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QIcon, QPixmap
 from widgets.RecyclingVerticalScrollArea import ScrollAreaItem
@@ -44,7 +44,7 @@ class MatchesOverviewLabelItem (ScrollAreaItem):
         return MatchesOverviewLabel(parent)
 
     def configureItem(self, item: QWidget) -> None:
-        overviewLabel = item # type: MatchesOverviewLabel
+        overviewLabel = cast(MatchesOverviewLabel, item)
         overviewLabel.setFixedHeight(self.height)
         overviewLabel.ui.labelText.setText("<b>" + self.fileName + "</b>")
         if self.navigateToCallback:

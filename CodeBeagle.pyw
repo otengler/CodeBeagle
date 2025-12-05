@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         lastUpdateCheck: Optional[int] = None
         if self.appSettings.value("lastUpdateCheck"):
             lastUpdateCheck = int(self.appSettings.value("lastUpdateCheck"))
-        self.updateCheck = UpdateCheck(lastUpdateCheck, self)
+        self.updateCheck = UpdateCheck(self, lastUpdateCheck)
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
 
@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
         else:
             self.setWindowTitle(self.initialWindowTitle)
 
-def installDesktopFile():
+def installDesktopFile() -> None:
     try:
         targetDir = os.path.join(os.environ["HOME"], ".local/share/applications")
         if not os.path.isdir(targetDir):

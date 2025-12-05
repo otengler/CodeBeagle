@@ -18,16 +18,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import re
-from typing import List, Optional, Pattern, Match
+from typing import List, Optional, Pattern, Match, Union
 from enum import IntEnum
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont
+from PyQt5.QtCore import Qt, QObject, pyqtSlot
+from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
 from PyQt5.QtWidgets import QDialog, QApplication, QWidget
 from .Ui_RegExTesterDlg import Ui_RegExTesterDlg
 
 class ExprHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent: Optional[QWidget]=None) -> None:
-        super().__init__(parent)
+    def __init__(self, parent: Optional[QObject]=None) -> None:
+        super().__init__(parent if parent is not None else QObject())
 
         self.bracketFormat = QTextCharFormat()
         self.bracketFormat.setFontWeight(QFont.Bold)
@@ -50,8 +50,8 @@ class SearchModes(IntEnum):
     Match = 3
 
 class TextHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent: Optional[QWidget]=None) -> None:
-        super().__init__(parent)
+    def __init__(self, parent: Optional[QObject]=None) -> None:
+        super().__init__(parent if parent is not None else QObject())
 
         self.matchFormat = QTextCharFormat()
         self.matchFormat.setBackground(RegExTesterDlg.matchBackgroundColor)
@@ -118,9 +118,9 @@ class TextHighlighter(QSyntaxHighlighter):
                     groupFormatIndex = (groupFormatIndex+1)%len(self.groupFormats)
 
 class RegExTesterDlg (QDialog):
-    bracketColor = Qt.GlobalColor.darkBlue
-    repeatColor = Qt.GlobalColor.darkRed
-    matchBackgroundColor = Qt.GlobalColor.yellow
+    bracketColor: Union[QColor, Qt.GlobalColor] = Qt.GlobalColor.darkBlue
+    repeatColor: Union[QColor, Qt.GlobalColor] = Qt.GlobalColor.darkRed
+    matchBackgroundColor: Union[QColor, Qt.GlobalColor] = Qt.GlobalColor.yellow
     groupColors = [Qt.GlobalColor.green, Qt.GlobalColor.cyan, Qt.GlobalColor.gray, Qt.GlobalColor.blue,  Qt.GlobalColor.magenta]
 
     def __init__ (self, parent: Optional[QWidget]=None) -> None:

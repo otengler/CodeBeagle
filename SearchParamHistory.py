@@ -1,29 +1,30 @@
+from typing import Optional, Dict, Any, cast
 from PyQt5.QtCore import Qt, QAbstractItemModel, QAbstractListModel, QSettings, QModelIndex, QVariant
 import AppConfig
    
 # This is like QStringListModel with the only exception that setData does not raise signals.
 # This caused combox boxes to change selection.
 class MyStringListModel(QAbstractListModel):
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QAbstractItemModel] = None) -> None:
         super().__init__(parent)
-        self._data = []  # list of strings
+        self._data: list[str] = []  # list of strings
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         if parent.isValid():
             return 0  # No children for any row (flat list)
         return len(self._data)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return QVariant()
-        if role in [Qt.DisplayRole, Qt.EditRole]:
+        if role in [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole]:
             return self._data[index.row()]
         return QVariant()
 
-    def flags(self, index):
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
         if not index.isValid():
-            return Qt.NoItemFlags
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+            return cast(Qt.ItemFlags, Qt.ItemFlag.NoItemFlags)
+        return cast(Qt.ItemFlags, Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
 
     def removeRows(self, row: int, count: int, parent: QModelIndex = QModelIndex()) -> bool:
         if row < 0:
@@ -37,8 +38,8 @@ class MyStringListModel(QAbstractListModel):
         self._data = self._data[0:row] + [""] * count + self._data[row:]
         return True
 
-    def setData(self, index, value, role=Qt.DisplayRole):
-        if index.isValid() and role in [Qt.DisplayRole, Qt.EditRole]:
+    def setData(self, index: QModelIndex, value: Any, role: int = Qt.ItemDataRole.DisplayRole) -> bool:
+        if index.isValid() and role in [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole]:
             self._data[index.row()] = value
             # Normally we should now raise "dataChanged". But we explicitly do not do this because it changes the selected item
             # for combo boxes on other tabs.
@@ -107,8 +108,8 @@ class SearchParamHistory:
                 self.itemModel.endRemoveRows()
 
 class SearchParamHistoryCollection:
-    def __init__(self):
-        self.histories = {}
+    def __init__(self) -> None:
+        self.histories: Dict[str, SearchParamHistory] = {}
 
     def get(self, storageKey: str) -> SearchParamHistory:
         if storageKey in self.histories:
@@ -119,5 +120,5 @@ class SearchParamHistoryCollection:
         return history
 
 paramHistory = SearchParamHistoryCollection()
-def getSearchParamHistory(storageKey: str):
+def getSearchParamHistory(storageKey: str) -> SearchParamHistory:
     return paramHistory.get(storageKey)

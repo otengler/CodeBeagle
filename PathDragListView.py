@@ -26,13 +26,13 @@ class PathDragListView (QListView):
         super().__init__(parent)
         self.startPos: Optional[QPoint] = None
 
-    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
-        if event and event.button() == Qt.MouseButton.LeftButton:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.startPos = event.pos()
         super ().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: Optional[QMouseEvent]) -> None:
-        if self.startPos and event and event.buttons() and Qt.MouseButton.LeftButton:
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if self.startPos and event.buttons() and Qt.MouseButton.LeftButton:
             distance = (event.pos() - self.startPos).manhattanLength()
             if distance >= QApplication.startDragDistance():
                 self.performDrag()

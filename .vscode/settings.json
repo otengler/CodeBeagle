@@ -1,6 +1,5 @@
 {
     "files.exclude": {
-        "**/*_rc.py": true,
         "**/Ui_*.py": true,
         "__pycache__": true,
         ".venv": true

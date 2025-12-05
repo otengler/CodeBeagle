@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Any, List, Iterator, Tuple, Dict, DefaultDict, Optional
+from typing import Any, List, Iterator, Tuple, Dict, DefaultDict, Optional, cast
 from abc import ABC,abstractmethod
 import bisect
 import collections
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QLabel, QLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QLabel, QLayout, QLayoutItem, QScrollArea, QWidget
 
 def doLinesIntersect (y1: int, length1: int, y2: int, length2: int) -> bool:
     if y1 < y2:
@@ -62,7 +62,7 @@ class Labeltem (ScrollAreaItem):
             text = "<b>" + self.text + "</b>"
         else:
             text = self.text
-        item.setText(text)
+        cast(QLabel, item).setText(text)
 
     def getType(self) -> str:
         return "QLabel"
@@ -125,10 +125,10 @@ class EmptyLayout(QLayout):
     This layout works around the problem that child wigets of the scrollarea widget are invisible if the scrollarea widget
     has no layout. If this is a bug or as designed - I don't know.
     """
-    def itemAt(self, _: int) -> None:
+    def itemAt(self, _: int) -> Optional[QLayoutItem]:  # type: ignore[override]
         return None
 
-    def takeAt(self, _: int) -> None:
+    def takeAt(self, _: int) -> Optional[QLayoutItem]:  # type: ignore[override]
         return None
 
     def count(self) -> int:
@@ -155,7 +155,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
         if self.items:
             self.ensureVisible (0, self.items.itemYPos(index),  0,  int(self.height()/2))
 
-    def resizeEvent(self, event: Optional[QResizeEvent]) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self.__refreshItems()
 
@@ -199,7 +199,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
         for ident, w in self.activeWidgets.items():
             wg = w.geometry()
             if not doLinesIntersect (y, height,  wg.top(),  wg.height()):
-                self.reservedWidgets[str(w.__itemTypeName__)].append(w)
+                self.reservedWidgets[str(w.__itemTypeName__)].append(w)  # type: ignore[attr-defined]
                 inactive.append(ident)
         for ident in inactive:
             del self.activeWidgets[ident]
@@ -214,7 +214,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
                 else:
                     # No element left, create a new one
                     w = item.generateItem (self.widget())
-                    w.__itemTypeName__ = typeName
+                    w.__itemTypeName__ = typeName  # type: ignore[attr-defined]
                     w.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
                 item.configureItem(w)
                 w.move(self.items.spacing, itemY)

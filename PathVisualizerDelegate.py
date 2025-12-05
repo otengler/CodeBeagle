@@ -23,22 +23,22 @@ from PyQt5.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
 from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
 
 class PathVisualizerDelegate (QStyledItemDelegate):
-    newPathColor = QColor(50, 50, 50)
-    samePathColor = QColor(150, 150, 150)
-    fileColor = QColor(0, 0, 50)
-    selectedPathColor = QColor(50, 50, 50)
-    selectedFileColor = QColor(0, 0, 50)
-    selectionBackground = QColor(205, 232, 255)
+    newPathColor: QColor|QPen = QColor(50, 50, 50)
+    samePathColor: QColor|QPen = QColor(150, 150, 150)
+    fileColor: QColor|QPen = QColor(0, 0, 50)
+    selectedPathColor: QColor|QPen = QColor(50, 50, 50)
+    selectedFileColor: QColor|QPen = QColor(0, 0, 50)
+    selectionBackground: QColor = QColor(205, 232, 255)
 
     """Parent must be the view (otherwise the focus drawing doesn't work)"""
     def __init__ (self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.newPathColor = QPen(PathVisualizerDelegate.newPathColor)
-        self.samePathColor = QPen(PathVisualizerDelegate.samePathColor)
-        self.fileColor = QPen(PathVisualizerDelegate.fileColor)
-        self.selectedPathColor = QPen(PathVisualizerDelegate.selectedPathColor)
-        self.seletedFileColor = QPen(PathVisualizerDelegate.selectedFileColor)
-        self.selectionBackground = QColor(PathVisualizerDelegate.selectionBackground)
+        self.newPathColor: QPen = QPen(PathVisualizerDelegate.newPathColor)
+        self.samePathColor: QPen = QPen(PathVisualizerDelegate.samePathColor)
+        self.fileColor: QPen = QPen(PathVisualizerDelegate.fileColor)
+        self.selectedPathColor: QPen = QPen(PathVisualizerDelegate.selectedPathColor)
+        self.seletedFileColor: QPen = QPen(PathVisualizerDelegate.selectedFileColor)
+        self.selectionBackground: QColor = QColor(PathVisualizerDelegate.selectionBackground)
         if parent:
             self.pathBoldFont = QFont (parent.font())
         else:

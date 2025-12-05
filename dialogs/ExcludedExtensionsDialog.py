@@ -61,7 +61,7 @@ class ExcludedExtensionsDialog(QDialog):
             countItem = QTableWidgetItem(str(count))
             countItem.setFlags(countItem.flags() & ~Qt.ItemFlag.ItemIsEditable)
             # Right-align the count
-            countItem.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            countItem.setTextAlignment(int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter))
             self.ui.tableExtensions.setItem(row, 1, countItem)
 
         # Resize columns to content

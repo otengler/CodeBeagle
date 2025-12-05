@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import List, Optional, Pattern
+from typing import List, Optional, Pattern, Iterator
 import bisect
 import re
 import unittest
@@ -41,7 +41,7 @@ class TextSegments:
     strings: List[TextSpan] 
     comments: List[TextSpan]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[List[TextSpan]]:
         # return values in order you want to unpack
         yield self.strings
         yield self.comments
@@ -239,7 +239,7 @@ class TestGetAllStrings(unittest.TestCase):
                 quotedStrings.append(TextSpan(start,stop-start+1))
             findAllStringTest(self, line, quotedStrings, findTripleQuotes=findTripleQuotes)
 
-def findAllStringTest(test: unittest.TestCase, line: str, expected: list, findTripleQuotes = False):
+def findAllStringTest(test: unittest.TestCase, line: str, expected: list, findTripleQuotes: bool = False) -> None:
     r = findAllStrings(line, findTripleQuotes)
     test.assertListEqual(r, expected)
 

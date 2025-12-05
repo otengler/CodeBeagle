@@ -36,12 +36,12 @@ class AboutDialog(QDialog):
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.__checkForUpdate()
 
-    def __checkForUpdate(self):
+    def __checkForUpdate(self) -> None:
         self.updateCheck = UpdateCheck(self)
         self.updateCheck.newerVersionFound.connect(self.__newerVersionFound)
         self.updateCheck.checkForUpdates(forceCheck=True)
 
-    def __newerVersionFound(self, version: str):
+    def __newerVersionFound(self, version: str) -> None:
         
         text = self.ui.labelUpdateAvailable.text()
         text = text.replace("{version}", version)

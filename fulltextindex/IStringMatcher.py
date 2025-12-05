@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from abc import ABC,abstractmethod
-from typing import Iterable, List
+from typing import Iterable, List, Iterator
 import bisect
 
 class MatchPosition:
@@ -28,7 +28,7 @@ class MatchPosition:
     def __lt__ (self, other: 'MatchPosition') -> bool:
         return self.index < other.index
     
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         # return values in order you want to unpack
         yield self.index
         yield self.length

@@ -11,6 +11,7 @@ import logging
 import os
 import re
 import tempfile
+from typing import Dict, List, Tuple, Any
 
 # Third party imports
 from PyQt5.QtCore import QSize
@@ -41,7 +42,7 @@ TEMPLATE_QRC_FOOTER = '''
 _logger = logging.getLogger(__name__)
 
 
-def _get_file_color_map(fname, palette):
+def _get_file_color_map(fname: str, palette: Any) -> Dict[str, str]:
     """
     Return map of files (i.e states) to color from given palette.
     """
@@ -70,7 +71,7 @@ def _get_file_color_map(fname, palette):
     return file_colors
 
 
-def _create_colored_svg(svg_path, temp_svg_path, color):
+def _create_colored_svg(svg_path: str, temp_svg_path: str, color: str) -> None:
     """
     Replace base svg with fill color.
     """
@@ -84,7 +85,7 @@ def _create_colored_svg(svg_path, temp_svg_path, color):
         fh.write(new_data)
 
 
-def convert_svg_to_png(svg_path, png_path, height, width):
+def convert_svg_to_png(svg_path: str, png_path: str, height: int, width: int) -> None:
     """
     Convert svg files to png files using Qt.
     """
@@ -95,8 +96,8 @@ def convert_svg_to_png(svg_path, png_path, height, width):
     img.save(png_path)
 
 
-def create_palette_image(base_svg_path=SVG_PATH, path=IMAGES_PATH,
-                         palette=DarkPalette):
+def create_palette_image(base_svg_path: str = SVG_PATH, path: str = IMAGES_PATH,
+                         palette: Any = DarkPalette) -> Tuple[str, str]:
     """
     Create palette image svg and png image on specified path.
     """
@@ -128,8 +129,8 @@ def create_palette_image(base_svg_path=SVG_PATH, path=IMAGES_PATH,
     return palette_svg_path, palette_png_path
 
 
-def create_images(base_svg_path=SVG_PATH, rc_path=RC_PATH,
-                  palette=DarkPalette):
+def create_images(base_svg_path: str = SVG_PATH, rc_path: str = RC_PATH,
+                  palette: Any = DarkPalette) -> None:
     """Create resources `rc` png image files from base svg files and palette.
 
     Search all SVG files in `base_svg_path` excluding IMAGE_BLACKLIST,
@@ -219,7 +220,7 @@ def create_images(base_svg_path=SVG_PATH, rc_path=RC_PATH,
     _logger.info("RC links not in RC: %s" % rc_list)
 
 
-def generate_qrc_file(resource_prefix='qss_icons', style_prefix='qdarkstyle'):
+def generate_qrc_file(resource_prefix: str = 'qss_icons', style_prefix: str = 'qdarkstyle') -> None:
     """
     Generate the QRC file programmaticaly.
 
@@ -256,7 +257,7 @@ def generate_qrc_file(resource_prefix='qss_icons', style_prefix='qdarkstyle'):
         fh.write(qrc_content)
 
 
-def get_rc_links_from_scss(pattern=r"\/.*\.png"):
+def get_rc_links_from_scss(pattern: str = r"\/.*\.png") -> List[str]:
     """
     Get all rc links from scss file returning the list of unique links.
 

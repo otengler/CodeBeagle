@@ -20,7 +20,7 @@ import unittest
 import bisect
 import re
 import threading
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable, cast
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QFontMetrics, QFont, QWheelEvent
 from PyQt5.QtWidgets import QWidget
@@ -291,11 +291,11 @@ class MatchesOverview (QWidget):
         editItem = FixedSizeSourcePreviewItem (self, startLine, text, name, height)
         return self.scrollItems.addItem(editItem)
     
-    def __createNavigateToFileFunc(self, labelItem: MatchesOverviewLabelItem):
+    def __createNavigateToFileFunc(self, labelItem: MatchesOverviewLabelItem) -> Callable[[], None]:
         return lambda: self.emitNavigateToFile(labelItem)
 
     @pyqtSlot(MatchesOverviewLabelItem)
-    def emitNavigateToFile(self, item: MatchesOverviewLabelItem):
+    def emitNavigateToFile(self, item: MatchesOverviewLabelItem) -> None:
         self.navigateToFile.emit(item.fileName, item.startLine)
 
 class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
@@ -312,14 +312,15 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         item.selectionFinishedWithKeyboardModifier.connect (self.matchesOverview.selectionFinishedWithKeyboardModifier)
         return item
 
-    def configureItem(self, item: FixedSizeSourcePreview) -> None:
+    def configureItem(self, item: QWidget) -> None:
+        preview = cast(FixedSizeSourcePreview, item)
         rules = HighlightingRulesCache.rules().getRulesByFileName(self.name, self.matchesOverview.sourceFont)
-        item.setFont(self.matchesOverview.sourceFont) 
-        item.setTabStopWidth(self.matchesOverview.tabWidth*10)
-        item.highlighter.setHighlightingRules (rules)
-        item.highlighter.setSearchData (self.matchesOverview.searchData)
-        item.setTextDocument(self.text, self.name)
-        item.showLineNumbers(True, self.startLine)
+        preview.setFont(self.matchesOverview.sourceFont)
+        preview.setTabStopWidth(self.matchesOverview.tabWidth*10)
+        preview.highlighter.setHighlightingRules (rules)
+        preview.highlighter.setSearchData (self.matchesOverview.searchData)
+        preview.setTextDocument(self.text, self.name)
+        preview.showLineNumbers(True, self.startLine)
 
     def getType(self) -> str:
         return "FixedSizeSourcePreview"

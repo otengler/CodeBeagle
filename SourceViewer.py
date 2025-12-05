@@ -310,7 +310,7 @@ class SourceViewer (QWidget):
 
         self.__updateCurrentLineExtraSelections(extras)
 
-    def __setCurrentLineSearchHighlights(self, lineStart, lineText) -> tuple[list, int]:
+    def __setCurrentLineSearchHighlights(self, lineStart: int, lineText: str) -> tuple[list, int]:
         """Returns a tuple of List[ExtraSelection],int. The int contains the nunber of search matches highlighted (not in document searches)"""
         extras = []
         matchCount = 0

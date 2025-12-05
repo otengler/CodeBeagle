@@ -113,7 +113,7 @@ class SettingsItem (QWidget):
             self.tr("Choose file for index DB"),
             "",
             self.tr("*.dat"),
-            None,
+            "",
             QFileDialog.Options(QFileDialog.DontConfirmOverwrite))[0] # tuple returned, selection and used filter
 
         if indexDB:

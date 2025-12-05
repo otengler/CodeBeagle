@@ -80,8 +80,7 @@ check.ps1
 The project uses strict mypy settings configured in `mypy.ini`:
 - `disallow_untyped_defs`: All functions must have type annotations
 - `warn_return_any`: Warns when returning Any from typed functions
-- `ignore_missing_imports`: Ignores missing stubs for third-party libraries
-- Auto-generated files (`Ui_*.py`, `*_rc.py`) are excluded from type checking
+- Auto-generated files (`Ui_*.py`) are excluded from type checking
 
 ### Dependencies
 

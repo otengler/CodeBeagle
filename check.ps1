@@ -1,2 +1,1 @@
-& .\.venv\Scripts\Activate.ps1
-& mypy .
+& .\.venv\Scripts\python.exe -m mypy

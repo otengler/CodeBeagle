@@ -95,13 +95,13 @@ class HighlightingTextEdit (QPlainTextEdit):
 
     def currentLineNumber(self) -> int:
         if self.lineNumberArea:
-            return self.textCursor().blockNumber() + self.lineNumberArea.firstLineNumber
+            return int(self.textCursor().blockNumber()) + self.lineNumberArea.firstLineNumber
         else:
-            return self.textCursor().blockNumber() + 1
+            return int(self.textCursor().blockNumber()) + 1
 
-    def resizeEvent(self, e: Optional[QResizeEvent]) -> None:
+    def resizeEvent(self, e: QResizeEvent) -> None:
         super().resizeEvent(e)
-        if self.lineNumberArea and e:
+        if self.lineNumberArea:
             self.lineNumberArea.reactOnResize(e)
 
     def setPlainText(self, text: Optional[str]) -> None:
@@ -109,7 +109,7 @@ class HighlightingTextEdit (QPlainTextEdit):
 
     def setTextDocument(self, text: Optional[str], filename: Optional[str] = None) -> None:
         if text:
-            self.highlighter.setTextDocument(text, filename)
+            self.highlighter.setTextDocument(text, filename or "")
             super().setPlainText(text)
 
     def setDynamicHighlight(self, text: str) -> None:
@@ -128,10 +128,10 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.lineNumberArea.setFont(font)
         self.rehighlight()
 
-    def wheelEvent(self, event: Optional[QWheelEvent]):
+    def wheelEvent(self, event: QWheelEvent) -> None:
         super().wheelEvent(event)
         # Qt automatically supports channging the font size using CTRL+mouse wheel. We need to intercept this to propagate the font change to all components
-        if event and event.modifiers() and Qt.KeyboardModifier.ControlModifier:
+        if event.modifiers() and Qt.KeyboardModifier.ControlModifier:
             self.setFont(self.font())           
 
     def rehighlight(self) -> None:
@@ -142,7 +142,7 @@ class HighlightingTextEdit (QPlainTextEdit):
         if viewport := self.viewport():
             viewport.update()
 
-    def paintEvent(self, event: Optional[QPaintEvent]) -> None:
+    def paintEvent(self, event: QPaintEvent) -> None:
         firstVisibleBlock: QTextBlock = self.firstVisibleBlock()
         bColorizedBlocks = self.__colorizeVisibleBlocks(firstVisibleBlock)
 

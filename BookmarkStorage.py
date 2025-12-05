@@ -95,7 +95,7 @@ class BookmarkStorage:
                 return item
         return None
     
-    def setBookmarksForFile(self, fileName, lines: set[int]) -> None:
+    def setBookmarksForFile(self, fileName: str, lines: set[int]) -> None:
         bookmarks = self.__readBookmarks().bookmarks
         sortedLines = [line for line in lines]
         if sortedLines:
@@ -106,7 +106,7 @@ class BookmarkStorage:
                 del bookmarks[fileName]
         self.__storeBookmarks()
 
-    def toggleBookmarkForFile(self, fileName, line: int) -> set[int]:
+    def toggleBookmarkForFile(self, fileName: str, line: int) -> set[int]:
         lines = self.getBookmarksForFile(fileName)
         if line in lines:
             lines.remove(line)
@@ -268,7 +268,7 @@ class BookmarkStorage:
 
         return self.bookmarkData
 
-    def __numberedBookmarksHaveDuplicates(self):
+    def __numberedBookmarksHaveDuplicates(self) -> bool:
         if not self.bookmarkData.numberedBookmarks:
             return False
         numbers = set()

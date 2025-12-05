@@ -79,7 +79,7 @@ class StringListModel(QAbstractListModel):
     def rowCount(self, _:QModelIndex = QModelIndex()) -> int:
         return len(self.filelist)
 
-    def data(self, index: QModelIndex, role = ...) -> Any:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
         if role == Qt.ItemDataRole.DisplayRole:
