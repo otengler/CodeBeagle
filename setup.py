@@ -13,7 +13,7 @@ codeBeagleScript = None
 if sys.platform == "win32":
     print("Using Windows settings")
     codeBeagleScript = "CodeBeagle.pyw"
-    targetBase = "Win32GUI"
+    targetBase = "gui"
     targetCodeBeagle = "CodeBeagle.exe"
     targetUpdateIndex = "UpdateIndex.exe"
     options["build_exe"]["excludes"] = "distutils,html,multiprocessing,lib2to3,xml,test,tkinter,pydoc_data,bz2,queue,lzma,ssl,pyreadline,decimal,curses,zipfile,sysconfig"
