@@ -39,7 +39,7 @@
       <enum>QAbstractItemView::SelectRows</enum>
      </property>
      <property name="sortingEnabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <column>
       <property name="text">
@@ -49,6 +49,11 @@
      <column>
       <property name="text">
        <string>File Count</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Relevance</string>
       </property>
      </column>
     </widget>
