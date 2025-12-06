@@ -29,6 +29,9 @@ exts2 = c,cpp,h,rc,rc2,sln,vcxproj
 # Check for new versions of CodeBeagle every X days. 0 disables the check
 updateCheckPeriod = 7
 
+# Expand the filter panel by default when opening a new search tab
+# expandFilterPanelByDefault = False
+
 #
 # Source viewer settings
 #

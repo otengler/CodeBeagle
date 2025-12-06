@@ -393,6 +393,13 @@
          </property>
         </widget>
        </item>
+       <item row="9" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkExpandFilterPanel">
+         <property name="text">
+          <string>Expand filter panel by default</string>
+         </property>
+        </widget>
+       </item>
        <item row="10" column="0" colspan="2">
         <widget class="QCheckBox" name="checkActivateFirstMatch">
          <property name="text">

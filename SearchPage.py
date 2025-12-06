@@ -135,9 +135,9 @@ class SearchPage (QWidget):
         self.ui.checkCaseSensitive.stateChanged.connect(self.updateFilterPreview)
         self.ui.checkExcludeComments.stateChanged.connect(self.updateFilterPreview)
 
-        # Initialize filter panel state (collapsed by default)
-        self.filterPanelExpanded = False
-        self.ui.frameFilterControls.hide()
+        # Initialize filter panel state based on configuration
+        expandByDefault = AppConfig.appConfig().expandFilterPanelByDefault
+        self.filterPanelExpanded = expandByDefault
         self.ui.labelFilterPreview.setTextFormat(Qt.TextFormat.PlainText)
 
         # Set up animation for filter panel
@@ -149,8 +149,14 @@ class SearchPage (QWidget):
         self.ui.frameFilterControls.show()  # Temporarily show to measure
         self.ui.frameFilterControls.adjustSize()
         self.filterPanelNaturalHeight = self.ui.frameFilterControls.sizeHint().height()
-        self.ui.frameFilterControls.setMaximumHeight(0)  # Start collapsed
-        self.ui.frameFilterControls.hide()
+
+        # Apply initial state based on configuration
+        if expandByDefault:
+            self.ui.labelFilterPreview.hide()
+            self.ui.buttonToggleFilters.setChecked(True)
+        else:
+            self.ui.frameFilterControls.setMaximumHeight(0)
+            self.ui.frameFilterControls.hide()
 
         # Add keyboard shortcut Ctrl+D for toggling filter panel
         self.addAction(createQAction(self, QKeySequence("Ctrl+D"), self.toggleFilterPanel))

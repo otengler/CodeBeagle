@@ -130,6 +130,7 @@ def configTypeInfo (config: Config.Config) -> None:
     config.setType("theme", Config.typeDefaultString(""))
     config.setType("showPerformanceButton",  Config.typeDefaultBool(False))
     config.setType("defaultLocation",  Config.typeDefaultString(""))
+    config.setType("expandFilterPanelByDefault",  Config.typeDefaultBool(False))
     config.setType("SourceViewer",  typeSourceViewerDefaults())
     config.setType("managedConfig", Config.typeDefaultString(""))
 

@@ -219,15 +219,15 @@ class SettingsDialog (QDialog):
         self.ui.editFontSize.setText(str(config.SourceViewer.fontSize))
         self.ui.editTabWidth.setText(str(config.SourceViewer.tabWidth))
         self.ui.editPreviewLines.setText(str(config.previewLines))
+        setCheckBox (self.ui.checkDarkTheme, config.theme == AppConfig.darkTheme)
+        setCheckBox (self.ui.checkShowLineNumbers, config.SourceViewer.showLineNumbers)
+        setCheckBox (self.ui.checkExpandFilterPanel, config.expandFilterPanelByDefault)
         setCheckBox (self.ui.checkActivateFirstMatch, config.activateFirstMatch)
         setCheckBox (self.ui.checkMatchOverFiles,  config.matchOverFiles)
-        setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
-        setCheckBox (self.ui.checkRegexDialog, config.showRegexDialog)
         setCheckBox (self.ui.checkShowMatchList, config.showMatchList)
-        setCheckBox (self.ui.checkShowLineNumbers, config.SourceViewer.showLineNumbers)
-        isDarkTheme = config.theme == AppConfig.darkTheme
-        setCheckBox (self.ui.checkDarkTheme, isDarkTheme)
-
+        setCheckBox (self.ui.checkRegexDialog, config.showRegexDialog)
+        setCheckBox (self.ui.checkConfirmClose,  config.showCloseConfirmation)
+        
         self.myLocations = LocationControl(self.ui.settingsItem,  self.ui.listViewLocations,  searchLocations, False)
         self.globalLocations = LocationControl(self.ui.globalSettingsItem,  self.ui.listViewGlobalLocations,  globalSearchLocations, True)
 
@@ -389,23 +389,21 @@ class SettingsDialog (QDialog):
             locConf.indexType = location.indexType
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
+        config.fontSize = self.ui.editAppFontSize.text()
         config.sourceViewer.fontFamily = self.ui.fontComboBox.currentFont().family()
         config.sourceViewer.fontSize = self.ui.editFontSize.text()
         config.sourceViewer.tabWidth = self.ui.editTabWidth.text()
-        config.sourceViewer.showLineNumbers = self.ui.checkShowLineNumbers.checkState() == Qt.CheckState.Checked
-        config.fontSize = self.ui.editAppFontSize.text()
-        config.matchOverFiles = self.ui.checkMatchOverFiles.checkState() == Qt.CheckState.Checked
-        config.activateFirstMatch = self.ui.checkActivateFirstMatch.checkState() == Qt.CheckState.Checked
-        config.showCloseConfirmation = self.ui.checkConfirmClose.checkState() == Qt.CheckState.Checked
-        config.showRegexDialog = self.ui.checkRegexDialog.checkState() == Qt.CheckState.Checked
-        config.showMatchList = self.ui.checkShowMatchList.checkState() == Qt.CheckState.Checked
-        config.defaultLocation = self.defaultLocation()
         config.previewLines = int(self.ui.editPreviewLines.text())
-        theme = ""
-        if self.ui.checkDarkTheme.checkState() == Qt.CheckState.Checked:
-            theme = AppConfig.darkTheme
-        config.theme = theme
-
+        config.theme = AppConfig.darkTheme if self.ui.checkDarkTheme.checkState() == Qt.CheckState.Checked else ""
+        config.sourceViewer.showLineNumbers = self.ui.checkShowLineNumbers.checkState() == Qt.CheckState.Checked
+        config.expandFilterPanelByDefault = self.ui.checkExpandFilterPanel.checkState() == Qt.CheckState.Checked
+        config.activateFirstMatch = self.ui.checkActivateFirstMatch.checkState() == Qt.CheckState.Checked
+        config.matchOverFiles = self.ui.checkMatchOverFiles.checkState() == Qt.CheckState.Checked
+        config.showMatchList = self.ui.checkShowMatchList.checkState() == Qt.CheckState.Checked
+        config.showRegexDialog = self.ui.checkRegexDialog.checkState() == Qt.CheckState.Checked
+        config.showCloseConfirmation = self.ui.checkConfirmClose.checkState() == Qt.CheckState.Checked
+        config.defaultLocation = self.defaultLocation()
+                
         try:
             AppConfig.saveUserConfig (config)
         except:
