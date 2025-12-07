@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os, json
+import json, sys
 from typing import Optional
 from urllib.request import urlopen
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, QDateTime
