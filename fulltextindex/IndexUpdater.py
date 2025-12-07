@@ -92,9 +92,6 @@ class IndexUpdater (IndexDatabase):
         c = self.conn.cursor()
         q = self.conn.cursor()
 
-        #c.execute("PRAGMA synchronous = OFF")
-        #c.execute("PRAGMA journal_mode = MEMORY")
-
         with self.conn:
             # Generate the next index ID, old documents still have a lower number
             nextIndexID = self.__getNextIndexRun(c)

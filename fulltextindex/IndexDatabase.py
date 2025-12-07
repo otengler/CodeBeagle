@@ -83,12 +83,19 @@ CREATE INDEX IF NOT EXISTS i_excludedExtensions_extension ON excludedExtensions 
 
 
 class IndexDatabase:
-    def __init__(self, strDbLocation: str) -> None:
+    def __init__(self, strDbLocation: str, readOnlyOptimizations: bool = False) -> None:
         if not strDbLocation:
             raise RuntimeError("Database location cannot be empty")
 
         self.strDbLocation = strDbLocation
         self.conn = sqlite3.connect(strDbLocation)
+
+        if readOnlyOptimizations:
+            # Read optimizations (safe for read-only operations)
+            cursor = self.conn.cursor()
+            cursor.execute("PRAGMA cache_size = -64000") # 64MB cache
+            # Also tested 'PRAGMA temp_store = MEMORY' and 'PRAGMA mmap_size = 268435456' but the effect was not measureable.
+
         self.__setupDatabase()
 
     def __del__(self) -> None:

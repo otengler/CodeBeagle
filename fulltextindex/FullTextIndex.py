@@ -87,6 +87,9 @@ def cancelableSearch(func: Callable[..., SearchResult], *args: Any) -> SearchRes
         raise
 
 class FullTextIndex (IndexDatabase):
+    def __init__(self, strDbLocation: str) -> None:
+        super().__init__(strDbLocation, readOnlyOptimizations = True)
+
     def searchFile(self, query: FileQuery, perfReport: Optional[PerformanceReport]=None, cancelEvent:Optional[threading.Event]=None) -> SearchResult:
         return cancelableSearch(self.__searchFile, query, perfReport)
 
@@ -96,13 +99,11 @@ class FullTextIndex (IndexDatabase):
 
     # commonKeywordMap maps  keywords to numbers. A lower number means a worse keyword. Bad keywords are very common like "h" in cpp files.
     def searchContent(self, query: ContentQuery, perfReport: Optional[PerformanceReport]=None, commonKeywordMap: Optional[CommonKeywordMap]=None,
-                      manualIntersect: bool=True, cancelEvent: Optional[threading.Event]=None,
-                      reportProgress: Optional[ProgressFunction]=None) -> SearchResult:
-        return cancelableSearch(self.__searchContent, query, perfReport, commonKeywordMap, manualIntersect, cancelEvent, reportProgress)
+                      cancelEvent: Optional[threading.Event]=None, reportProgress: Optional[ProgressFunction]=None) -> SearchResult:
+        return cancelableSearch(self.__searchContent, query, perfReport, commonKeywordMap, cancelEvent, reportProgress)
 
     def __searchContent(self, query: ContentQuery, perfReport: Optional[PerformanceReport]=None, commonKeywordMap: Optional[CommonKeywordMap]=None, 
-                        manualIntersect:bool=True, cancelEvent: Optional[threading.Event]=None,
-                        reportProgress: Optional[ProgressFunction]=None) -> SearchResult:
+                        cancelEvent: Optional[threading.Event]=None, reportProgress: Optional[ProgressFunction]=None) -> SearchResult:
         if not isinstance(query, ContentQuery):
             raise RuntimeError("query must be a ContentQuery derived object")
 
@@ -122,10 +123,7 @@ class FullTextIndex (IndexDatabase):
         goodKeywords, badKeywords = self.__qualifyKeywords(kwList, commonKeywordMap)
 
         with perfReport.newAction("Finding documents") as action:
-            if not manualIntersect:
-                result = self.__findDocsByKeywords(q, goodKeywords, badKeywords)
-            else:
-                result = self.__findDocsByKeywordsManualIntersect(q, goodKeywords, badKeywords, action)
+            result = self.__findDocsByKeywordsManualIntersect(q, goodKeywords, badKeywords, action)
             action.addData("%u matches", safeLen(result))
             if not result:
                 return []
@@ -139,17 +137,6 @@ class FullTextIndex (IndexDatabase):
                     return [r[0] for r in result]
                 return [r[0] for r in result if query.matchFolderAndExtensionFilter(r[0])]
         return []
-
-    def __findDocsByKeywords(self, q: sqlite3.Cursor, goodKeywords: KeywordList, badKeywords: KeywordList) -> SearchResult:
-        kwList = goodKeywords + badKeywords
-        stmt = ""
-        for keywords in kwList:
-            if stmt:
-                stmt += " INTERSECT "
-            inString = ",".join((str(keyword.id) for keyword in keywords))
-            stmt += "SELECT DISTINCT fullpath FROM kw2doc,documents WHERE docID=id AND kwID IN (%s)" % (inString, )
-        q.execute(stmt + " ORDER BY fullpath")
-        return q.fetchall()
 
     def __findDocsByKeywordsManualIntersect(self, q: sqlite3.Cursor, goodKeywords: KeywordList, badKeywords: KeywordList, reportAction: ReportAction) -> SearchResult:
         result: SearchResult = []
@@ -166,9 +153,10 @@ class FullTextIndex (IndexDatabase):
                         reportAction.addData("Common keyword '%s' used because %u matches are too much", kwNames, len(result))
                     else:
                         reportAction.addData("Common keyword '%s' used as first keyword", kwNames)
-            inString = ",".join((str(keyword.id) for keyword in keywords))
-            stmt = "SELECT DISTINCT fullpath FROM kw2doc,documents WHERE docID=id AND kwID IN (%s) ORDER BY fullpath" % (inString, )
-            q.execute(stmt)
+            keywordIds = [keyword.id for keyword in keywords]
+            placeholders = ",".join("?" * len(keywordIds))
+            stmt = f"SELECT DISTINCT fullpath FROM kw2doc,documents WHERE docID=id AND kwID IN ({placeholders}) ORDER BY fullpath"
+            q.execute(stmt, keywordIds)
             kwMatches = q.fetchall()
             if not result:
                 result = kwMatches
