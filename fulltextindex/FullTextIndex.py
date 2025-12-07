@@ -18,11 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sqlite3
 import threading
-from typing import List, Tuple, Iterable, Any, Dict, cast, Callable, Optional
+from typing import List, Tuple, Iterable, Any, Dict, Callable, Optional
 from tools.FileTools import fopen, freadall
 from .IndexDatabase import IndexDatabase
 from .FileSearch import searchFile
-from .Query import ContentQuery, FileQuery, QueryParams, PerformanceReport, ReportAction, safeLen, SearchResult
+from .Query import ContentQuery, FileQuery, PerformanceReport, ReportAction, safeLen, SearchResult
+from .KeywordCaching import Keyword, getCachedKeywords, setCachedKeywords, checkAndInvalidateKeywordsCache
 
 ProgressFunction = Callable[[int], None]
 
@@ -49,21 +50,6 @@ def intersectSortedLists(l1: List[str], l2: List[str]) -> List[str]:
     except IndexError:
         pass
     return l3
-
-class Keyword:
-    def __init__(self, identifier: int, name: str) -> None:
-        self.id = identifier
-        self.name = name
-
-    def __repr__(self) -> str:
-        return "%s (%u)" % (self.name, self.id)
-
-    def __eq__(self, other: object) -> bool:
-        if not type(other) is Keyword:
-            return False
-
-        other = cast(Keyword, other)
-        return self.id == other.id and self.name == other.name
 
 KeywordList = List[List[Keyword]]
 
@@ -228,22 +214,40 @@ class FullTextIndex (IndexDatabase):
     # Receives a list of keywords which might contain wildcards. For every passed keyword a list of Keyword objects
     # is returned. If a keyword is not found an empty list is returned.
     def __getKeywords(self, q: sqlite3.Cursor, keywordList: Iterable[str], reportAction: Optional[ReportAction]=None) -> KeywordList:
+        # Check if database has been modified and invalidate cache if needed
+        checkAndInvalidateKeywordsCache(self.strDbLocation)
+
         keys = []
-        for kw in keywordList:
-            query = "SELECT id,keyword FROM keywords WHERE"
-            if kw.find("*") != -1:
-                query += " keyword LIKE ? ESCAPE '!'"
-                kw = kw.replace("_", "!_")
-                kw = kw.replace("*", "%")
-            else:
-                query += " keyword=?"
-            q.execute(query, (kw, ))
-            result = q.fetchall()
-            if not result:
-                if reportAction:
-                    reportAction.addData("String '%s' was not found", kw)
-                return []
+        for originalKw in keywordList:
+            keywordMatches: Optional[List[Keyword]] = None
+
+            # Check cache first
+            cachedResult = getCachedKeywords(self.strDbLocation, originalKw)
+            if cachedResult is not None:
+                keywordMatches = cachedResult
+
+            if keywordMatches is None:
+                # Not in cache - query database
+                kw = originalKw
+                query = "SELECT id,keyword FROM keywords WHERE"
+                if kw.find("*") != -1:
+                    query += " keyword LIKE ? ESCAPE '!'"
+                    kw = kw.replace("_", "!_")
+                    kw = kw.replace("*", "%")
+                else:
+                    query += " keyword=?"
+                q.execute(query, (kw, ))
+                result = q.fetchall()
+                if not result:
+                    if reportAction:
+                        reportAction.addData("String '%s' was not found", originalKw)
+                    return []
+                keywordMatches = [Keyword(r[0], r[1]) for r in result]
+
+                # Add to cache
+                setCachedKeywords(self.strDbLocation, originalKw, keywordMatches)
+
             if reportAction:
-                reportAction.addData("String '%s' results in %u keyword matches", kw, len(result))
-            keys.append([Keyword(r[0], r[1]) for r in result])
+                reportAction.addData("String '%s' results in %u keyword matches", originalKw, len(keywordMatches))
+            keys.append(keywordMatches)
         return keys
