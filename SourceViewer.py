@@ -59,7 +59,7 @@ class SourceViewer (QWidget):
 
         super ().__init__(parent)
         self.ui = Ui_SourceViewer()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         if AppConfig.appConfig().theme == AppConfig.darkTheme:
             icon = QIcon()
             icon.addPixmap(QPixmap("resources/currentLighter.png"))
@@ -67,7 +67,7 @@ class SourceViewer (QWidget):
         self.ui.widgetInDocumentSearch.hide()
 
         self.sourceFont: QFont = self.font()
-        self.searchData: Optional[FullTextIndex.ContentQuery] = None
+        self.searchData: Optional[FullTextIndex.Query] = None
         self.reset()
         self.__processConfig(None)
 
@@ -154,7 +154,7 @@ class SourceViewer (QWidget):
         self.ui.textEdit.clear()
         self.__resetTextCursor()
         self.__setInfoLabel()
-        self.ui.textEdit.setDynamicHighlight(None)
+        self.ui.textEdit.setDynamicHighlight(None)  
         self.ui.listMatchesWidget.clear()
         self.__hideInDocumentSearch()
         if self.ui.textEdit.lineNumberArea:
@@ -165,7 +165,7 @@ class SourceViewer (QWidget):
         self.currentMatchChanged.emit(self.curMatch)
         self.ui.listMatchesWidget.setCurrentRow(index)
 
-    def setSearchData (self, searchData: FullTextIndex.ContentQuery) -> None:
+    def setSearchData (self, searchData: Optional[FullTextIndex.Query]) -> None:
         self.reset()
         self.searchData = searchData
         self.ui.textEdit.highlighter.setSearchData (searchData)
@@ -227,7 +227,8 @@ class SourceViewer (QWidget):
     @pyqtSlot()
     def setNumberedBookmark(self, number: int) -> None:
         numberedBookmarks = getBookmarkStorage().toggleNumberedBookmark(number, self.currentFile, self.ui.textEdit.currentLineNumber())
-        self.ui.textEdit.lineNumberArea.setNumberedBookmarks(numberedBookmarks)
+        if lineNumberArea := self.ui.textEdit.lineNumberArea:
+            lineNumberArea.setNumberedBookmarks(numberedBookmarks)
 
     @pyqtSlot()
     def reloadFile(self) -> None:
@@ -287,7 +288,10 @@ class SourceViewer (QWidget):
         line = self.ui.textEdit.currentLineNumber()
         self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))
 
-        lineStart, lineEnd, lineText = self.ui.textEdit.getLineByLineNumber(line)
+        if lineSpan := self.ui.textEdit.getLineByLineNumber(line):
+            lineStart, _, lineText = lineSpan
+        else:
+            return
         
         # Do not highlight anything if we are on the line of the current match. It has its own highlighting.
         # Just remove the current line highlight
@@ -310,7 +314,7 @@ class SourceViewer (QWidget):
 
         self.__updateCurrentLineExtraSelections(extras)
 
-    def __setCurrentLineSearchHighlights(self, lineStart: int, lineText: str) -> tuple[list, int]:
+    def __setCurrentLineSearchHighlights(self, lineStart: int, lineText: str) -> tuple[list[QTextEdit.ExtraSelection], int]:
         """Returns a tuple of List[ExtraSelection],int. The int contains the nunber of search matches highlighted (not in document searches)"""
         extras = []
         matchCount = 0
@@ -396,7 +400,10 @@ class SourceViewer (QWidget):
     def __scrollToMatch (self, index: int, length: int) -> None:
         scrollDir = index - self.ui.textEdit.textCursor().position() # Determine if we need to scroll down or up
 
-        self.scrollToMatchLine, _, lineText = self.ui.textEdit.getLineByIndex(index)
+        if lineSpan := self.ui.textEdit.getLineByIndex(index):
+            self.scrollToMatchLine, _, lineText = lineSpan
+        else:
+            return
 
         extras = []
 

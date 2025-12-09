@@ -208,7 +208,7 @@ class SettingsDialog (QDialog):
     def __init__ (self, parent: Optional[QWidget], searchLocations: List[IndexConfiguration], globalSearchLocations: List[IndexConfiguration], config: Config) -> None:
         super ().__init__(parent)
         self.ui = Ui_SettingsDialog()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
         self.searchLocations = searchLocations
@@ -252,11 +252,11 @@ class SettingsDialog (QDialog):
 
     def defaultLocation (self) -> str:
         index = None
-        row = self.ui.listViewLocations.itemDelegate().defaultLocationRow
+        row = cast(SettingsEditorDelegate, self.ui.listViewLocations.itemDelegate()).defaultLocationRow  
         if row != -1:
             model = self.ui.listViewLocations.model()
             index = model.index(row, 0)
-        row = self.ui.listViewGlobalLocations.itemDelegate().defaultLocationRow
+        row = cast(SettingsEditorDelegate, self.ui.listViewGlobalLocations.itemDelegate()).defaultLocationRow
         if row != -1:
             model = self.ui.listViewGlobalLocations.model()
             index = model.index(row, 0)

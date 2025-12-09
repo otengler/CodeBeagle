@@ -46,7 +46,7 @@ parser.add_argument("-v", "--version", action='version', version="UpdateIndex " 
 parser.add_argument("--jobmode", metavar='DIR', type=str, help=helpJobMode)
 parser.add_argument("-c", "--config", action="append", default=[AppConfig.configName], type=str, help=helpConfig)
 
-def taketime(name: str, func: Callable, *args: Any) -> Any:
+def taketime(name: str, func: Callable[..., Any], *args: Any) -> Any:
     t1 = time.perf_counter()
     result = func(*args)
     t2 = time.perf_counter()

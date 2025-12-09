@@ -74,7 +74,7 @@ class FixedSizeSourcePreview(SourceHighlightingTextEdit):
         # Scrolling should not be needed and is not wanted. This is just a way to make it 100% sure that it is switched off:
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.wheelEvent = lambda event: None  # type: ignore
+        self.wheelEvent = lambda event: None  # type: ignore[method-assign]
 
 class Line:
     def __init__(self, charPos: int, lineNumber: int) -> None:
@@ -208,9 +208,9 @@ class MatchesOverview (QWidget):
     def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
         self.ui = Ui_MatchesOverview()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.matches: Optional[List[str]] = None
-        self.searchData: Optional[FullTextIndex.ContentQuery] = None
+        self.searchData: Optional[FullTextIndex.Query] = None
         self.resultHandled = True
         self.sourceFont: QFont = self.font()
         self.lineHeight = 0
@@ -242,7 +242,7 @@ class MatchesOverview (QWidget):
         if self.matches and self.isVisible():
             self.__handleResult()
 
-    def setSearchResult(self, matches: List[str], searchData: FullTextIndex.ContentQuery) -> None:
+    def setSearchResult(self, matches: List[str], searchData: Optional[FullTextIndex.Query]) -> None:
         self.matches = matches
         self.searchData = searchData
         self.resultHandled = False

@@ -27,7 +27,7 @@ class LeaveLastTabWidget (QTabWidget):
         super().__init__(parent)
         self.buttonNewTab: Optional[QPushButton] = None
         self.ui = Ui_LeaveLastTabWidget()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.setupUi()
 
         self.strTabName = "Tab"
@@ -49,9 +49,9 @@ class LeaveLastTabWidget (QTabWidget):
 
     def addWidgetsToCornerWidget (self, hbox: QHBoxLayout) -> None:
         """Derived classes can implement this to add additional buttons to the corner widget."""
-        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.tr("New tab"),  "NewTab.png",  self.addNewTab)
+        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.tr("New tab"),  "NewTab.png",  self.addNewTab) 
 
-    def addButtonToCornerWidget (self, hbox: QHBoxLayout, name: str, iconFile: str, handler: Callable) -> QPushButton:
+    def addButtonToCornerWidget (self, hbox: QHBoxLayout, name: str, iconFile: str, handler: Callable[[], Optional[QWidget]]) -> QPushButton:
         button = QPushButton(name, self)
         icon = QIcon()
         icon.addPixmap(QPixmap("resources/" + iconFile), QIcon.Mode.Normal, QIcon.State.Off)
@@ -79,7 +79,7 @@ class LeaveLastTabWidget (QTabWidget):
         self.strTabName = strTabName
 
     @pyqtSlot()
-    def addNewTab(self) -> QWidget|None:
+    def addNewTab(self) -> Optional[QWidget]:
         if not self.objType:
             return None
         prevTabWidget = self.currentWidget()

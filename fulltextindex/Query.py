@@ -26,6 +26,8 @@ from typing import List, Tuple, Iterator, Iterable, Pattern, Any, Sized, Optiona
 from .CommentRule import CommentRule
 from .CommentDetection import isInsideTextSpan, analyzeText
 
+__all__ = ['Query', 'ContentQuery', 'FileQuery', 'QueryParams', 'PerformanceReport', 'SearchResult', 'hasFileNameWildcard', 'createPathMatchPattern']
+
 reQueryToken = re.compile(r"[\w#*]+|<!.*?!>")
 reMatchWords = re.compile(r"(\*\*)([0-9]+)")
 reMatchRegEx = re.compile(r"<!(.*)!>")
@@ -127,8 +129,8 @@ class IncludeExcludePattern:
     def __init__(self, filterParts: List[Tuple[str,bool]], matchAll: bool = False) -> None:
         self.includeParts = []
         self.excludeParts = []
-        self.positivePattern: Optional[Pattern] = None
-        self.negativePattern: Optional[Pattern] = None
+        self.positivePattern: Optional[Pattern[str]] = None
+        self.negativePattern: Optional[Pattern[str]] = None
         self.matchAll = matchAll # If true all characters from the text must be used by the pattern
 
         if filterParts:
@@ -281,7 +283,7 @@ class ContentQuery(Query):
             raise QueryError("Sorry, you can't search for that.")
 
     # Returns a list of regular expressions which match all found occurances in a document
-    def regExForMatches(self) -> Pattern:
+    def regExForMatches(self) -> Pattern[str]:
         regParts = []
         for t, s in self.parts:
             if TokenType.IndexPart == t:

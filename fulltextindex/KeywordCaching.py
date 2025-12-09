@@ -32,7 +32,6 @@ class Keyword:
         if not type(other) is Keyword:
             return False
 
-        other = cast(Keyword, other)
         return self.id == other.id and self.name == other.name
 
 # Module-level cache for keyword lookups, shared across all FullTextIndex instances

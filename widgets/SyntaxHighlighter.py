@@ -29,10 +29,10 @@ type foregroundType = QBrush|Qt.GlobalColor|QColor
 
 class HighlightingRules:
     def __init__(self, font: QFont) -> None:
-        self.rules: List[Tuple[Pattern, QTextCharFormat]] = []
-        self.lineComment: Optional[Pattern] = None
-        self.multiCommentStart: Optional[Pattern] = None
-        self.multiCommentStop: Optional[Pattern] = None
+        self.rules: List[Tuple[Pattern[str], QTextCharFormat]] = []
+        self.lineComment: Optional[Pattern[str]] = None
+        self.multiCommentStart: Optional[Pattern[str]] = None
+        self.multiCommentStop: Optional[Pattern[str]] = None
         self.commentFormat: Optional[QTextCharFormat] = None
         self.stringFormat: Optional[QTextCharFormat] = None
         self.font = font

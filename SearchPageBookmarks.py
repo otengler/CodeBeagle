@@ -16,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, Callable, TYPE_CHECKING
-from StringListModel import StringListModel
+from typing import Callable, TYPE_CHECKING
 from PyQt5.QtCore import Qt, QObject, pyqtSlot
 from tools.QHelper import createQAction
 from BookmarkStorage import getBookmarkStorage
@@ -41,9 +40,9 @@ class SearchPageBookmarks (QObject):
             self.searchPage.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.KeyboardModifier.ShiftModifier+key, triggered=self.__createSetNumberedBookmarkFunc(number)))
             self.searchPage.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+key, triggered=self.__createJumpToNumberedBookmarkFunc(number)))
 
-    def __createSetNumberedBookmarkFunc(self, number: int) -> Callable:
+    def __createSetNumberedBookmarkFunc(self, number: int) -> Callable[[], None]:
         return lambda: self.setNumberedBookmark(number)
-    def __createJumpToNumberedBookmarkFunc(self, number: int) -> Callable:
+    def __createJumpToNumberedBookmarkFunc(self, number: int) -> Callable[[], None]:
         return lambda: self.jumpToNumberedBookmark(number)
 
     @pyqtSlot()

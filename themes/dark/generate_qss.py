@@ -12,7 +12,7 @@ def generate() -> None:
     subprocess.run([sassExecutable(), "--no-source-map", MAIN_SCSS_FILEPATH, STYLES_SCSS_FILEPATH_PROCESSED], check=True, shell=False)
     _replaceInFile(STYLES_SCSS_FILEPATH_PROCESSED, QSS_FILEPATH, "_qnot_", "!")
 
-def _dict_to_scss(data: dict) -> str:
+def _dict_to_scss(data: dict[str, Any]) -> str:
     """Create a scss variables string from a dict."""
     lines = []
     template = "${}: {};"

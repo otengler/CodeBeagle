@@ -27,7 +27,7 @@ class CheckableItemsDialog(QDialog):
     def __init__(self, title: str, bCheckAllState: bool, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
         self.ui = Ui_CheckableItemsDialog()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.ui.buttonOK.clicked.connect(self.accept)
         self.ui.buttonCancel.clicked.connect(self.reject)
         self.ui.checkToggleAll.toggled.connect(self.checkAll)

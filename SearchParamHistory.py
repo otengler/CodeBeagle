@@ -24,7 +24,7 @@ class MyStringListModel(QAbstractListModel):
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:
         if not index.isValid():
             return cast(Qt.ItemFlags, Qt.ItemFlag.NoItemFlags)
-        return cast(Qt.ItemFlags, Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
     def removeRows(self, row: int, count: int, parent: QModelIndex = QModelIndex()) -> bool:
         if row < 0:

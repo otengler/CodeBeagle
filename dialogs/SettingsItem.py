@@ -33,7 +33,7 @@ class SettingsItem (QWidget):
     def __init__ (self, parent: QWidget) -> None:
         super ().__init__(parent)
         self.ui = Ui_SettingsItem()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
 
         self.buildDBName = True
         self.ui.editName.textEdited.connect(self.nameEdited)
@@ -142,22 +142,22 @@ class SettingsItem (QWidget):
         self.ui.comboIndexUpdateMode.setCurrentIndex(indexUpdateMode)
 
     def name (self) -> str:
-        return cast(str,self.ui.editName.text())
+        return self.ui.editName.text()
 
     def directories (self) -> str:
-        return cast(str,self.ui.editDirectories.text())
+        return self.ui.editDirectories.text()
 
     def dirExcludes (self) -> str:
-        return cast(str,self.ui.editExcludeDirectories.text())
+        return self.ui.editExcludeDirectories.text()
 
     def extensions (self) -> str:
-        return cast(str,self.ui.comboExtensions.currentText())
+        return self.ui.comboExtensions.currentText()
 
     def indexDB (self) -> str:
-        return cast(str,self.ui.editIndexDB.text())
+        return self.ui.editIndexDB.text()
 
     def indexGenerationEnabled (self) -> bool:
-        return cast(bool, self.ui.comboIndexUpdateMode.currentIndex() != IndexMode.NoIndexWanted)
+        return self.ui.comboIndexUpdateMode.currentIndex() != IndexMode.NoIndexWanted
 
     def indexUpdateMode(self) -> IndexMode:
         return cast(IndexMode,self.ui.comboIndexUpdateMode.currentIndex())

@@ -28,7 +28,7 @@ class ProgressBar (QDialog):
     def __init__ (self, parent: Optional[QWidget], bEnableCancel: bool=False) -> None:
         super().__init__(parent, Qt.WindowType.SplashScreen)
         self.ui = Ui_ProgressBar()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.ui.frame.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         if not bEnableCancel:
             self.ui.buttonCancel.setEnabled(False)

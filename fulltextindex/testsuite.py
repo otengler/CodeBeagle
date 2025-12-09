@@ -38,7 +38,7 @@ def delDir (name: str) -> None:
     try:
         removeReadOnly (name)
         shutil.rmtree(name)
-    except WindowsError as e: # type: ignore
+    except WindowsError as e:
         if e.winerror != 3:
             raise
 
@@ -62,7 +62,7 @@ def modifyTimestamp (name: str) -> None:
 def setModifyTimestamp(name: str, seconds: float) -> None:
     os.utime(name,(seconds,seconds))
 
-def forAllFiles(name: str, doAction: Callable) -> None:
+def forAllFiles(name: str, doAction: Callable[[str], None]) -> None:
     for root, _, files in os.walk(name):
         for file in files:
             doAction(os.path.join(root,file))
@@ -102,7 +102,7 @@ class TestFullTextIndex(unittest.TestCase):
         for a,b in zip(expected,actual):
             self.assertEqual(a.lower(),b.lower())
 
-    def __assertTestFiles(self, testPath: str, result: List, expectedFiles: List) -> None:
+    def __assertTestFiles(self, testPath: str, result: List[str], expectedFiles: List[str]) -> None:
         exp = [os.path.join(testPath,x) for x in expectedFiles]
         self.__assertStringArray(exp, result)
 

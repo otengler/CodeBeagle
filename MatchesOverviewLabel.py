@@ -27,7 +27,7 @@ class MatchesOverviewLabel (QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.ui = Ui_MatchesOverviewLabel()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         if AppConfig.appConfig().theme == AppConfig.darkTheme:
             icon = QIcon()
             icon.addPixmap(QPixmap("resources/currentLighter.png"))
@@ -38,7 +38,7 @@ class MatchesOverviewLabelItem (ScrollAreaItem):
         super ().__init__(24)
         self.fileName = fileName
         self.startLine = startLine
-        self.navigateToCallback: Optional[Callable] = None
+        self.navigateToCallback: Optional[Callable[[], None]] = None
 
     def generateItem (self, parent: Optional[QWidget]) -> QWidget:
         return MatchesOverviewLabel(parent)

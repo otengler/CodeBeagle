@@ -35,7 +35,7 @@ testmodules = [
 
 def getModulePath() -> str:
     import __main__
-    return cast(str, os.path.split(__main__.__file__)[0])
+    return os.path.split(__main__.__file__)[0]
 
 if __name__ == "__main__":
     testPath = os.path.join(getModulePath (), "tests")

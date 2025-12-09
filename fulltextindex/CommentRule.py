@@ -26,7 +26,7 @@ class CommentRule:
     Defines comment patterns for a file type.
     Contains compiled regex patterns for detecting comments.
     """
-    lineComment: Optional[Pattern]
-    multiCommentStart: Optional[Pattern]
-    multiCommentStop: Optional[Pattern]
+    lineComment: Optional[Pattern[str]]
+    multiCommentStart: Optional[Pattern[str]]
+    multiCommentStop: Optional[Pattern[str]]
     hasTripleQuotes: bool 

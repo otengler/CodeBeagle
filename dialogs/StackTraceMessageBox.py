@@ -28,7 +28,7 @@ class StackTraceMessageBox (QDialog):
     def __init__ (self, parent: Optional[QWidget], title:str, text:str, stackTrace:str) -> None:
         super().__init__(parent)
         self.ui = Ui_StackTraceMessageBox()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
         rules = HighlightingRules(self.font())

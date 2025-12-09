@@ -102,7 +102,7 @@ class MainWindow(QMainWindow):
                 self.appSettings.value("lastUsedSearchLocation"))
         # Now setup UI. This already uses the restored search location name
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.initialWindowTitle = self.windowTitle()
         self.ui.tabWidget.requestWindowTitleChange.connect(self.changeWindowTitle)
         self.__restoreGeometryAndState()

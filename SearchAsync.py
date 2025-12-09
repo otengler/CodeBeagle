@@ -25,7 +25,9 @@ from tools.FileTools import fopen
 from fulltextindex import FullTextIndex, IndexConfiguration
 from fulltextindex.IStringMatcher import IStringMatcher, MatchPosition
 from fulltextindex.SearchMethods import SearchMethods, ResultSet, removeDupsAndSort
-from fulltextindex.Query import QueryParams
+from fulltextindex.Query import QueryParams, ContentQuery, FileQuery
+
+__all__ = ['ResultSet', 'searchContent', 'searchFileName', 'customSearchScript']
 
 def searchContent(parent: QObject, params: QueryParams, indexConf: IndexConfiguration.IndexConfiguration, commonKeywordMap: Optional[FullTextIndex.CommonKeywordMap] = None) -> ResultSet:
     """This executes an indexed or a direct search in the file content. This depends on the IndexConfiguration
@@ -35,7 +37,7 @@ def searchContent(parent: QObject, params: QueryParams, indexConf: IndexConfigur
     if not params.strSearch:
         return ResultSet()
 
-    searchData = FullTextIndex.ContentQuery(params)
+    searchData = ContentQuery(params)
     result: ResultSet
 
     ftiSearch = SearchMethods()
@@ -51,7 +53,7 @@ def searchFileName(parent: QObject, params: QueryParams, indexConf: IndexConfigu
     if not params.strSearch:
         return ResultSet()
 
-    searchData = FullTextIndex.FileQuery(params)
+    searchData = FileQuery(params)
     result: ResultSet
 
     ftiSearch = SearchMethods()
@@ -72,8 +74,8 @@ def customSearch(parent: QObject, script: str, params: QueryParams, indexConf: I
     result: ResultSet = AsynchronousTask.execute(parent, __customSearchAsync, os.path.join("scripts", script), params, commonKeywordMap, indexConf)
     return result
 
-class ScriptSearchData (IStringMatcher): 
-    def __init__(self, reExpr: Pattern) -> None:
+class ScriptSearchData (IStringMatcher):
+    def __init__(self, reExpr: Pattern[str]) -> None:
         self.reExpr = reExpr
 
     def matches(self, data: str, filename: str = "") -> Iterator[MatchPosition]:
@@ -101,14 +103,14 @@ def __customSearchAsync(script: str, params: QueryParams, commonKeywordMap: Full
     def performSearch(strSearch: str, strFolderFilter: str="", strExtensionFilter:str="", bCaseSensitive: bool=False) -> FullTextIndex.SearchResult:
         if not strSearch:
             return []
-        queryParams = FullTextIndex.QueryParams(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
-        searchData = FullTextIndex.ContentQuery(queryParams)
+        queryParams = QueryParams(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive)
+        searchData = ContentQuery(queryParams)
         ftiSearch = SearchMethods()
         return ftiSearch.searchContent(searchData, indexConf, commonKeywordMap).matches
 
-    def regexFromText(strQuery: str, bCaseSensitive: bool) -> Pattern:
-        queryParams = FullTextIndex.QueryParams(strQuery, "", "", bCaseSensitive)
-        query = FullTextIndex.ContentQuery(queryParams)
+    def regexFromText(strQuery: str, bCaseSensitive: bool) -> Pattern[str]:
+        queryParams = QueryParams(strQuery, "", "", bCaseSensitive)
+        query = ContentQuery(queryParams)
         return query.regExForMatches()
 
     class Result:
@@ -156,7 +158,7 @@ def __customSearchAsync(script: str, params: QueryParams, commonKeywordMap: Full
         searchData = ScriptSearchData(highlight)
     else:
         # Highlight by default the query
-        queryParams = FullTextIndex.QueryParams(query, "", "", caseSensitive)
-        searchData = FullTextIndex.ContentQuery(queryParams)
+        queryParams = QueryParams(query, "", "", caseSensitive)
+        searchData = ContentQuery(queryParams)
 
     return ResultSet(matches, searchData, label=label)

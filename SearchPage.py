@@ -97,7 +97,7 @@ class SearchPage (QWidget):
     def __init__ (self, parent: QWidget) -> None:
         super ().__init__(parent)
         self.ui = Ui_SearchPage()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         if AppConfig.appConfig().theme == AppConfig.darkTheme:
             icon = QIcon()
             icon.addPixmap(QPixmap("resources/angle-downLighter.png"))
@@ -228,7 +228,7 @@ class SearchPage (QWidget):
     def __chooseInitialLocation (self) -> str:
         configName = cast(str,AppConfig.appConfig().defaultLocation) # Display name of current config
         if not configName:
-            configName = cast(str,AppConfig.lastUsedConfigName())
+            configName = AppConfig.lastUsedConfigName()
         return configName
 
     def __loadCommonKeywordMap(self) -> FullTextIndex.CommonKeywordMap:
@@ -321,14 +321,14 @@ class SearchPage (QWidget):
 
     @pyqtSlot(QModelIndex)
     def fileSelected (self,  index: QModelIndex) -> None:
-        model = self.ui.listView.model() # type: Optional[StringListModel]
+        model = cast(StringListModel, self.ui.listView.model())
         if not model:
             return
-        if model.getSelectedFileIndex() != -1:
-            model.setEditorState(model.getSelectedFileIndex(), self.ui.sourceViewer.saveEditorState())
-        model.setSelectedFileIndex (index.row())
+        if model.getSelectedFileIndex() != -1: 
+            model.setEditorState(model.getSelectedFileIndex(), self.ui.sourceViewer.saveEditorState())  
+        model.setSelectedFileIndex (index.row()) 
         name = index.data(Qt.ItemDataRole.UserRole)
-        editorState = model.getEditorState(index.row())
+        editorState = model.getEditorState(index.row())  
         self.__showFile (name, editorState)
         self.ui.matchesOverview.scrollToFile(index.row())
 
@@ -340,15 +340,15 @@ class SearchPage (QWidget):
     @pyqtSlot(str, int)
     def showFileLine(self, name: str, line: int) -> None:
         # Try to find bookmark file in list and activate it
-        model = self.ui.listView.model() # type: Optional[StringListModel]
+        model = cast(StringListModel, self.ui.listView.model())
         if model:
-            row = model.findFile(name)
+            row = model.findFile(name) 
             if row != -1:
-                model.setSelectedFileIndex (row)
-                index = model.index(row)
+                model.setSelectedFileIndex (row)  
+                index = model.index(row, 0)
                 self.ui.listView.clearSelection()
                 self.ui.listView.setCurrentIndex(index)
-        if self.ui.stackedWidget.currentIndex != 0:
+        if self.ui.stackedWidget.currentIndex() != 0:  
             self.ui.buttonSwitchView.setChecked(False)
             self.ui.stackedWidget.setCurrentIndex(0)
         self.__showFile(name)
@@ -486,10 +486,11 @@ class SearchPage (QWidget):
             matches = result.matches
         self.matches = matches
         self.ui.sourceViewer.setSearchData (result.searchData)
-        self.ui.matchesOverview.setSearchResult(self.matches, result.searchData)
+        self.ui.matchesOverview.setSearchResult(self.matches, result.searchData) 
         self.ui.labelMatches.setText("%u " % (len(matches), ) + self.tr("matches"))
         model = StringListModel(matches)
-        sizeHint = self.ui.listView.itemDelegate().computeSizeHint(matches,  model.cutLeft)
+        listDelegate = cast(PathVisualizerDelegate.PathVisualizerDelegate, self.ui.listView.itemDelegate())
+        sizeHint = listDelegate.computeSizeHint(matches,  model.cutLeft) 
         model.setSizeHint(sizeHint)
         self.ui.listView.setModel(model)
         # Activate first match if enabled in config
@@ -528,10 +529,10 @@ class SearchPage (QWidget):
     def __rememberSelectedFileInState(self) -> None:
         if self.searchStateIndex <= -1:
             return
-        model = self.ui.listView.model() # type: Optional[StringListModel]
+        model = self.ui.listView.model()
         if not model:
             return
-        self.searchStateList[self.searchStateIndex].selectedFileIndex = model.getSelectedFileIndex()
+        self.searchStateList[self.searchStateIndex].selectedFileIndex = cast(StringListModel, model).getSelectedFileIndex()
 
     def __updateUIFromSearchState(self) -> None:
         if self.searchStateIndex >= len(self.searchStateList):

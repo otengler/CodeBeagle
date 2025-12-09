@@ -28,9 +28,9 @@ from fulltextindex.IStringMatcher import IStringMatcher, MatchPosition
 
 class StringMatcher (IStringMatcher):
     def __init__(self) -> None:
-        self.regex: Optional[Pattern] = None
+        self.regex: Optional[Pattern[str]] = None
 
-    def setRegex(self, expr: Pattern) -> None:
+    def setRegex(self, expr: Pattern[str]) -> None:
         self.regex = expr
 
     def matches(self, data: str, filename: str = "") -> Iterable[MatchPosition]:
@@ -52,7 +52,7 @@ class InDocumentSearchResult:
         self.results = results
         self.matcher = matcher
 
-def findAllMatches(text: str, searchRegex: Pattern, cancelEvent: threading.Event) -> InDocumentSearchResult:
+def findAllMatches(text: str, searchRegex: Pattern[str], cancelEvent: threading.Event) -> InDocumentSearchResult:
     if not text or not searchRegex:
         return InDocumentSearchResult([], None)
 
@@ -82,7 +82,7 @@ class InDocumentSearchWidget(QWidget):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.ui = Ui_InDocumentSearchWidget()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.ui.editSearch.textEdited.connect(self.__textEdited)
         self.ui.checkBoxCaseSensitive.clicked.connect(self.__optionsChanged)
         self.ui.checkBoxRegex.clicked.connect(self.__optionsChanged)
@@ -95,7 +95,7 @@ class InDocumentSearchWidget(QWidget):
 
         self.__searchTask: Optional[AsynchronousTask] = None
         self.text = ""
-        self.searchRegex: Optional[Pattern] = None
+        self.searchRegex: Optional[Pattern[str]] = None
         self.currentMatch = -1
         self.matches: List[MatchPosition] = []
         self.ui.labelCurrentMatch.setText("")

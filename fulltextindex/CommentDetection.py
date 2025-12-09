@@ -63,7 +63,7 @@ def findAllStrings(line: str, findTripleQuotes: bool) -> List[TextSpan]:
     quotes.sort()
     return quotes
 
-def __findAllStrings(line: str, reQuote: Pattern, allowMultiline: bool = False) -> List[TextSpan]:
+def __findAllStrings(line: str, reQuote: Pattern[str], allowMultiline: bool = False) -> List[TextSpan]:
     """Returns the position of all strings in a line as a list of TextSpan."""
     strings: List[TextSpan] = []
 
@@ -111,9 +111,9 @@ def __backSlashesBefore(line: str, pos: int) -> int:
     return backslashes
 
 def analyzeText(text: str,
-                lineCommentPattern: Optional[Pattern],
-                multiCommentStart: Optional[Pattern],
-                multiCommentStop: Optional[Pattern],
+                lineCommentPattern: Optional[Pattern[str]],
+                multiCommentStart: Optional[Pattern[str]],
+                multiCommentStop: Optional[Pattern[str]],
                 hasTripleQuotes: bool) -> TextSegments:
     r"""
     Find all comments and string ranges in the document and return them as TextSpan objects.
@@ -239,7 +239,7 @@ class TestGetAllStrings(unittest.TestCase):
                 quotedStrings.append(TextSpan(start,stop-start+1))
             findAllStringTest(self, line, quotedStrings, findTripleQuotes=findTripleQuotes)
 
-def findAllStringTest(test: unittest.TestCase, line: str, expected: list, findTripleQuotes: bool = False) -> None:
+def findAllStringTest(test: unittest.TestCase, line: str, expected: list[TextSpan], findTripleQuotes: bool = False) -> None:
     r = findAllStrings(line, findTripleQuotes)
     test.assertListEqual(r, expected)
 

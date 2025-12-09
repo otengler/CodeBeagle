@@ -29,7 +29,7 @@ def identity (a: T) -> T:
 
 def boolParse (value: Any) -> bool:
     if type(value) == bool:
-        return cast(bool, value)
+        return value
     if type(value) == str:
         value = value.lower()
         if value == "true" or value == "1" or value == "yes":
@@ -55,7 +55,7 @@ def boolPersist (value: Any) -> str:
         return "False"
     raise RuntimeError("Cannot interpret '" + str(value) + "' as bool")
 
-def plainTypeMapper(t: Any) -> Tuple[Callable, Callable, Callable]:
+def plainTypeMapper(t: Any) -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
     if bool == t:
         return (boolParse, lambda: None, boolPersist)
     if int == t:
@@ -69,9 +69,9 @@ def plainTypeMapper(t: Any) -> Tuple[Callable, Callable, Callable]:
 # c.sub = Config()
 # c.sub.a = "Text"
 class Config:
-    def __init__ (self, name: str="", dataMap: Optional[Dict[str,Any]]=None,  configLines:Optional[Iterator[str]]=None,  typeInfoFunc: Optional[Callable]=None) -> None:
+    def __init__ (self, name: str="", dataMap: Optional[Dict[str,Any]]=None,  configLines:Optional[Iterator[str]]=None,  typeInfoFunc: Optional[Callable[[Any], None]]=None) -> None:
         self.__data = dataMap or {}
-        self.__typeMapper: Dict[str,Tuple[Callable,Callable,Callable]] = {}
+        self.__typeMapper: Dict[str,Tuple[Callable[[Any], Any],Callable[[], Any],Callable[[Any], str]]] = {}
         if typeInfoFunc:
             typeInfoFunc(self)
         if name:
@@ -82,20 +82,20 @@ class Config:
     def setPlainType(self, attr: str, attrType: Any) -> None:
         self.__typeMapper[attr.lower()] = plainTypeMapper(attrType)
 
-    def setType (self, attr: str, typeFuncs: Tuple[Callable, Callable, Callable]) -> None:
+    def setType (self, attr: str, typeFuncs: Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]) -> None:
         self.__typeMapper[attr.lower()] = typeFuncs
 
-    def __typeParse (self, attr: str) -> Callable:
+    def __typeParse (self, attr: str) -> Callable[[Any], Any]:
         if attr in self.__typeMapper:
             return self.__typeMapper[attr][0]
         return lambda a: a
 
-    def __typeNotFound (self, attr: str) -> Callable:
+    def __typeNotFound (self, attr: str) -> Callable[[], Any]:
         if attr in self.__typeMapper:
             return self.__typeMapper[attr][1]
         return lambda:None
 
-    def __typePersist (self, attr: str) -> Callable:
+    def __typePersist (self, attr: str) -> Callable[[Any], str]:
         if attr in self.__typeMapper:
             return self.__typeMapper[attr][2]
         return str
@@ -223,16 +223,16 @@ class Config:
             except IOError:
                 pass
 
-def typeDefaultBool (bDefault: bool) -> Tuple[Callable, Callable, Callable]:
+def typeDefaultBool (bDefault: bool) -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
     return (boolParse, lambda: bDefault, boolPersist)
 
-def typeDefaultInt (iDefault: int) -> Tuple[Callable, Callable, Callable]:
+def typeDefaultInt (iDefault: int) -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
     return (int, lambda: iDefault, str)
 
-def typeDefaultString (strDefault: str) -> Tuple[Callable, Callable, Callable]:
+def typeDefaultString (strDefault: str) -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
     return (identity, lambda: strDefault, str)
 
-def typeDefaultConfig () -> Tuple[Callable, Callable, Callable]:
+def typeDefaultConfig () -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
     return (identity, lambda: Config(), identity) # Lambda may not be neccessary pylint: disable=W0108
 class TestConfig(unittest.TestCase):
     def test(self) -> None:

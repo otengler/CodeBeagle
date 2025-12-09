@@ -17,7 +17,7 @@ from PyQt5.QtCore import QFile, QTextStream
 from PyQt5.QtGui import QColor, QPalette
 
 # Local imports
-from .palette import DarkPalette
+from .palette import DarkPalette as DarkPalette
 from .constants import PACKAGE_PATH, QSS_FILE
 
 _logger = logging.getLogger(__name__)

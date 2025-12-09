@@ -19,15 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import re
 import threading
-from typing import Optional, List, Callable
+from typing import Optional, List, Pattern
 from tools.FileTools import freadall
-from  . import FullTextIndex, IndexConfiguration, Query, IndexUpdater
-
-emptyPattern = re.compile("") # make mypy happy
+from  . import IndexConfiguration, IndexUpdater
+from .FullTextIndex import FullTextIndex, ContentQuery, FileQuery, SearchResult, PerformanceReport, CommonKeywordMap, ProgressFunction
+from .Query import Query, hasFileNameWildcard, createPathMatchPattern
 
 class ResultSet:
-    def __init__(self, matches: Optional[FullTextIndex.SearchResult] = None, searchData: Optional[Query.Query] = None,
-                 perfReport: Optional[FullTextIndex.PerformanceReport] = None, label: Optional[str] = None) -> None:
+    def __init__(self, matches: Optional[SearchResult] = None, searchData: Optional[Query] = None,
+                 perfReport: Optional[PerformanceReport] = None, label: Optional[str] = None) -> None:
 
         self.matches = matches or []
         self.perfReport = perfReport
@@ -40,12 +40,12 @@ class SearchMethods:
     the call to 'cancel' may happen any time - also during construction and assignment of FullTextIndex
     """
     def __init__(self) -> None:
-        self.fti: Optional[FullTextIndex.FullTextIndex] = None
+        self.fti: Optional[FullTextIndex] = None
         self.lock = threading.Lock()
 
-    def searchContent(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
-                      commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: Optional[threading.Event]=None,
-                      reportProgress: Optional[FullTextIndex.ProgressFunction]=None) -> ResultSet:
+    def searchContent(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
+                      commonKeywordMap: CommonKeywordMap, cancelEvent: Optional[threading.Event]=None,
+                      reportProgress: Optional[ProgressFunction]=None) -> ResultSet:
 
         try:
             if indexConf.isContentIndexed():
@@ -56,17 +56,17 @@ class SearchMethods:
                 del self.fti
                 self.fti = None
 
-    def __searchContentIndexed(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                               commonKeywordMap:FullTextIndex.CommonKeywordMap, cancelEvent: Optional[threading.Event]=None,
-                               reportProgress: Optional[FullTextIndex.ProgressFunction]=None) -> ResultSet:
-        perfReport = FullTextIndex.PerformanceReport()
+    def __searchContentIndexed(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
+                               commonKeywordMap: CommonKeywordMap, cancelEvent: Optional[threading.Event]=None,
+                               reportProgress: Optional[ProgressFunction]=None) -> ResultSet:
+        perfReport = PerformanceReport()
         with perfReport.newAction("Init database"):
             with self.lock:
-                self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
+                self.fti = FullTextIndex(indexConf.indexdb)
             result = ResultSet(self.fti.searchContent(searchData, perfReport, commonKeywordMap, cancelEvent=cancelEvent, reportProgress=reportProgress), searchData, perfReport)
         return result
 
-    def __searchContentDirect(self, searchData: FullTextIndex.ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
+    def __searchContentDirect(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration, 
                               cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         matches: List[str] = []
         for directory in indexConf.directories:
@@ -84,7 +84,7 @@ class SearchMethods:
         matches = removeDupsAndSort(matches)
         return ResultSet(matches, searchData)
 
-    def searchFileName(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
+    def searchFileName(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         try:
             if indexConf.isFileNameIndexed():
                 return self.__searchFileNameIndexed(searchData, indexConf, cancelEvent)
@@ -94,27 +94,27 @@ class SearchMethods:
                 del self.fti
                 self.fti = None
 
-    def __searchFileNameIndexed(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
-        perfReport = FullTextIndex.PerformanceReport()
+    def __searchFileNameIndexed(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
+        perfReport = PerformanceReport()
         with perfReport.newAction("Init database"):
             with self.lock:
-                self.fti = FullTextIndex.FullTextIndex(indexConf.indexdb)
+                self.fti = FullTextIndex(indexConf.indexdb)
             result = ResultSet(self.fti.searchFile(searchData, perfReport, cancelEvent=cancelEvent), searchData, perfReport)
         return result
 
-    def __searchFileNameDirect(self, searchData: FullTextIndex.FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
+    def __searchFileNameDirect(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         search = searchData.search
         searchLower = search.lower()
 
-        hasWildcards = Query.hasFileNameWildcard(search)
+        hasWildcards = hasFileNameWildcard(search)
         bCaseSensitive = searchData.bCaseSensitive
 
-        searchPattern = emptyPattern
+        searchPattern: Pattern[str]
         if hasWildcards:
             reFlags = 0
             if not bCaseSensitive:
                 reFlags = re.IGNORECASE
-            searchPattern = re.compile(Query.createPathMatchPattern(search, True), reFlags)
+            searchPattern = re.compile(createPathMatchPattern(search, True), reFlags)
 
         matches: List[str] = []
         for directory in indexConf.directories:
@@ -142,7 +142,7 @@ class SearchMethods:
             if self.fti:
                 self.fti.interrupt()
 
-def removeDupsAndSort(matches: FullTextIndex.SearchResult) -> FullTextIndex.SearchResult:
+def removeDupsAndSort(matches: SearchResult) -> SearchResult:
     """Remove duplicates and sort"""
     uniqueMatches = set()
     for match in matches:

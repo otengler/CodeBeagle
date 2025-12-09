@@ -22,8 +22,10 @@ from typing import List, Tuple, Iterable, Any, Dict, Callable, Optional
 from tools.FileTools import fopen, freadall
 from .IndexDatabase import IndexDatabase
 from .FileSearch import searchFile
-from .Query import ContentQuery, FileQuery, PerformanceReport, ReportAction, safeLen, SearchResult
+from .Query import Query, ContentQuery, FileQuery, PerformanceReport, ReportAction, safeLen, SearchResult
 from .KeywordCaching import Keyword, getCachedKeywords, setCachedKeywords, checkAndInvalidateKeywordsCache
+
+__all__ = ['ContentQuery', 'FileQuery', 'Query', 'PerformanceReport', 'SearchResult', 'Keyword', 'buildMapFromCommonKeywordFile', 'FullTextIndex']
 
 ProgressFunction = Callable[[int], None]
 

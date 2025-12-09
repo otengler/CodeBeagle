@@ -114,8 +114,6 @@ class IndexConfiguration:
         if not type(other) is IndexConfiguration:
             return False
 
-        other = cast(IndexConfiguration, other)
-
         return self.indexName == other.indexName and \
                self.indexUpdateMode == other.indexUpdateMode and \
                self.indexType == other.indexType and \

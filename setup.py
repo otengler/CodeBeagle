@@ -1,5 +1,5 @@
 import sys
-from cx_Freeze import setup, Executable
+from cx_Freeze import setup, Executable  # type: ignore[import-untyped]
 import AppConfig
 
 options = {

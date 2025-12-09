@@ -4,6 +4,7 @@
 
 # Standard library imports
 from collections import OrderedDict
+from typing import Any
 
 class DarkPalette:
     """Theme variables."""
@@ -42,7 +43,7 @@ class DarkPalette:
     PATH_RESOURCES = "'<RC_DIR>'"
 
     @classmethod
-    def to_dict(cls, colors_only: bool=False) -> OrderedDict:
+    def to_dict(cls, colors_only: bool=False) -> OrderedDict[str, Any]:
         """Convert variables to dictionary."""
         order = [
             'COLOR_BACKGROUND_LIGHT',
@@ -79,6 +80,6 @@ class DarkPalette:
         return dic
 
     @classmethod
-    def color_palette(cls) -> OrderedDict:
+    def color_palette(cls) -> OrderedDict[str, Any]:
         """Return the ordered colored palette dictionary."""
         return cls.to_dict(colors_only=True)

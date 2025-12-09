@@ -28,7 +28,7 @@ class AboutDialog(QDialog):
     def __init__(self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
         self.ui = Ui_AboutDialog()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.ui.labelUpdateAvailable.hide()
         version = sys.version_info
         pythonAndQt = " (Python %u.%u.%u, Qt %s)" % (version.major, version.minor, version.micro, QtCore.qVersion())

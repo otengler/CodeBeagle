@@ -26,7 +26,7 @@ class HelpViewerDialog (QDialog):
     def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent,  cast(Qt.WindowType, Qt.WindowType.Dialog | Qt.WindowType.WindowMinMaxButtonsHint))
         self.ui = Ui_HelpViewerDialog()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.ui.okButton.clicked.connect(self.accept)
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 

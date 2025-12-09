@@ -112,7 +112,7 @@ class HighlightingTextEdit (QPlainTextEdit):
             self.highlighter.setTextDocument(text, filename or "")
             super().setPlainText(text)
 
-    def setDynamicHighlight(self, text: str) -> None:
+    def setDynamicHighlight(self, text: Optional[str]) -> None:
         if self.dynamicHighlight != text:
             self.dynamicHighlight = text
             if viewport := self.viewport():

@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os, json
-from typing import Optional, Tuple, Callable, cast
+from typing import Optional, Tuple, Callable, cast, Any
 from tools import Config, FileTools
 
 def readVersion() -> str:
@@ -112,7 +112,7 @@ def sourceViewerConfig() -> Config.Config:
     sourceviewer.setType ("showLineNumbers", Config.typeDefaultBool(True))
     return sourceviewer
 
-def typeSourceViewerDefaults () -> Tuple[Callable, Callable, Callable]:
+def typeSourceViewerDefaults () -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
     return (Config.identity, sourceViewerConfig, Config.identity)
 
 def configTypeInfo (config: Config.Config) -> None:

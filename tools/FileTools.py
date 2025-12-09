@@ -29,7 +29,7 @@ import unittest
 
 def getModulePath() -> str:
     import __main__
-    return cast(str, os.path.split(__main__.__file__)[0])
+    return os.path.split(__main__.__file__)[0]
 
 class Encoding(IntEnum):
     Default = 1,
@@ -37,7 +37,7 @@ class Encoding(IntEnum):
     UTF8_BOM = 3,
     UTF16_BOM = 4
 
-def fopenEx (name:str, mode: str='r', defaultEncoding: Optional[str]="latin_1") -> Tuple[IO, Encoding]:
+def fopenEx (name:str, mode: str='r', defaultEncoding: Optional[str]="latin_1") -> Tuple[IO[str], Encoding]:
     f = open(name, mode, -1, "latin-1")
     try:
         start = f.read(3)
@@ -66,7 +66,7 @@ def fopenEx (name:str, mode: str='r', defaultEncoding: Optional[str]="latin_1") 
         f.close()
         raise
 
-def fopen (name: str, mode: str='r', defaultEncoding: str="latin_1") -> IO:
+def fopen (name: str, mode: str='r', defaultEncoding: str="latin_1") -> IO[str]:
     return fopenEx(name, mode, defaultEncoding)[0]
 
 def freadall(name: str, mode: str='r', defaultEncoding: str="latin_1") -> str:
@@ -191,7 +191,7 @@ class PidFile:
     """Pass full path to file where current process ID is stored."""
     def __init__(self, name: str) -> None:
         self.name = name
-        self.pidfile: Optional[IO] = None
+        self.pidfile: Optional[IO[str]] = None
 
     def exists(self) -> bool:
         """Reads the PID from a pid file or returns 0 if there is no PID file."""

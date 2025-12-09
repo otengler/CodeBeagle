@@ -34,7 +34,7 @@ class UserHintDialog (QDialog):
     def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent,  Qt.WindowType.Tool)
         self.ui = Ui_UserHintDialog()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.ui.pushButton1.hide()
         self.ui.pushButton2.hide()
@@ -55,7 +55,7 @@ class UserHintDialog (QDialog):
             self.ui.checkShowHint.setCheckState(Qt.CheckState.Unchecked)
 
     def showHintAgain(self) -> bool:
-        return cast(bool, self.ui.checkShowHint.checkState() == Qt.CheckState.Checked)
+        return self.ui.checkShowHint.checkState() == Qt.CheckState.Checked
 
     def addButton (self, buttonID: ButtonType, bIsDefault:bool=False) -> None:
         if not self.button1:

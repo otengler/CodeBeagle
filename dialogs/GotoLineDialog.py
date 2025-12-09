@@ -26,7 +26,7 @@ class GotoLineDialog (QDialog):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.ui = Ui_GotoLineDialog()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
 
     def focusInEvent (self, _: Optional[QFocusEvent]) -> None:

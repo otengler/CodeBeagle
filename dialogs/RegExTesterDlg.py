@@ -63,7 +63,7 @@ class TextHighlighter(QSyntaxHighlighter):
             groupFormat.setForeground(Qt.GlobalColor.darkBlue)
             self.groupFormats.append(groupFormat)
 
-        self.expr: Optional[Pattern] = None
+        self.expr: Optional[Pattern[str]] = None
         self.iMode = SearchModes.SearchFirst
         self.bColorizeGroups = False
 
@@ -105,7 +105,7 @@ class TextHighlighter(QSyntaxHighlighter):
                 if self.iMode == SearchModes.SearchFirst:
                     break
 
-    def highlightMatch(self, reMatch: Match) -> None:
+    def highlightMatch(self, reMatch: Match[str]) -> None:
         start, end = reMatch.span()
         self.setFormat(start,  end-start,  self.matchFormat)
 
@@ -126,7 +126,7 @@ class RegExTesterDlg (QDialog):
     def __init__ (self, parent: Optional[QWidget]=None) -> None:
         super().__init__(parent)
         self.ui = Ui_RegExTesterDlg()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.exprHighlighter = ExprHighlighter(self.ui.textEditExpr.document())
         self.textHighlighter = TextHighlighter(self.ui.textEditText.document())

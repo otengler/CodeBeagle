@@ -16,14 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 import json, unittest, os
 from bisect import bisect_left, bisect_right
 from PyQt5.QtCore import QSettings
 from tools.ExceptionTools import ignoreExcepion
 import AppConfig
 
-def findStrInList(items: list, item: str) -> int:
+def findStrInList(items: list[str], item: str) -> int:
     try:
         return items.index(item)
     except ValueError:
@@ -214,7 +214,7 @@ class BookmarkStorage:
             settings.setValue(self.BookmarkStorageKey, self.__serializeBookmarks())
 
     def __serializeBookmarks(self) -> str:
-        data: dict = {}
+        data: dict[str, Any] = {}
         if self.bookmarkData.bookmarks:
             all = []
             for fileName, lines in self.bookmarkData.bookmarks.items():
@@ -233,7 +233,7 @@ class BookmarkStorage:
         try:
             deserialized = json.loads(serialized)
             if deserialized and isinstance(deserialized, dict):
-                all: list
+                all: list[Any]
                 if all := deserialized.get(self.PropAll): 
                     for item in all:
                         name = item.get(self.PropName)
@@ -244,7 +244,7 @@ class BookmarkStorage:
                                     continue
                             lines.sort()
                             bookmarks[name] = lines
-                numbered: list
+                numbered: list[Any]
                 if numbered := deserialized.get(self.PropNumbered):
                     for item in numbered:
                         number = item.get(self.PropNumber)
@@ -291,21 +291,21 @@ class TestBookmarks(unittest.TestCase):
 
         storage = BookmarkStorage()
         storage.setBookmarksForFile("a", set((10,)))
-        json = storage._BookmarkStorage__serializeBookmarks() # type: ignore
-        self.assertListEqual([k for k in storage.bookmarkData.bookmarks.keys()], ["a"]) # type: ignore
+        json = storage._BookmarkStorage__serializeBookmarks()  # type: ignore[attr-defined]
+        self.assertListEqual([k for k in storage.bookmarkData.bookmarks.keys()], ["a"])
         self.assertIsNone(storage.current)
 
         storage = BookmarkStorage()
         storage.setBookmarksForFile("a", set((20,30,10)))
         storage.setBookmarksForFile("b", set((15,)))
         storage.setBookmarksForFile("c", set()) # empty must be removed when serializing
-        json = storage._BookmarkStorage__serializeBookmarks() # type: ignore
-        
+        json = storage._BookmarkStorage__serializeBookmarks()  # type: ignore[attr-defined]
+
         storage = BookmarkStorage()
-        storage._BookmarkStorage__deserializeBookmarks(json, False) # type: ignore
-        self.assertListEqual([k for k in storage.bookmarkData.bookmarks.keys()], ["a", "b"]) # type: ignore
-        self.assertListEqual(storage.bookmarkData.bookmarks["a"], [10,20,30]) # type: ignore
-        self.assertListEqual(storage.bookmarkData.bookmarks["b"], [15]) # type: ignore
+        storage._BookmarkStorage__deserializeBookmarks(json, False)  # type: ignore[attr-defined]
+        self.assertListEqual([k for k in storage.bookmarkData.bookmarks.keys()], ["a", "b"])
+        self.assertListEqual(storage.bookmarkData.bookmarks["a"], [10,20,30])
+        self.assertListEqual(storage.bookmarkData.bookmarks["b"], [15])
         self.assertIsNone(storage.current)
         storage.setBookmarksForFile("c", set()) # make sure empty file is skipped in next/previous
 
