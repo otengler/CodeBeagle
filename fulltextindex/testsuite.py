@@ -35,12 +35,9 @@ def delFile (name: str) -> None:
         print (str(e))
 
 def delDir (name: str) -> None:
-    try:
+    if os.path.isdir(name):
         removeReadOnly (name)
         shutil.rmtree(name)
-    except WindowsError as e:
-        if e.winerror != 3:
-            raise
 
 def removeReadOnly (path: str) -> None:
     for path, _, filelist in os.walk (path):
