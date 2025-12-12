@@ -90,11 +90,11 @@ class IndexDatabase:
         self.strDbLocation = strDbLocation
         self.conn = sqlite3.connect(strDbLocation)
 
-        if readOnlyOptimizations:
-            # Read optimizations (safe for read-only operations)
-            cursor = self.conn.cursor()
-            cursor.execute("PRAGMA cache_size = -64000") # 64MB cache
-            # Also tested 'PRAGMA temp_store = MEMORY' and 'PRAGMA mmap_size = 268435456' but the effect was not measureable.
+        cursor = self.conn.cursor()
+        cursor.execute("PRAGMA cache_size = -64000") # 64MB cache
+        # To improve read performance also the following was tested:
+        # 'PRAGMA temp_store = MEMORY' and 'PRAGMA mmap_size = 268435456' 
+        # but the effect was not measureable.
 
         self.__setupDatabase()
 

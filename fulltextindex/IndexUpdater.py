@@ -84,6 +84,7 @@ class UpdateStatistics:
 
 class IndexUpdater (IndexDatabase):
     def updateIndex(self, config: IndexConfiguration, statistics: Optional[UpdateStatistics]=None) -> None:
+        kwCache: dict[str, int] = {}
         directories = config.directories
         extensions = config.extensions
         dirExcludes = config.dirExcludes or []
@@ -123,7 +124,7 @@ class IndexUpdater (IndexDatabase):
                     try:
                         if indexType != IndexType.FileName:
                             if timestamp != mTime:
-                                self.__updateFile(c, q, docID, strFullPath)
+                                self.__updateFile(c, q, docID, strFullPath, kwCache)
                                 c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
                                 if statistics and timestamp != 0:
                                     statistics.incUpdated()
@@ -171,7 +172,7 @@ class IndexUpdater (IndexDatabase):
         logging.info("Cleaning excluded extensions")
         c.execute("DELETE FROM excludedExtensions WHERE indexID < :index", {"index":nextIndexID})
 
-    def __updateFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, strFullPath: str) -> None:
+    def __updateFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, strFullPath: str, kwCache: dict[str, int]) -> None:
         # Delete old associations
         c.execute("DELETE FROM kw2doc WHERE docID=?", (docID,))
         # Associate document with all tokens
@@ -179,12 +180,16 @@ class IndexUpdater (IndexDatabase):
         for token in genTokens(freadall(strFullPath)):
             keyword = lower(token)
 
-            c.execute("INSERT OR IGNORE INTO keywords (id,keyword) VALUES (NULL,?)", (keyword,))
-            if c.rowcount == 1 and c.lastrowid != 0:
-                kwID = c.lastrowid
+            if keyword in kwCache:
+                kwID = kwCache[keyword]
             else:
-                q.execute("SELECT id FROM keywords WHERE keyword=:kw", {"kw":keyword})
-                kwID = q.fetchone()[0]
+                c.execute("INSERT OR IGNORE INTO keywords (id,keyword) VALUES (NULL,?)", (keyword,))
+                if c.rowcount == 1 and c.lastrowid != 0 and c.lastrowid != None:
+                    kwID = c.lastrowid
+                else:
+                    q.execute("SELECT id FROM keywords WHERE keyword=:kw", {"kw":keyword})
+                    kwID = q.fetchone()[0]
+                kwCache[keyword] = kwID
 
             c.execute("INSERT OR IGNORE INTO kw2doc (kwID,docID) values (?,?)", (kwID, docID))
 
