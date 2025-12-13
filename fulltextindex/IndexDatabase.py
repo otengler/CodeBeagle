@@ -83,7 +83,7 @@ CREATE INDEX IF NOT EXISTS i_excludedExtensions_extension ON excludedExtensions 
 
 
 class IndexDatabase:
-    def __init__(self, strDbLocation: str, readOnlyOptimizations: bool = False) -> None:
+    def __init__(self, strDbLocation: str) -> None:
         if not strDbLocation:
             raise RuntimeError("Database location cannot be empty")
 

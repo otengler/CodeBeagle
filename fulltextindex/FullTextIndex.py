@@ -76,7 +76,7 @@ def cancelableSearch(func: Callable[..., SearchResult], *args: Any) -> SearchRes
 
 class FullTextIndex (IndexDatabase):
     def __init__(self, strDbLocation: str) -> None:
-        super().__init__(strDbLocation, readOnlyOptimizations = True)
+        super().__init__(strDbLocation)
 
     def searchFile(self, query: FileQuery, perfReport: Optional[PerformanceReport]=None, cancelEvent:Optional[threading.Event]=None) -> SearchResult:
         return cancelableSearch(self.__searchFile, query, perfReport)
