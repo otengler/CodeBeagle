@@ -3,7 +3,7 @@
 - Added progress as percent value where possible
 - Fix false detected multi line comment starting inside strings
 - There is now a "..." button beside the extension list in the index definition which shows file extensions not yet included
-- Improve speed of index update by caching keywords
+- Improve speed of searching and index update by caching keywords
 
 1.3.15
 - Fix syntax highlighting glitches in combination with in document search
