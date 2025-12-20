@@ -1,9 +1,10 @@
 1.3.16
-- Move filter options to second row
-- Added progress as percent value where possible
-- Fix false detected multi line comment starting inside strings
-- There is now a "..." button beside the extension list in the index definition which shows file extensions not yet included
-- Improve speed of searching and index update by caching keywords
+- Moved filter options to a second row
+- Added search option to suppress matches in comments
+- Added percentage-based progress indicators where possible
+- Fixed false detection of multi-line comments starting inside strings
+- Added a “…” button next to the extension list in the index definition to show file extensions not yet included
+- Improved search and index update performance by caching keywords
 
 1.3.15
 - Fix syntax highlighting glitches in combination with in document search
