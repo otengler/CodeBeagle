@@ -22,6 +22,7 @@ import re
 import time
 import logging
 import sqlite3
+from fnmatch import fnmatch
 from typing import List, Iterator, Set, cast, Tuple, Optional, Dict
 from tools.FileTools import freadall
 from .IndexDatabase import IndexDatabase
@@ -47,7 +48,7 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]
             pathLower = path.lower()
             found = False
             for exclude in dirExcludes:
-                if pathLower.find(exclude) != -1:
+                if fnmatch (pathLower, exclude):
                     found = True
                     break
             if found:

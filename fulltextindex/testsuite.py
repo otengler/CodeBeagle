@@ -23,7 +23,7 @@ import stat
 from typing import Callable, List
 from .FullTextIndex import FullTextIndex, Keyword, buildMapFromCommonKeywordFile
 from .Query import ContentQuery, FileQuery, QueryParams
-from .IndexUpdater import IndexUpdater, UpdateStatistics
+from .IndexUpdater import IndexUpdater, UpdateStatistics, genFind
 from .IndexConfiguration import IndexConfiguration, IndexType, IndexMode
 from .SearchMethods import SearchMethods
 
@@ -581,6 +581,107 @@ class TestFullTextIndex(unittest.TestCase):
         delFile(testDb)
 
         print("All excluded extensions tests passed!")
+
+class TestGenFindWildcardExcludes(unittest.TestCase):
+    """Test the genFind function with wildcard directory excludes."""
+
+    def setUp(self) -> None:
+        self.testDir = "test_genfind"
+        if os.path.exists(self.testDir):
+            delDir(self.testDir)
+
+        # Create directory structure:
+        # test_genfind/
+        #   src/
+        #     main.c
+        #     util.c
+        #   build/
+        #     output.o
+        #   out/
+        #     debug/
+        #       temp.o
+        #   node_modules/
+        #     index.js
+        #   .git/
+        #     config
+        os.makedirs(os.path.join(self.testDir, "src"))
+        os.makedirs(os.path.join(self.testDir, "build"))
+        os.makedirs(os.path.join(self.testDir, "out", "debug"))
+        os.makedirs(os.path.join(self.testDir, "node_modules"))
+        os.makedirs(os.path.join(self.testDir, ".git"))
+
+        for f in ["src/main.c", "src/util.c", "build/output.o",
+                  "out/debug/temp.o", "node_modules/index.js",
+                  ".git/config"]:
+            with open(os.path.join(self.testDir, f), "w") as fp:
+                fp.write("test")
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.testDir):
+            delDir(self.testDir)
+
+    def test_no_excludes(self) -> None:
+        """Without excludes, all matching files are found."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir))
+        self.assertEqual(len(result), 6)
+
+    def test_exclude_exact_dirname_with_wildcard(self) -> None:
+        """Exclude a directory by name using * as wildcard prefix."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir, ["*build"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, "build", "output.o"), paths)
+        # only build excluded -> 5 files remain
+        self.assertEqual(len(result), 5)
+
+    def test_exclude_with_wildcard_contains(self) -> None:
+        """Exclude directories matching a pattern like *build*."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir, ["*build*"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, "build", "output.o"), paths)
+        # only build excluded -> 5 files remain
+        self.assertEqual(len(result), 5)
+
+    def test_exclude_with_wildcard_suffix(self) -> None:
+        """Exclude directories matching a pattern like *node_modules."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir, ["*\\node_modules"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, "node_modules", "index.js"), paths)
+        self.assertEqual(len(result), 5)
+
+    def test_exclude_nested_directory(self) -> None:
+        """Exclude a nested directory path like *out*debug*."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir, ["*out*debug*"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, "out", "debug", "temp.o"), paths)
+        self.assertEqual(len(result), 5)
+
+    def test_multiple_excludes(self) -> None:
+        """Multiple exclude patterns can be combined."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir, ["*build", "*node_modules"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, "build", "output.o"), paths)
+        self.assertNotIn(os.path.join(self.testDir, "node_modules", "index.js"), paths)
+        self.assertEqual(len(result), 4)
+
+    def test_exclude_dot_directory(self) -> None:
+        """Exclude a .git directory using *.git pattern."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir, ["*.git"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, ".git", "config"), paths)
+        self.assertEqual(len(result), 5)
+
+    def test_wildcard_exclude_dot_directory(self) -> None:
+        """Exclude all dot directories with *.git* pattern."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir, ["*.git*"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, ".git", "config"), paths)
+        self.assertEqual(len(result), 5)
+
+    def test_exclude_nonexistent_pattern(self) -> None:
+        """A pattern that matches nothing should not change results."""
+        result = list(genFind({".c", ".o"}, self.testDir, ["*nonexistent*", "*xyz*"]))
+        self.assertEqual(len(result), 4)
+
 
 if __name__ == "__main__":
     unittest.main()
