@@ -233,10 +233,11 @@ class IndexUpdater (IndexDatabase):
 
         # Get excluded extensions for that run, sorted by count descending
         cursor.execute("""
-            SELECT extension, fileCount
+            SELECT extension, SUM(fileCount) as totalCount
             FROM excludedExtensions
             WHERE indexID = ?
-            ORDER BY fileCount DESC, extension ASC
+            GROUP BY extension
+            ORDER BY totalCount DESC, extension ASC
         """, (mostRecentIndexID,))
 
         return cursor.fetchall() or []
