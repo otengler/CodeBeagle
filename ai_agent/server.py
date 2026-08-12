@@ -98,7 +98,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = self.path.split("?")[0].rstrip("/")
         try:
-            if path in ("/api/v1/health", "/health"):
+            if path == "" or path == "/":
+                self._serveApiDoc()
+            elif path in ("/api/v1/health", "/health"):
                 self._sendJson(200, {"status": "ok"})
             elif path in ("/api/v1/locations", "/locations"):
                 self._handleLocations()
@@ -230,6 +232,25 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         return result
 
     # ---- Endpoint handlers ----
+
+    def _serveApiDoc(self) -> None:
+        """Serve the API documentation markdown file at the root URL."""
+        docPath = os.path.join(os.path.dirname(__file__), "API.md")
+        try:
+            with open(docPath, "r", encoding="utf-8") as f:
+                content = f.read()
+            body = content.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/markdown; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self._sendCorsHeaders()
+            self.end_headers()
+            self.wfile.write(body)
+        except FileNotFoundError:
+            self._sendError(500, "API documentation file not found")
+        except Exception as e:
+            logger.exception("Failed to serve API doc")
+            self._sendError(500, str(e))
 
     def _handleLocations(self) -> None:
         locations = self.server.provider.getLocations()

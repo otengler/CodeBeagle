@@ -250,7 +250,12 @@ class SettingsDialog (QDialog):
 
         self.ui.settingsItem.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
-    def defaultLocation (self) -> str:
+        # Load AI agent settings from config
+        agent = AppConfig.appConfig().agent
+        setCheckBox(self.ui.checkAgentEnabled, bool(agent.enabled))
+        self.ui.editAgentPort.setText(str(int(agent.port)))
+
+    def defaultLocation(self) -> str:
         index = None
         row = cast(SettingsEditorDelegate, self.ui.listViewLocations.itemDelegate()).defaultLocationRow  
         if row != -1:
@@ -403,6 +408,8 @@ class SettingsDialog (QDialog):
         config.showRegexDialog = self.ui.checkRegexDialog.checkState() == Qt.CheckState.Checked
         config.showCloseConfirmation = self.ui.checkConfirmClose.checkState() == Qt.CheckState.Checked
         config.defaultLocation = self.defaultLocation()
+        config.agent.enabled = self.ui.checkAgentEnabled.isChecked()
+        config.agent.port = int(self.ui.editAgentPort.text())
                 
         try:
             AppConfig.saveUserConfig (config)
