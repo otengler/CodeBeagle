@@ -169,7 +169,6 @@ class SearchProvider:
                       folderFilter: str = "",
                       extensionFilter: str = "",
                       caseSensitive: bool = False,
-                      excludeComments: bool = False,
                       contextLines: int = 2,
                       limit: int = 100,
                       pageOffset: Optional[Dict[str, int]] = None) -> ContentSearchResult:
@@ -183,7 +182,6 @@ class SearchProvider:
             folderFilter: Optional folder filter pattern.
             extensionFilter: Optional extension filter pattern.
             caseSensitive: Whether to search case-sensitively.
-            excludeComments: Whether to exclude matches inside comments.
             contextLines: Number of context lines before/after each match.
             limit: Maximum number of matches to return.
             pageOffset: Cursor for pagination, from a previous response.
@@ -200,13 +198,11 @@ class SearchProvider:
             strSearch=query,
             strFolderFilter=folderFilter,
             strExtensionFilter=extensionFilter,
-            bCaseSensitive=caseSensitive,
-            bExcludeComments=excludeComments
+            bCaseSensitive=caseSensitive
         )
         searchData = ContentQuery(params)
         # Check file list cache
-        cacheKey = self._makeFileListCacheKey(query, indexConf, folderFilter, extensionFilter,
-                                               caseSensitive, excludeComments)
+        cacheKey = self._makeFileListCacheKey(query, indexConf, folderFilter, extensionFilter, caseSensitive)
         matchingFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
         if matchingFiles is None:
             ftiSearch = SearchMethods()
@@ -315,9 +311,9 @@ class SearchProvider:
 
     def _makeFileListCacheKey(self, query: str, indexConf: IndexConfiguration.IndexConfiguration,
                                folderFilter: str, extensionFilter: str,
-                               caseSensitive: bool, excludeComments: bool) -> str:
+                               caseSensitive: bool) -> str:
         """Build a cache key for the file list of a content search."""
-        return f"fl:{indexConf.displayName()}|{query}|{folderFilter}|{extensionFilter}|{caseSensitive}|{excludeComments}"
+        return f"fl:{indexConf.displayName()}|{query}|{folderFilter}|{extensionFilter}|{caseSensitive}"
 
     def _makeFileMatchCacheKey(self, searchData: ContentQuery, filePath: str) -> str:
         """Build a cache key for the matches inside a single file."""

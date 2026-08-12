@@ -22,7 +22,8 @@ from tools import FileTools
 # if we are executed from a different working directory. This must even be done before other imports. 
 FileTools.switchToAppDir()
 
-import os, sys, subprocess, shutil, argparse
+import os, sys, subprocess, shutil, argparse, atexit
+from typing import Any, Optional
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -36,7 +37,6 @@ from PathVisualizerDelegate import PathVisualizerDelegate
 from UpdateCheck import UpdateCheck
 from SourceViewer import SourceViewer
 from Ui_MainWindow import Ui_MainWindow
-from typing import Optional
 from tools.CustomFont import installCustomFont
 
 userHintNewVersionAvailable = """
@@ -50,8 +50,8 @@ def main() -> None:
                         help="Start the AI agent web server in the background")
     args = parser.parse_args()
 
-    if args.agent_server:
-        startAgentServer()
+    if args.agent_server or AppConfig.appConfig().agent.enabled:
+        startAgentServer(force=args.agent_server)
 
     # dark title bar on Win
     if sys.platform == "win32":
@@ -75,17 +75,25 @@ def main() -> None:
     wnd.show()
     sys.exit(app.exec_())
 
-def startAgentServer() -> None:
-    """Start the AI agent web server in a background thread (integrated mode)."""
+_agentServer: Optional[Any] = None
+
+def startAgentServer(force: bool = False) -> None:
+    """Start the AI agent web server in a background thread (integrated mode).
+
+    Args:
+        force: If True, start the server even if agent.enabled is False in config.
+    """
+    global _agentServer
     try:
         agent = AppConfig.appConfig().agent
-        if not agent.enabled:
-            print("AI agent server is disabled in config ([agent] enabled = false)")
+        if not agent.enabled and not force:
+            print("AI agent server is disabled in config (agent enabled = false)")
             return
         from ai_agent.server import AgentServer
-        server = AgentServer()
-        if server.start():
+        _agentServer = AgentServer()
+        if _agentServer.start():
             print(f"AI agent server started at http://{agent.bind}:{agent.port}")
+            atexit.register(_agentServer.stop)
     except Exception as e:
         print(f"Failed to start AI agent server: {e}")
 

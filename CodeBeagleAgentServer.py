@@ -20,7 +20,7 @@ Standalone AI agent server for CodeBeagle.
 
 Runs the web API server without a GUI. Indexes can be updated using the
 existing UpdateIndex.py tool. The server reads configuration from config.txt
-(and UserConfig.txt) and respects the [agent] section.
+(and UserConfig.txt) and respects the agent section.
 """
 
 import sys
@@ -41,11 +41,12 @@ from ai_agent.server import AgentServer
 def main() -> None:
     agent = AppConfig.appConfig().agent
     if not agent.enabled:
-        print("AI agent server is disabled in config.txt ([agent] enabled = false).")
+        print("AI agent server is disabled in config (agent enabled = false).")
         print("Enable it by adding:")
-        print("  [agent]")
+        print("  agent {")
         print("    enabled = true")
         print("    port = 8080")
+        print("  }")
         print("to config.txt or UserConfig.txt.")
         sys.exit(0)
 

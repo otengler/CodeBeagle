@@ -98,7 +98,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = self.path.split("?")[0].rstrip("/")
         try:
-            if path in ("/health", "/api/v1/health"):
+            if path in ("/api/v1/health", "/health"):
                 self._sendJson(200, {"status": "ok"})
             elif path in ("/api/v1/locations", "/locations"):
                 self._handleLocations()
@@ -256,7 +256,6 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         folderFilter = self._getString(data, "folderFilter", "")
         extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
-        excludeComments = self._getBool(data, "excludeComments", False)
         contextLines = self._getInt(data, "contextLines", self.server.contextLines)
         limit = self._getInt(data, "limit", self.server.defaultLimit)
         pageOffset = self._getPageOffset(data)
@@ -268,7 +267,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             result = self.server.provider.searchContent(
                 query, location=location, folder=folder,
                 folderFilter=folderFilter, extensionFilter=extensionFilter,
-                caseSensitive=caseSensitive, excludeComments=excludeComments,
+                caseSensitive=caseSensitive,
                 contextLines=contextLines, limit=limit, pageOffset=pageOffset
             )
         except ValueError as e:
@@ -334,7 +333,7 @@ class AgentServer:
     """
     Wraps the AgentHTTPServer and manages its lifecycle.
 
-    Reads configuration from the [agent] section of config.txt.
+    Reads configuration from the agent section of config.txt.
     """
 
     def __init__(self, provider: Optional[SearchProvider] = None) -> None:
