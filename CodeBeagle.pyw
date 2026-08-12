@@ -22,7 +22,7 @@ from tools import FileTools
 # if we are executed from a different working directory. This must even be done before other imports. 
 FileTools.switchToAppDir()
 
-import os, sys, subprocess, shutil
+import os, sys, subprocess, shutil, argparse
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -44,6 +44,15 @@ userHintNewVersionAvailable = """
 """
 
 def main() -> None:
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(prog="CodeBeagle")
+    parser.add_argument("--agent-server", action="store_true",
+                        help="Start the AI agent web server in the background")
+    args = parser.parse_args()
+
+    if args.agent_server:
+        startAgentServer()
+
     # dark title bar on Win
     if sys.platform == "win32":
         if AppConfig.appConfig().theme == AppConfig.darkTheme:
@@ -65,6 +74,20 @@ def main() -> None:
     wnd = MainWindow()
     wnd.show()
     sys.exit(app.exec_())
+
+def startAgentServer() -> None:
+    """Start the AI agent web server in a background thread (integrated mode)."""
+    try:
+        agent = AppConfig.appConfig().agent
+        if not agent.enabled:
+            print("AI agent server is disabled in config ([agent] enabled = false)")
+            return
+        from ai_agent.server import AgentServer
+        server = AgentServer()
+        if server.start():
+            print(f"AI agent server started at http://{agent.bind}:{agent.port}")
+    except Exception as e:
+        print(f"Failed to start AI agent server: {e}")
 
 def configureTheme(app: QApplication) -> None: 
     if AppConfig.appConfig().theme == AppConfig.darkTheme:

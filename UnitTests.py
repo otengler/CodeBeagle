@@ -33,6 +33,10 @@ testmodules = [
     'BookmarkStorage'
     ]
 
+agentTestmodules = [
+    'ai_agent.tests'
+    ]
+
 def getModulePath() -> str:
     import __main__
     return os.path.split(__main__.__file__)[0]
@@ -44,6 +48,9 @@ if __name__ == "__main__":
     suite = unittest.TestSuite()
 
     for t in testmodules:
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
+
+    for t in agentTestmodules:
         suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
 
     unittest.TextTestRunner().run(suite)

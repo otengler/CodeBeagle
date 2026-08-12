@@ -60,4 +60,19 @@ import config/SourceViewer.txt as SourceViewer
 import UserConfig.txt
 
 
+#
+# AI Agent server settings
+#
+# Uncomment and configure the [agent] section to enable the AI agent web API server.
+# This allows AI agents (e.g. Claude, GPT) to search code via HTTP requests.
+#
+#[agent] {
+#    enabled = false
+#    port = 8080
+#    bind = 127.0.0.1
+#    contextLines = 2
+#    defaultLimit = 100
+#}
+
+
 

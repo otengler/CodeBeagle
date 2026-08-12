@@ -115,6 +115,19 @@ def sourceViewerConfig() -> Config.Config:
 def typeSourceViewerDefaults () -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
     return (Config.identity, sourceViewerConfig, Config.identity)
 
+def agentConfigTypeDefaults() -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
+    return (Config.identity, lambda: agentConfig(), Config.identity)
+
+def agentConfig() -> Config.Config:
+    agent = Config.Config()
+    agent.setType("port", Config.typeDefaultInt(8080))
+    agent.setType("bind", Config.typeDefaultString("127.0.0.1"))
+    agent.setType("enabled", Config.typeDefaultBool(False))
+    agent.setType("contextLines", Config.typeDefaultInt(2))
+    agent.setType("defaultLimit", Config.typeDefaultInt(100))
+    agent.setType("allowOrigin", Config.typeDefaultString(""))
+    return agent
+
 def configTypeInfo (config: Config.Config) -> None:
     """Configurates the default values and types."""
     config.setType("fontSize", Config.typeDefaultInt(-1))
@@ -133,6 +146,7 @@ def configTypeInfo (config: Config.Config) -> None:
     config.setType("expandFilterPanelByDefault",  Config.typeDefaultBool(False))
     config.setType("SourceViewer",  typeSourceViewerDefaults())
     config.setType("managedConfig", Config.typeDefaultString(""))
+    config.setType("agent", agentConfigTypeDefaults())
 
 def lastUsedConfigName () -> str:
     return ConfigCache.lastUsedConfigName

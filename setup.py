@@ -38,11 +38,17 @@ UpdateIndex=Executable(
     target_name = targetUpdateIndex
 )
 
+CodeBeagleAgentServer=Executable(
+    script = "CodeBeagleAgentServer.py",
+    target_name = "CodeBeagleAgentServer",
+    icon = "resources.src/CodeBeagle.ico"
+)
+
 setup(
     options=options,
     name = AppConfig.appName,
     version = AppConfig.appVersion + ".0",
     description = "CodeBeagle - A tool to search source code based on a full text index",
-    executables = [CodeBeagle, UpdateIndex]
+    executables = [CodeBeagle, UpdateIndex, CodeBeagleAgentServer]
 )
 

@@ -18,17 +18,46 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import threading
-from typing import Any, Dict, List, Optional, Tuple
+import time
+from typing import Any, Dict, List, Optional, Tuple, cast
 from AppConfig import appConfig
 from tools.FileTools import freadall
 from tools.ContextExtraction import LineMapping
 from fulltextindex import IndexConfiguration
 from fulltextindex.FullTextIndex import buildMapFromCommonKeywordFile, CommonKeywordMap
+from fulltextindex.IStringMatcher import MatchPosition
 from fulltextindex.Query import QueryParams, ContentQuery, FileQuery
 from fulltextindex.SearchMethods import SearchMethods, ResultSet
 
 __all__ = ['SearchLocation', 'ContentMatch', 'ContentSearchResult', 'FileSearchResult',
-           'SearchProvider']
+           'SearchProvider', 'TTLCache']
+
+class TTLCache:
+    """Simple thread-safe TTL cache mapping keys to values."""
+
+    def __init__(self, ttlSeconds: int = 300) -> None:
+        self._ttl = ttlSeconds
+        self._data: Dict[str, Tuple[float, Any]] = {}
+        self._lock = threading.Lock()
+
+    def get(self, key: str) -> Any:
+        with self._lock:
+            item = self._data.get(key)
+            if item is None:
+                return None
+            expiresAt, value = item
+            if time.time() > expiresAt:
+                del self._data[key]
+                return None
+            return value
+
+    def set(self, key: str, value: Any) -> None:
+        with self._lock:
+            self._data[key] = (time.time() + self._ttl, value)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._data.clear()
 
 class SearchLocation:
     """Plain data object describing a search location for the API."""
@@ -74,9 +103,11 @@ class FileSearchResult:
 class SearchProvider:
     """Qt-free interface to CodeBeagle's search engine for the AI agent API."""
 
-    def __init__(self) -> None:
+    def __init__(self, cacheTTLSeconds: int = 300) -> None:
         self._commonKeywordMap: Optional[CommonKeywordMap] = None
         self._config = appConfig()
+        self._fileListCache = TTLCache(cacheTTLSeconds)
+        self._fileMatchesCache = TTLCache(cacheTTLSeconds)
         self._loadCommonKeywords()
 
     def _loadCommonKeywords(self) -> None:
@@ -96,14 +127,16 @@ class SearchProvider:
                             folder: Optional[str] = None) -> IndexConfiguration.IndexConfiguration:
         """
         Resolve an IndexConfiguration from either a location name or a folder path.
-        Exactly one of location or folder must be provided.
+
+        If neither location nor folder is specified, the configured defaultLocation
+        is used. If that is not configured, the first available location is returned.
         """
         if location and folder:
             raise ValueError("Only one of 'location' or 'folder' may be specified")
-        if not location and not folder:
-            raise ValueError("Either 'location' or 'folder' must be specified")
 
         indexConfigs = IndexConfiguration.readConfig(self._config)
+        if not indexConfigs:
+            raise ValueError("No search locations configured")
 
         if location:
             for conf in indexConfigs:
@@ -111,16 +144,24 @@ class SearchProvider:
                     return conf
             raise ValueError(f"Search location '{location}' not found")
 
-        # Resolve by folder: find the first location whose source directory
-        # equals or is a parent of the requested folder.
-        assert folder is not None  # already checked above
-        normFolder = os.path.normpath(folder)
-        for conf in indexConfigs:
-            for srcDir in conf.directories:
-                normalizedSrc = os.path.normpath(srcDir)
-                if normalizedSrc == normFolder or normFolder.startswith(normalizedSrc + os.sep):
+        if folder:
+            # Resolve by folder: find the first location whose source directory
+            # equals or is a parent of the requested folder.
+            normFolder = os.path.normpath(folder)
+            for conf in indexConfigs:
+                for srcDir in conf.directories:
+                    normalizedSrc = os.path.normpath(srcDir)
+                    if normalizedSrc == normFolder or normFolder.startswith(normalizedSrc + os.sep):
+                        return conf
+            raise ValueError(f"No search location found for folder '{folder}'")
+
+        # Neither location nor folder provided: use defaultLocation or first config
+        defaultName = str(self._config.defaultLocation)
+        if defaultName:
+            for conf in indexConfigs:
+                if conf.displayName() == defaultName:
                     return conf
-        raise ValueError(f"No search location found for folder '{folder}'")
+        return indexConfigs[0]
 
     def searchContent(self, query: str, *,
                       location: Optional[str] = None,
@@ -163,10 +204,16 @@ class SearchProvider:
             bExcludeComments=excludeComments
         )
         searchData = ContentQuery(params)
-        ftiSearch = SearchMethods()
-        resultSet = ftiSearch.searchContent(searchData, indexConf, self._commonKeywordMap or {})
+        # Check file list cache
+        cacheKey = self._makeFileListCacheKey(query, indexConf, folderFilter, extensionFilter,
+                                               caseSensitive, excludeComments)
+        matchingFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
+        if matchingFiles is None:
+            ftiSearch = SearchMethods()
+            resultSet = ftiSearch.searchContent(searchData, indexConf, self._commonKeywordMap or {})
+            matchingFiles = resultSet.matches  # List of file paths
+            self._fileListCache.set(cacheKey, matchingFiles)
 
-        matchingFiles = resultSet.matches  # List of file paths
         if not matchingFiles:
             return ContentSearchResult(totalFiles=0, matches=[], pageOffset=None)
 
@@ -212,9 +259,21 @@ class SearchProvider:
 
             text, lineIndex = fileLineCache[filePath]
 
+            # Try to get cached matches for this file
+            fileMatchCacheKey = self._makeFileMatchCacheKey(searchData, filePath)
+            cachedMatches = cast(Optional[List[MatchPosition]], self._fileMatchesCache.get(fileMatchCacheKey))
+
+            if cachedMatches is not None:
+                matchIterator: List[MatchPosition] = cachedMatches
+            else:
+                # Compute and cache matches for this file
+                freshMatches = list(searchData.matches(text, filePath))
+                self._fileMatchesCache.set(fileMatchCacheKey, freshMatches)
+                matchIterator = freshMatches
+
             # Iterate over matches in this file
             fileMatchIndex = 0
-            for startPos, length in searchData.matches(text, filePath):
+            for startPos, length in matchIterator:
                 if skip > 0:
                     skip -= 1
                     fileMatchIndex += 1
@@ -253,6 +312,16 @@ class SearchProvider:
 
         # No more matches
         return ContentSearchResult(totalFiles, matches, pageOffset=None)
+
+    def _makeFileListCacheKey(self, query: str, indexConf: IndexConfiguration.IndexConfiguration,
+                               folderFilter: str, extensionFilter: str,
+                               caseSensitive: bool, excludeComments: bool) -> str:
+        """Build a cache key for the file list of a content search."""
+        return f"fl:{indexConf.displayName()}|{query}|{folderFilter}|{extensionFilter}|{caseSensitive}|{excludeComments}"
+
+    def _makeFileMatchCacheKey(self, searchData: ContentQuery, filePath: str) -> str:
+        """Build a cache key for the matches inside a single file."""
+        return f"fm:{searchData.search}|{searchData.bCaseSensitive}|{searchData.bExcludeComments}|{filePath}"
 
     def _calcColumn(self, lineIndex: LineMapping, lineNumber: int, charPos: int) -> int:
         """Calculate 1-based column number from character position."""
@@ -310,10 +379,17 @@ class SearchProvider:
             bCaseSensitive=caseSensitive
         )
         searchData = FileQuery(params)
-        ftiSearch = SearchMethods()
-        resultSet = ftiSearch.searchFileName(searchData, indexConf)
 
-        allFiles = resultSet.matches  # List of file paths
+        # Check file list cache
+        cacheKey = self._makeFileNameCacheKey(query, indexConf, folderFilter, extensionFilter, caseSensitive)
+        allFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
+
+        if allFiles is None:
+            ftiSearch = SearchMethods()
+            resultSet = ftiSearch.searchFileName(searchData, indexConf)
+            allFiles = resultSet.matches  # List of file paths
+            self._fileListCache.set(cacheKey, allFiles)
+
         totalFiles = len(allFiles)
 
         # Apply pagination
@@ -327,3 +403,9 @@ class SearchProvider:
             nextOffset = {"fileIndex": startIndex + limit}
 
         return FileSearchResult(totalFiles, pageFiles, nextOffset)
+
+    def _makeFileNameCacheKey(self, query: str, indexConf: IndexConfiguration.IndexConfiguration,
+                               folderFilter: str, extensionFilter: str,
+                               caseSensitive: bool) -> str:
+        """Build a cache key for the file list of a file name search."""
+        return f"fn:{indexConf.displayName()}|{query}|{folderFilter}|{extensionFilter}|{caseSensitive}"
