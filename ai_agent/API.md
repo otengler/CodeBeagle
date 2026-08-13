@@ -9,18 +9,18 @@ Humans are welcome too :-)
 # Check if the server is running
 curl http://localhost:8080/health
 
-# List available search locations
-curl http://localhost:8080/api/v1/locations
-
 # Search file content
 curl -X POST http://localhost:8080/api/v1/search/content \
   -H "Content-Type: application/json" \
-  -d '{"query": "class Factory", "location": "myproject", "contextLines": 3}'
+  -d '{"query": "class Factory", "folder": "c:\\src\\project", "contextLines": 3}'
 
-# Search file names
+# Search file names - 404 means the folder is not covered by an index
 curl -X POST http://localhost:8080/api/v1/search/filename \
   -H "Content-Type: application/json" \
-  -d '{"query": "Factory*", "location": "myproject"}'
+  -d '{"query": "Factory*", "folder": "c:\\src\\project"}'
+
+# List available search locations
+curl http://localhost:8080/api/v1/locations
 ```
 
 ## Base URL
@@ -48,7 +48,8 @@ Returns a simple status check. Use this to verify the server is running.
 
 ### `GET /api/v1/locations`
 
-Returns all configured search locations. Call this first to discover which indexes are available, then reference them in search requests.
+Returns all configured search locations. The recommended way is to skip this and specify the `folder` parameter with the desired root folder
+in the content or file name search.
 
 **Response:**
 ```json
@@ -83,8 +84,8 @@ Search within file contents. Returns matching lines with surrounding context.
 ```json
 {
   "query": "class MyClass*",
-  "location": "myproject",
-  "folder": null,
+  "location": null,
+  "folder": "C:\\src\\project",
   "folderFilter": "",
   "extensionFilter": "",
   "caseSensitive": false,
@@ -170,8 +171,8 @@ Search for file names. Wildcard matching with `*` and `?` is always enabled.
 ```json
 {
   "query": "Factory*",
-  "location": "myproject",
-  "folder": null,
+  "location": null,
+  "folder": "C:\\src\\project",
   "folderFilter": "",
   "extensionFilter": "",
   "caseSensitive": false,
@@ -275,7 +276,6 @@ Filename search supports `*` and `?` wildcards:
 | `*test*` | `test_main.py`, `mytest.js` | `data.txt` |
 | `test?.py` | `test1.py`, `testA.py` | `test.py`, `test10.py` |
 | `*.py` | `main.py`, `util.py` | `main.js` |
-| `*` | All files | — |
 
 When the query contains a `.`, the part after the last `.` is treated as an extension filter. For example, `*.py` searches for files with any name and `.py` extension. Search for `Factory` to find files named exactly `Factory` (with any extension).
 
