@@ -107,55 +107,55 @@ class SearchProvider:
                            caseSensitive: bool = False,
                            limit: int = 100,
                            pageOffset: Optional[Dict[str, int]] = None) -> FileSearchResult:
-            """
-            Search file names.
-    
-            Args:
-                query: File name pattern (supports * and ? wildcards).
-                location: Name of the search location (from getLocations()).
-                folder: Root folder path to search in (alternative to location).
-                folderFilter: Optional folder filter pattern.
-                extensionFilter: Optional extension filter pattern.
-                caseSensitive: Whether to search case-sensitively.
-                limit: Maximum number of files to return.
-                pageOffset: Cursor for pagination, from a previous response.
-    
-            Returns:
-                FileSearchResult with matching files and pagination cursor.
-            """
-            indexConf = self._resolveIndexConfig(location, folder)
-    
-            params = QueryParams(
-                strSearch=query,
-                strFolderFilter=folderFilter,
-                strExtensionFilter=extensionFilter,
-                bCaseSensitive=caseSensitive
-            )
-            searchData = FileQuery(params)
-    
-            # Check file list cache
-            cacheKey = self._makeFileNameCacheKey(searchData, indexConf, folderFilter, extensionFilter)
-            allFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
-    
-            if allFiles is None:
-                ftiSearch = SearchMethods()
-                resultSet = ftiSearch.searchFileName(searchData, indexConf)
-                allFiles = resultSet.matches  # List of file paths
-                self._fileListCache.set(cacheKey, allFiles)
-    
-            totalFiles = len(allFiles)
-    
-            # Apply pagination
-            startIndex = 0
-            if pageOffset:
-                startIndex = pageOffset.get("fileIndex", 0)
-    
-            pageFiles = allFiles[startIndex:startIndex + limit]
-            nextOffset: Optional[Dict[str, int]] = None
-            if startIndex + limit < totalFiles:
-                nextOffset = {"fileIndex": startIndex + limit}
-    
-            return FileSearchResult(totalFiles, pageFiles, nextOffset)
+        """
+        Search file names.
+
+        Args:
+            query: File name pattern (supports * and ? wildcards).
+            location: Name of the search location (from getLocations()).
+            folder: Root folder path to search in (alternative to location).
+            folderFilter: Optional folder filter pattern.
+            extensionFilter: Optional extension filter pattern.
+            caseSensitive: Whether to search case-sensitively.
+            limit: Maximum number of files to return.
+            pageOffset: Cursor for pagination, from a previous response.
+
+        Returns:
+            FileSearchResult with matching files and pagination cursor.
+        """
+        indexConf = self._resolveIndexConfig(location, folder)
+
+        params = QueryParams(
+            strSearch=query,
+            strFolderFilter=folderFilter,
+            strExtensionFilter=extensionFilter,
+            bCaseSensitive=caseSensitive
+        )
+        searchData = FileQuery(params)
+
+        # Check file list cache
+        cacheKey = self._makeFileNameCacheKey(searchData, indexConf, folderFilter, extensionFilter)
+        allFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
+
+        if allFiles is None:
+            ftiSearch = SearchMethods()
+            resultSet = ftiSearch.searchFileName(searchData, indexConf)
+            allFiles = resultSet.matches  # List of file paths
+            self._fileListCache.set(cacheKey, allFiles)
+
+        totalFiles = len(allFiles)
+
+        # Apply pagination
+        startIndex = 0
+        if pageOffset:
+            startIndex = pageOffset.get("fileIndex", 0)
+
+        pageFiles = allFiles[startIndex:startIndex + limit]
+        nextOffset: Optional[Dict[str, int]] = None
+        if startIndex + limit < totalFiles:
+            nextOffset = {"fileIndex": startIndex + limit}
+
+        return FileSearchResult(totalFiles, pageFiles, nextOffset)
 
     def _buildContentResults(self, matchingFiles: List[str], searchData: ContentQuery,
                               contextLines: int, limit: int,
@@ -265,43 +265,43 @@ class SearchProvider:
     
     def _resolveIndexConfig(self, location: Optional[str] = None,
                                     folder: Optional[str] = None) -> IndexConfiguration.IndexConfiguration:
-                """
-                Resolve an IndexConfiguration from either a location name or a folder path.
-        
-                If neither location nor folder is specified, the configured defaultLocation
-                is used. If that is not configured, the first available location is returned.
-                """
-                if location and folder:
-                    raise ValueError("Only one of 'location' or 'folder' may be specified")
-        
-                indexConfigs = IndexConfiguration.readConfig(self._config)
-                if not indexConfigs:
-                    raise ValueError("No search locations configured")
-        
-                if location:
-                    for conf in indexConfigs:
-                        if conf.displayName() == location:
+            """
+            Resolve an IndexConfiguration from either a location name or a folder path.
+    
+            If neither location nor folder is specified, the configured defaultLocation
+            is used. If that is not configured, the first available location is returned.
+            """
+            if location and folder:
+                raise ValueError("Only one of 'location' or 'folder' may be specified")
+    
+            indexConfigs = IndexConfiguration.readConfig(self._config)
+            if not indexConfigs:
+                raise ValueError("No search locations configured")
+    
+            if location:
+                for conf in indexConfigs:
+                    if conf.displayName() == location:
+                        return conf
+                raise ValueError(f"Search location '{location}' not found")
+    
+            if folder:
+                # Resolve by folder: find the first location whose source directory
+                # equals or is a parent of the requested folder.
+                normFolder = os.path.normpath(folder)
+                for conf in indexConfigs:
+                    for srcDir in conf.directories:
+                        normalizedSrc = os.path.normpath(srcDir)
+                        if normalizedSrc == normFolder or normFolder.startswith(normalizedSrc + os.sep):
                             return conf
-                    raise ValueError(f"Search location '{location}' not found")
-        
-                if folder:
-                    # Resolve by folder: find the first location whose source directory
-                    # equals or is a parent of the requested folder.
-                    normFolder = os.path.normpath(folder)
-                    for conf in indexConfigs:
-                        for srcDir in conf.directories:
-                            normalizedSrc = os.path.normpath(srcDir)
-                            if normalizedSrc == normFolder or normFolder.startswith(normalizedSrc + os.sep):
-                                return conf
-                    raise ValueError(f"No search location found for folder '{folder}'")
-        
-                # Neither location nor folder provided: use defaultLocation or first config
-                defaultName = str(self._config.defaultLocation)
-                if defaultName:
-                    for conf in indexConfigs:
-                        if conf.displayName() == defaultName:
-                            return conf
-                return indexConfigs[0]
+                raise ValueError(f"No search location found for folder '{folder}'")
+    
+            # Neither location nor folder provided: use defaultLocation or first config
+            defaultName = str(self._config.defaultLocation)
+            if defaultName:
+                for conf in indexConfigs:
+                    if conf.displayName() == defaultName:
+                        return conf
+            return indexConfigs[0]
 
     def _makeFileListCacheKey(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
                                    folderFilter: str, extensionFilter: str) -> str:

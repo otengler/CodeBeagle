@@ -1,6 +1,7 @@
 # CodeBeagle AI Agent API
 
 This document describes the HTTP API for AI agents to search source code using CodeBeagle's full-text indexing engine.
+Humans are welcome too :-)
 
 ## Quick Start
 
@@ -324,21 +325,17 @@ Both search endpoints return a `pageOffset` object when there are more results a
 **End of data:**
 When there are no more results, `pageOffset` is omitted from the response. No special handling is needed — just stop paginating when `pageOffset` is absent.
 
-**Example pagination loop:**
-```python
-import requests, json
+**Example pagination loop (curl):**
+```bash
+# Get first page
+curl -X POST http://localhost:8080/api/v1/search/content \
+  -H "Content-Type: application/json" \
+  -d '{"query": "class Factory", "location": "myproject", "limit": 10}' | jq .
 
-url = "http://localhost:8080/api/v1/search/content"
-payload = {"query": "class Factory", "location": "myproject", "limit": 10}
-
-while True:
-    resp = requests.post(url, json=payload)
-    data = resp.json()
-    for match in data["matches"]:
-        print(f"{match['file']}:{match['line']} {match['fullLine']}")
-    if "pageOffset" not in data:
-        break
-    payload["pageOffset"] = data["pageOffset"]
+# Use the pageOffset from the response to get the next page
+curl -X POST http://localhost:8080/api/v1/search/content \
+  -H "Content-Type: application/json" \
+  -d '{"query": "class Factory", "location": "myproject", "limit": 10, "pageOffset": {"fileIndex": 4, "matchIndex": 3}}' | jq .
 ```
 
 ---
@@ -408,120 +405,6 @@ agent {
 
 ---
 
-## Examples
-
-### Python (using `requests`)
-
-```python
-import requests, json
-
-BASE = "http://localhost:8080/api/v1"
-
-# Discover locations
-locations = requests.get(f"{BASE}/locations").json()
-for loc in locations["locations"]:
-    print(f"  {loc['name']}: {loc['indexMode']}")
-
-# Search content
-resp = requests.post(f"{BASE}/search/content", json={
-    "query": "def main",
-    "location": "myproject",
-    "caseSensitive": False,
-    "contextLines": 2,
-    "limit": 5
-})
-data = resp.json()
-print(f"Found {data['totalFiles']} files with matches")
-for match in data["matches"]:
-    print(f"  {match['file']}:{match['line']} -> {match['fullLine']}")
-
-# Search filename
-resp = requests.post(f"{BASE}/search/filename", json={
-    "query": "README*",
-    "location": "myproject"
-})
-data = resp.json()
-print(f"Found {data['totalFiles']} matching files")
-for file in data["files"]:
-    print(f"  {file}")
-```
-
-### Bash (using `curl`)
-
-```bash
-# Health check
-curl http://localhost:8080/health
-
-# List locations
-curl http://localhost:8080/api/v1/locations | jq .
-
-# Content search with pagination
-curl -X POST http://localhost:8080/api/v1/search/content \
-  -H "Content-Type: application/json" \
-  -d '{"query": "TODO|FIXME", "location": "myproject", "contextLines": 1, "limit": 3}' | jq .
-
-# Filename search
-curl -X POST http://localhost:8080/api/v1/search/filename \
-  -H "Content-Type: application/json" \
-  -d '{"query": "*.py", "location": "myproject", "limit": 10}' | jq .
-
-# Search with folder filter
-curl -X POST http://localhost:8080/api/v1/search/content \
-  -H "Content-Type: application/json" \
-  -d '{"query": "def main", "location": "myproject", "folderFilter": "src"}' | jq .
-
-# Pagination: get first page, then second
-curl -X POST http://localhost:8080/api/v1/search/content \
-  -H "Content-Type: application/json" \
-  -d '{"query": "import", "location": "myproject", "limit": 2}' | jq .
-
-# Use the pageOffset from the response to get the next page
-curl -X POST http://localhost:8080/api/v1/search/content \
-  -H "Content-Type: application/json" \
-  -d '{"query": "import", "location": "myproject", "limit": 2, "pageOffset": {"fileIndex": 2, "matchIndex": 0}}' | jq .
-```
-
-### JavaScript (using `fetch`)
-
-```javascript
-const BASE = "http://localhost:8080/api/v1";
-
-async function searchCode(query, location) {
-  let page = null;
-  let allMatches = [];
-
-  do {
-    const body = {
-      query,
-      location,
-      limit: 50,
-      pageOffset: page
-    };
-
-    const resp = await fetch(`${BASE}/search/content`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    const data = await resp.json();
-    allMatches = allMatches.concat(data.matches);
-    page = data.pageOffset || null;
-  } while (page);
-
-  return allMatches;
-}
-
-// Usage
-searchCode("class Factory", "myproject").then(matches => {
-  for (const m of matches) {
-    console.log(`${m.file}:${m.line} ${m.fullLine}`);
-  }
-});
-```
-
----
-
 ## Notes for AI Agents
 
 1. **Start with `GET /api/v1/locations`** to discover which indexes are available. The response tells you the `name` to use in the `location` field and what `indexMode` is supported (content vs. filename).
@@ -534,8 +417,10 @@ searchCode("class Factory", "myproject").then(matches => {
 
 5. **Wildcards are powerful for filename search.** Use `*` to match any part of a filename: `*test*` finds all files containing "test" in the name.
 
-6. **For regex searches in content**, wrap the regex in `<!...!>`. Example: `<!\\b[A-Z][a-z]+Factory!>` matches words ending in "Factory" that start with a capital letter.
+6. **Wildcards for content search cost performance.** Especially if not at the end. If you know the exact pattern omit wildcards.
 
-7. **The server binds to localhost only** by default (127.0.0.1). This is intentional for security. Do not change the bind address to 0.0.0.0 unless you are in a controlled network environment.
+7. **For regex searches in content**, wrap the regex in `<!...!>`. Example: `<!\\b[A-Z][a-z]+Factory!>` matches words ending in "Factory" that start with a capital letter.
 
-8. **Performance:** Searches are typically fast (milliseconds to seconds). The server uses caching to avoid re-scanning files for paginated requests. The cache has a 5-minute TTL.
+8. **The server binds to localhost only** by default (127.0.0.1). This is intentional for security. Do not change the bind address to 0.0.0.0 unless you are in a controlled network environment.
+
+9. **Performance:** Searches are typically fast (milliseconds to seconds). The server uses caching to avoid re-scanning files for paginated requests. The cache has a 5-minute TTL.
