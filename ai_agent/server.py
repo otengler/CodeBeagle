@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2025 Oliver Tengler
+Copyright (C) 2026 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,13 +23,9 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple
 from AppConfig import appConfig
-from ai_agent.search_provider import (
-    SearchProvider, ContentSearchResult, FileSearchResult, ContentMatch
-)
-
-__all__ = ['AgentServer', 'TTLCache']
+from .search_provider import SearchProvider, ContentSearchResult, FileSearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -327,7 +323,6 @@ def _contentResultToJson(result: ContentSearchResult) -> Dict[str, object]:
         matches.append({
             "file": m.file,
             "line": m.line,
-            "column": m.column,
             "matchText": m.matchText,
             "contextBefore": m.contextBefore,
             "contextAfter": m.contextAfter,

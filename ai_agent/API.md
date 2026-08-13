@@ -114,7 +114,7 @@ Search within file contents. Returns matching lines with surrounding context.
 **Matching logic:**
 - The query is matched against the full text of each file using regex.
 - Only files whose extensions match the index configuration are searched.
-- Each match's position, line number, column, and surrounding context are returned.
+- Each match's position, line number, and surrounding context are returned.
 - Matches are returned in file order (sorted alphabetically by file path), then by position within each file.
 
 **Response:**
@@ -130,7 +130,6 @@ Search within file contents. Returns matching lines with surrounding context.
     {
       "file": "C:/src/myproject/src/main.py",
       "line": 45,
-      "column": 10,
       "matchText": "class MyClassA",
       "contextBefore": ["# My awesome class", ""],
       "contextAfter": ["    def __init__(self):", "        pass"],
@@ -154,7 +153,6 @@ Search within file contents. Returns matching lines with surrounding context.
 |-------|------|-------------|
 | `file` | string | Full path to the file. |
 | `line` | int | 1-based line number. |
-| `column` | int | 1-based column number. |
 | `matchText` | string | The exact text that matched the search. |
 | `fullLine` | string | The complete source line containing the match. |
 | `contextBefore` | string[] | Lines before the match (up to `contextLines`). |
@@ -266,9 +264,6 @@ Wrap a regex in `<!` and `!>` to use it as a search term. The regex is matched a
 **Case sensitivity:**
 By default, searches are case-insensitive. Set `"caseSensitive": true` in the request body to enable case-sensitive matching.
 
-**Comment exclusion:**
-Set `"excludeComments": true` to skip matches inside comments. This uses comment detection rules for known file types and may not work for all languages.
-
 ### Filename Search
 
 Filename search supports `*` and `?` wildcards:
@@ -340,7 +335,7 @@ while True:
     resp = requests.post(url, json=payload)
     data = resp.json()
     for match in data["matches"]:
-        print(f"{match['file']}:{match['line']}:{match['column']} {match['fullLine']}")
+        print(f"{match['file']}:{match['line']} {match['fullLine']}")
     if "pageOffset" not in data:
         break
     payload["pageOffset"] = data["pageOffset"]
@@ -520,7 +515,7 @@ async function searchCode(query, location) {
 // Usage
 searchCode("class Factory", "myproject").then(matches => {
   for (const m of matches) {
-    console.log(`${m.file}:${m.line}:${m.column} ${m.fullLine}`);
+    console.log(`${m.file}:${m.line} ${m.fullLine}`);
   }
 });
 ```

@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from typing import List, Optional, Callable, cast
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QFontMetrics, QFont, QWheelEvent
+from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QWidget
 from tools import AsynchronousTask
-from tools.ContextExtraction import MatchesInFile, extractMatches
+from tools.ContextExtraction import extractMatches
 from fulltextindex import FullTextIndex
 from widgets.SourceHighlightingTextEdit import SourceHighlightingTextEdit
 from widgets import RecyclingVerticalScrollArea

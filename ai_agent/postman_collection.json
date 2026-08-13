@@ -1,0 +1,297 @@
+{
+  "info": {
+    "name": "CodeBeagle AI Agent API",
+    "description": "Postman collection for the CodeBeagle AI Agent web API.\n\nThe server exposes CodeBeagle's full-text search engine over HTTP so AI agents can search source code.\n\n## Setup\n\n1. Start the server: `python CodeBeagleAgentServer.py`\n2. The default base URL is `http://127.0.0.1:8080` (override the `baseUrl` collection variable if needed).\n3. Run **Health Check** first, then **List Locations** to discover search locations.\n\n## Endpoints\n\n- `GET /` – API documentation (markdown)\n- `GET /health` – Server status\n- `GET /api/v1/locations` – List configured search locations\n- `POST /api/v1/search/content` – Full-text content search\n- `POST /api/v1/search/filename` – File name search\n\nFull documentation is available at `ai_agent/API.md` or served by the server at `/`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "API Documentation",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"],
+          "path": [""]
+        },
+        "description": "Returns the API documentation as markdown. Useful as a quick reference for available endpoints."
+      },
+      "response": []
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Simple status check to verify the server is running.\n\n**Response:**\n```json\n{\n  \"status\": \"ok\"\n}\n```"
+      },
+      "response": []
+    },
+    {
+      "name": "List Locations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/locations",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "locations"]
+        },
+        "description": "Returns all configured search locations. Call this first to discover which indexes are available, then reference them in the `location` field of search requests.\n\n**Response:**\n```json\n{\n  \"locations\": [\n    {\n      \"name\": \"myproject\",\n      \"folders\": [\"C:/src/myproject\"],\n      \"extensions\": [\".py\", \".js\"],\n      \"indexMode\": \"filenameAndContent\"\n    }\n  ]\n}\n```\n\n`indexMode` is one of `filenameAndContent`, `content`, or `filename`."
+      },
+      "response": []
+    },
+    {
+      "name": "Search Content",
+      "item": [
+        {
+          "name": "Basic Content Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"class Factory\",\n    \"location\": \"myproject\",\n    \"contextLines\": 2,\n    \"limit\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "content"]
+            },
+            "description": "Search file contents. The query uses the same syntax as CodeBeagle's GUI search box (multi-keyword, `*` wildcards, `**N` proximity, and `<!...!>` regex).\n\nReplace `location` with a name from **List Locations**, or use `folder` with a source path instead (mutually exclusive).\n\n**Response:**\n```json\n{\n  \"totalFiles\": 42,\n  \"matches\": [\n    {\n      \"file\": \"C:/src/myproject/src/main.py\",\n      \"line\": 45,\n      \"matchText\": \"class Factory\",\n      \"contextBefore\": [\"# comment\", \"\"],\n      \"contextAfter\": [\"    def __init__(self):\", \"        pass\"],\n      \"fullLine\": \"class Factory(AbstractFactory):\"\n    }\n  ]\n}\n```\n\n`pageOffset` is present in the response when more results exist."
+          },
+          "response": []
+        },
+        {
+          "name": "Content Search with Filters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"<!\\\\bTODO!>\",\n    \"location\": \"myproject\",\n    \"folderFilter\": \"src\",\n    \"extensionFilter\": \".py, -test.py\",\n    \"caseSensitive\": false,\n    \"excludeComments\": false,\n    \"contextLines\": 3,\n    \"limit\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "content"]
+            },
+            "description": "Content search with folder and extension filters, a regex query (wrapped in `<!` and `!>`), and 3 context lines.\n\n- `folderFilter`: comma-separated folder patterns, prefix with `-` to exclude.\n- `extensionFilter`: comma-separated extensions, prefix with `-` to exclude.\n- `excludeComments`: skip matches inside comments (may not work for all file types)."
+          },
+          "response": []
+        },
+        {
+          "name": "Content Search Pagination",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"import\",\n    \"location\": \"myproject\",\n    \"limit\": 2,\n    \"pageOffset\": {\n        \"fileIndex\": 2,\n        \"matchIndex\": 0\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "content"]
+            },
+            "description": "Fetch the next page of a content search. Take the `pageOffset` object from a previous response and pass it back as-is (do not modify the values).\n\nWhen `pageOffset` is absent from a response, there are no more results."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search File Name",
+      "item": [
+        {
+          "name": "Basic Filename Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"Factory*\",\n    \"location\": \"myproject\",\n    \"limit\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/filename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "filename"]
+            },
+            "description": "Search file names. Supports `*` and `?` wildcards. Matches against the file name only (not the full path). When the query contains a `.`, the part after the last `.` is treated as an extension filter (e.g. `*.py`).\n\n**Response:**\n```json\n{\n  \"totalFiles\": 5000,\n  \"files\": [\n    \"C:/src/myproject/src/Factory.py\"\n  ]\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Filename Search with Filters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"*test*\",\n    \"location\": \"myproject\",\n    \"folderFilter\": \"tests, -tests/mock\",\n    \"extensionFilter\": \".py\",\n    \"caseSensitive\": false,\n    \"limit\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/filename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "filename"]
+            },
+            "description": "Filename search with folder and extension filters.\n\n- `*test*` finds all files containing \"test\" in the name.\n- `folderFilter` and `extensionFilter` behave like in content search."
+          },
+          "response": []
+        },
+        {
+          "name": "Filename Search Pagination",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"*.py\",\n    \"location\": \"myproject\",\n    \"limit\": 100,\n    \"pageOffset\": {\n        \"fileIndex\": 100\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/filename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "filename"]
+            },
+            "description": "Fetch the next page of a filename search. Pass back the `pageOffset` object from a previous response. `fileIndex` is the zero-based index into the list of matching files.\n\nWhen `pageOffset` is absent from a response, there are no more results."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Errors",
+      "item": [
+        {
+          "name": "Invalid Query (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"\",\n    \"location\": \"myproject\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "content"]
+            },
+            "description": "Example of a 400 error: an empty `query` field.\n\n**Response:**\n```json\n{\n  \"error\": \"Field 'query' must not be empty\"\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Unknown Location (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"class Factory\",\n    \"location\": \"does-not-exist\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "content"]
+            },
+            "description": "Example of a 404 error: the `location` name does not match any configured search location.\n\n**Response:**\n```json\n{\n  \"error\": \"Search location 'does-not-exist' not found\"\n}\n```"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8080",
+      "type": "string"
+    }
+  ]
+}

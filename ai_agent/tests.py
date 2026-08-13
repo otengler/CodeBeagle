@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2025 Oliver Tengler
+Copyright (C) 2026 Oliver Tengler
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,15 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
-import json
-from typing import Any, Dict, List, Optional, Tuple, cast
-from ai_agent.search_provider import (
-    SearchLocation, ContentMatch, ContentSearchResult, FileSearchResult,
-    SearchProvider, TTLCache
-)
-from ai_agent.server import (
-    HttpError, _contentResultToJson, _fileNameResultToJson, AgentServer
-)
+from typing import Any, Dict, List, cast
+from .search_provider import ContentMatch, ContentSearchResult, FileSearchResult, TTLCache
+from .server import HttpError, _contentResultToJson, _fileNameResultToJson
 
 class TestTTLCache(unittest.TestCase):
     def test_getSet(self) -> None:
@@ -53,7 +47,6 @@ class TestJsonConversion(unittest.TestCase):
             ContentMatch(
                 file="C:/test/main.py",
                 line=10,
-                column=5,
                 matchText="def main",
                 contextBefore=["import sys", ""],
                 contextAfter=["    print('hello')", "    return 0"],
@@ -68,7 +61,6 @@ class TestJsonConversion(unittest.TestCase):
         m = cast(Dict[str, Any], j["matches"][0])
         self.assertEqual(m["file"], "C:/test/main.py")
         self.assertEqual(m["line"], 10)
-        self.assertEqual(m["column"], 5)
         self.assertEqual(m["matchText"], "def main")
         self.assertEqual(m["fullLine"], "def main():")
 
