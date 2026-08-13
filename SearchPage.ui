@@ -34,7 +34,7 @@
    </property>
    <item>
     <widget class="QFrame" name="frameSearch">
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,2,0,0,0,0,0,0,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="leftMargin">
        <number>22</number>
       </property>
@@ -286,6 +286,23 @@ p, li { white-space: pre-wrap; }
          </size>
         </property>
        </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonAgentHistory">
+        <property name="toolTip">
+         <string>Show AI agent API call history</string>
+        </property>
+        <property name="text">
+         <string>AI</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>resources/Agent.png</normaloff>resources/Agent.png</iconset>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QLabel" name="labelLocation">

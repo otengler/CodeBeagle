@@ -135,6 +135,13 @@ class SearchPage (QWidget):
         self.ui.checkCaseSensitive.stateChanged.connect(self.updateFilterPreview)
         self.ui.checkExcludeComments.stateChanged.connect(self.updateFilterPreview)
 
+        # Hide or wire up the AI agent history button
+        from ai_agent.agent_state import agentServer
+        if agentServer() is None:
+            self.ui.buttonAgentHistory.hide()
+        else:
+            self.ui.buttonAgentHistory.clicked.connect(self.showAgentHistory)
+
         # Initialize filter panel state based on configuration
         expandByDefault = AppConfig.appConfig().expandFilterPanelByDefault
         self.filterPanelExpanded = expandByDefault
@@ -192,6 +199,15 @@ class SearchPage (QWidget):
 
         # Initialize filter preview
         self.updateFilterPreview()
+
+    def showAgentHistory(self) -> None:
+        """Open the AI agent API call history dialog."""
+        from ai_agent.agent_state import agentHistory
+        from ai_agent.HistoryDialog import HistoryDialog
+        history = agentHistory()
+        if history is not None:
+            dlg = HistoryDialog(history, self)
+            dlg.exec_()
 
     def showEvent(self, _: Optional[QShowEvent]) -> None:
         self.documentShown.emit(self.ui.sourceViewer.currentFile)

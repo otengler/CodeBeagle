@@ -115,9 +115,6 @@ def sourceViewerConfig() -> Config.Config:
 def typeSourceViewerDefaults () -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
     return (Config.identity, sourceViewerConfig, Config.identity)
 
-def agentConfigTypeDefaults() -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
-    return (Config.identity, lambda: agentConfig(), Config.identity)
-
 def agentConfig() -> Config.Config:
     agent = Config.Config()
     agent.setType("port", Config.typeDefaultInt(8080))
@@ -127,6 +124,9 @@ def agentConfig() -> Config.Config:
     agent.setType("defaultLimit", Config.typeDefaultInt(100))
     agent.setType("allowOrigin", Config.typeDefaultString(""))
     return agent
+
+def agentConfigTypeDefaults() -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
+    return (Config.identity, agentConfig, Config.identity)
 
 def configTypeInfo (config: Config.Config) -> None:
     """Configurates the default values and types."""

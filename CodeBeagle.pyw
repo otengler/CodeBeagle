@@ -92,6 +92,8 @@ def startAgentServer(force: bool = False) -> None:
         from ai_agent.server import AgentServer
         _agentServer = AgentServer()
         if _agentServer.start():
+            from ai_agent.agent_state import setAgentServer
+            setAgentServer(_agentServer)
             print(f"AI agent server started at http://{agent.bind}:{agent.port}")
             atexit.register(_agentServer.stop)
     except Exception as e:

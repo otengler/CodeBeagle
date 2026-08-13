@@ -19,13 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import logging
 import os
+import socket
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import parse_qsl
 from AppConfig import appConfig
+from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
 from .search_provider import SearchProvider, ContentSearchResult, FileSearchResult
+from .ttl_cache import TTLCache
 
 logger = logging.getLogger(__name__)
 
@@ -35,34 +39,7 @@ class HttpError(Exception):
         super().__init__(message)
         self.statusCode = statusCode
         self.message = message
-
-class TTLCache:
-    """Simple thread-safe TTL cache mapping keys to values."""
-
-    def __init__(self, ttlSeconds: int = 300) -> None:
-        self._ttl = ttlSeconds
-        self._data: Dict[str, Tuple[float, Any]] = {}
-        self._lock = threading.Lock()
-
-    def get(self, key: str) -> Any:
-        with self._lock:
-            item = self._data.get(key)
-            if item is None:
-                return None
-            expiresAt, value = item
-            if time.time() > expiresAt:
-                del self._data[key]
-                return None
-            return value
-
-    def set(self, key: str, value: Any) -> None:
-        with self._lock:
-            self._data[key] = (time.time() + self._ttl, value)
-
-    def clear(self) -> None:
-        with self._lock:
-            self._data.clear()
-
+        
 class AgentHTTPServer(ThreadingMixIn, HTTPServer):
     """HTTP server for the AI agent API with thread-per-request handling."""
     daemon_threads = True
@@ -75,6 +52,8 @@ class AgentHTTPServer(ThreadingMixIn, HTTPServer):
         self.provider = provider
         self.contextLines = contextLines
         self.defaultLimit = defaultLimit
+        # History of API calls (thread-safe, capped at 500 entries)
+        self.history = AgentHistory()
         # File list cache: keyed by (query, indexConf.displayName(), folderFilter, extensionFilter, caseSensitive, excludeComments)
         self.fileListCache = TTLCache(cacheTTL)
         # File matches cache: keyed by (query, caseSensitive, excludeComments, filePath)
@@ -85,6 +64,12 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
     server: AgentHTTPServer
 
+    def __init__(self, request: socket.socket, clientAddress: Tuple[str, int],
+                 server: "AgentHTTPServer") -> None:
+        self._statusCode = 200
+        self._lastBody: Optional[Dict[str, Any]] = None
+        super().__init__(request, clientAddress, server)
+
     # Silence per-request log output
     def log_message(self, format: str, *args: Any) -> None:  # pylint: disable=redefined-builtin
         logger.debug("HTTP %s %s", self.command, self.path)
@@ -93,6 +78,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         path = self.path.split("?")[0].rstrip("/")
+        startTime = time.time()
         try:
             if path == "" or path == "/":
                 self._serveApiDoc()
@@ -107,11 +93,14 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         except Exception as e:
             logger.exception("GET %s failed", path)
             self._sendError(500, str(e))
+        finally:
+            self._recordHistory(self._formatQueryParams(), self._statusCode, time.time() - startTime)
 
     # ---- POST endpoints ----
 
     def do_POST(self) -> None:
         path = self.path.split("?")[0].rstrip("/")
+        startTime = time.time()
         try:
             if path in ("/api/v1/search/content", "/search/content"):
                 self._handleContentSearch()
@@ -124,6 +113,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         except Exception as e:
             logger.exception("POST %s failed", path)
             self._sendError(500, str(e))
+        finally:
+            params = formatBodyParams(self._lastBody) if self._lastBody else self._formatQueryParams()
+            self._recordHistory(params, self._statusCode, time.time() - startTime)
 
     # ---- OPTIONS for CORS preflight ----
 
@@ -135,6 +127,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     # ---- Internal helpers ----
 
     def _sendJson(self, statusCode: int, data: object) -> None:
+        self._statusCode = statusCode
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(statusCode)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -153,6 +146,29 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", allowOrigin)
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type")
+
+    def _recordHistory(self, params: str, statusCode: int, durationSecs: float = 0.0) -> None:
+        """Add the current call to the shared API history (newest last)."""
+        path = self.path.split("?")[0]
+        if path != "/":
+            path = path.rstrip("/")
+        entry = HistoryEntry(
+            timestamp=time.time(),
+            method=str(self.command),
+            path=path,
+            params=params,
+            statusCode=statusCode,
+            durationSecs=durationSecs
+        )
+        self.server.history.add(entry)
+
+    def _formatQueryParams(self) -> str:
+        """Format the query string of the request into a human-readable string."""
+        query = self.path.split("?", 1)[1] if "?" in self.path else ""
+        if not query:
+            return ""
+        parts = [f"{key}: '{value}'" for key, value in parse_qsl(query)]
+        return ", ".join(parts)
 
     def _agentConfig(self) -> Any:
         return appConfig().agent
@@ -174,6 +190,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             raise HttpError(400, "Invalid JSON in request body")
         if not isinstance(data, dict):
             raise HttpError(400, "JSON request body must be an object")
+        self._lastBody = data
         return data
 
     def _getString(self, data: Dict[str, Any], key: str,
@@ -236,6 +253,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             with open(docPath, "r", encoding="utf-8") as f:
                 content = f.read()
             body = content.encode("utf-8")
+            self._statusCode = 200
             self.send_response(200)
             self.send_header("Content-Type", "text/markdown; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
@@ -320,14 +338,17 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 def _contentResultToJson(result: ContentSearchResult) -> Dict[str, object]:
     matches: List[Dict[str, object]] = []
     for m in result.matches:
-        matches.append({
+        match = {
             "file": m.file,
             "line": m.line,
             "matchText": m.matchText,
-            "contextBefore": m.contextBefore,
-            "contextAfter": m.contextAfter,
-            "fullLine": m.fullLine,
-        })
+            "fullLine": m.fullLine
+        }
+        if m.contextBefore:
+            match["contextBefore"] = m.contextBefore
+        if m.contextAfter:
+            match["contextAfter"] = m.contextAfter
+        matches.append(match)
     jsonResult: Dict[str, object] = {
         "totalFiles": result.totalFiles,
         "matches": matches,
