@@ -298,10 +298,6 @@ The extension must therefore:
 1. On first tool call, hit `/health` (or let the first request fail with a clear message).
 2. If unreachable, return a tool error telling the user: *"Start the CodeBeagle agent server (enable `agent` in config or run CodeBeagleAgentServer.py)."*
 
-Optionally, the extension can register a **command** `/codebeagle-start` that spawns
-`python CodeBeagleAgentServer.py` as a child process and keeps it alive for the session
-(guarded by `ctx.ui.confirm`), mirroring the pattern of the old bridge design.
-
 ---
 
 ## 7. Key Design Decisions
@@ -321,17 +317,16 @@ Optionally, the extension can register a **command** `/codebeagle-start` that sp
 ## 8. Implementation Order
 
 ### Phase 1 — PI Extension (`codebeagle.ts`)
-- [ ] HTTP client helper using `fetch()` + `AbortSignal`
-- [ ] `codebeagle_list_indexes` tool
-- [ ] `codebeagle_search` tool
-- [ ] `codebeagle_search_files` tool
-- [ ] `codebeagle_health` tool
-- [ ] Server-down error message
+- [x] HTTP client helper using `fetch()` + `AbortSignal`
+- [x] `codebeagle_list_indexes` tool
+- [x] `codebeagle_search` tool
+- [x] `codebeagle_search_files` tool
+- [x] `codebeagle_health` tool
+- [x] Server-down error message
 
 ### Phase 2 — Polish
-- [ ] Pagination loop guidance in tool results (show `pageOffset` hint)
-- [ ] Optional `/codebeagle-start` command to spawn `CodeBeagleAgentServer.py`
-- [ ] Config override via env var `CODEBEAGLE_API_URL`
+- [x] Pagination loop guidance in tool results (show `pageOffset` hint)
+- [x] Config override via env var `CODEBEAGLE_API_URL`
 
 ### Phase 3 — Verify server gaps
 - [ ] Decide whether `stats` / `update_index` tools are needed; they require new HTTP endpoints
