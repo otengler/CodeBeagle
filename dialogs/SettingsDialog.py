@@ -26,9 +26,74 @@ from tools.Config import Config
 import tools.FileTools as FileTools
 from dialogs import StackTraceMessageBox
 from dialogs.UserHintDialog import ButtonType,showUserHint
+from dialogs.AgentInstructionsDialog import AgentInstructionsDialog
 from .Ui_SettingsDialog import Ui_SettingsDialog
 from .SettingsItem import SettingsItem
 import AppConfig
+
+# Mock instructions for connecting AI agents to CodeBeagle. Replace with real setup
+# instructions once the agent connections are implemented.
+piAgentInstructions = """\
+PI agent instructions
+======================
+
+CodeBeagle provides a full-text search API for AI agents.
+
+To connect your PI agent to CodeBeagle:
+
+1. Enable the AI agent web server in this settings page and make sure
+   the "Enable AI agent web server" check box is checked.
+2. Install the CodeBeagle PI extension into your agent configuration.
+3. Restart the application so the server picks up the configured port.
+4. The agent can then search source code through the codebeagle_search
+   and codebeagle_search_files tools.
+
+Example
+-------
+
+Ask your agent to search code like this:
+
+  Search the codebase for the definition of IndexUpdater.
+
+(Mock text - real instructions will be added later.)
+"""
+
+mcpAgentInstructions = """\
+MCP compatible agents
+======================
+
+CodeBeagle supports agents that understand the Model Context Protocol (MCP),
+for example Claude Code, ChatGPT, Cursor and similar tools.
+
+To connect an MCP compatible agent to CodeBeagle:
+
+1. Enable the AI agent web server in this settings page.
+2. Add CodeBeagle as an MCP server to your agent configuration.
+3. Restart the application so the server picks up the configured port.
+4. The agent can then search source code through the CodeBeagle MCP tools.
+
+(Mock text - real instructions will be added later.)
+"""
+
+otherAgentInstructions = """\
+Other agents
+============
+
+Any agent that can issue HTTP requests can search code through the
+CodeBeagle REST API.
+
+To connect your agent:
+
+1. Enable the AI agent web server in this settings page.
+2. Check the listen port and make sure the server can be reached.
+3. Point your agent at the CodeBeagle API endpoints, e.g.
+   POST /api/v1/search/content
+4. Restart the application so the server picks up the configured port.
+
+See the documentation in ai_agent/API.md for the full API description.
+
+(Mock text - real instructions will be added later.)
+"""
 
 
 userHintUpdateIndex = """
@@ -254,6 +319,30 @@ class SettingsDialog (QDialog):
         agent = AppConfig.appConfig().agent
         setCheckBox(self.ui.checkAgentEnabled, bool(agent.enabled))
         self.ui.editAgentPort.setText(str(int(agent.port)))
+
+        # Wire up connection agents buttons (kept in code, not in .ui)
+        self.ui.buttonPiAgentInstructions.clicked.connect(self.showPiAgentInstructions)
+        self.ui.buttonMcpAgentInstructions.clicked.connect(self.showMcpAgentInstructions)
+        self.ui.buttonOtherAgentInstructions.clicked.connect(self.showOtherAgentInstructions)
+
+    def showAgentTab(self) -> None:
+        """Select the AI agent page of the settings dialog."""
+        self.ui.tabWidget.setCurrentWidget(self.ui.tabAgent)
+
+    @pyqtSlot()
+    def showPiAgentInstructions(self) -> None:
+        dialog = AgentInstructionsDialog(self, self.tr("PI agent instructions"), piAgentInstructions)
+        dialog.exec()
+
+    @pyqtSlot()
+    def showMcpAgentInstructions(self) -> None:
+        dialog = AgentInstructionsDialog(self, self.tr("MCP compatible agents"), mcpAgentInstructions)
+        dialog.exec()
+
+    @pyqtSlot()
+    def showOtherAgentInstructions(self) -> None:
+        dialog = AgentInstructionsDialog(self, self.tr("Other agents"), otherAgentInstructions)
+        dialog.exec()
 
     def defaultLocation(self) -> str:
         index = None

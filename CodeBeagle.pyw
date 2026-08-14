@@ -43,6 +43,13 @@ userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
 """
 
+userHintAiSearch = """
+<p align='justify'>CodeBeagle now supports AI agent search! 🎉</p>
+<p align='justify'>You can connect AI agents such as PI, Claude Code, ChatGPT, Cursor and more
+to search code directly through CodeBeagle's REST API.</p>
+<p align='justify'>Would you like to open the <b>AI agent</b> settings page to configure the connection?</p>
+"""
+
 def main() -> None:
     # Parse command line arguments
     parser = argparse.ArgumentParser(prog="CodeBeagle")
@@ -146,6 +153,16 @@ class MainWindow(QMainWindow):
         self.updateCheck = UpdateCheck(self, lastUpdateCheck)
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
+
+        # Show the AI search onboarding hint (once)
+        self.__showAiSearchHint()
+
+    def __showAiSearchHint(self) -> None:
+        """Notifies new users that AI agent search is supported."""
+        result = showUserHint(self, "aiSearch", self.tr("AI search is now supported"), userHintAiSearch,
+                              ButtonType.Yes, True, ButtonType.No, False, bShowHintAgain=True)
+        if result == ButtonType.Yes:
+            self.ui.tabWidget.openSettings(showAgentTab=True)
 
     def closeEvent(self, event: Optional[QCloseEvent]) -> None:
         if not event:

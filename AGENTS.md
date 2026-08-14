@@ -209,10 +209,16 @@ setup.py                    # cx_Freeze build configuration
 
 ### UI Development
 
-1. Edit `.ui` files in Qt Designer
-2. Run build UI script to regenerate `Ui_*.py` files
-3. Never manually edit `Ui_*.py` files - they are auto-generated
-4. Keyboard shortcuts must be documented in help.html
+1. Edit `.ui` files instead of creating UI elements in the source directly
+2. When `.ui` files are added make sure `build-windows-ui.ps1` and `build-unix-ui.sh` is adapted. Also adapt `mypy.ini` to include the generated source file.
+3. Run build UI script to regenerate `Ui_*.py` files
+4. Never manually edit `Ui_*.py` files - they are auto-generated
+5. Keyboard shortcuts must be documented in help.html
+
+### Signals and slots
+The connection of signals to slots must be done inside the source code not inside the ".ui" files.
+
+### 
 
 ### Adding a New Dialog
 

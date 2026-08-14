@@ -138,7 +138,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     # The settings allow to configure search locations.
     @pyqtSlot()
-    def openSettings(self, createInitialLocation: bool=False, locationToAdd: Optional[IndexConfiguration.IndexConfiguration] = None) -> None:
+    def openSettings(self, createInitialLocation: bool=False, locationToAdd: Optional[IndexConfiguration.IndexConfiguration] = None,
+                     showAgentTab: bool = False) -> None:
         try:
             config = AppConfig.userConfig()
             globalConfig = AppConfig.globalConfig()
@@ -155,6 +156,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     settingsDlg.addLocation()
                 if locationToAdd:
                     settingsDlg.addExistingLocation(locationToAdd)
+                if showAgentTab:
+                    settingsDlg.showAgentTab()
                 if settingsDlg.exec():
                     # Refresh config
                     AppConfig.refreshConfig()

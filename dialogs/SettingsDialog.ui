@@ -521,6 +521,36 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBoxConnectionAgents">
+         <property name="title">
+          <string>Connection agents</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayoutConnectionAgents">
+          <item>
+           <widget class="QPushButton" name="buttonPiAgentInstructions">
+            <property name="text">
+             <string>PI agent instructions</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonMcpAgentInstructions">
+            <property name="text">
+             <string>MCP compatible agents (Claude code, ChatGPT, Cursor ...)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonOtherAgentInstructions">
+            <property name="text">
+             <string>Other agents</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="labelAgentInfo">
          <property name="text">
           <string>Additional settings can be configured in config.txt:

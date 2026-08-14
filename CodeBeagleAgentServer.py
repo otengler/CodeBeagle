@@ -24,9 +24,7 @@ existing UpdateIndex.py tool. The server reads configuration from config.txt
 """
 
 import sys
-import os
 import signal
-import logging
 import threading
 from typing import Any
 
@@ -36,7 +34,7 @@ from tools import FileTools
 FileTools.switchToAppDir()
 
 import AppConfig
-from ai_agent.server import AgentServer
+from ai_agent.Server import AgentServer
 
 def main() -> None:
     agent = AppConfig.appConfig().agent
