@@ -29,28 +29,11 @@ import { readFileSync } from "node:fs";
 
 /**
  * Resolve the CodeBeagle agent server base URL.
- * Precedence: CODEBEAGLE_API_URL env var > agent port in the user's CodeBeagle
- * config (Windows: %LOCALAPPDATA%\CodeBeagle\config.txt) > 8080 default.
+ * Precedence: CODEBEAGLE_API_URL env var > 8080 default.
  */
 function resolveBaseUrl(): string {
   if (process.env.CODEBEAGLE_API_URL) {
     return process.env.CODEBEAGLE_API_URL.replace(/\/+$/, "");
-  }
-  try {
-    const appData = process.env.LOCALAPPDATA;
-    if (appData) {
-      const configPath = join(appData, "CodeBeagle", "config.txt");
-      const content = readFileSync(configPath, "utf8");
-      const agentMatch = content.match(/agent\s*\{([^}]*)\}/);
-      if (agentMatch) {
-        const portMatch = agentMatch[1].match(/port\s*=\s*(\d+)/);
-        if (portMatch) {
-          return `http://127.0.0.1:${portMatch[1]}`;
-        }
-      }
-    }
-  } catch {
-    // fall through to the default
   }
   return "http://127.0.0.1:8080";
 }
@@ -59,7 +42,7 @@ const BASE_URL = resolveBaseUrl();
 
 const SERVER_DOWN_HINT =
   `The CodeBeagle agent server is not reachable at ${BASE_URL}. ` +
-  `Start it with the /codebeagle-start command (or enable the agent in config.txt inside the CodeBeagle GUI).`;
+  `Run the CodeBeagle GUI and enable the 'AI agent' or use the standalone CodeBeagleAgentServer).`;
 
 // ---- HTTP client -----------------------------------------------------------
 
@@ -132,7 +115,7 @@ export default function (pi: ExtensionAPI) {
     description:
       "Full-text search across CodeBeagle-indexed source code. " +
       "Query syntax: keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), " +
-      "unknown-word gaps ('error **5 <!\\d+!>'), regex ('<!\\b[A-Z][a-z]+Factory!>'). " +
+      "unknown-word gaps ('error **2 network', regex ('code <!\\d+!>'). " +
       "Specify either 'location' (name from codebeagle_list_indexes) or 'folder' (root path; " +
       "the server resolves the best matching index). Returns matching lines with surrounding context. " +
       "Keep contextLines low (2-3) to bound token usage. " +
@@ -140,12 +123,12 @@ export default function (pi: ExtensionAPI) {
     promptSnippet: "Search indexed source code with CodeBeagle (keywords, wildcards, regex, context lines)",
     promptGuidelines: [
       "Use codebeagle_search to find code usages, definitions, or patterns across indexed source code instead of ad-hoc grep.",
-      "Call codebeagle_list_indexes first to discover available search locations.",
+      "Call codebeagle_list_indexes to discover available search locations.",
     ],
     parameters: Type.Object({
       query: Type.String({
         description:
-          "Search query. Examples: 'malloc', 'createNode ( CComVariant', 'error **5 <!\\d+!>', '<!\\b[A-Z][a-z]+Factory!>'",
+          "Search query. Examples: 'malloc', 'createNode ( CComVariant', 'error **5 <!\\d+!>'",
       }),
       location: Type.Optional(
         Type.String({

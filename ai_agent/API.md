@@ -417,7 +417,7 @@ agent {
 
 6. **Wildcards for content search cost performance.** Especially if not at the end. If you know the exact pattern omit wildcards.
 
-7. **For regex searches in content**, wrap the regex in `<!...!>`. Example: `<!\\b[A-Z][a-z]+Factory!>` matches words ending in "Factory" that start with a capital letter.
+7. **For regex searches in content**, wrap the regex in `<!...!>`. Example: `code <!\\d+!>` matches `code` followed by a number.
 
 8. **The server binds to localhost only** by default (127.0.0.1). This is intentional for security. Do not change the bind address to 0.0.0.0 unless you are in a controlled network environment.
 
