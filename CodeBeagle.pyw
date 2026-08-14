@@ -89,7 +89,7 @@ def startAgentServer(force: bool = False) -> None:
         if not agent.enabled and not force:
             print("AI agent server is disabled in config (agent enabled = false)")
             return
-        from ai_agent.server import AgentServer
+        from ai_agent.Server import AgentServer
         _agentServer = AgentServer()
         if _agentServer.start():
             from ai_agent.AgentState import setAgentServer

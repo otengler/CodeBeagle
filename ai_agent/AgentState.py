@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import threading
 from typing import Optional
 from .AgentHistory import AgentHistory
-from .server import AgentServer
+from .Server import AgentServer
 
 _lock = threading.Lock()
 _agentServer: Optional[AgentServer] = None
