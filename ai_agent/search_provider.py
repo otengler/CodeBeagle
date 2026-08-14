@@ -73,7 +73,7 @@ class SearchProvider:
             ContentSearchResult with matches and pagination cursor.
         """
 
-        indexConf = self._resolveIndexConfig(location, folder)
+        indexConf = self._resolveIndexConfig(location, folder, "content")
 
         params = QueryParams(
             strSearch=query,
@@ -123,7 +123,7 @@ class SearchProvider:
         Returns:
             FileSearchResult with matching files and pagination cursor.
         """
-        indexConf = self._resolveIndexConfig(location, folder)
+        indexConf = self._resolveIndexConfig(location, folder, "filename")
 
         params = QueryParams(
             strSearch=query,
@@ -264,44 +264,62 @@ class SearchProvider:
                 self._commonKeywordMap = {}
     
     def _resolveIndexConfig(self, location: Optional[str] = None,
-                                    folder: Optional[str] = None) -> IndexConfiguration.IndexConfiguration:
+                                    folder: Optional[str] = None,
+                                    searchType: str = "content") -> IndexConfiguration.IndexConfiguration:
             """
             Resolve an IndexConfiguration from either a location name or a folder path.
-    
-            If neither location nor folder is specified, the configured defaultLocation
-            is used. If that is not configured, the first available location is returned.
+
+            searchType is "content" or "filename" and controls which configurations
+            are considered indexed: isContentIndexed() or isFileNameIndexed().
+
+            If neither location nor folder is specified, a ValueError is raised:
+            the agent must explicitly choose a search location.
+            If several configurations qualify, one that has a matching index is preferred
+            over one without a matching index.
             """
             if location and folder:
                 raise ValueError("Only one of 'location' or 'folder' may be specified")
-    
+
             indexConfigs = IndexConfiguration.readConfig(self._config)
             if not indexConfigs:
                 raise ValueError("No search locations configured")
-    
+
             if location:
                 for conf in indexConfigs:
                     if conf.displayName() == location:
                         return conf
                 raise ValueError(f"Search location '{location}' not found")
-    
+
             if folder:
-                # Resolve by folder: find the first location whose source directory
+                # Resolve by folder: find all locations whose source directory
                 # equals or is a parent of the requested folder.
                 normFolder = os.path.normpath(folder)
-                for conf in indexConfigs:
-                    for srcDir in conf.directories:
-                        normalizedSrc = os.path.normpath(srcDir)
-                        if normalizedSrc == normFolder or normFolder.startswith(normalizedSrc + os.sep):
-                            return conf
-                raise ValueError(f"No search location found for folder '{folder}'")
-    
-            # Neither location nor folder provided: use defaultLocation or first config
-            defaultName = str(self._config.defaultLocation)
-            if defaultName:
-                for conf in indexConfigs:
-                    if conf.displayName() == defaultName:
-                        return conf
-            return indexConfigs[0]
+                candidates = [
+                    conf for conf in indexConfigs
+                    if any(
+                        normFolder == os.path.normpath(srcDir) or
+                        normFolder.startswith(os.path.normpath(srcDir) + os.sep)
+                        for srcDir in conf.directories
+                    )
+                ]
+                if not candidates:
+                    raise ValueError(f"No search location found for folder '{folder}'")
+                return self._preferIndexed(candidates, searchType)
+
+            raise ValueError("Either 'location' or 'folder' must be specified")
+
+    def _preferIndexed(self, configs: List[IndexConfiguration.IndexConfiguration],
+                       searchType: str = "content") -> IndexConfiguration.IndexConfiguration:
+        """Prefer a config with a matching index for the given search type."""
+        if searchType == "filename":
+            for conf in configs:
+                if conf.isFileNameIndexed():
+                    return conf
+        else:
+            for conf in configs:
+                if conf.isContentIndexed():
+                    return conf
+        return configs[0]
 
     def _makeFileListCacheKey(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
                                    folderFilter: str, extensionFilter: str) -> str:
