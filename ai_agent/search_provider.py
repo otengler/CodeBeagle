@@ -74,7 +74,7 @@ class SearchProvider:
             ContentSearchResult with matches and pagination cursor.
         """
 
-        indexConf = self._resolveIndexConfig(location, folder, "content")
+        indexConf = self._resolveIndexConfig(location, folder, "content", extensionFilter)
         self._checkExtensionFilter(extensionFilter, indexConf)
 
         params = QueryParams(
@@ -125,7 +125,7 @@ class SearchProvider:
         Returns:
             FileSearchResult with matching files and pagination cursor.
         """
-        indexConf = self._resolveIndexConfig(location, folder, "filename")
+        indexConf = self._resolveIndexConfig(location, folder, "filename", extensionFilter)
         self._checkExtensionFilter(extensionFilter, indexConf)
 
         params = QueryParams(
@@ -268,12 +268,15 @@ class SearchProvider:
     
     def _resolveIndexConfig(self, location: Optional[str] = None,
                                     folder: Optional[str] = None,
-                                    searchType: str = "content") -> IndexConfiguration.IndexConfiguration:
+                                    searchType: str = "content",
+                                    extensionFilter: str = "") -> IndexConfiguration.IndexConfiguration:
             """
             Resolve an IndexConfiguration from either a location name or a folder path.
 
             searchType is "content" or "filename" and controls which configurations
             are considered indexed: isContentIndexed() or isFileNameIndexed().
+            If an extensionFilter is given, configurations whose indexed extensions
+            cover the filter are preferred over configurations that do not.
 
             If neither location nor folder is specified, a ValueError is raised:
             the agent must explicitly choose a search location.
@@ -303,7 +306,7 @@ class SearchProvider:
                 ]
                 if not candidates:
                     raise ValueError(f"No search location found for folder '{folder}'")
-                return self._preferIndexed(candidates, searchType)
+                return self._preferIndexed(candidates, searchType, extensionFilter)
 
             raise ValueError("Either 'location' or 'folder' must be specified")
 
@@ -326,6 +329,19 @@ class SearchProvider:
                 return True
         return False
 
+    def _extensionsCovered(self, indexConf: IndexConfiguration.IndexConfiguration,
+                           extensionFilter: str) -> bool:
+        """True if all positive extension patterns of the filter are indexed by the config."""
+        if not extensionFilter:
+            return True
+        parts = createExtensionFilter(extensionFilter)
+        for ext, isPositive in parts:
+            if not isPositive:
+                continue
+            if not any(fnmatch(confExt, ext) for confExt in indexConf.extensions):
+                return False
+        return True
+
     def _checkExtensionFilter(self, extensionFilter: str,
                                 indexConf: IndexConfiguration.IndexConfiguration) -> None:
         """
@@ -335,30 +351,34 @@ class SearchProvider:
         any extension indexed by the config. Negative (excluded) extensions are
         not checked since they only narrow results.
         """
-        if not extensionFilter:
+        if self._extensionsCovered(indexConf, extensionFilter):
             return
         parts = createExtensionFilter(extensionFilter)
-        for ext, isPositive in parts:
-            if not isPositive:
-                continue
-            if not any(fnmatch(confExt, ext) for confExt in indexConf.extensions):
-                raise ValueError(
-                    f"Extension '{ext}' from filter '{extensionFilter}' is not indexed "
-                    f"in search location '{indexConf.displayName()}' "
-                    f"(indexed extensions: {', '.join(sorted(indexConf.extensions))})")
+        uncovered = [ext for ext, isPositive in parts
+                     if isPositive and not any(fnmatch(confExt, ext) for confExt in indexConf.extensions)]
+        raise ValueError(
+            f"Extension(s) {', '.join(uncovered)} from filter '{extensionFilter}' are not indexed "
+            f"in search location '{indexConf.displayName()}' "
+            f"(indexed extensions: {', '.join(sorted(indexConf.extensions))})")
 
     def _preferIndexed(self, configs: List[IndexConfiguration.IndexConfiguration],
-                       searchType: str = "content") -> IndexConfiguration.IndexConfiguration:
-        """Prefer a config with a matching index for the given search type."""
+                       searchType: str = "content",
+                       extensionFilter: str = "") -> IndexConfiguration.IndexConfiguration:
+        """
+        Prefer a config with a matching index for the given search type.
+
+        Among configs with a matching index type, prefer one whose indexed
+        extensions cover the extensionFilter. Falls back to the first config
+        if no config matches.
+        """
         if searchType == "filename":
-            for conf in configs:
-                if conf.isFileNameIndexed():
-                    return conf
+            indexed = [c for c in configs if c.isFileNameIndexed()]
         else:
-            for conf in configs:
-                if conf.isContentIndexed():
-                    return conf
-        return configs[0]
+            indexed = [c for c in configs if c.isContentIndexed()]
+        for conf in indexed:
+            if self._extensionsCovered(conf, extensionFilter):
+                return conf
+        return indexed[0] if indexed else configs[0]
 
     def _makeFileListCacheKey(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
                                    folderFilter: str, extensionFilter: str) -> str:

@@ -526,6 +526,49 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider = self._provider([excluded, covering])
         self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/build"), covering)
 
+    def _confExt(self, name: str, extensions: str,
+                 indexType: IndexType = IndexType.FileContentAndName) -> IndexConfiguration.IndexConfiguration:
+        return IndexConfiguration.IndexConfiguration(
+            indexName=name, extensions=extensions, directories="C:/src/proj",
+            indexdb=f"C:/idx/{name}.idx", indexType=indexType)
+
+    def test_preferConfigMatchingExtensionFilter(self) -> None:
+        pyConf = self._confExt("py", ".py")
+        cppConf = self._confExt("cpp", ".cpp")
+        provider = self._provider([pyConf, cppConf])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="*.py"), pyConf)
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="*.cpp"), cppConf)
+
+    def test_preferExtensionMatchOverFirstIndexed(self) -> None:
+        noIndex = self._conf("noIdx", "C:/src/proj", indexUpdateMode=IndexMode.NoIndexWanted)
+        pyConf = self._confExt("py", ".py")
+        cppConf = self._confExt("cpp", ".cpp")
+        provider = self._provider([noIndex, pyConf, cppConf])
+        # pyConf is the first indexed config, but the *.cpp filter picks cppConf
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="*.cpp"), cppConf)
+
+    def test_fallbackToFirstIndexedWhenNoConfExtMatches(self) -> None:
+        pyConf = self._confExt("py", ".py")
+        cppConf = self._confExt("cpp", ".cpp")
+        provider = self._provider([pyConf, cppConf])
+        # neither py nor cpp covers both .py and .cpp — falls back to first indexed
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="*.py,*.cpp"), pyConf)
+
+    def test_negativeOnlyFilterDoesNotAffectSelection(self) -> None:
+        pyConf = self._confExt("py", ".py")
+        cppConf = self._confExt("cpp", ".cpp")
+        # a negative-only filter has no positive parts to match: first indexed wins
+        provider = self._provider([cppConf, pyConf])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="-*.test"), cppConf)
+
+    def test_extensionFitConsideredForContentSearch(self) -> None:
+        pyConf = self._confExt("py", ".py", indexType=IndexType.FileContent)
+        cppConf = self._confExt("cpp", ".cpp", indexType=IndexType.FileName)
+        provider = self._provider([cppConf, pyConf])
+        # content search with *.py filter prefers py even though cpp is first
+        self.assertEqual(provider._resolveIndexConfig(
+            folder="C:/src/proj", searchType="content", extensionFilter="*.py"), pyConf)
+
     def _confWithExtensions(self, name: str, extensions: str) -> IndexConfiguration.IndexConfiguration:
         return IndexConfiguration.IndexConfiguration(
             indexName=name, extensions=extensions, directories="C:/src/proj",
