@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 from unittest import mock
 from .SearchProvider import ContentMatch, ContentSearchResult, FileSearchResult, SearchProvider
 from .SearchIndexResolver import SearchIndexResolver
-from .server import HttpError, _contentResultToJson, _fileNameResultToJson
+from .Server import HttpError, _contentResultToJson, _fileNameResultToJson
 from .TtlCache import TTLCache
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
 from fulltextindex import IndexConfiguration
@@ -200,7 +200,7 @@ class TestContentSearchPagination(unittest.TestCase):
                 raise OSError(f"Cannot read {filePath}")
             return value
 
-        with mock.patch("ai_agent.search_provider.freadall", side_effect=read):
+        with mock.patch("ai_agent.SearchProvider.freadall", side_effect=read):
             return self.provider._buildContentResults(files, self.query, contextLines, limit, pageOffset)
 
     def test_firstPage(self) -> None:
@@ -348,8 +348,8 @@ class TestContentSearchPagination(unittest.TestCase):
             return value
 
         with mock.patch.object(provider._indexResolver, "resolve", return_value=indexConf), \
-             mock.patch("ai_agent.search_provider.SearchMethods") as sm, \
-             mock.patch("ai_agent.search_provider.freadall", side_effect=read):
+             mock.patch("ai_agent.SearchProvider.SearchMethods") as sm, \
+             mock.patch("ai_agent.SearchProvider.freadall", side_effect=read):
             sm.return_value.searchContent.return_value = ResultSet(matches=list(content))
             page1 = provider.searchContent("target", limit=2)
             page2 = provider.searchContent("target", limit=2, pageOffset=page1.pageOffset)
@@ -378,7 +378,7 @@ class TestFileNameSearchPagination(unittest.TestCase):
     def _search(self, limit: int,
                 pageOffset: Optional[Dict[str, int]] = None) -> Tuple[FileSearchResult, mock.MagicMock]:
         with mock.patch.object(self.provider._indexResolver, "resolve", return_value=self.indexConf), \
-             mock.patch("ai_agent.search_provider.SearchMethods") as sm:
+             mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
             sm.return_value.searchFileName.return_value = ResultSet(matches=list(self.allFiles))
             result = self.provider.searchFileName("*.py", limit=limit, pageOffset=pageOffset)
             return result, sm
@@ -637,7 +637,7 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider._fileListCache = mock.MagicMock()
         provider._fileListCache.get.return_value = None
         provider._commonKeywordMap = {}
-        with mock.patch("ai_agent.search_provider.SearchMethods") as sm:
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
             sm.return_value.searchContent.return_value = ResultSet(matches=[])
             with self.assertRaises(ValueError):
                 provider.searchContent("foo", folder="C:/src/proj", extensionFilter="*.java")
@@ -648,7 +648,7 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider = self._provider([conf])
         provider._fileListCache = mock.MagicMock()
         provider._fileListCache.get.return_value = None
-        with mock.patch("ai_agent.search_provider.SearchMethods") as sm:
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
             sm.return_value.searchFileName.return_value = ResultSet(matches=[])
             with self.assertRaises(ValueError):
                 provider.searchFileName("*.py", folder="C:/src/proj", extensionFilter="*.java")
