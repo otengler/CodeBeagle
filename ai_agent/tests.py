@@ -20,9 +20,10 @@ import os
 import unittest
 from typing import Any, Dict, List, Optional, Tuple, cast
 from unittest import mock
-from .search_provider import ContentMatch, ContentSearchResult, FileSearchResult, SearchProvider
+from .SearchProvider import ContentMatch, ContentSearchResult, FileSearchResult, SearchProvider
+from .SearchIndexResolver import SearchIndexResolver
 from .server import HttpError, _contentResultToJson, _fileNameResultToJson
-from .ttl_cache import TTLCache
+from .TtlCache import TTLCache
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
 from fulltextindex import IndexConfiguration
 from fulltextindex.IndexConfiguration import IndexMode, IndexType
@@ -332,6 +333,7 @@ class TestContentSearchPagination(unittest.TestCase):
         provider._fileListCache = TTLCache(60)
         provider._fileMatchesCache = TTLCache(60)
         provider._commonKeywordMap = {}
+        provider._indexResolver = SearchIndexResolver(mock.MagicMock())
         indexConf = mock.MagicMock()
         indexConf.displayName.return_value = "loc1"
         content: Dict[str, Optional[str]] = {
@@ -345,7 +347,7 @@ class TestContentSearchPagination(unittest.TestCase):
                 raise OSError(filePath)
             return value
 
-        with mock.patch.object(provider, "_resolveIndexConfig", return_value=indexConf), \
+        with mock.patch.object(provider._indexResolver, "resolve", return_value=indexConf), \
              mock.patch("ai_agent.search_provider.SearchMethods") as sm, \
              mock.patch("ai_agent.search_provider.freadall", side_effect=read):
             sm.return_value.searchContent.return_value = ResultSet(matches=list(content))
@@ -368,13 +370,14 @@ class TestFileNameSearchPagination(unittest.TestCase):
         # Create the provider without running __init__ to avoid loading the config.
         self.provider = object.__new__(SearchProvider)
         self.provider._fileListCache = TTLCache(60)
+        self.provider._indexResolver = SearchIndexResolver(mock.MagicMock())
         self.indexConf = mock.MagicMock()
         self.indexConf.displayName.return_value = "loc1"
         self.allFiles = [f"C:/src/proj/file{i:02d}.py" for i in range(1, 11)]
 
     def _search(self, limit: int,
                 pageOffset: Optional[Dict[str, int]] = None) -> Tuple[FileSearchResult, mock.MagicMock]:
-        with mock.patch.object(self.provider, "_resolveIndexConfig", return_value=self.indexConf), \
+        with mock.patch.object(self.provider._indexResolver, "resolve", return_value=self.indexConf), \
              mock.patch("ai_agent.search_provider.SearchMethods") as sm:
             sm.return_value.searchFileName.return_value = ResultSet(matches=list(self.allFiles))
             result = self.provider.searchFileName("*.py", limit=limit, pageOffset=pageOffset)
@@ -418,12 +421,13 @@ class TestFileNameSearchPagination(unittest.TestCase):
         self.assertEqual(result2.files, self.allFiles[3:6])
 
 class TestResolveIndexConfig(unittest.TestCase):
-    """Tests for SearchProvider._resolveIndexConfig."""
+    """Tests for SearchIndexResolver.resolve and checkExtensionFilter."""
 
     def _provider(self, configs: List[IndexConfiguration.IndexConfiguration]) -> SearchProvider:
         """Return a provider with readConfig patched to return the given configs."""
         provider = object.__new__(SearchProvider)
         provider._config = mock.MagicMock()
+        provider._indexResolver = SearchIndexResolver(provider._config)
         patcher = mock.patch.object(IndexConfiguration, "readConfig", return_value=configs)
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -440,59 +444,59 @@ class TestResolveIndexConfig(unittest.TestCase):
     def test_locationMatch(self) -> None:
         conf = self._conf("loc1", "C:/src/proj")
         provider = self._provider([conf])
-        self.assertEqual(provider._resolveIndexConfig(location="loc1"), conf)
+        self.assertEqual(provider._indexResolver.resolve(location="loc1"), conf)
 
     def test_locationNotFound(self) -> None:
         conf = self._conf("loc1", "C:/src/proj")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._resolveIndexConfig(location="nope")
+            provider._indexResolver.resolve(location="nope")
 
     def test_neitherLocationNorFolderRaises(self) -> None:
         conf = self._conf("loc1", "C:/src/proj")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._resolveIndexConfig()
+            provider._indexResolver.resolve()
 
     def test_folderInSubdirectory(self) -> None:
         conf = self._conf("loc1", "C:/src/proj")
         provider = self._provider([conf])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/sub/dir"), conf)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/sub/dir"), conf)
 
     def test_folderNotCoveredRaises(self) -> None:
         conf = self._conf("loc1", "C:/src/proj")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._resolveIndexConfig(folder="C:/other/proj")
+            provider._indexResolver.resolve(folder="C:/other/proj")
 
     def test_prefersContentIndexed(self) -> None:
         noIndex = self._conf("plain", "C:/src/proj", indexUpdateMode=IndexMode.NoIndexWanted)
         indexed = self._conf("idx", "C:/src/proj")
         provider = self._provider([noIndex, indexed])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", searchType="content"), indexed)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", searchType="content"), indexed)
 
     def test_prefersFileNameIndexed(self) -> None:
         contentOnly = self._conf("content", "C:/src/proj", indexType=IndexType.FileContent)
         fileName = self._conf("fname", "C:/src/proj", indexType=IndexType.FileName)
         provider = self._provider([contentOnly, fileName])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", searchType="filename"), fileName)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", searchType="filename"), fileName)
 
     def test_contentSearchDoesNotCountFileNameOnlyIndex(self) -> None:
         contentOnly = self._conf("content", "C:/src/proj", indexType=IndexType.FileContent)
         fileName = self._conf("fname", "C:/src/proj", indexType=IndexType.FileName)
         provider = self._provider([contentOnly, fileName])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", searchType="content"), contentOnly)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", searchType="content"), contentOnly)
 
     def test_folderExcludedByDirExcludes(self) -> None:
         conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._resolveIndexConfig(folder="C:/src/proj/build")
+            provider._indexResolver.resolve(folder="C:/src/proj/build")
 
     def test_folderNotExcluded(self) -> None:
         conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
         provider = self._provider([conf])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/src"), conf)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/src"), conf)
 
     def test_excludedParentDoesNotDisqualify(self) -> None:
         # os.walk descends into subdirectories even if a parent matches an
@@ -500,31 +504,31 @@ class TestResolveIndexConfig(unittest.TestCase):
         # so a folder below an excluded parent is still covered.
         conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
         provider = self._provider([conf])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/build/sub/deep"), conf)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/build/sub/deep"), conf)
 
     def test_wildcardExclude(self) -> None:
         conf = self._conf("loc1", "C:/src/proj", dirExcludes="*/build")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._resolveIndexConfig(folder="C:/src/proj/build")
+            provider._indexResolver.resolve(folder="C:/src/proj/build")
 
     def test_questionMarkExclude(self) -> None:
         conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/buil?")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._resolveIndexConfig(folder="C:/src/proj/build")
+            provider._indexResolver.resolve(folder="C:/src/proj/build")
 
     def test_excludeIsCaseInsensitive(self) -> None:
         conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/SRC/PROJ/BUILD")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._resolveIndexConfig(folder="C:/src/proj/build")
+            provider._indexResolver.resolve(folder="C:/src/proj/build")
 
     def test_excludedConfigSkippedInFavorOfCoveringConfig(self) -> None:
         excluded = self._conf("excluded", "C:/src/proj", dirExcludes="C:/src/proj/build")
         covering = self._conf("covering", "C:/src/proj")
         provider = self._provider([excluded, covering])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/build"), covering)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/build"), covering)
 
     def _confExt(self, name: str, extensions: str,
                  indexType: IndexType = IndexType.FileContentAndName) -> IndexConfiguration.IndexConfiguration:
@@ -536,8 +540,8 @@ class TestResolveIndexConfig(unittest.TestCase):
         pyConf = self._confExt("py", ".py")
         cppConf = self._confExt("cpp", ".cpp")
         provider = self._provider([pyConf, cppConf])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="*.py"), pyConf)
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="*.cpp"), cppConf)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", extensionFilter="*.py"), pyConf)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", extensionFilter="*.cpp"), cppConf)
 
     def test_preferExtensionMatchOverFirstIndexed(self) -> None:
         noIndex = self._conf("noIdx", "C:/src/proj", indexUpdateMode=IndexMode.NoIndexWanted)
@@ -545,28 +549,28 @@ class TestResolveIndexConfig(unittest.TestCase):
         cppConf = self._confExt("cpp", ".cpp")
         provider = self._provider([noIndex, pyConf, cppConf])
         # pyConf is the first indexed config, but the *.cpp filter picks cppConf
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="*.cpp"), cppConf)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", extensionFilter="*.cpp"), cppConf)
 
     def test_fallbackToFirstIndexedWhenNoConfExtMatches(self) -> None:
         pyConf = self._confExt("py", ".py")
         cppConf = self._confExt("cpp", ".cpp")
         provider = self._provider([pyConf, cppConf])
         # neither py nor cpp covers both .py and .cpp — falls back to first indexed
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="*.py,*.cpp"), pyConf)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", extensionFilter="*.py,*.cpp"), pyConf)
 
     def test_negativeOnlyFilterDoesNotAffectSelection(self) -> None:
         pyConf = self._confExt("py", ".py")
         cppConf = self._confExt("cpp", ".cpp")
         # a negative-only filter has no positive parts to match: first indexed wins
         provider = self._provider([cppConf, pyConf])
-        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", extensionFilter="-*.test"), cppConf)
+        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", extensionFilter="-*.test"), cppConf)
 
     def test_extensionFitConsideredForContentSearch(self) -> None:
         pyConf = self._confExt("py", ".py", indexType=IndexType.FileContent)
         cppConf = self._confExt("cpp", ".cpp", indexType=IndexType.FileName)
         provider = self._provider([cppConf, pyConf])
         # content search with *.py filter prefers py even though cpp is first
-        self.assertEqual(provider._resolveIndexConfig(
+        self.assertEqual(provider._indexResolver.resolve(
             folder="C:/src/proj", searchType="content", extensionFilter="*.py"), pyConf)
 
     def _confWithExtensions(self, name: str, extensions: str) -> IndexConfiguration.IndexConfiguration:
@@ -577,23 +581,23 @@ class TestResolveIndexConfig(unittest.TestCase):
     def test_extensionCovered(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._checkExtensionFilter("*.py", conf)
+        provider._indexResolver.checkExtensionFilter("*.py", conf)
 
     def test_extensionNotCoveredRaises(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._checkExtensionFilter("*.txt", conf)
+            provider._indexResolver.checkExtensionFilter("*.txt", conf)
 
     def test_emptyFilterIsFine(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._checkExtensionFilter("", conf)
+        provider._indexResolver.checkExtensionFilter("", conf)
 
     def test_wildcardExtensionCovered(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._checkExtensionFilter("*.p?", conf)
+        provider._indexResolver.checkExtensionFilter("*.p?", conf)
 
     def test_wildcardMatchingNothingRaises(self) -> None:
         # '.jsx?' matches '.jsxx' but not '.js': the pattern covers nothing
@@ -601,31 +605,31 @@ class TestResolveIndexConfig(unittest.TestCase):
         conf = self._confWithExtensions("loc1", ".js")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._checkExtensionFilter("*.jsx?", conf)
+            provider._indexResolver.checkExtensionFilter("*.jsx?", conf)
 
     def test_wildcardAllMatches(self) -> None:
         conf = self._confWithExtensions("loc1", ".py,.cpp")
         provider = self._provider([conf])
-        provider._checkExtensionFilter("*", conf)
-        provider._checkExtensionFilter(".*", conf)
+        provider._indexResolver.checkExtensionFilter("*", conf)
+        provider._indexResolver.checkExtensionFilter(".*", conf)
 
     def test_negativeFilterPartsNotChecked(self) -> None:
         # A negative part only narrows results; it does not require the config
         # to index that extension.
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._checkExtensionFilter("*.py,-*.txt", conf)
+        provider._indexResolver.checkExtensionFilter("*.py,-*.txt", conf)
 
     def test_negativeFilterOnly(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._checkExtensionFilter("-*.txt", conf)
+        provider._indexResolver.checkExtensionFilter("-*.txt", conf)
 
     def test_multiplePositiveOneMissingRaises(self) -> None:
         conf = self._confWithExtensions("loc1", ".py,.cpp")
         provider = self._provider([conf])
         with self.assertRaises(ValueError):
-            provider._checkExtensionFilter("*.py,*.java", conf)
+            provider._indexResolver.checkExtensionFilter("*.py,*.java", conf)
 
     def test_extensionCheckRunsInContentSearch(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")

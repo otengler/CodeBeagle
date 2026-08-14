@@ -28,8 +28,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qsl
 from AppConfig import appConfig
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
-from .search_provider import SearchProvider, ContentSearchResult, FileSearchResult
-from .ttl_cache import TTLCache
+from .SearchProvider import SearchProvider, ContentSearchResult, FileSearchResult
+from .TtlCache import TTLCache
 
 logger = logging.getLogger(__name__)
 

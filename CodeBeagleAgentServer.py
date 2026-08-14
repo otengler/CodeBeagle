@@ -54,7 +54,7 @@ def main() -> None:
     if not server.start():
         print("Failed to start AI agent server. See log for details.")
         sys.exit(1)
-    from ai_agent.agent_state import setAgentServer
+    from ai_agent.AgentState import setAgentServer
     setAgentServer(server)
 
     print(f"CodeBeagle AI agent server listening on http://{agent.bind}:{agent.port}")
