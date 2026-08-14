@@ -446,7 +446,7 @@
      </widget>
      <widget class="QWidget" name="tabAgent">
       <attribute name="title">
-       <string>AI agent</string>
+       <string>Agentic AI search</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayoutAgent">
        <property name="leftMargin">
@@ -463,21 +463,21 @@
        </property>
        <item>
         <widget class="QCheckBox" name="checkAgentEnabled">
-         <property name="text">
-          <string>Enable AI agent web server</string>
-         </property>
          <property name="toolTip">
           <string>When enabled, AI agents can search code via HTTP requests to the configured port. Requires restart to take effect.</string>
+         </property>
+         <property name="text">
+          <string>Enable agentic AI search</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="labelAgentRestartHint">
-         <property name="text">
-          <string>Changes require an application restart to take effect</string>
-         </property>
          <property name="styleSheet">
           <string notr="true">color: gray; font-size: 11px; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>Changes require an application restart to take effect</string>
          </property>
         </widget>
        </item>
@@ -521,37 +521,10 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="groupBoxConnectionAgents">
-         <property name="title">
-          <string>Connection agents</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayoutConnectionAgents">
-          <item>
-           <widget class="QPushButton" name="buttonPiAgentInstructions">
-            <property name="text">
-             <string>PI agent instructions</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="buttonMcpAgentInstructions">
-            <property name="text">
-             <string>MCP compatible agents (Claude code, ChatGPT, Cursor ...)</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="buttonOtherAgentInstructions">
-            <property name="text">
-             <string>Other agents</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <widget class="QLabel" name="labelAgentInfo">
+         <property name="styleSheet">
+          <string notr="true">color: gray; font-size: 11px;</string>
+         </property>
          <property name="text">
           <string>Additional settings can be configured in config.txt:
   bind, contextLines, defaultLimit, allowOrigin</string>
@@ -559,9 +532,54 @@
          <property name="wordWrap">
           <bool>true</bool>
          </property>
-         <property name="styleSheet">
-          <string notr="true">color: gray; font-size: 11px;</string>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBoxConnectionAgents">
+         <property name="title">
+          <string>Connect agents</string>
          </property>
+         <layout class="QVBoxLayout" name="verticalLayoutConnectionAgents">
+          <item>
+           <widget class="QPushButton" name="buttonPiAgentInstructions">
+            <property name="maximumSize">
+             <size>
+              <width>400</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PI agent instructions</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonMcpAgentInstructions">
+            <property name="maximumSize">
+             <size>
+              <width>400</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>MCP compatible agents (Claude code, ChatGPT, Cursor ...)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonOtherAgentInstructions">
+            <property name="maximumSize">
+             <size>
+              <width>400</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Other agents</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
@@ -579,7 +597,6 @@
        </item>
       </layout>
      </widget>
-
     </widget>
    </item>
    <item>
