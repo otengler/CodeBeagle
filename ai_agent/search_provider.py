@@ -25,7 +25,7 @@ from tools.ContextExtraction import LineMapping
 from fulltextindex import IndexConfiguration
 from fulltextindex.FullTextIndex import buildMapFromCommonKeywordFile, CommonKeywordMap
 from fulltextindex.IStringMatcher import MatchPosition
-from fulltextindex.Query import QueryParams, ContentQuery, FileQuery
+from fulltextindex.Query import QueryParams, ContentQuery, FileQuery, createExtensionFilter
 from fulltextindex.SearchMethods import SearchMethods
 from .data_model import ContentMatch, ContentSearchResult, FileSearchResult, SearchLocation
 from .ttl_cache import TTLCache
@@ -75,6 +75,7 @@ class SearchProvider:
         """
 
         indexConf = self._resolveIndexConfig(location, folder, "content")
+        self._checkExtensionFilter(extensionFilter, indexConf)
 
         params = QueryParams(
             strSearch=query,
@@ -125,6 +126,7 @@ class SearchProvider:
             FileSearchResult with matching files and pagination cursor.
         """
         indexConf = self._resolveIndexConfig(location, folder, "filename")
+        self._checkExtensionFilter(extensionFilter, indexConf)
 
         params = QueryParams(
             strSearch=query,
@@ -323,6 +325,27 @@ class SearchProvider:
             if normFolder == normalizedSrc.lower() or normFolder.startswith(normalizedSrc.lower() + os.sep):
                 return True
         return False
+
+    def _checkExtensionFilter(self, extensionFilter: str,
+                                indexConf: IndexConfiguration.IndexConfiguration) -> None:
+        """
+        Verify that all positive extensions in the filter are covered by the config.
+
+        Raises ValueError if an extension pattern in the filter does not match
+        any extension indexed by the config. Negative (excluded) extensions are
+        not checked since they only narrow results.
+        """
+        if not extensionFilter:
+            return
+        parts = createExtensionFilter(extensionFilter)
+        for ext, isPositive in parts:
+            if not isPositive:
+                continue
+            if not any(fnmatch(confExt, ext) for confExt in indexConf.extensions):
+                raise ValueError(
+                    f"Extension '{ext}' from filter '{extensionFilter}' is not indexed "
+                    f"in search location '{indexConf.displayName()}' "
+                    f"(indexed extensions: {', '.join(sorted(indexConf.extensions))})")
 
     def _preferIndexed(self, configs: List[IndexConfiguration.IndexConfiguration],
                        searchType: str = "content") -> IndexConfiguration.IndexConfiguration:

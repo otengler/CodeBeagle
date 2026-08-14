@@ -526,5 +526,86 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider = self._provider([excluded, covering])
         self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/build"), covering)
 
+    def _confWithExtensions(self, name: str, extensions: str) -> IndexConfiguration.IndexConfiguration:
+        return IndexConfiguration.IndexConfiguration(
+            indexName=name, extensions=extensions, directories="C:/src/proj",
+            indexdb=f"C:/idx/{name}.idx")
+
+    def test_extensionCovered(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._checkExtensionFilter("*.py", conf)
+
+    def test_extensionNotCoveredRaises(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._checkExtensionFilter("*.txt", conf)
+
+    def test_emptyFilterIsFine(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._checkExtensionFilter("", conf)
+
+    def test_wildcardExtensionCovered(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._checkExtensionFilter("*.p?", conf)
+
+    def test_wildcardMatchingNothingRaises(self) -> None:
+        # '.jsx?' matches '.jsxx' but not '.js': the pattern covers nothing
+        # the config indexes, so it must raise.
+        conf = self._confWithExtensions("loc1", ".js")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._checkExtensionFilter("*.jsx?", conf)
+
+    def test_wildcardAllMatches(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py,.cpp")
+        provider = self._provider([conf])
+        provider._checkExtensionFilter("*", conf)
+        provider._checkExtensionFilter(".*", conf)
+
+    def test_negativeFilterPartsNotChecked(self) -> None:
+        # A negative part only narrows results; it does not require the config
+        # to index that extension.
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._checkExtensionFilter("*.py,-*.txt", conf)
+
+    def test_negativeFilterOnly(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._checkExtensionFilter("-*.txt", conf)
+
+    def test_multiplePositiveOneMissingRaises(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py,.cpp")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._checkExtensionFilter("*.py,*.java", conf)
+
+    def test_extensionCheckRunsInContentSearch(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._fileListCache = mock.MagicMock()
+        provider._fileListCache.get.return_value = None
+        provider._commonKeywordMap = {}
+        with mock.patch("ai_agent.search_provider.SearchMethods") as sm:
+            sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            with self.assertRaises(ValueError):
+                provider.searchContent("foo", folder="C:/src/proj", extensionFilter="*.java")
+            provider.searchContent("foo", folder="C:/src/proj", extensionFilter="*.py")
+
+    def test_extensionCheckRunsInFileNameSearch(self) -> None:
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._fileListCache = mock.MagicMock()
+        provider._fileListCache.get.return_value = None
+        with mock.patch("ai_agent.search_provider.SearchMethods") as sm:
+            sm.return_value.searchFileName.return_value = ResultSet(matches=[])
+            with self.assertRaises(ValueError):
+                provider.searchFileName("*.py", folder="C:/src/proj", extensionFilter="*.java")
+            provider.searchFileName("*.py", folder="C:/src/proj", extensionFilter="*.py")
+
 if __name__ == "__main__":
     unittest.main()
