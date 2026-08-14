@@ -24,6 +24,8 @@ from .search_provider import ContentMatch, ContentSearchResult, FileSearchResult
 from .server import HttpError, _contentResultToJson, _fileNameResultToJson
 from .ttl_cache import TTLCache
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
+from fulltextindex import IndexConfiguration
+from fulltextindex.IndexConfiguration import IndexMode, IndexType
 from fulltextindex.IStringMatcher import MatchPosition
 from fulltextindex.Query import ContentQuery, QueryParams
 from fulltextindex.SearchMethods import ResultSet
@@ -414,6 +416,115 @@ class TestFileNameSearchPagination(unittest.TestCase):
         # The second page must come from the cached file list, not a new search.
         self.assertEqual(sm.return_value.searchFileName.call_count, 1)
         self.assertEqual(result2.files, self.allFiles[3:6])
+
+class TestResolveIndexConfig(unittest.TestCase):
+    """Tests for SearchProvider._resolveIndexConfig."""
+
+    def _provider(self, configs: List[IndexConfiguration.IndexConfiguration]) -> SearchProvider:
+        """Return a provider with readConfig patched to return the given configs."""
+        provider = object.__new__(SearchProvider)
+        provider._config = mock.MagicMock()
+        patcher = mock.patch.object(IndexConfiguration, "readConfig", return_value=configs)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return provider
+
+    def _conf(self, name: str, directories: str, dirExcludes: str = "",
+              indexUpdateMode: IndexMode = IndexMode.TriggeredIndexUpdate,
+              indexType: IndexType = IndexType.FileContentAndName) -> IndexConfiguration.IndexConfiguration:
+        return IndexConfiguration.IndexConfiguration(
+            indexName=name, extensions=".py", directories=directories,
+            dirExcludes=dirExcludes, indexdb=f"C:/idx/{name}.idx",
+            indexUpdateMode=indexUpdateMode, indexType=indexType)
+
+    def test_locationMatch(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj")
+        provider = self._provider([conf])
+        self.assertEqual(provider._resolveIndexConfig(location="loc1"), conf)
+
+    def test_locationNotFound(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._resolveIndexConfig(location="nope")
+
+    def test_neitherLocationNorFolderRaises(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._resolveIndexConfig()
+
+    def test_folderInSubdirectory(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj")
+        provider = self._provider([conf])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/sub/dir"), conf)
+
+    def test_folderNotCoveredRaises(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._resolveIndexConfig(folder="C:/other/proj")
+
+    def test_prefersContentIndexed(self) -> None:
+        noIndex = self._conf("plain", "C:/src/proj", indexUpdateMode=IndexMode.NoIndexWanted)
+        indexed = self._conf("idx", "C:/src/proj")
+        provider = self._provider([noIndex, indexed])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", searchType="content"), indexed)
+
+    def test_prefersFileNameIndexed(self) -> None:
+        contentOnly = self._conf("content", "C:/src/proj", indexType=IndexType.FileContent)
+        fileName = self._conf("fname", "C:/src/proj", indexType=IndexType.FileName)
+        provider = self._provider([contentOnly, fileName])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", searchType="filename"), fileName)
+
+    def test_contentSearchDoesNotCountFileNameOnlyIndex(self) -> None:
+        contentOnly = self._conf("content", "C:/src/proj", indexType=IndexType.FileContent)
+        fileName = self._conf("fname", "C:/src/proj", indexType=IndexType.FileName)
+        provider = self._provider([contentOnly, fileName])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj", searchType="content"), contentOnly)
+
+    def test_folderExcludedByDirExcludes(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._resolveIndexConfig(folder="C:/src/proj/build")
+
+    def test_folderNotExcluded(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
+        provider = self._provider([conf])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/src"), conf)
+
+    def test_excludedParentDoesNotDisqualify(self) -> None:
+        # os.walk descends into subdirectories even if a parent matches an
+        # exclude (genFind only skips files directly in the excluded directory),
+        # so a folder below an excluded parent is still covered.
+        conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
+        provider = self._provider([conf])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/build/sub/deep"), conf)
+
+    def test_wildcardExclude(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj", dirExcludes="*/build")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._resolveIndexConfig(folder="C:/src/proj/build")
+
+    def test_questionMarkExclude(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/buil?")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._resolveIndexConfig(folder="C:/src/proj/build")
+
+    def test_excludeIsCaseInsensitive(self) -> None:
+        conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/SRC/PROJ/BUILD")
+        provider = self._provider([conf])
+        with self.assertRaises(ValueError):
+            provider._resolveIndexConfig(folder="C:/src/proj/build")
+
+    def test_excludedConfigSkippedInFavorOfCoveringConfig(self) -> None:
+        excluded = self._conf("excluded", "C:/src/proj", dirExcludes="C:/src/proj/build")
+        covering = self._conf("covering", "C:/src/proj")
+        provider = self._provider([excluded, covering])
+        self.assertEqual(provider._resolveIndexConfig(folder="C:/src/proj/build"), covering)
 
 if __name__ == "__main__":
     unittest.main()

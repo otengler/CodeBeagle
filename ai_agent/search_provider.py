@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from fnmatch import fnmatch
 from typing import Dict, List, Optional, cast
 from AppConfig import appConfig
 from tools.FileTools import freadall
@@ -292,21 +293,36 @@ class SearchProvider:
 
             if folder:
                 # Resolve by folder: find all locations whose source directory
-                # equals or is a parent of the requested folder.
-                normFolder = os.path.normpath(folder)
+                # equals or is a parent of the requested folder and that do not
+                # exclude the folder (or any directory on the path to it).
                 candidates = [
                     conf for conf in indexConfigs
-                    if any(
-                        normFolder == os.path.normpath(srcDir) or
-                        normFolder.startswith(os.path.normpath(srcDir) + os.sep)
-                        for srcDir in conf.directories
-                    )
+                    if self._folderCovered(conf, folder)
                 ]
                 if not candidates:
                     raise ValueError(f"No search location found for folder '{folder}'")
                 return self._preferIndexed(candidates, searchType)
 
             raise ValueError("Either 'location' or 'folder' must be specified")
+
+    def _folderCovered(self, conf: IndexConfiguration.IndexConfiguration, folder: str) -> bool:
+        """
+        True if a walk from one of the config's source directories would reach folder.
+
+        Mirrors IndexUpdater.genFind: only the final folder itself is checked
+        against dirExcludes (os.walk descends into subdirectories even if a
+        parent is excluded). Matching uses fnmatch, case-insensitively, and
+        supports wildcards (*, ?).
+        """
+        normFolder = os.path.normpath(folder).lower()
+        excludes = [e.lower() for e in conf.dirExcludes]
+        if any(fnmatch(normFolder, ex) for ex in excludes):
+            return False
+        for srcDir in conf.directories:
+            normalizedSrc = os.path.normpath(srcDir)
+            if normFolder == normalizedSrc.lower() or normFolder.startswith(normalizedSrc.lower() + os.sep):
+                return True
+        return False
 
     def _preferIndexed(self, configs: List[IndexConfiguration.IndexConfiguration],
                        searchType: str = "content") -> IndexConfiguration.IndexConfiguration:
