@@ -7,7 +7,7 @@ Humans are welcome too :-)
 
 ```bash
 # Check if the server is running
-curl http://localhost:8080/health
+curl http://localhost:8080/api/v1/health
 
 # Search file content
 curl -X POST http://localhost:8080/api/v1/search/content \
@@ -89,7 +89,6 @@ Search within file contents. Returns matching lines with surrounding context.
   "folderFilter": "",
   "extensionFilter": "",
   "caseSensitive": false,
-  "excludeComments": false,
   "contextLines": 2,
   "limit": 100,
   "pageOffset": null
@@ -106,7 +105,6 @@ Search within file contents. Returns matching lines with surrounding context.
 | `folderFilter` | string | no | `""` | Filter results by folder path. See [Folder Filter](#folder-and-extension-filters). |
 | `extensionFilter` | string | no | `""` | Filter results by file extension. See [Extension Filter](#folder-and-extension-filters). |
 | `caseSensitive` | bool | no | `false` | If `true`, search is case-sensitive. |
-| `excludeComments` | bool | no | `false` | If `true`, matches inside comments are excluded. May not work for all file types. |
 | `contextLines` | int | no | `2` | Number of lines of context before and after each match. |
 | `limit` | int | no | `100` | Maximum number of matches per page. |
 | `pageOffset` | object | no | `null` | Pagination cursor from a previous response. See [Pagination](#pagination). |
