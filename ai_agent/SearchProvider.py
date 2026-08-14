@@ -29,6 +29,7 @@ from fulltextindex.SearchMethods import SearchMethods
 from .DataModel import ContentMatch, ContentSearchResult, FileSearchResult, SearchLocation
 from .SearchIndexResolver import SearchIndexResolver
 from .TtlCache import TTLCache
+from fulltextindex.CommentRuleProvider import CommentRuleProvider
 
 __all__ = ['ContentMatch', 'ContentSearchResult', 'FileSearchResult', 'SearchLocation']
 
@@ -43,6 +44,16 @@ class SearchProvider:
         self._indexResolver = SearchIndexResolver(self._config)
         self._loadCommonKeywords()
 
+    # Lazily created comment rule provider (class attribute so instances created
+    # via object.__new__ in tests work without running __init__).
+    _commentRuleProviderCache: Optional[CommentRuleProvider] = None
+
+    @property
+    def _commentRuleProvider(self) -> CommentRuleProvider:
+        if self._commentRuleProviderCache is None:
+            self._commentRuleProviderCache = CommentRuleProvider()
+        return self._commentRuleProviderCache
+
     def getLocations(self) -> List[SearchLocation]:
         """Return all configured search locations."""
         indexConfigs = IndexConfiguration.readConfig(self._config)
@@ -54,6 +65,7 @@ class SearchProvider:
                       folderFilter: str = "",
                       extensionFilter: str = "",
                       caseSensitive: bool = False,
+                      excludeComments: bool = True,
                       contextLines: int = 2,
                       limit: int = 100,
                       pageOffset: Optional[Dict[str, int]] = None) -> ContentSearchResult:
@@ -67,6 +79,7 @@ class SearchProvider:
             folderFilter: Optional folder filter pattern.
             extensionFilter: Optional extension filter pattern.
             caseSensitive: Whether to search case-sensitively.
+            excludeComments: If True (default), exclude matches inside single-line comments.
             contextLines: Number of context lines before/after each match.
             limit: Maximum number of matches to return.
             pageOffset: Cursor for pagination, from a previous response.
@@ -78,15 +91,22 @@ class SearchProvider:
         indexConf = self._indexResolver.resolve(location, folder, "content", extensionFilter)
         self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
 
+        # Build comment rule fetcher if comment exclusion is requested
+        commentRuleFetcher = None
+        if excludeComments:
+            commentRuleFetcher = self._commentRuleProvider.getCommentRule
+
         params = QueryParams(
             strSearch=query,
             strFolderFilter=folderFilter,
             strExtensionFilter=extensionFilter,
-            bCaseSensitive=caseSensitive
+            bCaseSensitive=caseSensitive,
+            bExcludeComments=excludeComments,
+            commentRuleFetcher=commentRuleFetcher
         )
         searchData = ContentQuery(params)
         # Check file list cache
-        cacheKey = self._makeFileListCacheKey(searchData, indexConf, folderFilter, extensionFilter)
+        cacheKey = self._makeFileListCacheKey(searchData, indexConf, folderFilter, extensionFilter, excludeComments)
         matchingFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
         if matchingFiles is None:
             ftiSearch = SearchMethods()
@@ -268,13 +288,13 @@ class SearchProvider:
                 self._commonKeywordMap = {}
     
     def _makeFileListCacheKey(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                                   folderFilter: str, extensionFilter: str) -> str:
+                                   folderFilter: str, extensionFilter: str, excludeComments: bool = False) -> str:
             """Build a cache key for the file list of a content search."""
-            return f"fl:{indexConf.displayName()}|{searchData.search}|{folderFilter}|{extensionFilter}|{searchData.bCaseSensitive}"
+            return f"fl:{indexConf.displayName()}|{searchData.search}|{folderFilter}|{extensionFilter}|{searchData.bCaseSensitive}|{excludeComments}"
     
     def _makeFileMatchCacheKey(self, searchData: ContentQuery, filePath: str) -> str:
             """Build a cache key for the matches inside a single file."""
-            return f"fm:{searchData.search}|{searchData.bCaseSensitive}|{filePath}"
+            return f"fm:{searchData.search}|{searchData.bCaseSensitive}|{searchData.bExcludeComments}|{filePath}"
 
     def _makeFileNameCacheKey(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration,
                                folderFilter: str, extensionFilter: str) -> str:

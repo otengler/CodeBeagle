@@ -291,6 +291,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         folderFilter = self._getString(data, "folderFilter", "")
         extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
+        excludeComments = self._getBool(data, "excludeComments", True)
         contextLines = self._getInt(data, "contextLines", self.server.contextLines)
         limit = self._getInt(data, "limit", self.server.defaultLimit)
         pageOffset = self._getPageOffset(data)
@@ -302,7 +303,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             result = self.server.provider.searchContent(
                 query, location=location, folder=folder,
                 folderFilter=folderFilter, extensionFilter=extensionFilter,
-                caseSensitive=caseSensitive,
+                caseSensitive=caseSensitive, excludeComments=excludeComments,
                 contextLines=contextLines, limit=limit, pageOffset=pageOffset
             )
         except ValueError as e:
