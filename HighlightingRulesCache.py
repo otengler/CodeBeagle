@@ -22,7 +22,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
 from tools.FileTools import freadall
 from widgets.SyntaxHighlighter import HighlightingRules
-from fulltextindex.CommentRule import CommentRule
 import HighlighterConfiguration
 import AppConfig
 

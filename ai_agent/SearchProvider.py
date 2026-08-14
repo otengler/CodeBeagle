@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from typing import Dict, List, Optional, cast
+from PyQt5.QtGui import QFont
 from AppConfig import appConfig
 from tools.FileTools import freadall
 from tools.ContextExtraction import LineMapping
@@ -26,15 +27,16 @@ from fulltextindex.FullTextIndex import buildMapFromCommonKeywordFile, CommonKey
 from fulltextindex.IStringMatcher import MatchPosition
 from fulltextindex.Query import QueryParams, ContentQuery, FileQuery
 from fulltextindex.SearchMethods import SearchMethods
+from fulltextindex.CommentRule import CommentRule
+from HighlightingRulesCache import rules as highlightingRules
 from .DataModel import ContentMatch, ContentSearchResult, FileSearchResult, SearchLocation
 from .SearchIndexResolver import SearchIndexResolver
 from .TtlCache import TTLCache
-from fulltextindex.CommentRuleProvider import CommentRuleProvider
 
 __all__ = ['ContentMatch', 'ContentSearchResult', 'FileSearchResult', 'SearchLocation']
 
 class SearchProvider:
-    """Qt-free interface to CodeBeagle's search engine for the AI agent API."""
+    """Interface to CodeBeagle's search engine for the AI agent API."""
 
     def __init__(self, cacheTTLSeconds: int = 300) -> None:
         self._commonKeywordMap: Optional[CommonKeywordMap] = None
@@ -44,15 +46,16 @@ class SearchProvider:
         self._indexResolver = SearchIndexResolver(self._config)
         self._loadCommonKeywords()
 
-    # Lazily created comment rule provider (class attribute so instances created
-    # via object.__new__ in tests work without running __init__).
-    _commentRuleProviderCache: Optional[CommentRuleProvider] = None
-
-    @property
-    def _commentRuleProvider(self) -> CommentRuleProvider:
-        if self._commentRuleProviderCache is None:
-            self._commentRuleProviderCache = CommentRuleProvider()
-        return self._commentRuleProviderCache
+    def __commentRuleForFile(self, filename: str) -> Optional[CommentRule]:
+        """
+        Return the single-line comment rule for a file, taken from the existing
+        highlighting rules cache (same source as the GUI). Multi-line comment
+        patterns are intentionally not used for performance reasons.
+        """
+        rule = highlightingRules().getRulesByFileName(filename, QFont())
+        if not rule or not rule.lineComment:
+            return None
+        return CommentRule(rule.lineComment, None, None, False)
 
     def getLocations(self) -> List[SearchLocation]:
         """Return all configured search locations."""
@@ -94,7 +97,7 @@ class SearchProvider:
         # Build comment rule fetcher if comment exclusion is requested
         commentRuleFetcher = None
         if excludeComments:
-            commentRuleFetcher = self._commentRuleProvider.getCommentRule
+            commentRuleFetcher = self.__commentRuleForFile
 
         params = QueryParams(
             strSearch=query,
