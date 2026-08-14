@@ -28,7 +28,7 @@ from tools import FileTools
 from dialogs import StackTraceMessageBox
 from dialogs.UserHintDialog import ButtonType,hintWouldBeShown,showUserHint
 from dialogs.SettingsDialog import SettingsDialog
-from SearchPage import SearchPage
+from SearchPage import NewSearchRequest, SearchPage
 import AppConfig
 from fulltextindex import IndexConfiguration
 from tools.QHelper import createQAction
@@ -329,13 +329,15 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             prevTab = cast(SearchPage, prevTabWidget)
             newTab.setCurrentSearchLocation(prevTab.currentConfigName)
 
-    @pyqtSlot(str, str)
-    def searchInNewTab (self, text: str, searchLocationName: str) -> None:
+    @pyqtSlot(NewSearchRequest)
+    def searchInNewTab (self, newSearchRequest: NewSearchRequest) -> None:
         widget = self.addNewTab ()
         if widget:
             searchPage = cast(SearchPage, widget)
-            searchPage.setCurrentSearchLocation(searchLocationName)
-            searchPage.searchForText(text)
+            searchPage.setCurrentSearchLocation(newSearchRequest.searchLocationName)
+            searchPage.setSearchParams(newSearchRequest.strFolderFilter, newSearchRequest.strExtensionFilter,
+                                       newSearchRequest.bCaseSensitive, newSearchRequest.bExcludeComments)
+            searchPage.searchForText(newSearchRequest.text)
 
     @pyqtSlot(QWidget, str)
     def changeTabName (self,  searchPage: SearchPage,  text: str) -> None:

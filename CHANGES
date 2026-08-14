@@ -1,3 +1,6 @@
+1.3.17
+- Use current filter setting for new tab when performing a CTRL+click search
+
 1.3.16
 - Moved filter options to a second row
 - Added search option to suppress matches in comments

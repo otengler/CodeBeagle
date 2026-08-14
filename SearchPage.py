@@ -85,10 +85,20 @@ class SearchState:
         self.lockedResultSet: Optional[FullTextIndex.SearchResult] = lockedResultSet
         self.selectedFileIndex: int = -1
 
+class NewSearchRequest:
+    """Request to open a new search tab with a given search string and the search settings of the originating tab."""
+    def __init__(self, text: str, searchLocationName: str, strFolderFilter: str, strExtensionFilter: str, bCaseSensitive: bool, bExcludeComments: bool) -> None:
+        self.text = text
+        self.searchLocationName = searchLocationName
+        self.strFolderFilter = strFolderFilter
+        self.strExtensionFilter = strExtensionFilter
+        self.bCaseSensitive = bCaseSensitive
+        self.bExcludeComments = bExcludeComments
+
 class SearchPage (QWidget):
     # Triggered when a new search tab is requested which should be opened using a given search string
-    # First parameter is the search string, the second the display name of the search configuration (IndexConfiguration)
-    newSearchRequested = pyqtSignal(str, str)
+    # The signal carries a NewSearchRequest object
+    newSearchRequested = pyqtSignal(NewSearchRequest)
     # Triggered when a search has finished
     searchFinished = pyqtSignal(QWidget, str)
     # Triggered whenever the view becomes visible and whenever the current file changes
@@ -393,8 +403,12 @@ class SearchPage (QWidget):
                 # Search in the same search page
                 self.searchForText(text)
             else:
-                # Search in a new tab
-                self.newSearchRequested.emit(text,  self.ui.comboLocation.currentText())
+                # Search in a new tab and copy the current search settings
+                params = self.getSearchParameterFromUI()
+                request = NewSearchRequest(text, self.ui.comboLocation.currentText(),
+                                           params.strFolderFilter, params.strExtensionFilter,
+                                           params.bCaseSensitive, params.bExcludeComments)
+                self.newSearchRequested.emit(request)
 
     def getSearchParameterFromUI (self) -> QueryParams:
         strSearch = self.ui.comboSearch.currentText().strip()
@@ -403,6 +417,13 @@ class SearchPage (QWidget):
         bCaseSensitive = self.ui.checkCaseSensitive.checkState() == Qt.CheckState.Checked
         bExcludeComments = self.ui.checkExcludeComments.checkState() == Qt.CheckState.Checked
         return QueryParams(strSearch, strFolderFilter, strExtensionFilter, bCaseSensitive, bExcludeComments, self.__getCommentRuleFromHighlightingCache)
+
+    def setSearchParams(self, strFolderFilter: str, strExtensionFilter: str, bCaseSensitive: bool, bExcludeComments: bool) -> None:
+        """Apply the given search parameters to the UI. Used when a new tab is opened from an existing tab."""
+        self.ui.comboFolderFilter.setEditText(strFolderFilter)
+        self.ui.comboExtensionFilter.setEditText(strExtensionFilter)
+        self.ui.checkCaseSensitive.setChecked(bCaseSensitive)
+        self.ui.checkExcludeComments.setChecked(bExcludeComments)
 
     def __getCommentRuleFromHighlightingCache(self, filename: str) -> Optional[CommentRule]:
         rule = HighlightingRulesCache.rules().getRulesByFileName(filename, self.sourceFont)
@@ -677,7 +698,11 @@ class SearchPage (QWidget):
             subprocess.Popen (["explorer.exe", "/select,", name])
 
     def __searchForFileName (self,  name: str) -> None:
-        self.newSearchRequested.emit(name,  self.ui.comboLocation.currentText())
+        params = self.getSearchParameterFromUI()
+        request = NewSearchRequest(name, self.ui.comboLocation.currentText(),
+                                   params.strFolderFilter, params.strExtensionFilter,
+                                   params.bCaseSensitive, params.bExcludeComments)
+        self.newSearchRequested.emit(request)
 
     def __getSelectedFiles (self) -> List[str]:
         filenames = []
