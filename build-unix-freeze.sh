@@ -28,11 +28,10 @@ LIB=$BUILDDIR/lib
 if [ "$1" == "linux" ]; then
   echo "Cleanup Linux"
   PYVER=`python3 build-GetPyVer.py`
-  rm $BUILDDIR/lib/liblzma-004595ca.so.5.2.2
+  # Keep the following modules: they are imported by the MCP server
+  # (CodeBeagleMCP) via pydantic/mcp: decimal, queue, multiprocessing, bz2, lzma
   rm $BUILDDIR/lib/libreadline-2c5f7b8d.so.6.2
   rm $BUILDDIR/lib/libffi-af4ed708.so.6.0.1
-  rm $BUILDDIR/lib/libbz2-a273e504.so.1.0.6
-  rm $BUILDDIR/lib/_bz2.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_codecs_kr.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_codecs_tw.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_posixshmem.cpython-$PYVER-x86_64-linux-gnu.so
@@ -42,7 +41,6 @@ if [ "$1" == "linux" ]; then
   rm $BUILDDIR/lib/pyexpat.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_codecs_cn.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/grp.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_queue.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_heapq.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_ctypes.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_json.cpython-$PYVER-x86_64-linux-gnu.so
@@ -51,15 +49,11 @@ if [ "$1" == "linux" ]; then
   rm $BUILDDIR/lib/_pickle.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_statistics.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_contextvars.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_multiprocessing.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_hashlib.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_decimal.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_bisect.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/termios.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/mmap.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_codecs_iso2022.cpython-$PYVER-x86_64-linux-gnu.so
   rm -r $BUILDDIR/lib/ctypes
-  rm -r $BUILDDIR/lib/multiprocessing
   rm -r $BUILDDIR/lib/xml
   rm -r $BUILDDIR/lib/xmlrpc
   # PyQt

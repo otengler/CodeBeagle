@@ -16,7 +16,7 @@ if sys.platform == "win32":
     targetBase = "gui"
     targetCodeBeagle = "CodeBeagle.exe"
     targetUpdateIndex = "UpdateIndex.exe"
-    options["build_exe"]["excludes"] = "distutils,multiprocessing,lib2to3,xml,test,tkinter,pydoc_data,bz2,queue,lzma,ssl,pyreadline,decimal,curses,zipfile,sysconfig"
+    options["build_exe"]["excludes"] = "distutils,lib2to3,xml,test,tkinter,pydoc_data,pyreadline,curses"
 else:
     print("Using Linux/MacOS settings")
     codeBeagleScript = "CodeBeagle.py"
@@ -43,11 +43,16 @@ CodeBeagleAgentServer=Executable(
     target_name = "CodeBeagleAgentServer"
 )
 
+CodeBeagleMCP=Executable(
+    script = "CodeBeagleMCP.py",
+    target_name = "CodeBeagleMCP"
+)
+
 setup(
     options = options,
     name = AppConfig.appName,
     version = AppConfig.appVersion + ".0",
     description = "CodeBeagle - A tool to search source code based on a full text index",
-    executables = [CodeBeagle, UpdateIndex, CodeBeagleAgentServer]
+    executables = [CodeBeagle, UpdateIndex, CodeBeagleAgentServer, CodeBeagleMCP]
 )
 

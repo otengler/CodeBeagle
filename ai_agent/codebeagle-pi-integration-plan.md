@@ -326,11 +326,7 @@ The extension must therefore:
 
 ### Phase 2 — Polish
 - [x] Pagination loop guidance in tool results (show `pageOffset` hint)
-- [x] Config override via env var `CODEBEAGLE_API_URL`
-
-### Phase 3 — Verify server gaps
-- [ ] Decide whether `stats` / `update_index` tools are needed; they require new HTTP endpoints
-  (out of scope for now)
+- [x] Config override via env var `CODEBEAGLE_API_URL`, and config file codebeagle.json
 
 ---
 

@@ -78,17 +78,6 @@ tool without writing HTTP-level code.
 └──────────────────────────────────────────────────────┘
 ```
 
-### Two Deployment Modes
-
-| Mode | MCP Transport | Start Command | Use Case |
-|------|---------------|---------------|----------|
-| **Local subprocess** | stdio | `npx @codebeagle/mcp-server` | Agent spawns MCP server as child process |
-| **Remote server** | SSE | `python CodeBeagleMCP.py --sse` | Agent connects over HTTP to a long-running daemon |
-
-Both modes share the same MCP tool/resource definitions; only the transport differs.
-
----
-
 ## MCP Server Implementation
 
 ### Recommended Approach: Python MCP SDK

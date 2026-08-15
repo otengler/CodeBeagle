@@ -34,7 +34,8 @@ testmodules = [
     ]
 
 agentTestmodules = [
-    'ai_agent.tests'
+    'ai_agent.tests',
+    'ai_agent.mcp_server.tests'
     ]
 
 def getModulePath() -> str:

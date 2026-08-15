@@ -55,7 +55,8 @@ rmdir "$LIB\themes\dark\qss" -Recurse -Force
 rmdir "$LIB\themes\dark\svg" -Recurse -Force
 
 rmdir "$LIB\_pyrepl" -Recurse -Force
-del "$LIB\libcrypto-3.dll" -Force
+
+# libcrypto-3.dll must stay: the MCP server (CodeBeagleMCP.exe) needs ssl.
 
 xcopy config.txt $BUILDDIR
 xcopy help.html $BUILDDIR
