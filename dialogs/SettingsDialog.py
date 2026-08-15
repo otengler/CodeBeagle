@@ -16,19 +16,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import List, Optional, cast
+from typing import List, Set, Optional, cast
 import os, sys
 from PyQt5.QtCore import Qt, QRect, QSize, pyqtSignal, pyqtSlot, QModelIndex, QObject
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QPainter
-from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QWidget, QCheckBox, QListView
-from fulltextindex.IndexConfiguration import IndexConfiguration
+from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QMessageBox, QWidget, QCheckBox, QListView
+from fulltextindex.IndexConfiguration import IndexConfiguration, indexTypeInfo, IndexMode
 from tools.Config import Config
 import tools.FileTools as FileTools
+from dialogs import StackTraceMessageBox
+from dialogs.UserHintDialog import ButtonType,showUserHint
 from ai_agent.dialogs.AgentInstructionsDialog import AgentInstructionsDialog
 from .Ui_SettingsDialog import Ui_SettingsDialog
 from .SettingsItem import SettingsItem
 import AppConfig
 from ai_agent.SetupHints import piAgentInstructions, mcpAgentInstructions, otherAgentInstructions
+
 
 userHintUpdateIndex = """
 <p align='justify'>You added or changed indexed search locations:
@@ -275,7 +278,7 @@ class SettingsDialog (QDialog):
         if sys.platform == "win32":
             mcp_executable += ".exe"                    
         dialog = AgentInstructionsDialog(self, self.tr("MCP compatible agents"), mcpAgentInstructions.format(mcp_executable=mcp_executable), 
-                                         "Enter this on the command line (not inside the chat windows):")
+                                         "Find the instructions for your Coding agent below:")
         dialog.exec()
 
     @pyqtSlot()

@@ -32,7 +32,11 @@ class AgentInstructionsDialog(QDialog):
             self.ui.labelHint.setText(description)
         self.setProperty("shadeBackground", True)
         self.setWindowTitle(title)
-        self.ui.textEditInstructions.setPlainText(instructions)
+        # setText() auto-detects rich text (HTML) vs plain text, so
+        # instructions can use HTML for captions and code blocks.
+        # QTextBrowser with openExternalLinks=True opens <a href=...> links
+        # in the default browser automatically.
+        self.ui.textEditInstructions.setText(instructions)
 
         # Wire up buttons (kept in code, not in .ui)
         self.ui.buttonCopy.clicked.connect(self.__copyToClipboard)
