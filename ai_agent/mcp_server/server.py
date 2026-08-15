@@ -35,7 +35,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import mcp_types as types
 from mcp.server import Server
+from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
+from mcp_types import ServerCapabilities, ToolsCapability
 from pydantic import BaseModel, ValidationError
 
 from .client import ApiError, CodeBeagleClient, ServerUnreachable
@@ -210,10 +212,27 @@ def _formatValidationError(error: ValidationError) -> str:
 
 # ---- Transport ----
 
+def _buildCapabilities() -> ServerCapabilities:
+    """Build capabilities without the (empty) `experimental` dict.
+
+    `Server.create_initialization_options()` always sets
+    `experimental={}`, which the MCP Inspector shows as ✓ Experimental
+    even though no experimental capabilities are offered.  Building the
+    options manually leaves `experimental` unset so it is dropped from
+    the wire by `exclude_unset=True` in the stdio transport.
+    """
+    return ServerCapabilities(tools=ToolsCapability(list_changed=False))
+
+
 async def runStdioServer(baseUrl: str) -> None:
     """Serve MCP over stdio until the client closes the connection."""
     mcpServer = CodeBeagleMCPServer(baseUrl)
-    initializationOptions = mcpServer.server.create_initialization_options()
+    initializationOptions = InitializationOptions(
+        server_name=mcpServer.server.name,
+        server_version=mcpServer.server.version,
+        description=mcpServer.server.description,
+        capabilities=_buildCapabilities(),
+    )
     async with stdio_server() as (readStream, writeStream):
         await mcpServer.server.run(readStream, writeStream, initializationOptions)
 
