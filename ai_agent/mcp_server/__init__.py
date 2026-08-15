@@ -23,7 +23,7 @@ can search indexed source code. See ai_agent/MCP-INTEGRATION.md for the
 full integration plan.
 
 Run the stdio server with:
-    python -m ai_agent.mcp_server
+    python CodeBeagleMCP.py
 """
 
 from .client import ApiError, CodeBeagleClient, ServerUnreachable

@@ -33,7 +33,7 @@ Configure the agent in your MCP client:
     "codebeagle": { "command": "CodeBeagleMCP" }
 
 When developing from a source tree you can use instead:
-    "codebeagle": { "command": "python", "args": ["-m", "ai_agent.mcp_server"] }
+    "codebeagle": { "command": "python", "args": ["CodeBeagleMCP.py"] }
 """
 
 import sys

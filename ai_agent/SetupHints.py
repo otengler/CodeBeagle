@@ -35,7 +35,7 @@ To connect an MCP compatible agent to CodeBeagle:
    }}
 
    When running from a source tree instead of the distribution use:
-   "command": "python", "args": ["-m", "ai_agent.mcp_server"]
+   "command": "python", "args": ["CodeBeagleMCP.py"]
 3. Restart the agent so the MCP server starts. It reads the configured port
    from the CodeBeagle settings, so no port needs to be configured here.
 4. The agent can then use the CodeBeagle MCP tools (list_locations,

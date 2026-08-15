@@ -25,7 +25,7 @@ CodeBeagleClient and registers three tools:
   - search_content        -> POST /api/v1/search/content
   - search_filename       -> POST /api/v1/search/filename
 
-Run via stdio with:  python -m ai_agent.mcp_server
+Run via stdio with:  python CodeBeagleMCP.py
 """
 
 import asyncio
