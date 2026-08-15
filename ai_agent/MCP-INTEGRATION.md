@@ -518,7 +518,7 @@ consider returning a summary + pagination cursor rather than all matches at once
 - [ ] `search_codebase` and `find_references` prompt templates.
 - [ ] A `debug_issue` prompt for tracing bugs across files.
 
-### Phase 4: SSE Transport (Optional) — **Not started**
+### Phase 4: SSE Transport (Currently out of scope) — **Not started**
 
 - [ ] `--sse` flag to start the server with SSE transport.
 - [ ] Optional API key authentication for SSE mode.
@@ -529,7 +529,6 @@ consider returning a summary + pagination cursor rather than all matches at once
 - [x] Standalone `CodeBeagleMCP.py` script (analogous to `CodeBeagleAgentServer.py`).
 - [x] `CodeBeagleMCP` executable target in `setup.py` (built by the freeze scripts).
 - [x] `mcp_server/tests.py` with unit tests for the MCP layer (mocking the HTTP client).
-- [ ] `CodeBeagleMCP.pyw` entry point that starts both the HTTP API and the MCP server.
 - [ ] Document MCP usage in `help.html` and `README.md`.
 
 ### Phase 6: Client-side Testing — **Not started**
