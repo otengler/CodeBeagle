@@ -370,8 +370,10 @@ class TestContentSearchPagination(unittest.TestCase):
              mock.patch("ai_agent.SearchProvider.SearchMethods") as sm, \
              mock.patch("ai_agent.SearchProvider.freadall", side_effect=read):
             sm.return_value.searchContent.return_value = ResultSet(matches=list(content))
-            page1 = provider.searchContent("target", limit=2)
-            page2 = provider.searchContent("target", limit=2, pageOffset=page1.pageOffset)
+            # Comment exclusion would load the highlighting rules and with them
+            # the global config, which this test deliberately avoids (see setUp).
+            page1 = provider.searchContent("target", limit=2, excludeComments=False)
+            page2 = provider.searchContent("target", limit=2, pageOffset=page1.pageOffset, excludeComments=False)
             # The file list is cached: the second page must not re-run the index search.
             self.assertEqual(sm.return_value.searchContent.call_count, 1)
 
