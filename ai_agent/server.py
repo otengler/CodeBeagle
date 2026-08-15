@@ -351,7 +351,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             )
         except ValueError as e:
             raise HttpError(404, str(e))
-        self._sendJson(200, _contentResultToJson(result))
+        self._sendJson(200, _contentResultToJson(query, result))
 
     def _handleFileNameSearch(self) -> None:
         data = self._readJsonBody()
@@ -379,15 +379,16 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             raise HttpError(404, str(e))
         self._sendJson(200, _fileNameResultToJson(result))
 
-def _contentResultToJson(result: ContentSearchResult) -> Dict[str, object]:
+def _contentResultToJson(query: str, result: ContentSearchResult) -> Dict[str, object]:
     matches: List[Dict[str, object]] = []
     for m in result.matches:
         match = {
             "file": m.file,
             "line": m.line,
-            "matchText": m.matchText,
             "fullLine": m.fullLine
         }
+        if query != m.matchText:
+            match["matchText"] = m.matchText
         if m.contextBefore:
             match["contextBefore"] = m.contextBefore
         if m.contextAfter:
