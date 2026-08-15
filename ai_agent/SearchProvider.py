@@ -48,14 +48,13 @@ class SearchProvider:
 
     def __commentRuleForFile(self, filename: str) -> Optional[CommentRule]:
         """
-        Return the single-line comment rule for a file, taken from the existing
-        highlighting rules cache (same source as the GUI). Multi-line comment
-        patterns are intentionally not used for performance reasons.
+        Return the comment rule for a file, taken from the existing
+        highlighting rules cache (same source as the GUI).
         """
         rule = highlightingRules().getRulesByFileName(filename, QFont())
         if not rule or not rule.lineComment:
             return None
-        return CommentRule(rule.lineComment, None, None, False)
+        return CommentRule(rule.lineComment, rule.multiCommentStart, rule.multiCommentStop, rule.hasTripleQuotes)
 
     def getLocations(self) -> List[SearchLocation]:
         """Return all configured search locations."""
@@ -82,7 +81,7 @@ class SearchProvider:
             folderFilter: Optional folder filter pattern.
             extensionFilter: Optional extension filter pattern.
             caseSensitive: Whether to search case-sensitively.
-            excludeComments: If True (default), exclude matches inside single-line comments.
+            excludeComments: If True (default), exclude matches inside comments.
             contextLines: Number of context lines before/after each match.
             limit: Maximum number of matches to return.
             pageOffset: Cursor for pagination, from a previous response.
@@ -94,18 +93,11 @@ class SearchProvider:
         indexConf = self._indexResolver.resolve(location, folder, "content", extensionFilter)
         self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
 
-        # Build comment rule fetcher if comment exclusion is requested
-        commentRuleFetcher = None
-        if excludeComments:
-            commentRuleFetcher = self.__commentRuleForFile
-
         params = QueryParams(
             strSearch=query,
             strFolderFilter=folderFilter,
             strExtensionFilter=extensionFilter,
-            bCaseSensitive=caseSensitive,
-            bExcludeComments=excludeComments,
-            commentRuleFetcher=commentRuleFetcher
+            bCaseSensitive=caseSensitive
         )
         searchData = ContentQuery(params)
         # Check file list cache
@@ -119,6 +111,11 @@ class SearchProvider:
 
         if not matchingFiles:
             return ContentSearchResult(totalFiles=0, matches=[], pageOffset=None)
+
+        # Build comment rule fetcher if comment exclusion is requested
+        if excludeComments:
+            searchData.bExcludeComments = True
+            searchData.commentRuleFetcher = self.__commentRuleForFile
 
         # Build paginated matches from the matching files
         return self._buildContentResults(

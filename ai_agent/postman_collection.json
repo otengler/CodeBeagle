@@ -74,7 +74,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "search", "content"]
             },
-            "description": "Search file contents. The query uses the same syntax as CodeBeagle's GUI search box (multi-keyword, `*` wildcards, `**N` proximity, and `<!...!>` regex).\n\nReplace `location` with a name from **List Locations**, or use `folder` with a source path instead (mutually exclusive).\n\n`excludeComments` is `true` by default and skips matches inside single-line comments; set it to `false` to include them. Multi-line comments are not filtered for performance reasons.\n\n**Response:**\n```json\n{\n  \"totalFiles\": 42,\n  \"matches\": [\n    {\n      \"file\": \"C:/src/myproject/src/main.py\",\n      \"line\": 45,\n      \"matchText\": \"class Factory\",\n      \"contextBefore\": [\"# comment\", \"\"],\n      \"contextAfter\": [\"    def __init__(self):\", \"        pass\"],\n      \"fullLine\": \"class Factory(AbstractFactory):\"\n    }\n  ]\n}\n```\n\n`pageOffset` is present in the response when more results exist."
+            "description": "Search file contents. The query uses the same syntax as CodeBeagle's GUI search box (multi-keyword, `*` wildcards, `**N` proximity, and `<!...!>` regex).\n\nReplace `location` with a name from **List Locations**, or use `folder` with a source path instead (mutually exclusive).\n\n`excludeComments` is `true` by default and skips matches inside comments; set it to `false` to include them. Multi-line comments are not filtered for performance reasons.\n\n**Response:**\n```json\n{\n  \"totalFiles\": 42,\n  \"matches\": [\n    {\n      \"file\": \"C:/src/myproject/src/main.py\",\n      \"line\": 45,\n      \"matchText\": \"class Factory\",\n      \"contextBefore\": [\"# comment\", \"\"],\n      \"contextAfter\": [\"    def __init__(self):\", \"        pass\"],\n      \"fullLine\": \"class Factory(AbstractFactory):\"\n    }\n  ]\n}\n```\n\n`pageOffset` is present in the response when more results exist."
           },
           "response": []
         },
@@ -102,7 +102,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "search", "content"]
             },
-            "description": "Content search with folder and extension filters, a regex query (wrapped in `<!` and `!>`), and 3 context lines.\n\n- `folderFilter`: comma-separated folder patterns, prefix with `-` to exclude.\n- `extensionFilter`: comma-separated extensions, prefix with `-` to exclude.\n- `excludeComments`: `false` here so matches inside comments are included (e.g. finding TODO notes). The default is `true`, which skips single-line comment matches."
+            "description": "Content search with folder and extension filters, a regex query (wrapped in `<!` and `!>`), and 3 context lines.\n\n- `folderFilter`: comma-separated folder patterns, prefix with `-` to exclude.\n- `extensionFilter`: comma-separated extensions, prefix with `-` to exclude.\n- `excludeComments`: `false` here so matches inside comments are included (e.g. finding TODO notes). The default is `true`, which skips comment matches."
           },
           "response": []
         },

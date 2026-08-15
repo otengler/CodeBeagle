@@ -106,7 +106,7 @@ Search within file contents. Returns matching lines with surrounding context.
 | `folderFilter` | string | no | `""` | Filter results by folder path. See [Folder Filter](#folder-and-extension-filters). |
 | `extensionFilter` | string | no | `""` | Filter results by file extension. See [Extension Filter](#folder-and-extension-filters). |
 | `caseSensitive` | bool | no | `false` | If `true`, search is case-sensitive. |
-| `excludeComments` | bool | no | `true` | If `true`, matches inside single-line comments are excluded (e.g. `//` in C/C++, `#` in Python). Multi-line comments are not filtered for performance reasons. |
+| `excludeComments` | bool | no | `true` | If `true`, matches inside comments are excluded (e.g. `//` in C/C++, `#` in Python). |
 | `contextLines` | int | no | `2` | Number of lines of context before and after each match. Set to `0` to omit context lines entirely (the `contextBefore`/`contextAfter` fields are then not included in the response). |
 | `limit` | int | no | `100` | Maximum number of matches per page. |
 | `pageOffset` | object | no | `null` | Pagination cursor from a previous response. See [Pagination](#pagination). |
@@ -118,7 +118,7 @@ Search within file contents. Returns matching lines with surrounding context.
 - Only files whose extensions match the index configuration are searched.
 - Each match's position, line number, and surrounding context are returned.
 - Matches are returned in file order (sorted alphabetically by file path), then by position within each file.
-- When `excludeComments` is `true` (the default), matches that start inside a single-line comment (e.g. `//` in C/C++, `#` in Python) are dropped. Multi-line comments are not filtered for performance reasons. Set `"excludeComments": false` to include matches in comments.
+- When `excludeComments` is `true` (the default), matches that start inside a comment (e.g. `//` in C/C++, `#` in Python) are dropped. Set `"excludeComments": false` to include matches in comments.
 
 **Response:**
 
@@ -424,7 +424,7 @@ agent {
 
 8. **The server binds to localhost only** by default (127.0.0.1). This is intentional for security. Do not change the bind address to 0.0.0.0 unless you are in a controlled network environment.
 
-9. **Use `excludeComments` (default `true`) to filter out trivial matches** in comments (e.g. TODO notes, documentation). Set `"excludeComments": false` if you want matches in comments too. Only single-line comments are filtered (multi-line comments are skipped for performance reasons).
+9. **Use `excludeComments` (default `true`) to filter out trivial matches** in comments (e.g. TODO notes, documentation). Set `"excludeComments": false` if you want matches in comments too.
 
 10. **For compact output set `"contextLines": 0`** — the response then contains no `contextBefore`/`contextAfter` lines, only `file`, `line`, `matchText` and `fullLine` per match. This reduces response size and is what the PI extension's compact format does.
 

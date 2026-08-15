@@ -5,13 +5,10 @@
  * CodeBeagle's local HTTP web API (ai_agent/Server.py, 127.0.0.1:8080 by default).
  *
  * Tools:
- *  - codebeagle_list_indexes  -> GET  /api/v1/locations
- *  - codebeagle_search        -> POST /api/v1/search/content
- *  - codebeagle_search_files  -> POST /api/v1/search/filename
- *  - codebeagle_health        -> GET  /api/v1/health
- *
- * Command:
- *  - /codebeagle-start  spawns CodeBeagleAgentServer.py for the current session
+ *  - codebeagle_health         -> GET  /api/v1/health
+ *  - codebeagle_content_search -> POST /api/v1/search/content
+ *  - codebeagle_file_search    -> POST /api/v1/search/filename
+ *  - codebeagle_list_indexes   -> GET  /api/v1/locations
  *
  * Base URL resolution:
  *  - CODEBEAGLE_API_URL env var (highest precedence)
@@ -77,6 +74,9 @@ const SERVER_DOWN_HINT =
   `The CodeBeagle agent server is not reachable at ${BASE_URL}. ` +
   `Run the CodeBeagle GUI and enable the 'AI agent' or use the standalone CodeBeagleAgentServer).`;
 
+const NOT_INDEXED_HINT =
+  `The requested path is not indexed. Fallback to searching without codebeagle_content_search or codebeagle_file_search.`
+
 // ---- HTTP client -----------------------------------------------------------
 
 async function callApi(
@@ -99,11 +99,17 @@ async function callApi(
     (wrapped as any).cause = err;
     throw wrapped;
   }
-  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error ?? `HTTP ${res.status} from ${path}`);
+    if (res.status === 404) {
+      throw new Error(NOT_INDEXED_HINT)
+    }
+    throw new Error(`HTTP ${res.status} from ${path}`);
   }
-  return data;
+  try {
+    return await res.json();
+  } catch (err) {
+    throw new Error(`Reading data failed: ${err}`);
+  }
 }
 
 // ---- Result formatting ------------------------------------------------------
@@ -126,21 +132,6 @@ function formatCompactMatches(matches: any[]): string {
   return matches.map((m) => `${m.file}:${m.line}: ${m.fullLine}`).join("\n");
 }
 
-/** Human-readable match listing with context (used by the legacy default view). */
-function formatMatches(matches: any[]): string {
-  return matches
-    .map((m) => {
-      const before = (m.contextBefore ?? []).map((l: string) => `  ${l}`).join("\n");
-      const after = (m.contextAfter ?? []).map((l: string) => `  ${l}`).join("\n");
-      const parts = [`${m.file}:${m.line}`];
-      if (before) parts.push(before);
-      parts.push(`> ${m.fullLine}`);
-      if (after) parts.push(after);
-      return parts.join("\n");
-    })
-    .join("\n\n");
-}
-
 function truncate(text: string): string {
   const t = truncateHead(text, { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES });
   let out = t.content;
@@ -156,7 +147,7 @@ function truncate(text: string): string {
 
 export default function (pi: ExtensionAPI) {
   pi.registerTool({
-    name: "codebeagle_search",
+    name: "codebeagle_content_search",
     label: "CodeBeagle: Search Content",
     description:
       "Full-text search across CodeBeagle-indexed source code. " +
@@ -168,10 +159,9 @@ export default function (pi: ExtensionAPI) {
       "(compact mode returns no context lines). " +
       "Keep contextLines low (2-3) to bound token usage. " +
       "Pagination: pass pageOffset from a previous response to fetch the next page.",
-    promptSnippet: "Search indexed source code with CodeBeagle (keywords, wildcards, regex, context lines)",
+    promptSnippet: "Search CodeBeagle-indexed location for content (keywords, wildcards, regex, context lines)",
     promptGuidelines: [
-      "Use codebeagle_search to find code usages, definitions, or patterns across indexed source code instead of ad-hoc grep.",
-      "Call codebeagle_list_indexes to discover available search locations.",
+      "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`.",
     ],
     parameters: Type.Object({
       query: Type.String({
@@ -193,7 +183,7 @@ export default function (pi: ExtensionAPI) {
         Type.String({ description: "Extension filter, e.g. '.cpp,.h,-.hpp'" }),
       ),
       caseSensitive: Type.Optional(Type.Boolean({ description: "Case-sensitive search (default: false)" })),
-      excludeComments: Type.Optional(Type.Boolean({ description: "Exclude matches inside single-line comments (default: true)" })),
+      excludeComments: Type.Optional(Type.Boolean({ description: "Exclude matches inside comments (default: true)" })),
       contextLines: Type.Optional(
         Type.Integer({ description: "Context lines before/after each match (default 2)" }),
       ),
@@ -211,17 +201,12 @@ export default function (pi: ExtensionAPI) {
       if (outputFormat === "compact") {
         // path:line: full matching line
         body = formatCompactMatches(result.matches);
-      } else if (outputFormat === "json") {
+      } else {
         // Default: raw JSON for programmatic consumption
         body = JSON.stringify(result, null, 2);
-      } else {
-        // Legacy human-readable view
-        body =
-          `Found ${result.totalFiles} files with matches (showing ${result.matches.length}):\n\n` +
-          formatMatches(result.matches);
       }
       const more = result.pageOffset
-        ? `\n\nMore results available. Call codebeagle_search again with the same parameters plus pageOffset=${JSON.stringify(result.pageOffset)}.`
+        ? `\n\nMore results available. Call codebeagle_content_search again with the same parameters plus pageOffset=${JSON.stringify(result.pageOffset)}.`
         : "";
       return {
         content: [{ type: "text", text: truncate(body + more) }],
@@ -231,7 +216,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerTool({
-    name: "codebeagle_search_files",
+    name: "codebeagle_file_search",
     label: "CodeBeagle: Search File Names",
     description:
       "Search for files by name across CodeBeagle-indexed source code. " +
@@ -240,9 +225,9 @@ export default function (pi: ExtensionAPI) {
       "Specify either 'location' or 'folder'. " +
       "Set format='json' (default) for JSON output, format='compact' for file paths. " +
       "Pagination: pass pageOffset from a previous response to fetch the next page.",
-    promptSnippet: "Search CodeBeagle-indexed file names with wildcards",
+    promptSnippet: "Search CodeBeagle-indexed location for file names.",
     promptGuidelines: [
-      "Use codebeagle_search_files when the user asks to find files by name across indexed source code.",
+      "Use codebeagle_file_search when the user asks to find files by name.",
     ],
     parameters: Type.Object({
       query: Type.String({ description: "File name pattern, e.g. 'main*', '*test*.py', 'Makefile'" }),
@@ -261,15 +246,11 @@ export default function (pi: ExtensionAPI) {
       let body: string;
       if (outputFormat === "compact") {
         body = result.files.join("\n");
-      } else if (outputFormat === "json") {
-        body = JSON.stringify(result, null, 2);
       } else {
-        body =
-          `Found ${result.totalFiles} matching files (showing ${result.files.length}):\n\n` +
-          result.files.join("\n");
+        body = JSON.stringify(result, null, 2);
       }
       const more = result.pageOffset
-        ? `\n\nMore results available. Call codebeagle_search_files again with the same parameters plus pageOffset=${JSON.stringify(result.pageOffset)}.`
+        ? `\n\nMore results available. Call codebeagle_file_search again with the same parameters plus pageOffset=${JSON.stringify(result.pageOffset)}.`
         : "";
       return {
         content: [{ type: "text", text: truncate(body + more) }],
@@ -283,10 +264,10 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: List Search Locations",
     description:
       "List all available CodeBeagle search locations (indexes): name, folders, extensions, index mode. " +
-      "Call this first to discover what is searchable, then pass the location name to codebeagle_search / codebeagle_search_files.",
+      "Call this first to discover what is searchable, then pass the location name to codebeagle_content_search / codebeagle_file_search.",
     promptSnippet: "List CodeBeagle search locations (indexes)",
     promptGuidelines: [
-      "Call codebeagle_list_indexes first when the user wants to search code, to discover available search locations.",
+      "Call codebeagle_list_indexes when the user wants to find files or search inside files (like grep), to discover available search locations.",
     ],
     parameters: Type.Object({}),
     async execute(_toolCallId: any, _params: any, signal: any) {
