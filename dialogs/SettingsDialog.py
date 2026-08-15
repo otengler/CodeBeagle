@@ -283,7 +283,8 @@ class SettingsDialog (QDialog):
 
     @pyqtSlot()
     def showOtherAgentInstructions(self) -> None:
-        dialog = AgentInstructionsDialog(self, self.tr("Other agents"), otherAgentInstructions)
+        port = self.ui.editAgentPort.text()
+        dialog = AgentInstructionsDialog(self, self.tr("Other agents"), otherAgentInstructions.format(port=port))
         dialog.exec()
 
     def defaultLocation(self) -> str:
