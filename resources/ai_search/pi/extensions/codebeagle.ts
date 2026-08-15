@@ -13,7 +13,13 @@
  * Command:
  *  - /codebeagle-start  spawns CodeBeagleAgentServer.py for the current session
  *
- * Base URL override: CODEBEAGLE_API_URL env var.
+ * Base URL resolution:
+ *  - CODEBEAGLE_API_URL env var (highest precedence)
+ *  - codebeagle.json in the same directory as this file, e.g.
+ *      {
+ *        "baseUrl": "http://127.0.0.1:8080"
+ *      }
+ *  - http://127.0.0.1:8080 default
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -24,16 +30,43 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { spawn, type ChildProcess } from "node:child_process";
-import { join } from "node:path";
-import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+// Directory of this extension file (codebeagle.json is expected next to it).
+const EXTENSION_DIR = dirname(fileURLToPath(import.meta.url));
+
+interface ExtensionConfig {
+  baseUrl?: string;
+}
+
+function readConfig(): ExtensionConfig {
+  const configPath = join(EXTENSION_DIR, "codebeagle.json");
+  try {
+    if (!existsSync(configPath)) {
+      return {};
+    }
+    const raw = readFileSync(configPath, "utf-8");
+    const config = JSON.parse(raw) as ExtensionConfig;
+    return typeof config === "object" && config !== null ? config : {};
+  } catch (err) {
+    console.warn(`CodeBeagle extension: could not read ${configPath}`, err);
+    return {};
+  }
+}
 
 /**
  * Resolve the CodeBeagle agent server base URL.
- * Precedence: CODEBEAGLE_API_URL env var > 8080 default.
+ * Precedence: CODEBEAGLE_API_URL env var > codebeagle.json (next to this file) > 8080 default.
  */
 function resolveBaseUrl(): string {
   if (process.env.CODEBEAGLE_API_URL) {
     return process.env.CODEBEAGLE_API_URL.replace(/\/+$/, "");
+  }
+  const config = readConfig();
+  if (config.baseUrl) {
+    return config.baseUrl.replace(/\/+$/, "");
   }
   return "http://127.0.0.1:8080";
 }

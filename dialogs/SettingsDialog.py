@@ -41,11 +41,21 @@ CodeBeagle provides a full-text search API for AI agents.
 
 To connect your PI agent to CodeBeagle:
 
-1. Enable the AI agent web server in this settings page and make sure
-   the "Enable AI agent web server" check box is checked.
-2. Install the CodeBeagle PI extension into your agent configuration.
-3. Restart the application so the server picks up the configured port.
-4. The agent can then search source code through the codebeagle_search
+1. Enable the AI agent web server on this settings page and restart the
+   application. The server listens on port {port} (default 8080).
+2. Download the CodeBeagle PI extension from
+   http://localhost:{port}/pi-extension
+   and store the downloaded file as codebeagle.ts in the PI user extension
+   folder (e.g. ~/.pi/agent/extensions/).
+3. Create a JSON config file named codebeagle.json in the same folder as
+   codebeagle.ts. It contains the base URL of the CodeBeagle agent server:
+
+   {{
+     "baseUrl": "http://127.0.0.1:{port}"
+   }}
+
+4. Restart PI (or use /reload) so the extension is loaded.
+5. The agent can then search source code through the codebeagle_search
    and codebeagle_search_files tools.
 
 Example
@@ -54,8 +64,6 @@ Example
 Ask your agent to search code like this:
 
   Search the codebase for the definition of IndexUpdater.
-
-(Mock text - real instructions will be added later.)
 """
 
 mcpAgentInstructions = """\
@@ -331,7 +339,8 @@ class SettingsDialog (QDialog):
 
     @pyqtSlot()
     def showPiAgentInstructions(self) -> None:
-        dialog = AgentInstructionsDialog(self, self.tr("PI agent instructions"), piAgentInstructions)
+        port = self.ui.editAgentPort.text()
+        dialog = AgentInstructionsDialog(self, self.tr("PI agent instructions"), piAgentInstructions.format(port=port))
         dialog.exec()
 
     @pyqtSlot()
