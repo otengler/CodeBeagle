@@ -36,7 +36,7 @@ class _ParamItem(QTableWidgetItem):
 class HistoryDialog(QDialog):
     """Dialog which shows the AI agent API call history. Latest action first."""
 
-    def __init__(self, history: AgentHistory, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, history: Optional[AgentHistory], parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setWindowTitle(self.tr("AI Agent History"))
         self.resize(900, 480)
@@ -83,6 +83,8 @@ class HistoryDialog(QDialog):
 
     def reload(self) -> None:
         """Fill the table with the current history, newest entry first."""
+        if not self.history:
+            return
         self.table.setRowCount(0)
         for entry in self.history.entries():
             row = self.table.rowCount()
@@ -95,27 +97,8 @@ class HistoryDialog(QDialog):
             self.table.setItem(row, 5, QTableWidgetItem(entry.durationStr()))
 
     def clearHistory(self) -> None:
+        if not self.history:
+            return
         self.history.clear()
         self.reload()
 
-
-def agentIcon() -> QIcon:
-    """Create a small status icon which indicates that the AI agent is running."""
-    pixmap = QPixmap(24, 24)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    # Blue round "agent head" with an antenna
-    painter.setBrush(QColor(52, 120, 246))
-    painter.setPen(Qt.PenStyle.NoPen)
-    painter.drawEllipse(4, 6, 16, 16)
-    painter.drawRect(11, 2, 2, 5)
-    # Pulse line inside the head
-    painter.setPen(QPen(QColor(255, 255, 255), 2))
-    painter.drawLine(7, 15, 10, 15)
-    painter.drawLine(10, 15, 12, 12)
-    painter.drawLine(12, 12, 14, 19)
-    painter.drawLine(14, 19, 16, 14)
-    painter.drawLine(16, 14, 18, 15)
-    painter.end()
-    return QIcon(pixmap)

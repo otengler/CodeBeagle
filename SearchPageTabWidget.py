@@ -21,7 +21,7 @@ import sys
 from typing import List, Optional, cast
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPushButton
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QToolTip, QPushButton
 from widgets.LeaveLastTabWidget import LeaveLastTabWidget
 from widgets.AnimatedProgressWidget import AnimatedProgressWidget
 from tools import FileTools
@@ -42,6 +42,13 @@ userHintInitialSetup= """
 userHintDarkTheme="""
 <p align='justify'>There is a dark theme available now. It can be selected from the options dialog.</p>
 <p align='justify'>Would you like to give it a try?</p>
+"""
+
+userHintAiSearch = """
+<p align='justify'>CodeBeagle now supports agentic AI search! 🎉</p>
+<p align='justify'>You can connect AI agents such as PI, Claude Code, ChatGPT, Cursor and more
+to search code directly through CodeBeagle's REST API.</p>
+<p align='justify'>Would you like to open the <b>Agentic AI search</b> settings page to configure the connection?</p>
 """
 
 class SearchPageTabWidget (LeaveLastTabWidget):
@@ -360,6 +367,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 res = showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  ButtonType.Yes,  True,  ButtonType.No)
                 if res == ButtonType.Yes:
                     self.openSettings(createInitialLocation=True)
+        if not AppConfig.appConfig().agent.enabled:
+            self.__showAiSearchHint()
         if AppConfig.appConfig().theme != AppConfig.darkTheme:
             text = self.tr(userHintDarkTheme)
             if showUserHint (self, "darkTheme",  self.tr("Dark theme"), text,  ButtonType.Yes, True, ButtonType.No) == ButtonType.Yes:
@@ -367,6 +376,13 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 AppConfig.saveUserConfig(AppConfig.appConfig())
                 self.__restartCodeBeagle()
                 sys.exit(0)
+
+    def __showAiSearchHint(self) -> None:
+        """Notifies new users that agentic AI search is supported."""
+        result = showUserHint(self, "aiSearch", self.tr("Agentic AI search is now supported"), userHintAiSearch,
+                              ButtonType.Yes, True, ButtonType.No, False, bShowHintAgain=True)
+        if result == ButtonType.Yes:
+            self.openSettings(showAgentTab=True)
 
     def __restartCodeBeagle(self) -> None:
         import subprocess

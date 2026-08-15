@@ -37,17 +37,8 @@ import AppConfig
 from ai_agent.Server import AgentServer
 
 def main() -> None:
+    #TODO: Needs argparse to configure all "agent" settings from agent section. 
     agent = AppConfig.appConfig().agent
-    if not agent.enabled:
-        print("AI agent server is disabled in config (agent enabled = false).")
-        print("Enable it by adding:")
-        print("  agent {")
-        print("    enabled = true")
-        print("    port = 8080")
-        print("  }")
-        print("to config.txt or UserConfig.txt.")
-        sys.exit(0)
-
     server = AgentServer()
     if not server.start():
         print("Failed to start AI agent server. See log for details.")

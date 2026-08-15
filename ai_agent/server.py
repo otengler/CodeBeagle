@@ -82,6 +82,10 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         try:
             if path == "" or path == "/":
                 self._serveApiDoc()
+            elif path in ("/api/v1/docs", "/docs"):
+                self._serveApiDoc()
+            elif path in ("/api/v1/pi-extension", "/pi-extension"):
+                self._servePiExtension()
             elif path in ("/api/v1/health", "/health"):
                 self._sendJson(200, {"status": "ok"})
             elif path in ("/api/v1/locations", "/locations"):
@@ -248,7 +252,11 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
     def _serveApiDoc(self) -> None:
         """Serve the API documentation markdown file at the root URL."""
-        docPath = os.path.join(os.path.dirname(__file__), "API.md")
+        # Prefer the distribution copy under resources/ai_search/, fall back to
+        # the source tree location for development without a build.
+        docPath = os.path.join("resources", "ai_search", "API.md")
+        if not os.path.isfile(docPath):
+            docPath = os.path.join(os.path.dirname(__file__), "API.md")
         try:
             with open(docPath, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -264,6 +272,41 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self._sendError(500, "API documentation file not found")
         except Exception as e:
             logger.exception("Failed to serve API doc")
+            self._sendError(500, str(e))
+
+    def _servePiExtension(self) -> None:
+        """Serve the PI extension TypeScript file for download."""
+        self._serveResourceFile(
+            os.path.join("resources", "ai_search", "pi", "extensions", "codebeagle.ts"),
+            "text/typescript",
+            "codebeagle.ts"
+        )
+
+    def _serveResourceFile(self, relPath: str, contentType: str, downloadName: str) -> None:
+        """
+        Serve a static file from the application directory.
+
+        Args:
+            relPath: Path relative to the app directory.
+            contentType: MIME type for the response.
+            downloadName: Filename hint for the Content-Disposition header.
+        """
+        try:
+            with open(relPath, "r", encoding="utf-8") as f:
+                content = f.read()
+            body = content.encode("utf-8")
+            self._statusCode = 200
+            self.send_response(200)
+            self.send_header("Content-Type", f"{contentType}; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Content-Disposition", f'attachment; filename="{downloadName}"')
+            self._sendCorsHeaders()
+            self.end_headers()
+            self.wfile.write(body)
+        except FileNotFoundError:
+            self._sendError(404, f"Resource not found: {relPath}")
+        except Exception as e:
+            logger.exception("Failed to serve resource %s", relPath)
             self._sendError(500, str(e))
 
     def _handleLocations(self) -> None:
@@ -425,7 +468,6 @@ class AgentServer:
             daemon=True
         )
         self.thread.start()
-        logger.info("AI agent server started at http://%s:%d", bind, port)
         return True
 
     def stop(self) -> None:

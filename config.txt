@@ -61,9 +61,9 @@ import UserConfig.txt
 
 
 #
-# AI Agent server settings
+# Agentic AI search server settings
 #
-# Uncomment and configure the [agent] section to enable the AI agent web API server.
+# Uncomment and configure the "agent" section to enable the agentic AI search web API server.
 # This allows AI agents (e.g. Claude, GPT) to search code via HTTP requests.
 #
 #agent {
@@ -73,6 +73,3 @@ import UserConfig.txt
 #    contextLines = 2
 #    defaultLimit = 100
 #}
-
-
-

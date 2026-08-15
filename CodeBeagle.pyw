@@ -22,7 +22,7 @@ from tools import FileTools
 # if we are executed from a different working directory. This must even be done before other imports. 
 FileTools.switchToAppDir()
 
-import os, sys, subprocess, shutil, argparse, atexit
+import os, sys, subprocess, shutil, atexit, logging
 from typing import Any, Optional
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
@@ -43,22 +43,11 @@ userHintNewVersionAvailable = """
 <p align='justify'>Version %(version)s is available for download. Do you want to visit the download page now?</p>
 """
 
-userHintAiSearch = """
-<p align='justify'>CodeBeagle now supports agentic AI search! 🎉</p>
-<p align='justify'>You can connect AI agents such as PI, Claude Code, ChatGPT, Cursor and more
-to search code directly through CodeBeagle's REST API.</p>
-<p align='justify'>Would you like to open the <b>Agentic AI search</b> settings page to configure the connection?</p>
-"""
-
 def main() -> None:
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(prog="CodeBeagle")
-    parser.add_argument("--agent-server", action="store_true",
-                        help="Start the AI agent web server in the background")
-    args = parser.parse_args()
+    setupLogging()
 
-    if args.agent_server or AppConfig.appConfig().agent.enabled:
-        startAgentServer(force=args.agent_server)
+    if AppConfig.appConfig().agent.enabled:
+        startAgentServer()
 
     # dark title bar on Win
     if sys.platform == "win32":
@@ -82,29 +71,34 @@ def main() -> None:
     wnd.show()
     sys.exit(app.exec_())
 
-_agentServer: Optional[Any] = None
+def setupLogging() -> None:
+    try:
+        userDir = os.path.join(AppConfig.userDataPath())
+        if not os.path.isdir(userDir):
+            os.makedirs(userDir)
+        logName = os.path.join(userDir, "codebeagle.log")
+        logging.basicConfig(filename=logName, format='%(asctime)s %(message)s', level=logging.INFO)
+        logging.info("Starting")
+    except Exception as e:
+        print(f"Failed to setup logging: {e}")
 
-def startAgentServer(force: bool = False) -> None:
+def startAgentServer() -> None:
     """Start the AI agent web server in a background thread (integrated mode).
 
     Args:
         force: If True, start the server even if agent.enabled is False in config.
     """
-    global _agentServer
     try:
         agent = AppConfig.appConfig().agent
-        if not agent.enabled and not force:
-            print("AI agent server is disabled in config (agent enabled = false)")
-            return
         from ai_agent.Server import AgentServer
-        _agentServer = AgentServer()
-        if _agentServer.start():
+        agentServer = AgentServer()
+        if agentServer.start():
             from ai_agent.AgentState import setAgentServer
-            setAgentServer(_agentServer)
-            print(f"AI agent server started at http://{agent.bind}:{agent.port}")
-            atexit.register(_agentServer.stop)
+            setAgentServer(agentServer)
+            logging.info(f"AI agent server started at http://{agent.bind}:{agent.port}")
+            atexit.register(agentServer.stop)
     except Exception as e:
-        print(f"Failed to start AI agent server: {e}")
+        logging.error(f"Failed to start AI agent server: {e}")
 
 def configureTheme(app: QApplication) -> None: 
     if AppConfig.appConfig().theme == AppConfig.darkTheme:
@@ -153,16 +147,6 @@ class MainWindow(QMainWindow):
         self.updateCheck = UpdateCheck(self, lastUpdateCheck)
         self.updateCheck.newerVersionFound.connect(self.newerVersionFound)
         self.updateCheck.checkForUpdates()
-
-        # Show the AI search onboarding hint (once)
-        self.__showAiSearchHint()
-
-    def __showAiSearchHint(self) -> None:
-        """Notifies new users that agentic AI search is supported."""
-        result = showUserHint(self, "aiSearch", self.tr("Agentic AI search is now supported"), userHintAiSearch,
-                              ButtonType.Yes, True, ButtonType.No, False, bShowHintAgain=True)
-        if result == ButtonType.Yes:
-            self.ui.tabWidget.openSettings(showAgentTab=True)
 
     def closeEvent(self, event: Optional[QCloseEvent]) -> None:
         if not event:

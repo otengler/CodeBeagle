@@ -29,10 +29,6 @@ if (Test-Path "$BUILDDIR\vcruntime140.dll")
 {
   del "$BUILDDIR\vcruntime140.dll" -Force 
 }
-if (Test-Path "$LIB\unicodedata.pyd") 
-{
-    del "$LIB\unicodedata.pyd" -Force
-}
 
 mkdir $LIB\PyQt5.new\Qt5\bin
 mkdir $LIB\PyQt5.new\Qt5\plugins\imageformats

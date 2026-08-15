@@ -106,7 +106,7 @@ def getAppDataPath (appName: str) -> str:
     """
     if "APPDATA" in os.environ:
         appdata = os.path.expandvars("$APPDATA")
-        location = os.path.join(os.path.split(appdata)[0],"Local")
+        location = os.path.join(os.path.split(appdata)[0],"Local") # replace 'roaming' with 'local'
         if not os.path.isdir(location):
             location = appdata
     elif "HOME" in os.environ:

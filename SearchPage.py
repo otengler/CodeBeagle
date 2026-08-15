@@ -215,9 +215,8 @@ class SearchPage (QWidget):
         from ai_agent.AgentState import agentHistory
         from ai_agent.HistoryDialog import HistoryDialog
         history = agentHistory()
-        if history is not None:
-            dlg = HistoryDialog(history, self)
-            dlg.exec_()
+        dlg = HistoryDialog(history, self)
+        dlg.exec_()
 
     def showEvent(self, _: Optional[QShowEvent]) -> None:
         self.documentShown.emit(self.ui.sourceViewer.currentFile)

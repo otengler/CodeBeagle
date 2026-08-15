@@ -60,7 +60,7 @@ def _apply_application_patches(app: QApplication) -> None:
     color = DarkPalette.COLOR_SELECTION_LIGHT
     qcolor = QColor(color)
 
-    _logger.info("Found application patches to be applied.")
+    _logger.debug("Apply dark theme application patches.")
 
     if app:
         palette = app.palette()
@@ -104,7 +104,7 @@ def apply_stylesheet(app: QApplication, additionalStyles: str = "") -> None:
         scriptDirPathRelToCwd = str(scriptDirPath.relative_to(os.getcwd())).replace("\\", "/")
         stylesheet = stylesheet.replace("<RC_DIR>", scriptDirPathRelToCwd)
 
-        _logger.info("QSS file sucessfuly loaded.")
+        _logger.debug("QSS file sucessfuly loaded.")
     else:
         stylesheet = ""
         raise FileNotFoundError("Unable to find QSS file '{}' resources.".format(qss_rc_path))
