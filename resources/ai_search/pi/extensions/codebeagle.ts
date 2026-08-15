@@ -161,7 +161,8 @@ export default function (pi: ExtensionAPI) {
       "Pagination: pass pageOffset from a previous response to fetch the next page.",
     promptSnippet: "Search CodeBeagle-indexed location for content (keywords, wildcards, regex, context lines)",
     promptGuidelines: [
-      "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`.",
+      "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`. " + 
+      "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
     ],
     parameters: Type.Object({
       query: Type.String({
@@ -227,7 +228,8 @@ export default function (pi: ExtensionAPI) {
       "Pagination: pass pageOffset from a previous response to fetch the next page.",
     promptSnippet: "Search CodeBeagle-indexed location for file names.",
     promptGuidelines: [
-      "Use codebeagle_file_search when the user asks to find files by name.",
+      "Use codebeagle_file_search when the user asks to find files by name. " +
+      "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
     ],
     parameters: Type.Object({
       query: Type.String({ description: "File name pattern, e.g. 'main*', '*test*.py', 'Makefile'" }),
@@ -267,7 +269,8 @@ export default function (pi: ExtensionAPI) {
       "Call this first to discover what is searchable, then pass the location name to codebeagle_content_search / codebeagle_file_search.",
     promptSnippet: "List CodeBeagle search locations (indexes)",
     promptGuidelines: [
-      "Call codebeagle_list_indexes when the user wants to find files or search inside files (like grep), to discover available search locations.",
+      "Call codebeagle_list_indexes when the user wants to find files or search inside files (like grep), to discover available search locations. " +
+      "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
     ],
     parameters: Type.Object({}),
     async execute(_toolCallId: any, _params: any, signal: any) {

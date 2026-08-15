@@ -327,12 +327,12 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     def _handleContentSearch(self) -> None:
         data = self._readJsonBody()
         location = self._getOptionalString(data, "location")
-        folder = self._getOptionalString(data, "folder")
+        folder = _correctPathSeparator(self._getOptionalString(data, "folder"))
         query = self._getString(data, "query")
         if not query:
             raise HttpError(400, "Field 'query' must not be empty")
-        folderFilter = self._getString(data, "folderFilter", "")
-        extensionFilter = self._getString(data, "extensionFilter", "")
+        folderFilter = _correctPathSeparator(self._getString(data, "folderFilter", ""))
+        extensionFilter = _correctPathSeparator(self._getString(data, "extensionFilter", ""))
         caseSensitive = self._getBool(data, "caseSensitive", False)
         excludeComments = self._getBool(data, "excludeComments", True)
         contextLines = self._getInt(data, "contextLines", self.server.contextLines)
@@ -356,12 +356,12 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
     def _handleFileNameSearch(self) -> None:
         data = self._readJsonBody()
         location = self._getOptionalString(data, "location")
-        folder = self._getOptionalString(data, "folder")
+        folder = _correctPathSeparator(self._getOptionalString(data, "folder"))
         query = self._getString(data, "query")
         if not query:
             raise HttpError(400, "Field 'query' must not be empty")
-        folderFilter = self._getString(data, "folderFilter", "")
-        extensionFilter = self._getString(data, "extensionFilter", "")
+        folderFilter = _correctPathSeparator(self._getString(data, "folderFilter", ""))
+        extensionFilter = _correctPathSeparator(self._getString(data, "extensionFilter", ""))
         caseSensitive = self._getBool(data, "caseSensitive", False)
         limit = self._getInt(data, "limit", self.server.defaultLimit)
         pageOffset = self._getPageOffset(data)
@@ -378,6 +378,16 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         except ValueError as e:
             raise HttpError(404, str(e))
         self._sendJson(200, _fileNameResultToJson(result))
+
+def _correctPathSeparator(path: str) -> str:
+    """Normalise path separators to the local OS convention."""
+    if not path:
+        return path
+    if os.sep == '\\':
+        return path.replace("/", "\\")
+    else:
+        return path.replace("\\", "/")
+
 
 def _contentResultToJson(query: str, result: ContentSearchResult) -> Dict[str, object]:
     matches: List[Dict[str, object]] = []

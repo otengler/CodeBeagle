@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 from unittest import mock
 from .SearchProvider import ContentMatch, ContentSearchResult, FileSearchResult, SearchProvider
 from .SearchIndexResolver import SearchIndexResolver
-from .Server import HttpError, _contentResultToJson, _fileNameResultToJson
+from .Server import HttpError, _contentResultToJson, _correctPathSeparator, _fileNameResultToJson
 from .TtlCache import TTLCache
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
 from fulltextindex import IndexConfiguration
@@ -64,7 +64,7 @@ class TestJsonConversion(unittest.TestCase):
             )
         ]
         result = ContentSearchResult(totalFiles=1, matches=matches)
-        j: Dict[str, Any] = _contentResultToJson(result)
+        j: Dict[str, Any] = _contentResultToJson("query that differs", result)
         self.assertEqual(j["totalFiles"], 1)
         self.assertEqual(len(cast(List[Any], j["matches"])), 1)
         self.assertNotIn("pageOffset", j)
@@ -79,7 +79,7 @@ class TestJsonConversion(unittest.TestCase):
             totalFiles=10, matches=[],
             pageOffset={"fileIndex": 2, "matchIndex": 1}
         )
-        j: Dict[str, Any] = _contentResultToJson(result)
+        j: Dict[str, Any] = _contentResultToJson("", result)
         self.assertIn("pageOffset", j)
         self.assertEqual(j["pageOffset"], {"fileIndex": 2, "matchIndex": 1})
 
@@ -105,6 +105,25 @@ class TestHttpError(unittest.TestCase):
         self.assertEqual(err.message, "Not found")
         self.assertEqual(str(err), "Not found")
 
+class TestPathSeparatorCorrection(unittest.TestCase):
+    def test_windowsSeparator(self) -> None:
+        if os.sep == '\\':
+            self.assertEqual(_correctPathSeparator("C:/src/proj"), "C:\\src\\proj")
+        else:
+            self.assertEqual(_correctPathSeparator("C:/src/proj"), "C:/src/proj")
+
+    def test_unixSeparator(self) -> None:
+        if os.sep == '/':
+            self.assertEqual(_correctPathSeparator("C:\\src\\proj"), "C:/src/proj")
+        else:
+            self.assertEqual(_correctPathSeparator("C:\\src\\proj"), "C:\\src\\proj")
+
+    def test_mixedSeparators(self) -> None:
+        expected = os.sep.join(["C:", "src", "proj"])
+        self.assertEqual(_correctPathSeparator("C:/src\\proj"), expected)
+
+    def test_emptyString(self) -> None:
+        self.assertEqual(_correctPathSeparator(""), "")
 class TestAgentHistory(unittest.TestCase):
     def test_addAndEntries(self) -> None:
         history = AgentHistory(maxEntries=5)
