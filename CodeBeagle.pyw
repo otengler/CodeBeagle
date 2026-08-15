@@ -23,6 +23,7 @@ from tools import FileTools
 FileTools.switchToAppDir()
 
 import os, sys, subprocess, shutil, atexit, logging
+from logging.handlers import RotatingFileHandler
 from typing import Any, Optional
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
@@ -73,11 +74,15 @@ def main() -> None:
 
 def setupLogging() -> None:
     try:
-        userDir = os.path.join(AppConfig.userDataPath())
+        userDir = os.path.join(AppConfig.userDataPath(), "log")
         if not os.path.isdir(userDir):
             os.makedirs(userDir)
         logName = os.path.join(userDir, "codebeagle.log")
-        logging.basicConfig(filename=logName, format='%(asctime)s %(message)s', level=logging.INFO)
+        handler = RotatingFileHandler(logName, maxBytes=1024*1024, backupCount=10)
+        handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+        root = logging.getLogger()
+        root.addHandler(handler)
+        root.setLevel(logging.INFO)
         logging.info("Starting")
     except Exception as e:
         print(f"Failed to setup logging: {e}")

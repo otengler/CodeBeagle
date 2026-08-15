@@ -213,7 +213,7 @@ class SearchPage (QWidget):
     def showAgentHistory(self) -> None:
         """Open the AI agent API call history dialog."""
         from ai_agent.AgentState import agentHistory
-        from ai_agent.HistoryDialog import HistoryDialog
+        from ai_agent.dialogs.HistoryDialog import HistoryDialog
         history = agentHistory()
         dlg = HistoryDialog(history, self)
         dlg.exec_()

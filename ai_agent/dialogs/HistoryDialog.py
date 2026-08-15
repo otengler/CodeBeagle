@@ -22,7 +22,7 @@ from PyQt5.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
                              QHeaderView, QPushButton, QTableWidget,
                              QTableWidgetItem, QVBoxLayout, QWidget)
-from .AgentHistory import AgentHistory
+from ..AgentHistory import AgentHistory
 
 
 class _ParamItem(QTableWidgetItem):

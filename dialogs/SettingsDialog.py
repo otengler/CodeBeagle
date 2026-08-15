@@ -26,7 +26,7 @@ from tools.Config import Config
 import tools.FileTools as FileTools
 from dialogs import StackTraceMessageBox
 from dialogs.UserHintDialog import ButtonType,showUserHint
-from dialogs.AgentInstructionsDialog import AgentInstructionsDialog
+from ai_agent.dialogs.AgentInstructionsDialog import AgentInstructionsDialog
 from .Ui_SettingsDialog import Ui_SettingsDialog
 from .SettingsItem import SettingsItem
 import AppConfig
