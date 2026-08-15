@@ -71,7 +71,8 @@ _DESC_SEARCH_CONTENT = (
     "unknown-word gaps ('error **2 network'), regex ('code <!\\d+!>'). "
     "Specify either 'location' (name from list_locations) or 'folder' (root path; "
     "the server resolves the best matching index). Returns matching lines with "
-    "surrounding context and a pageOffset if more results exist. "
+    "surrounding context and a pageOffset if more results exist; pass that "
+    "pageOffset back as the page_offset parameter to fetch the next page. "
     "Set format='json' (default) for the full JSON response or format='compact' "
     "for 'path:line: full matching line' output (no context lines)."
 )
@@ -80,8 +81,9 @@ _DESC_SEARCH_FILENAME = (
     "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). "
     "If the query contains a dot, the part after the last dot is used as an "
     "extension filter. Returns full file paths and a pageOffset if more "
-    "results exist. Set format='json' (default) for the full JSON response or "
-    "format='compact' for one file path per line."
+    "results exist; pass that pageOffset back as the page_offset parameter to "
+    "fetch the next page. Set format='json' (default) for the full JSON response "
+    "or format='compact' for one file path per line."
 )
 
 _EMPTY_SCHEMA: Dict[str, Any] = {"type": "object", "properties": {}, "required": []}

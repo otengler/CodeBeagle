@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import asyncio
 import email.message
 import io
+import json
 import os
 import sys
 import types as pytypes
@@ -209,6 +210,23 @@ class TestInputTypes(unittest.TestCase):
         params = FileNameSearchInput(query="*.py").toHttpParams()
         self.assertEqual(params, {"query": "*.py", "caseSensitive": False, "limit": 100})
 
+    def test_contentSearchPageOffsetPassedThrough(self) -> None:
+        params = ContentSearchInput(
+            query="target",
+            page_offset={"fileIndex": 2, "matchIndex": 3},
+        ).toHttpParams()
+        self.assertEqual(params["pageOffset"], {"fileIndex": 2, "matchIndex": 3})
+        # No page offset -> no pageOffset key on the wire.
+        self.assertNotIn("pageOffset", ContentSearchInput(query="target").toHttpParams())
+
+    def test_fileNameSearchPageOffsetPassedThrough(self) -> None:
+        params = FileNameSearchInput(
+            query="*.py",
+            page_offset={"fileIndex": 5},
+        ).toHttpParams()
+        self.assertEqual(params["pageOffset"], {"fileIndex": 5})
+        self.assertNotIn("pageOffset", FileNameSearchInput(query="*.py").toHttpParams())
+
     def test_limitBounds(self) -> None:
         with self.assertRaises(Exception):
             ContentSearchInput(query="x", limit=0)
@@ -318,6 +336,22 @@ class TestMCPServer(unittest.TestCase):
         self.assertTrue(result.is_error)
         self.client.searchContent.assert_not_called()
 
+    def test_searchContentForwardsPageOffset(self) -> None:
+        self.client.searchContent.return_value = {"totalFiles": 3, "matches": []}
+        result = self._call("search_content", {
+            "query": "target",
+            "page_offset": {"fileIndex": 1, "matchIndex": 2},
+        })
+        self.assertFalse(result.is_error)
+        self.client.searchContent.assert_called_once_with({
+            "query": "target",
+            "caseSensitive": False,
+            "excludeComments": True,
+            "contextLines": 2,
+            "limit": 100,
+            "pageOffset": {"fileIndex": 1, "matchIndex": 2},
+        })
+
     def test_searchFileName(self) -> None:
         self.client.searchFileName.return_value = {"totalFiles": 2, "files": ["a.py", "b.py"]}
         result = self._call("search_filename", {"query": "*.py", "case_sensitive": True})
@@ -326,6 +360,29 @@ class TestMCPServer(unittest.TestCase):
             "query": "*.py", "caseSensitive": True, "limit": 100,
         })
         self.assertIn("a.py", self._text(result))
+
+    def test_searchFileNameForwardsPageOffset(self) -> None:
+        self.client.searchFileName.return_value = {"totalFiles": 3, "files": ["c.py"]}
+        result = self._call("search_filename", {
+            "query": "*.py",
+            "page_offset": {"fileIndex": 2},
+        })
+        self.assertFalse(result.is_error)
+        self.client.searchFileName.assert_called_once_with({
+            "query": "*.py", "caseSensitive": False, "limit": 100,
+            "pageOffset": {"fileIndex": 2},
+        })
+
+    def test_searchContentPageOffsetSchema(self) -> None:
+        result = asyncio.run(self.mcp._handleListTools(None, None))
+        schemas = {t.name: t.input_schema for t in result.tools}
+        properties = schemas["search_content"]["properties"]
+        self.assertIn("page_offset", properties)
+        # Dict[str, int] serialises as JSON Schema object with integer additionalProperties
+        schema = properties["page_offset"]
+        serialized = json.dumps(schema)
+        self.assertIn("\"type\": \"object\"", serialized)
+        self.assertIn("\"type\": \"integer\"", serialized)
 
     def test_unknownTool(self) -> None:
         result = self._call("nope", {})

@@ -93,6 +93,14 @@ class ContentSearchInput(BaseModel):
         le=10000,
         description="Maximum number of matches to return (default: 100).",
     )
+    page_offset: Optional[Dict[str, int]] = Field(
+        default=None,
+        description=(
+            "Pagination cursor from a previous response. Pass the 'pageOffset' "
+            "object exactly as returned by the server. Must contain 'fileIndex' "
+            "(integer) and optionally 'matchIndex' (integer)."
+        ),
+    )
     format: Optional[OutputFormat] = Field(default=None, description=_OUTPUT_FORMAT_DESCRIPTION)
 
     def toHttpParams(self) -> Dict[str, Any]:
@@ -110,6 +118,7 @@ class ContentSearchInput(BaseModel):
             "excludeComments": self.exclude_comments,
             "contextLines": 0 if self.format == "compact" else self.context_lines,
             "limit": self.limit,
+            "pageOffset": self.page_offset,
         })
 
 class FileNameSearchInput(BaseModel):
@@ -156,6 +165,14 @@ class FileNameSearchInput(BaseModel):
         le=10000,
         description="Maximum number of files to return (default: 100).",
     )
+    page_offset: Optional[Dict[str, int]] = Field(
+        default=None,
+        description=(
+            "Pagination cursor from a previous response. Pass the 'pageOffset' "
+            "object exactly as returned by the server. Must contain 'fileIndex' "
+            "(integer) and optionally 'matchIndex' (integer)."
+        ),
+    )
     format: Optional[OutputFormat] = Field(default=None, description=_OUTPUT_FORMAT_DESCRIPTION)
 
     def toHttpParams(self) -> Dict[str, Any]:
@@ -168,6 +185,7 @@ class FileNameSearchInput(BaseModel):
             "extensionFilter": self.extension_filter,
             "caseSensitive": self.case_sensitive,
             "limit": self.limit,
+            "pageOffset": self.page_offset,
         })
 
 def _dropNone(data: Dict[str, Any]) -> Dict[str, Any]:
