@@ -26,8 +26,9 @@ existing UpdateIndex.py tool. The server reads configuration from config.txt
 import sys
 import signal
 import threading
+import logging
 from typing import Any
-
+from tools.SetupLogger import setupLogging
 from tools import FileTools
 # Switch to application directory to be able to load the configuration even
 # if we are executed from a different working directory.
@@ -37,11 +38,12 @@ import AppConfig
 from ai_agent.Server import AgentServer
 
 def main() -> None:
-    #TODO: Needs argparse to configure all "agent" settings from agent section. 
+    setupLogging("codebeagle-agentserver.log")
+
     agent = AppConfig.appConfig().agent
     server = AgentServer()
     if not server.start():
-        print("Failed to start AI agent server. See log for details.")
+        logging.error("Failed to start AI agent server. See log for details.")
         sys.exit(1)
     from ai_agent.AgentState import setAgentServer
     setAgentServer(server)

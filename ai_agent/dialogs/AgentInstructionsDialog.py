@@ -24,10 +24,12 @@ from .Ui_AgentInstructionsDialog import Ui_AgentInstructionsDialog
 class AgentInstructionsDialog(QDialog):
     """Dialog that shows setup instructions for connecting an AI agent to CodeBeagle."""
 
-    def __init__(self, parent: Optional[QWidget], title: str, instructions: str) -> None:
+    def __init__(self, parent: Optional[QWidget], title: str, instructions: str, description: Optional[str] = None) -> None:
         super().__init__(parent, Qt.WindowType.Dialog)
         self.ui = Ui_AgentInstructionsDialog()
         self.ui.setupUi(self)  # type: ignore[no-untyped-call]
+        if description:
+            self.ui.labelHint.setText(description)
         self.setProperty("shadeBackground", True)
         self.setWindowTitle(title)
         self.ui.textEditInstructions.setPlainText(instructions)

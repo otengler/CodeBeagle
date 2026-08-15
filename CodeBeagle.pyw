@@ -23,8 +23,7 @@ from tools import FileTools
 FileTools.switchToAppDir()
 
 import os, sys, subprocess, shutil, atexit, logging
-from logging.handlers import RotatingFileHandler
-from typing import Any, Optional
+from typing import Optional
 from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
 from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -34,6 +33,7 @@ import AppConfig
 from widgets.LineNumberArea import LineNumberArea
 from widgets.HighlightingTextEdit import HighlightingTextEdit
 from widgets.SyntaxHighlighter import SyntaxHighlighter
+from tools.SetupLogger import setupLogging
 from PathVisualizerDelegate import PathVisualizerDelegate
 from UpdateCheck import UpdateCheck
 from SourceViewer import SourceViewer
@@ -45,7 +45,7 @@ userHintNewVersionAvailable = """
 """
 
 def main() -> None:
-    setupLogging()
+    setupLogging("codebeagle.log")
 
     if AppConfig.appConfig().agent.enabled:
         startAgentServer()
@@ -71,21 +71,6 @@ def main() -> None:
     wnd = MainWindow()
     wnd.show()
     sys.exit(app.exec_())
-
-def setupLogging() -> None:
-    try:
-        userDir = os.path.join(AppConfig.userDataPath(), "log")
-        if not os.path.isdir(userDir):
-            os.makedirs(userDir)
-        logName = os.path.join(userDir, "codebeagle.log")
-        handler = RotatingFileHandler(logName, maxBytes=1024*1024, backupCount=10)
-        handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
-        root = logging.getLogger()
-        root.addHandler(handler)
-        root.setLevel(logging.INFO)
-        logging.info("Starting")
-    except Exception as e:
-        print(f"Failed to setup logging: {e}")
 
 def startAgentServer() -> None:
     """Start the AI agent web server in a background thread (integrated mode).

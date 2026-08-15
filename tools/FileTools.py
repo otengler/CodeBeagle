@@ -22,6 +22,7 @@ import os
 import codecs
 import time
 import collections
+import logging
 from typing import IO, DefaultDict, Any, Optional, Literal, Tuple, cast
 import unittest
 
@@ -126,14 +127,19 @@ def getTempPath () -> str:
         return os.path.expandvars("$HOME")
     return ""
 
+def getAppDir() -> str:
+    """Determine the application directory."""
+    try:
+        return os.path.dirname(sys.argv[0])
+    except Exception as  e:
+        logging.error ("Failed to determine the application directory: " + str(e))
+    return ""
+
 def switchToAppDir () -> None:
     """Switch to application directory. This helps to locate files by a relative path."""
-    try:
-        dirName = os.path.dirname(sys.argv[0])
-        if dirName:
-            os.chdir(dirName)
-    except Exception as  e:
-        print ("Failed to switch to application directory: " + str(e))
+    dirName = getAppDir()
+    if dirName:
+        os.chdir(dirName)
 
 class LockDir:
     """
@@ -151,7 +157,7 @@ class LockDir:
             try:
                 os.mkdir (self.name)
             except Exception as e:
-                print ("LockDir: " + str(e))
+                logging.error ("LockDir: " + str(e))
                 time.sleep(self.delay/1000.0)
             else:
                 return self
@@ -219,7 +225,7 @@ class PidFile:
             self.pidfile.write("%u" % pid)
             self.pidfile.flush()
         except:
-            print("Failed to create PID file at '%s'" % self.name)
+            logging.error("Failed to create PID file at '%s'" % self.name)
             raise
         return self
 

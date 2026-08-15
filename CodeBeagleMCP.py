@@ -38,6 +38,7 @@ When developing from a source tree you can use instead:
 
 import sys
 
+from tools.SetupLogger import setupLogging
 from tools import FileTools
 # Switch to application directory to be able to load the configuration even
 # if we are executed from a different working directory.
@@ -53,6 +54,8 @@ def _serverReachable(baseUrl: str) -> bool:
         return False
 
 def main() -> None:
+    setupLogging("codebeagle-mcp.log")
+    
     from ai_agent.mcp_server.config import resolveBaseUrl
     baseUrl = resolveBaseUrl()
 

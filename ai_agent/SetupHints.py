@@ -12,36 +12,7 @@ The user wants you to install the "CodeBeagle" extension. The setup steps are:
 """
 
 mcpAgentInstructions = """\
-MCP compatible agents
-======================
-
-CodeBeagle ships a Model Context Protocol (MCP) server so MCP-capable agents
-(for example Claude Desktop, Claude Code, Cursor) can search indexed source
-code directly.
-
-To connect an MCP compatible agent to CodeBeagle:
-
-1. Enable the AI agent web server in this settings page (the MCP server
-   connects to it).
-2. Add CodeBeagle as an MCP server to your agent's configuration, e.g. for
-   Claude Desktop in claude_desktop_config.json:
-
-   {{
-     "mcpServers": {{
-       "codebeagle": {{
-         "command": "CodeBeagleMCP"
-       }}
-     }}
-   }}
-
-   When running from a source tree instead of the distribution use:
-   "command": "python", "args": ["CodeBeagleMCP.py"]
-3. Restart the agent so the MCP server starts. It reads the configured port
-   from the CodeBeagle settings, so no port needs to be configured here.
-4. The agent can then use the CodeBeagle MCP tools (list_locations,
-   search_content, search_filename) to search your code.
-
-See ai_agent/MCP-INTEGRATION.md for the full protocol documentation.
+claude mcp add CodeBeagle -- "{mcp_executable}"
 """
 
 otherAgentInstructions = """\

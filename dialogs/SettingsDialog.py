@@ -16,16 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import List, Set, Optional, cast
-import os
+from typing import List, Optional, cast
+import os, sys
 from PyQt5.QtCore import Qt, QRect, QSize, pyqtSignal, pyqtSlot, QModelIndex, QObject
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QPainter
-from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QMessageBox, QWidget, QCheckBox, QListView
-from fulltextindex.IndexConfiguration import IndexConfiguration, indexTypeInfo, IndexMode
+from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QWidget, QCheckBox, QListView
+from fulltextindex.IndexConfiguration import IndexConfiguration
 from tools.Config import Config
 import tools.FileTools as FileTools
-from dialogs import StackTraceMessageBox
-from dialogs.UserHintDialog import ButtonType,showUserHint
 from ai_agent.dialogs.AgentInstructionsDialog import AgentInstructionsDialog
 from .Ui_SettingsDialog import Ui_SettingsDialog
 from .SettingsItem import SettingsItem
@@ -273,7 +271,11 @@ class SettingsDialog (QDialog):
 
     @pyqtSlot()
     def showMcpAgentInstructions(self) -> None:
-        dialog = AgentInstructionsDialog(self, self.tr("MCP compatible agents"), mcpAgentInstructions)
+        mcp_executable = os.path.join(os.getcwd(), "CodeBeagleMCP")
+        if sys.platform == "win32":
+            mcp_executable += ".exe"                    
+        dialog = AgentInstructionsDialog(self, self.tr("MCP compatible agents"), mcpAgentInstructions.format(mcp_executable=mcp_executable), 
+                                         "Enter this on the command line (not inside the chat windows):")
         dialog.exec()
 
     @pyqtSlot()

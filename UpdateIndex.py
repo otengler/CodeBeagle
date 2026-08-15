@@ -83,7 +83,7 @@ def loadConfigFiles(args: Any) -> Config:
     conf = AppConfig.configFromFile(configFiles[0])
     configFiles = configFiles[1:]
     for name in configFiles:
-        print("Load config " + name)
+        logging.info("Load config " + name)
         conf.loadFile(name)
     # managedConfig is an override for the config file maintained by
     # CodeBeagle. Normally this file is stored in the user profile.
@@ -92,7 +92,7 @@ def loadConfigFiles(args: Any) -> Config:
     # we don't know the user. But if there is an override it makes
     # sense to include the managed config.
     if conf.managedConfig:
-        print("Load config " + conf.managedConfig)
+        logging.info("Load config " + conf.managedConfig)
         conf.loadFile(conf.managedConfig)
     return conf
 
@@ -169,9 +169,9 @@ def getPidFile() -> Tuple[FileTools.PidFile, bool]:
     if pidfile.exists():
         pid = pidfile.read()
         if pid and FileTools.isProcessAlive(pid):
-            print("Update index process with PID %u is already running" % pid)
+            logging.info("Update index process with PID %u is already running" % pid)
         else:
-            print("Found a stale PID file for process %u - cleaning up data" % pid)
+            logging.info("Found a stale PID file for process %u - cleaning up data" % pid)
             pidfile.remove()
             bStaleFileWasRemoved = True
 
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     try:
         main()
     except:
-        print("Exception caught while updating index:\n%s" % exceptionAsString(None))
+        logging.error("Exception caught while updating index:\n%s" % exceptionAsString(None))
         sys.exit(1)
     else:
         sys.exit(0)

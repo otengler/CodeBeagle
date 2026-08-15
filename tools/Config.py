@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import re
 import types
 import unittest
+import logging
 from typing import TypeVar, Any, Dict, Callable, Tuple, Iterator, cast, Optional
 from tools.FileTools import fopen
 
@@ -191,7 +192,7 @@ class Config:
                         group.parseLines(lines)
                         setattr (self,  groupname,  group)
             except:
-                print ("Do not understand line: " + line)
+                logging.error ("Do not understand line: " + line)
                 raise
 
     def __handleImport (self, line: str) -> None:

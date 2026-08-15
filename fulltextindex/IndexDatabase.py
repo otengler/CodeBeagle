@@ -105,16 +105,12 @@ class IndexDatabase:
         q = self.conn.cursor()
         q.execute("SELECT COUNT(*) FROM documents")
         documents = int(q.fetchone()[0])
-        print("Documents: " + str(documents))
         q.execute("SELECT COUNT(*) FROM documentInIndex")
         documentsInIndex = int(q.fetchone()[0])
-        print("Documents in index: " + str(documentsInIndex))
         q.execute("SELECT COUNT(*) FROM keywords")
         keywords = int(q.fetchone()[0])
-        print("Keywords: " + str(keywords))
         q.execute("SELECT COUNT(*) FROM kw2doc")
         associations = int(q.fetchone()[0])
-        print("Associations: " + str(associations))
         return (documents, documentsInIndex, keywords, associations)
 
     def interrupt(self) -> None:

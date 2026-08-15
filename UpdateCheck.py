@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import json, sys
+import json, sys, logging
 from typing import Optional
 from urllib.request import urlopen
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, QDateTime
@@ -36,7 +36,7 @@ class UpdateCheckThread (QThread):
             self.__runInternal()
         except Exception:
             from tools.ExceptionTools import exceptionAsString
-            print(exceptionAsString())
+            logging.error(exceptionAsString())
 
     def __runInternal(self) -> None:
         if sys.platform != "win32":
