@@ -464,10 +464,20 @@
        <item>
         <widget class="QCheckBox" name="checkAgentEnabled">
          <property name="toolTip">
-          <string>When enabled, AI agents can search code via HTTP requests to the configured port. Requires restart to take effect.</string>
+          <string>When enabled, AI agents can search code via HTTP requests to the configured port. The server is started immediately.</string>
          </property>
          <property name="text">
           <string>Enable agentic AI search</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelAgentStatus">
+         <property name="styleSheet">
+          <string notr="true">color: gray; font-size: 11px; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>AI agent server is not running</string>
          </property>
         </widget>
        </item>
@@ -477,7 +487,7 @@
           <string notr="true">color: gray; font-size: 11px; padding-left: 20px;</string>
          </property>
          <property name="text">
-          <string>Changes require an application restart to take effect</string>
+          <string>The server is started automatically when you enable this option - no restart required</string>
          </property>
         </widget>
        </item>

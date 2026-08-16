@@ -256,11 +256,41 @@ class SettingsDialog (QDialog):
         agent = AppConfig.appConfig().agent
         setCheckBox(self.ui.checkAgentEnabled, bool(agent.enabled))
         self.ui.editAgentPort.setText(str(int(agent.port)))
+        self.__updateAgentStatus()
+
+        # Start or stop the server immediately when the user toggles the checkbox
+        # (no wait for the dialog to be closed, no cancel handling required)
+        self.ui.checkAgentEnabled.toggled.connect(self.__agentEnabledToggled)
 
         # Wire up connection agents buttons (kept in code, not in .ui)
         self.ui.buttonPiAgentInstructions.clicked.connect(self.showPiAgentInstructions)
         self.ui.buttonMcpAgentInstructions.clicked.connect(self.showMcpAgentInstructions)
         self.ui.buttonOtherAgentInstructions.clicked.connect(self.showOtherAgentInstructions)
+
+    @pyqtSlot(bool)
+    def __agentEnabledToggled(self, checked: bool) -> None:
+        """Start or stop the AI agent server immediately - no restart required."""
+        try:
+            port = int(self.ui.editAgentPort.text())
+        except ValueError:
+            pass  # invalid port in the edit box: keep the configured port
+        self.__applyAgentServerChanges(checked, port)
+        self.__updateAgentStatus()
+
+    def __updateAgentStatus(self) -> None:
+        """Show a green check mark when the AI agent server is running, otherwise
+        show the hint that the server is started automatically."""
+        from ai_agent.AgentState import agentServer
+        server = agentServer()
+        if server is not None:
+            port = int(server.config.port)
+            self.ui.labelAgentStatus.setText(self.tr("\u2714 AI agent server is running on port %d") % port)
+            self.ui.labelAgentStatus.setStyleSheet("color: green; font-size: 11px; padding-left: 20px;")
+            self.ui.labelAgentRestartHint.hide()
+        else:
+            self.ui.labelAgentStatus.setText(self.tr("\u2716 AI agent server is not running"))
+            self.ui.labelAgentStatus.setStyleSheet("color: gray; font-size: 11px; padding-left: 20px;")
+            self.ui.labelAgentRestartHint.show()
 
     def showAgentTab(self) -> None:
         """Select the AI agent page of the settings dialog."""
@@ -413,6 +443,12 @@ class SettingsDialog (QDialog):
         else:
             self.reject()
 
+    @pyqtSlot()
+    def reject(self) -> None:
+        config = AppConfig.appConfig()
+        self.__applyAgentServerChanges(config.agent.enabled, config.agent.port)
+        super().reject()
+
     def __saveUserConfig (self) -> bool:
         locations = self.locations()
         config = Config (typeInfoFunc=AppConfig.configTypeInfo)
@@ -449,6 +485,10 @@ class SettingsDialog (QDialog):
             self.failedToSaveUserConfigMessage()
             return False
         else:
+            # Apply the agent server changes immediately - no restart required
+            AppConfig.refreshConfig()
+            self.__applyAgentServerChanges(config.agent.enabled, config.agent.port)
+
             updateDisplayNames = self.__getAddedOrChangedIndexedSearchLocations (self.searchLocations,  locations)
             if updateDisplayNames:
                 # Show a user hint which allows to update added or changed indexes<ul>
@@ -462,6 +502,23 @@ class SettingsDialog (QDialog):
                     self.updateChangedIndexes.emit(updateDisplayNames)
 
             return True
+
+    def __applyAgentServerChanges(self, enabled: bool, port: int) -> None:
+        """Start or stop the AI agent server according to the new settings.
+
+        If the server is already running but the port changed it is restarted so
+        that the new settings take effect immediately.
+        """
+        from ai_agent.AgentState import applyAgentServerChanges
+        if not applyAgentServerChanges(enabled, port):
+            if enabled:
+                QMessageBox.warning(self,
+                                    self.tr("AI agent server"),
+                                    self.tr("The AI agent server could not be started. Please check the configured port and the log file."))
+            else:
+                QMessageBox.warning(self,
+                                    self.tr("AI agent server"),
+                                    self.tr("The AI agent server could not be stopped."))
 
     def __getAddedOrChangedIndexedSearchLocations (self,  currentSearchLocations: List[IndexConfiguration],
                                                    newSearchLocations: List[IndexConfiguration]) -> List[str]:

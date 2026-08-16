@@ -438,26 +438,13 @@ class AgentServer:
         self.httpd: Optional[AgentHTTPServer] = None
         self.thread: Optional[threading.Thread] = None
 
-    @property
-    def enabled(self) -> bool:
-        return bool(self.config.enabled)
-
-    def start(self) -> bool:
+    def start(self, port: int) -> bool:
         """
         Start the server in a background daemon thread.
 
         Returns True if the server was started successfully, False otherwise.
         """
-        if not self.enabled:
-            logger.info("AI agent server is disabled in config")
-            return False
-
         bind = str(self.config.bind)
-        try:
-            port = int(self.config.port)
-        except (ValueError, TypeError):
-            logger.error("Invalid port in config: %s", self.config.port)
-            return False
 
         try:
             contextLines = int(self.config.contextLines)

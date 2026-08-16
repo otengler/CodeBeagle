@@ -42,7 +42,7 @@ def main() -> None:
 
     agent = AppConfig.appConfig().agent
     server = AgentServer()
-    if not server.start():
+    if not server.start(agent.port):
         logging.error("Failed to start AI agent server. See log for details.")
         sys.exit(1)
     from ai_agent.AgentState import setAgentServer

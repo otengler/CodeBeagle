@@ -675,5 +675,48 @@ class TestResolveIndexConfig(unittest.TestCase):
                 provider.searchFileName("*.py", folder="C:/src/proj", extensionFilter="*.java")
             provider.searchFileName("*.py", folder="C:/src/proj", extensionFilter="*.py")
 
+class TestAgentState(unittest.TestCase):
+    """Tests for the central agent server start/stop helpers."""
+
+    def setUp(self) -> None:
+        from . import AgentState
+        self.AgentState = AgentState
+        self.AgentState.setAgentServer(None)
+
+    def tearDown(self) -> None:
+        self.AgentState.setAgentServer(None)
+
+    def test_startStartsServerAndRegistersIt(self) -> None:
+        with mock.patch("ai_agent.AgentState.AgentServer") as serverClass:
+            serverClass.return_value.start.return_value = True
+            self.assertTrue(self.AgentState.startAgentServer())
+            serverClass.return_value.start.assert_called_once()
+            self.assertIs(self.AgentState.agentServer(), serverClass.return_value)
+
+    def test_startFailureReturnsFalse(self) -> None:
+        with mock.patch("ai_agent.AgentState.AgentServer") as serverClass:
+            serverClass.return_value.start.return_value = False
+            self.assertFalse(self.AgentState.startAgentServer())
+            self.assertIsNone(self.AgentState.agentServer())
+
+    def test_startDoesNotRestartRunningServer(self) -> None:
+        with mock.patch("ai_agent.AgentState.AgentServer") as serverClass:
+            serverClass.return_value.start.return_value = True
+            self.assertTrue(self.AgentState.startAgentServer())
+            self.assertTrue(self.AgentState.startAgentServer())
+            self.assertEqual(serverClass.return_value.start.call_count, 1)
+
+    def test_stopStopsAndUnregistersServer(self) -> None:
+        with mock.patch("ai_agent.AgentState.AgentServer") as serverClass:
+            serverClass.return_value.start.return_value = True
+            self.assertTrue(self.AgentState.startAgentServer())
+            self.AgentState.stopAgentServer()
+            serverClass.return_value.stop.assert_called_once()
+            self.assertIsNone(self.AgentState.agentServer())
+
+    def test_stopWithoutServerIsNoOp(self) -> None:
+        self.AgentState.stopAgentServer()
+        self.assertIsNone(self.AgentState.agentServer())
+
 if __name__ == "__main__":
     unittest.main()
