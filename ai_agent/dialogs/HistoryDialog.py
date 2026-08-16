@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import List, Optional
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
                              QHeaderView, QLabel, QPushButton, QTableWidget,
@@ -94,6 +94,31 @@ class HistoryDialog(QDialog):
         layout.addLayout(buttonRow)
 
         self.reload()
+
+        QTimer.singleShot(0, self._showHint)
+
+    def _showHint(self) -> None:
+        from dialogs.UserHintDialog import showUserHint, ButtonType
+        showUserHint(
+            self, "agent_history",
+            self.tr("AI Agent History"),
+            self.tr(
+                "<html><body>"
+                "<p>This dialog shows the history of API calls made by AI agents to the CodeBeagle search server.</p>"
+                "<p>Each row shows:</p>"
+                "<ul>"
+                "<li>When the call was made</li>"
+                "<li>HTTP method (GET/POST)</li>"
+                "<li>Endpoint that was called</li>"
+                "<li>Parameters passed in the request</li>"
+                "<li>HTTP status code of the response</li>"
+                "<li>Duration of the request</li>"
+                "</ul>"
+                "<p>You can reload the list or clear the history using the buttons at the bottom.</p>"
+                "</body></html>"
+            ),
+            ButtonType.OK
+        )
 
     def _currentEntries(self) -> List[HistoryEntry]:
         """Return the entries to display, either from the local history object
