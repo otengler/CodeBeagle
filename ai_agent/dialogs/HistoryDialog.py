@@ -67,12 +67,16 @@ class HistoryDialog(QDialog):
 
         header = self.table.horizontalHeader()
         if header:
-            header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-            header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-            header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-            header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-            header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-            header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+            # Interactive mode lets the user resize every column.
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+            # Sensible initial widths so the most common content is visible
+            # without manual resizing.
+            header.resizeSection(0, 140)  # Time (with date)
+            header.resizeSection(1, 60)   # Method
+            header.resizeSection(2, 160)  # Endpoint
+            header.resizeSection(3, 320)  # Parameters
+            header.resizeSection(4, 55)   # Status
+            header.resizeSection(5, 65)   # Duration
         layout.addWidget(self.table)
 
         buttonRow = QHBoxLayout()

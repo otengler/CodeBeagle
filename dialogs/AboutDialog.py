@@ -33,8 +33,13 @@ class AboutDialog(QDialog):
         version = sys.version_info
         pythonAndQt = " (Python %u.%u.%u, Qt %s)" % (version.major, version.minor, version.micro, QtCore.qVersion())
         self.ui.labelVersion.setText(self.tr("Version") + " " + AppConfig.appVersion + pythonAndQt)
+        self.ui.labelGitHub.setText(self.ui.labelGitHub.text().replace("{linkColor}", self.__linkColor()))
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.__checkForUpdate()
+
+    @staticmethod
+    def __linkColor() -> str:
+        return "#8888FF" if AppConfig.appConfig().theme == AppConfig.darkTheme else "#2222FF"
 
     def __checkForUpdate(self) -> None:
         self.updateCheck = UpdateCheck(self)
@@ -42,13 +47,9 @@ class AboutDialog(QDialog):
         self.updateCheck.checkForUpdates(forceCheck=True)
 
     def __newerVersionFound(self, version: str) -> None:
-        
         text = self.ui.labelUpdateAvailable.text()
         text = text.replace("{version}", version)
-        if AppConfig.appConfig().theme == AppConfig.darkTheme:
-            text = text.replace("{linkColor}", "#8888FF")
-        else:
-            text = text.replace("{linkColor}", "#2222FF")
+        text = text.replace("{linkColor}", self.__linkColor())
         self.ui.labelUpdateAvailable.setText(text)
         self.ui.labelUpdateAvailable.show()
 

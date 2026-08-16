@@ -173,7 +173,7 @@ class TestAgentHistory(unittest.TestCase):
         import time
         # Expected string is timezone dependent, so compute it the same way
         entry = HistoryEntry(3600.0, "GET", "/health", "", 200)
-        expected = time.strftime("%H:%M:%S", time.localtime(3600.0))
+        expected = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(3600.0))
         self.assertEqual(entry.timeStr(), expected)
 
     def test_durationStr(self) -> None:

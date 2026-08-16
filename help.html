@@ -6,7 +6,7 @@
 <title>Documentation for CodeBeagle</title>
 </head>
 <body>
-<b>Introduction to CodeBeagle</b>
+<b><a name="intro">Introduction to CodeBeagle</a></b>
 <p>
 CodeBeagle allows you to quickly find all occurrences of a search term inside source code files. To do so it creates a full text index of 
 the desired source files. Because it is tolerant to white-space its search syntax works great for searching source code. The search 
@@ -17,7 +17,24 @@ CodeBeagle is written in Python and based on SqLite and Qt.
 </p>
 <br/>
 
-<b>Search syntax</b>
+<b>Table of Contents</b>
+<ul>
+  <li><a href="#intro">Introduction to CodeBeagle</a></li>
+  <li><a href="#searchsyntax">Search syntax</a></li>
+  <li><a href="#filterresults">Filtering the results</a></li>
+  <li><a href="#configuration">Configuration</a></li>
+  <li><a href="#updateindex">Updating indexed search locations</a></li>
+  <li><a href="#GlobalConfig">Global configuration file</a></li>
+  <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+  <li><a href="#contextmenu">Custom context menu entries</a></li>
+  <li><a href="#customscripts">Custom search scripts</a></li>
+  <li><a href="#customsyntaxhighlighting">Customizing syntax highlighting</a></li>
+  <li><a href="#aiagentapi">AI agent API server</a></li>
+  <li><a href="#license">License</a></li>
+</ul>
+<br/>
+
+<b><a name="searchsyntax">Search syntax</a></b>
 <pre>foo bar</pre>
 <p>
 Matches <strong>foo</strong> followed by any number of white-space followed by <strong>bar</strong> but not <strong>foobar</strong>.
@@ -67,7 +84,7 @@ white-space allowed between <strong>!</strong> and <strong>=</strong>. This woul
 </p>
 <br/>
 
-<b>Filtering the results</b>
+<b><a name="filterresults">Filtering the results</a></b>
 <p>The UI offers three filters to drill down the results:</p>
 <table border="1" summary="Filter options">
   <tr>
@@ -87,7 +104,7 @@ white-space allowed between <strong>!</strong> and <strong>=</strong>. This woul
 </table>
 <p><br/></p>
 
-<b>Configuration</b>
+<b><a name="configuration">Configuration</a></b>
 <p>
 Clicking on the <strong>Settings</strong> button opens a dialog which allows to configure search locations and general settings
 like the font type and font size used in the file viewer. Search locations define the directory and file extensions to search. They come 
@@ -98,7 +115,7 @@ search locations independent of the currently logged on user read the chapter ab
 </p>
 <br>
 
-<b>Updating indexed search locations</b>
+<b><a name="updateindex">Updating indexed search locations</a></b>
 <p>
 Indexed search locations can be created and updated in two ways. The first way is from the UI by clicking on the 
 <strong>Update index</strong> button. This allows to select which indexes you want to update. The update itself
@@ -227,7 +244,7 @@ of a config file in the current group.
 </p>
 <br/>
 
-<b>Keyboard shortcuts</b>
+<b><a name="shortcuts">Keyboard shortcuts</a></b>
 <p>
 <table border="1" summary="Keyboard shortcuts">
   <tr>
@@ -317,7 +334,7 @@ of a config file in the current group.
 </p>
 <p><br/></p>
 
-<b>Custom context menu entries</b>
+<b><a name="contextmenu">Custom context menu entries</a></b>
 <p>
 The context menu of the list control which shows the matches can be extended with additonal entries. These entries can either simply
 start an executable or execute a script file which contains python code. The following examples show how to configure both types:
@@ -364,7 +381,7 @@ for file in files:
 </pre>
 <p><br/></p>
 
-<b>Custom search scripts</b>
+<b><a name="customscripts">Custom search scripts</a></b>
 <p>
 These scripts written in Python allow to automate search tasks. At start-up of the application all files with the extension ".script" 
 are collected from the sub folder <strong>scripts</strong>.
@@ -419,47 +436,6 @@ result.matches.extend (performSearch(query, folders, extensions, caseSensitive))
   </tr>
 </table>
 <p><br/></p>
-
-<a name="aiagentapi"/>
-<b>AI agent API server</b>
-<p>
-CodeBeagle can expose its search capabilities to AI agents (PI, Claude Code, Cursor, ChatGPT, and others)
-through a local HTTP API. The API is described in detail at
-<strong>http://localhost:&lt;port&gt;/api/v1/docs</strong> once the server is running.
-The server offers content search, file name search and location discovery and respects the boundaries
-of the configured search locations.
-</p>
-<p>
-There are two ways to run the API server:
-</p>
-<ul>
-  <li>
-    <strong>From inside the UI</strong> - Open the settings dialog and switch to the
-    "Agentic AI search" page. Check the <strong>Enable agentic AI search</strong> box to start the
-    server immediately on the configured port (default 8080). The server is started and stopped
-    together with CodeBeagle. Unchecking the box stops it again.
-  </li>
-  <li>
-    <strong>As a standalone service</strong> - Run <strong>CodeBeagleAgentServer.exe</strong>.
-    This starts the same API server without a GUI. It reads its settings (port, bind address) from
-    the same configuration as the UI but ignores the "Enable agentic AI search" setting: the
-    standalone server always starts. This is useful to run the API permanently, for instance as a
-    scheduled task or Windows service, independent of whether CodeBeagle itself is running.
-  </li>
-</ul>
-<p>
-Only one server instance can run at a time because both variants use the same port. If
-<strong>CodeBeagleAgentServer.exe</strong> is already running, CodeBeagle detects it at start-up by
-calling the health endpoint of the API and then does not start its own instance. In that case the
-settings dialog shows the enable checkbox disabled and the "AI" history button on the search page
-stays available (the history of the external server is not visible in the UI because it is kept
-inside the separate process).
-</p>
-<p>
-If you want the UI to manage the server itself, stop the standalone server first and then enable
-"Agentic AI search" in the settings.
-</p>
-<br/>
 
 <b><a name="customsyntaxhighlighting">Customizing syntax highlighting</a></b>
 <p>
@@ -556,10 +532,51 @@ which is internally used to construct a <strong>QTextCharFormat</strong>:
 <br/>
 
 
-
-<b>License</b>
+<a name="aiagentapi"/>
+<b>AI agent API server</b>
 <p>
-CodeBeagle Copyright (C) 2011-2025 Oliver Tengler
+CodeBeagle can expose its search capabilities to AI agents (PI, Claude Code, Cursor, ChatGPT, and others)
+through a local HTTP API. The API is described in detail at
+<a href="http://localhost:__PORT__/api/v1/docs">http://localhost:__PORT__/api/v1/docs</a> once the server is running.
+The server offers content search, file name search and location discovery and respects the boundaries
+of the configured search locations.
+</p>
+<p>
+There are two ways to run the API server:
+</p>
+<ul>
+  <li>
+    <strong>From inside the UI</strong> - Open the settings dialog and switch to the
+    "Agentic AI search" page. Check the <strong>Enable agentic AI search</strong> box to start the
+    server immediately on the configured port (default 8080). The server is started and stopped
+    together with CodeBeagle. Unchecking the box stops it again.
+  </li>
+  <li>
+    <strong>As a standalone service</strong> - Run <strong>CodeBeagleAgentServer.exe</strong>.
+    This starts the same API server without a GUI. It reads its settings (port, bind address) from
+    the same configuration as the UI but ignores the "Enable agentic AI search" setting: the
+    standalone server always starts. This is useful to run the API permanently, for instance as a
+    scheduled task or Windows service, independent of whether CodeBeagle itself is running.
+  </li>
+</ul>
+<p>
+Only one server instance can run at a time because both variants use the same port. If
+<strong>CodeBeagleAgentServer.exe</strong> is already running, CodeBeagle detects it at start-up by
+calling the health endpoint of the API and then does not start its own instance. In that case the
+settings dialog shows the enable checkbox disabled and the "AI" history button on the search page
+stays available (the history of the external server is not visible in the UI because it is kept
+inside the separate process).
+</p>
+<p>
+If you want the UI to manage the server itself, stop the standalone server first and then enable
+"Agentic AI search" in the settings.
+</p>
+<br/>
+
+
+<b><a name="license">License</a></b>
+<p>
+CodeBeagle Copyright (C) 2011-2026 Oliver Tengler
 </p>
 <p>
 This program is free software: you can redistribute it and/or modify

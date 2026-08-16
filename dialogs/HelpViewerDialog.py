@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QApplication, QWidget
+from AppConfig import appConfig
 from tools.FileTools import freadall
 from typing import cast, Optional
 from .Ui_HelpViewerDialog import Ui_HelpViewerDialog
@@ -36,6 +37,8 @@ class HelpViewerDialog (QDialog):
         except:
             text = self.tr("Failed to open file")
 
+        # Replace the API server port placeholder with the configured port
+        text = text.replace("__PORT__", str(appConfig().agent.port))
         self.ui.textBrowserHelp.setHtml (text)
 
 def main() -> None:

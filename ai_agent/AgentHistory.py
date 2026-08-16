@@ -35,8 +35,8 @@ class HistoryEntry:
         self.durationSecs = durationSecs
 
     def timeStr(self) -> str:
-        """Return the timestamp as a formatted time string."""
-        return time.strftime("%H:%M:%S", time.localtime(self.timestamp))
+        """Return the timestamp as a formatted date/time string."""
+        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.timestamp))
 
     def durationStr(self) -> str:
         """Return the duration in seconds with one fraction, e.g. '2.3s'."""
