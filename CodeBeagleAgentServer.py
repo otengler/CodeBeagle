@@ -23,11 +23,12 @@ existing UpdateIndex.py tool. The server reads configuration from config.txt
 (and UserConfig.txt) and respects the agent section.
 """
 
+import argparse
 import sys
 import signal
 import threading
 import logging
-from typing import Any
+from typing import Any, List, Optional
 from tools.SetupLogger import setupLogging
 from tools import FileTools
 # Switch to application directory to be able to load the configuration even
@@ -37,10 +38,51 @@ FileTools.switchToAppDir()
 import AppConfig
 from ai_agent.Server import AgentServer
 
+
+def _parseArguments(args: Optional[List[str]] = None) -> argparse.Namespace:
+    """Parse the command line. All settings default to the 'agent' section of
+    config.txt and can be overridden via the command line."""
+    parser = argparse.ArgumentParser(
+        description="Standalone AI agent server for CodeBeagle. Runs the web API "
+                    "server without a GUI. All settings default to the 'agent' "
+                    "section of config.txt and can be overridden via the "
+                    "command line.")
+    parser.add_argument("--port", type=int,
+                        help="Port to listen on (default: from config.txt)")
+    parser.add_argument("--bind", type=str,
+                        help="Address to bind to (default: from config.txt)")
+    parser.add_argument("--context-lines", type=int,
+                        help="Default context lines around search matches (default: from config.txt)")
+    parser.add_argument("--default-limit", type=int,
+                        help="Default maximum number of results (default: from config.txt)")
+    parser.add_argument("--allow-origin", type=str,
+                        help="CORS Access-Control-Allow-Origin header value (default: from config.txt)")
+    return parser.parse_args(args)
+
+
+def _applyArgumentOverrides(args: argparse.Namespace) -> None:
+    """Apply command line overrides to the agent section of the configuration.
+    Only arguments that were explicitly passed override the config values."""
+    agent = AppConfig.appConfig().agent
+    if args.port is not None:
+        agent.port = args.port
+    if args.bind is not None:
+        agent.bind = args.bind
+    if args.context_lines is not None:
+        agent.contextLines = args.context_lines
+    if args.default_limit is not None:
+        agent.defaultLimit = args.default_limit
+    if args.allow_origin is not None:
+        agent.allowOrigin = args.allow_origin
+
 def main() -> None:
     setupLogging("codebeagle-agentserver.log")
 
+    args = _parseArguments()
+    _applyArgumentOverrides(args)
+
     agent = AppConfig.appConfig().agent
+
     server = AgentServer()
     if not server.start(agent.port):
         logging.error("Failed to start AI agent server. See log for details.")

@@ -258,6 +258,19 @@ class SettingsDialog (QDialog):
         self.ui.editAgentPort.setText(str(int(agent.port)))
         self.__updateAgentStatus()
 
+        # If an external server (e.g. CodeBeagleAgentServer.exe) is already
+        # running, the enable checkbox must be disabled: the UI cannot start
+        # or stop a server that belongs to a different process.
+        from ai_agent.AgentState import externalServerRunning
+        if externalServerRunning():
+            self.ui.checkAgentEnabled.setEnabled(False)
+            self.ui.checkAgentEnabled.setToolTip(
+                self.tr("A server is already running externally (CodeBeagleAgentServer). "
+                         "It cannot be started or stopped from the UI."))
+            self.ui.editAgentPort.setEnabled(False)
+            self.ui.editAgentPort.setToolTip(
+                self.tr("The port is managed by the external server."))
+
         # Start or stop the server immediately when the user toggles the checkbox
         # (no wait for the dialog to be closed, no cancel handling required)
         self.ui.checkAgentEnabled.toggled.connect(self.__agentEnabledToggled)
@@ -280,17 +293,24 @@ class SettingsDialog (QDialog):
     def __updateAgentStatus(self) -> None:
         """Show a green check mark when the AI agent server is running, otherwise
         show the hint that the server is started automatically."""
-        from ai_agent.AgentState import agentServer
-        server = agentServer()
-        if server is not None:
-            port = int(server.config.port)
-            self.ui.labelAgentStatus.setText(self.tr("\u2714 AI agent server is running on port %d") % port)
+        from ai_agent.AgentState import agentServer, externalServerRunning
+        if externalServerRunning():
+            agent = AppConfig.appConfig().agent
+            self.ui.labelAgentStatus.setText(
+                self.tr("\u2714 AI agent server is running externally on port %d (CodeBeagleAgentServer)") % int(agent.port))
             self.ui.labelAgentStatus.setStyleSheet("color: green; font-size: 11px; padding-left: 20px;")
             self.ui.labelAgentRestartHint.hide()
         else:
-            self.ui.labelAgentStatus.setText(self.tr("\u2716 AI agent server is not running"))
-            self.ui.labelAgentStatus.setStyleSheet("color: gray; font-size: 11px; padding-left: 20px;")
-            self.ui.labelAgentRestartHint.show()
+            server = agentServer()
+            if server is not None:
+                port = int(server.config.port)
+                self.ui.labelAgentStatus.setText(self.tr("\u2714 AI agent server is running on port %d") % port)
+                self.ui.labelAgentStatus.setStyleSheet("color: green; font-size: 11px; padding-left: 20px;")
+                self.ui.labelAgentRestartHint.hide()
+            else:
+                self.ui.labelAgentStatus.setText(self.tr("\u2716 AI agent server is not running"))
+                self.ui.labelAgentStatus.setStyleSheet("color: gray; font-size: 11px; padding-left: 20px;")
+                self.ui.labelAgentRestartHint.show()
 
     def showAgentTab(self) -> None:
         """Select the AI agent page of the settings dialog."""

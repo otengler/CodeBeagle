@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Optional
+from typing import List, Optional
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
-                             QHeaderView, QPushButton, QTableWidget,
+                             QHeaderView, QLabel, QPushButton, QTableWidget,
                              QTableWidgetItem, QVBoxLayout, QWidget)
-from ..AgentHistory import AgentHistory
+from ..AgentHistory import AgentHistory, HistoryEntry
 
 
 class _ParamItem(QTableWidgetItem):
@@ -43,8 +43,17 @@ class HistoryDialog(QDialog):
         self.setProperty("shadeBackground", True)
 
         self.history = history
+        self.external = history is None
 
         layout = QVBoxLayout(self)
+
+        self.labelUnavailable = QLabel(
+            self.tr("No API call history could be retrieved from the external server "
+                     "(CodeBeagleAgentServer)."), self)
+        self.labelUnavailable.setWordWrap(True)
+        self.labelUnavailable.setStyleSheet("color: gray;")
+        self.labelUnavailable.setVisible(False)
+        layout.addWidget(self.labelUnavailable)
 
         self.table = QTableWidget(0, 6, self)
         self.table.setHorizontalHeaderLabels([
@@ -73,6 +82,7 @@ class HistoryDialog(QDialog):
         buttonRow.addWidget(self.buttonReload)
         self.buttonClear = QPushButton(self.tr("&Clear history"), self)
         self.buttonClear.clicked.connect(self.clearHistory)
+        self.buttonClear.setEnabled(not self.external)
         buttonRow.addWidget(self.buttonClear)
         self.buttonClose = QPushButton(self.tr("Close"), self)
         self.buttonClose.clicked.connect(self.accept)
@@ -81,12 +91,19 @@ class HistoryDialog(QDialog):
 
         self.reload()
 
+    def _currentEntries(self) -> List[HistoryEntry]:
+        """Return the entries to display, either from the local history object
+        or fetched from the external server."""
+        if self.history is not None:
+            return self.history.entries()
+        from ..AgentState import fetchExternalHistory
+        return fetchExternalHistory()
+
     def reload(self) -> None:
         """Fill the table with the current history, newest entry first."""
-        if not self.history:
-            return
+        entries = self._currentEntries()
         self.table.setRowCount(0)
-        for entry in self.history.entries():
+        for entry in entries:
             row = self.table.rowCount()
             self.table.insertRow(row)
             self.table.setItem(row, 0, QTableWidgetItem(entry.timeStr()))
@@ -95,6 +112,7 @@ class HistoryDialog(QDialog):
             self.table.setItem(row, 3, _ParamItem(entry.params))
             self.table.setItem(row, 4, QTableWidgetItem(str(entry.statusCode)))
             self.table.setItem(row, 5, QTableWidgetItem(entry.durationStr()))
+        self.labelUnavailable.setVisible(self.external and not entries)
 
     def clearHistory(self) -> None:
         if not self.history:

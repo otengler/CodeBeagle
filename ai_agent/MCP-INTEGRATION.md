@@ -513,6 +513,34 @@ consider returning a summary + pagination cursor rather than all matches at once
 - [ ] `codebeagle://locations`, `codebeagle://file/{path}`, `codebeagle://search/{query}` resources.
 - [ ] `codebeagle://api-docs` resource.
 
+### MVP Scope (recommendation)
+
+The MCP part should be **usable but not bloated**. Analysis of what is worth building
+for an MVP (current state: three tools + pagination are implemented and tested):
+
+**Recommended scope: tools-only — no resources, no prompts.**
+
+| Planned item | Build for MVP? | Rationale |
+|--------------|----------------|-----------|
+| `codebeagle://file/{path}` | Optional | Coding agents (Claude, Cursor, VS Code extensions) read files natively, so this competes with a capability the client already has. Would require a new HTTP endpoint with location-boundary validation (medium effort) for limited unique value. Reconsider only if real client testing shows `context_lines` is not enough. |
+| `codebeagle://locations` | No | Duplicates the `list_locations` tool. |
+| `codebeagle://search/{query}` | No | A non-paginatable result snapshot; `search_content` does it better and supports pagination. |
+| `codebeagle://api-docs` | No | Documents the *HTTP* API, which MCP clients never call directly; the tools are the interface. |
+| Prompt templates | No | Tool descriptions already embed the search workflow guidance. Advertises an extra capability (`prompts`) for marginal benefit. If only one is ever wanted, `search_codebase` suffices. |
+
+**On "prompts as resources"**: MCP prompts are their own capability (and newer protocol
+revisions model prompt templates as resources with a prompt content type). Neither is
+needed for the MVP — the LLM learns the workflow from the tool descriptions
+(`list_locations` → `search_content` → paginate via `page_offset`) without server-side
+prompts. Skip; revisit only if a specific client does not surface tool descriptions well.
+
+**Kept because they are cheap and already paid off:** the `format=compact` output
+(`path:line: full matching line`) which keeps token usage low for large result sets.
+
+If the scope later grows, `codebeagle://file/{path}` is the single most valuable
+addition (needs a new `GET /api/v1/file?path=...` HTTP endpoint that validates the
+path against the configured search locations before the MCP resource is added).
+
 ### Phase 3: Prompt Templates — **Not started**
 
 - [ ] `search_codebase` and `find_references` prompt templates.

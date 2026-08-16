@@ -420,6 +420,47 @@ result.matches.extend (performSearch(query, folders, extensions, caseSensitive))
 </table>
 <p><br/></p>
 
+<a name="aiagentapi"/>
+<b>AI agent API server</b>
+<p>
+CodeBeagle can expose its search capabilities to AI agents (PI, Claude Code, Cursor, ChatGPT, and others)
+through a local HTTP API. The API is described in detail at
+<strong>http://localhost:&lt;port&gt;/api/v1/docs</strong> once the server is running.
+The server offers content search, file name search and location discovery and respects the boundaries
+of the configured search locations.
+</p>
+<p>
+There are two ways to run the API server:
+</p>
+<ul>
+  <li>
+    <strong>From inside the UI</strong> - Open the settings dialog and switch to the
+    "Agentic AI search" page. Check the <strong>Enable agentic AI search</strong> box to start the
+    server immediately on the configured port (default 8080). The server is started and stopped
+    together with CodeBeagle. Unchecking the box stops it again.
+  </li>
+  <li>
+    <strong>As a standalone service</strong> - Run <strong>CodeBeagleAgentServer.exe</strong>.
+    This starts the same API server without a GUI. It reads its settings (port, bind address) from
+    the same configuration as the UI but ignores the "Enable agentic AI search" setting: the
+    standalone server always starts. This is useful to run the API permanently, for instance as a
+    scheduled task or Windows service, independent of whether CodeBeagle itself is running.
+  </li>
+</ul>
+<p>
+Only one server instance can run at a time because both variants use the same port. If
+<strong>CodeBeagleAgentServer.exe</strong> is already running, CodeBeagle detects it at start-up by
+calling the health endpoint of the API and then does not start its own instance. In that case the
+settings dialog shows the enable checkbox disabled and the "AI" history button on the search page
+stays available (the history of the external server is not visible in the UI because it is kept
+inside the separate process).
+</p>
+<p>
+If you want the UI to manage the server itself, stop the standalone server first and then enable
+"Agentic AI search" in the settings.
+</p>
+<br/>
+
 <b><a name="customsyntaxhighlighting">Customizing syntax highlighting</a></b>
 <p>
 The default syntax highlighting works fine for C++ and languages with similar keywords (C#,Java,...). It is configured

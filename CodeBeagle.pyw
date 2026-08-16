@@ -48,10 +48,16 @@ def main() -> None:
     setupLogging("codebeagle.log")
 
     agent = AppConfig.appConfig().agent
+    from ai_agent.AgentState import externalServerRunning, checkExternalAgentServer, startAgentServer
+    checkExternalAgentServer()
     if agent.enabled:
-        from ai_agent.AgentState import startAgentServer
-        if not startAgentServer(agent.port):
+        if externalServerRunning():
+            logging.info("AI agent server is already running externally; not starting another one.")
+        elif not startAgentServer(agent.port):
             logging.error("Failed to start AI agent server. See log for details.")
+    elif externalServerRunning():
+        logging.info("AI agent server is running externally (CodeBeagleAgentServer).")
+        print("AI agent server is running externally (CodeBeagleAgentServer).")
 
     # dark title bar on Win
     if sys.platform == "win32":

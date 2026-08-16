@@ -57,6 +57,6 @@ Ask your agent how to setup a stdio based MCP server that is contained in an exe
 """
 
 otherAgentInstructions = """\
-Download the CodeBeagle API documentation from here http://localhost:{port}/api/v1/pi-extension.
+Download the CodeBeagle API documentation from here http://localhost:{port}/api/v1/docs.
 The base URL to access the API is http://localhost:{port}
 """

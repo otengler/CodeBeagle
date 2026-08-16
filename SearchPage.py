@@ -146,8 +146,8 @@ class SearchPage (QWidget):
         self.ui.checkExcludeComments.stateChanged.connect(self.updateFilterPreview)
 
         # Hide or wire up the AI agent history button
-        from ai_agent.AgentState import agentServer
-        if agentServer() is None:
+        from ai_agent.AgentState import agentServer, externalServerRunning
+        if agentServer() is None and not externalServerRunning():
             self.ui.buttonAgentHistory.hide()
         else:
             self.ui.buttonAgentHistory.clicked.connect(self.showAgentHistory)

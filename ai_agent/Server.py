@@ -88,6 +88,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                 self._servePiExtension()
             elif path in ("/api/v1/health", "/health"):
                 self._sendJson(200, {"status": "ok"})
+            elif path in ("/api/v1/history", "/history"):
+                self._handleHistory()
             elif path in ("/api/v1/locations", "/locations"):
                 self._handleLocations()
             else:
@@ -98,7 +100,11 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             logger.exception("GET %s failed", path)
             self._sendError(500, str(e))
         finally:
-            self._recordHistory(self._formatQueryParams(), self._statusCode, time.time() - startTime)
+            # The history endpoint itself and requests flagged with the
+            # excludeFromHistory query parameter (e.g. the startup health
+            # probe) must not pollute the history.
+            if not _hasExcludeFromHistory(self.path) and path not in ("/api/v1/history", "/history"):
+                self._recordHistory(self._formatQueryParams(), self._statusCode, time.time() - startTime)
 
     # ---- POST endpoints ----
 
@@ -324,6 +330,16 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         }
         self._sendJson(200, data)
 
+    def _handleHistory(self) -> None:
+        """Serve the API call history.
+
+        Internal endpoint, intentionally NOT documented in API.md so that AI
+        agents do not discover it. It is used by the AgentHistory dialog of a
+        second CodeBeagle instance when the API server runs externally
+        (CodeBeagleAgentServer.exe).
+        """
+        self._sendJson(200, _historyToJson(self.server.history))
+
     def _handleContentSearch(self) -> None:
         data = self._readJsonBody()
         location = self._getOptionalString(data, "location")
@@ -393,6 +409,16 @@ def _correctPathSeparator(path: str) -> str:
         return path.replace("\\", "/")
 
 
+def _hasExcludeFromHistory(path: str) -> bool:
+    """True if the request path carries the excludeFromHistory query parameter.
+
+    Used by internal probes (e.g. the startup health check) so that they do not
+    show up in the API call history.
+    """
+    query = path.split("?", 1)[1] if "?" in path else ""
+    return any(key == "excludeFromHistory" for key, _ in parse_qsl(query, keep_blank_values=True))
+
+
 def _contentResultToJson(query: str, result: ContentSearchResult) -> Dict[str, object]:
     matches: List[Dict[str, object]] = []
     for m in result.matches:
@@ -424,6 +450,21 @@ def _fileNameResultToJson(result: FileSearchResult) -> Dict[str, object]:
     if result.pageOffset is not None:
         jsonResult["pageOffset"] = result.pageOffset
     return jsonResult
+
+
+def _historyToJson(history: AgentHistory) -> Dict[str, object]:
+    """Serialize the API history for the internal (undocumented) history endpoint."""
+    entries: List[Dict[str, object]] = []
+    for entry in history.entries():
+        entries.append({
+            "timestamp": entry.timestamp,
+            "method": entry.method,
+            "path": entry.path,
+            "params": entry.params,
+            "statusCode": entry.statusCode,
+            "durationSecs": entry.durationSecs,
+        })
+    return {"history": entries}
 
 class AgentServer:
     """
