@@ -104,7 +104,8 @@ def main() -> None:
     signal.signal(signal.SIGTERM, handleSignal)
 
     try:
-        stopEvent.wait()
+        while not stopEvent.wait(0.5):
+            pass
     except KeyboardInterrupt:
         pass
 
