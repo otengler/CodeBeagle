@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
+from enum import Enum
 from typing import List, Callable, Any, Optional, Tuple
 import argparse
 import time
@@ -32,7 +33,7 @@ from fulltextindex.IndexUpdater import IndexUpdater, UpdateStatistics
 import AppConfig
 
 codebeagleLicense = """
-CodeBeagle Copyright (C) 2011-2017 Oliver Tengler;
+CodeBeagle Copyright (C) 2011-2026 Oliver Tengler;
 This program comes with ABSOLUTELY NO WARRANTY; 
 This is free software, and you are welcome to redistribute it under certain conditions; 
 """
@@ -45,6 +46,12 @@ parser = argparse.ArgumentParser(description=updateIndexDescription, epilog=code
 parser.add_argument("-v", "--version", action='version', version="UpdateIndex " + AppConfig.appVersion)
 parser.add_argument("--jobmode", metavar='DIR', type=str, help=helpJobMode)
 parser.add_argument("-c", "--config", action="append", default=[AppConfig.configName], type=str, help=helpConfig)
+
+class PidStatus (Enum):
+    Unknown = 0,
+    NotRunning = 1,
+    StaleFileRemoved = 2,
+    Running = 3
 
 def taketime(name: str, func: Callable[..., Any], *args: Any) -> Any:
     t1 = time.perf_counter()
@@ -83,7 +90,7 @@ def loadConfigFiles(args: Any) -> Config:
     conf = AppConfig.configFromFile(configFiles[0])
     configFiles = configFiles[1:]
     for name in configFiles:
-        print("Load config " + name)
+        logging.info("Load config " + name)
         conf.loadFile(name)
     # managedConfig is an override for the config file maintained by
     # CodeBeagle. Normally this file is stored in the user profile.
@@ -92,7 +99,7 @@ def loadConfigFiles(args: Any) -> Config:
     # we don't know the user. But if there is an override it makes
     # sense to include the managed config.
     if conf.managedConfig:
-        print("Load config " + conf.managedConfig)
+        logging.info("Load config " + conf.managedConfig)
         conf.loadFile(conf.managedConfig)
     return conf
 
@@ -128,8 +135,8 @@ def nextJob(jobDir: str) -> Optional[Tuple[str, str]]:
     return None
 
 def handleUncleanShutdown(jobDir: str, removeTriggerFiles: bool) -> None:
-    pidfile, bStaleFileWasRemoved = getPidFile()
-    if bStaleFileWasRemoved:
+    pidfile, pidstatus = getPidFile()
+    if pidstatus != PidStatus.Running:
         # This writes the current PID and make sure the file is removed at the end
         with pidfile:
             cleanupCrash(jobDir, removeTriggerFiles)
@@ -161,21 +168,24 @@ def cleanupCrash(jobDir: str, removeTriggerFiles: bool = False) -> None:
                 removeFile(triggerFile)
 
 # Returns touple (pidfile, bStaleFileWasRemoved)
-def getPidFile() -> Tuple[FileTools.PidFile, bool]:
+def getPidFile() -> Tuple[FileTools.PidFile, PidStatus]:
     pidname = os.path.join(FileTools.getTempPath(), "codebeagle.pid")
     pidfile = FileTools.PidFile(pidname)
-    bStaleFileWasRemoved = False
+    pidstatus: PidStatus = PidStatus.Unknown
 
     if pidfile.exists():
         pid = pidfile.read()
         if pid and FileTools.isProcessAlive(pid):
-            print("Update index process with PID %u is already running" % pid)
+            logging.info("Update index process with PID %u is already running" % pid)
+            pidstatus = PidStatus.Running
         else:
-            print("Found a stale PID file for process %u - cleaning up data" % pid)
+            logging.info("Found a stale PID file for process %u - cleaning up data" % pid)
             pidfile.remove()
-            bStaleFileWasRemoved = True
+            pidstatus = PidStatus.StaleFileRemoved
+    else:
+        pidstatus = PidStatus.NotRunning
 
-    return (pidfile, bStaleFileWasRemoved)
+    return (pidfile, pidstatus)
 
 def main() -> None:
     # Parse command line
@@ -215,7 +225,7 @@ if __name__ == "__main__":
     try:
         main()
     except:
-        print("Exception caught while updating index:\n%s" % exceptionAsString(None))
+        logging.error("Exception caught while updating index:\n%s" % exceptionAsString(None))
         sys.exit(1)
     else:
         sys.exit(0)
