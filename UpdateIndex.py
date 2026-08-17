@@ -62,10 +62,11 @@ def taketime(name: str, func: Callable[..., Any], *args: Any) -> Any:
 
 def setupLogging(conf: Config) -> None:
     log = conf.updateIndexLog
+    # force=True to configure logger even if someone has used e.g. "logging.info" before
     if log:
-        logging.basicConfig(filename=log, format='%(asctime)s %(message)s', level=logging.INFO)
+        logging.basicConfig(filename=log, force=True, format='%(asctime)s %(message)s', level=logging.INFO)
     else:
-        logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+        logging.basicConfig(force=True, format='%(asctime)s %(message)s', level=logging.INFO)
 
 def updateIndex(config: IndexConfiguration.IndexConfiguration) -> None:
     logging.info("-"*80)
@@ -90,7 +91,7 @@ def loadConfigFiles(args: Any) -> Config:
     conf = AppConfig.configFromFile(configFiles[0])
     configFiles = configFiles[1:]
     for name in configFiles:
-        logging.info("Load config " + name)
+        print("Load config " + name) # not using logging because it it not initialized yet
         conf.loadFile(name)
     # managedConfig is an override for the config file maintained by
     # CodeBeagle. Normally this file is stored in the user profile.
@@ -99,7 +100,7 @@ def loadConfigFiles(args: Any) -> Config:
     # we don't know the user. But if there is an override it makes
     # sense to include the managed config.
     if conf.managedConfig:
-        logging.info("Load config " + conf.managedConfig)
+        print("Load config " + conf.managedConfig) # not using logging because it it not initialized yet
         conf.loadFile(conf.managedConfig)
     return conf
 
@@ -202,20 +203,20 @@ def main() -> None:
         FileTools.switchToAppDir()
 
         conf = loadConfigFiles(args)
+        setupLogging(conf)
+
         indexes = IndexConfiguration.readConfig(conf)
 
         if args.jobmode:
             runGuardDir = os.path.join(FileTools.getTempPath(), "UpdateIndex_running")
             while True:
                 with FileTools.LockDir(runGuardDir):
-                    setupLogging(conf)
                     logging.info("UpdateIndex watches directory '%s'", args.jobmode)
                     handleUpdateJobs(indexes, args.jobmode)
                 if not nextJob(args.jobmode):
                     logging.info("No more jobs found")
                     break
         else:
-            setupLogging(conf)
             if conf.profileUpdate:
                 cProfile.run("updateIndexes(indexes)")
             else:
