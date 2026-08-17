@@ -42,6 +42,7 @@ from SearchPageBookmarks import SearchPageBookmarks
 from StringListModel import StringListModel
 from Ui_SearchPage import Ui_SearchPage
 from SearchParamHistory import getSearchParamHistory
+from ai_agent.AgentState import agentServerEvents
 
 userHintUseWildcards = """
 <p align='justify'>The search matches words exactly as entered. In order to match words with unknown parts use the asterisk as wildcard.
@@ -145,12 +146,12 @@ class SearchPage (QWidget):
         self.ui.checkCaseSensitive.stateChanged.connect(self.updateFilterPreview)
         self.ui.checkExcludeComments.stateChanged.connect(self.updateFilterPreview)
 
-        # Hide or wire up the AI agent history button
-        from ai_agent.AgentState import agentServer, externalServerRunning
-        if agentServer() is None and not externalServerRunning():
-            self.ui.buttonAgentHistory.hide()
-        else:
-            self.ui.buttonAgentHistory.clicked.connect(self.showAgentHistory)
+        # Hide or wire up the AI agent history button. Visibility is updated
+        # whenever the agent server state changes (e.g. toggled in the settings
+        # dialog or detected at startup by the background health check).
+        self.ui.buttonAgentHistory.clicked.connect(self.showAgentHistory)
+        self.__updateAgentHistoryButton()
+        agentServerEvents.serverChanged.connect(self.__updateAgentHistoryButton)
 
         # Initialize filter panel state based on configuration
         expandByDefault = AppConfig.appConfig().expandFilterPanelByDefault
@@ -209,6 +210,14 @@ class SearchPage (QWidget):
 
         # Initialize filter preview
         self.updateFilterPreview()
+
+    def __updateAgentHistoryButton(self) -> None:
+        """Show the AI agent history button only when an agent server is available."""
+        from ai_agent.AgentState import agentServer, externalServerRunning
+        if agentServer() is None and not externalServerRunning():
+            self.ui.buttonAgentHistory.hide()
+        else:
+            self.ui.buttonAgentHistory.show()
 
     def showAgentHistory(self) -> None:
         """Open the AI agent API call history dialog."""
@@ -303,6 +312,7 @@ class SearchPage (QWidget):
             self.unavailableConfigName = backupCurrentConfigName
         self.ui.sourceViewer.reloadConfig(self.__updateSourceFont())
         self.ui.matchesOverview.reloadConfig(self.__updateSourceFont())
+        self.__updateAgentHistoryButton()
         self.__showRegexDialogIcon()
 
     def __updateSearchLocationList(self,  searchLocationList: List[IndexConfiguration]) -> None:

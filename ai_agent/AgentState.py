@@ -22,7 +22,8 @@ import threading
 import logging
 import urllib.error
 import urllib.request
-from typing import List, Optional
+from typing import Callable, List, Optional
+from PyQt5.QtCore import QObject, pyqtSignal
 from AppConfig import appConfig
 from .AgentHistory import AgentHistory, HistoryEntry
 from .Server import AgentServer
@@ -36,6 +37,16 @@ _exitHandlerRegistered = False
 _externalServerRunning = False
 
 
+class AgentServerEvents(QObject):
+    """Signal hub which notifies the UI about AI agent server state changes."""
+    serverChanged = pyqtSignal()
+
+
+# Module-level signal hub. Created before QApplication, which is safe for
+# plain QObject instances (no widgets or event loop required).
+agentServerEvents = AgentServerEvents()
+
+
 def checkExternalAgentServer() -> bool:
     """Check whether an AI agent API server is already running externally.
 
@@ -46,6 +57,9 @@ def checkExternalAgentServer() -> bool:
     The result is stored in this module and is NOT updated afterwards: if a
     server was found running at startup the UI must not try to start its own
     instance (the port would be blocked anyway).
+
+    Emits events.serverChanged when the check completes so the UI can update
+    the AI agent history button visibility.
     """
     global _externalServerRunning
     agent = appConfig().agent
@@ -57,7 +71,30 @@ def checkExternalAgentServer() -> bool:
     except (urllib.error.URLError, OSError, ValueError):
         _externalServerRunning = False
     logging.debug("External AI agent server check on %s: %s", url, _externalServerRunning)
+    agentServerEvents.serverChanged.emit()
     return _externalServerRunning
+
+
+def checkExternalAgentServerAsync(onFinished: Optional[Callable[[bool], None]] = None) -> threading.Thread:
+    """Run the external agent server check in a background daemon thread.
+
+    The health check is a network call with a timeout; performing it on the
+    main thread would delay the application startup. The callback is invoked
+    from the worker thread after the check has finished.
+
+    Emits agentServerEvents.serverChanged when the check completes so the UI can update
+    the AI agent history button visibility.
+    """
+    def run() -> None:
+        result = checkExternalAgentServer()
+        if onFinished:
+            try:
+                onFinished(result)
+            except Exception:
+                logging.exception("Callback after external agent server check failed")
+    thread = threading.Thread(target=run, name="AgentServerCheck", daemon=True)
+    thread.start()
+    return thread
 
 
 def externalServerRunning() -> bool:
@@ -96,10 +133,15 @@ def fetchExternalHistory() -> List[HistoryEntry]:
         return []
 
 def setAgentServer(server: Optional[AgentServer]) -> None:
-    """Register the running AgentServer instance (or None if it was stopped)."""
+    """Register the running AgentServer instance (or None if it was stopped).
+
+    Emits agentServerEvents.serverChanged so the UI can update the AI agent history
+    button visibility.
+    """
     global _agentServer
     with _lock:
         _agentServer = server
+    agentServerEvents.serverChanged.emit()
 
 def agentServer() -> Optional[AgentServer]:
     """Return the registered AgentServer instance, or None if it is not running."""

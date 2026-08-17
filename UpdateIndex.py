@@ -61,10 +61,10 @@ def taketime(name: str, func: Callable[..., Any], *args: Any) -> Any:
     return result
 
 def setupLogging(conf: Config) -> None:
-    try:
-        log = conf.updateIndexLog
+    log = conf.updateIndexLog
+    if log:
         logging.basicConfig(filename=log, format='%(asctime)s %(message)s', level=logging.INFO)
-    except AttributeError:
+    else:
         logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
 def updateIndex(config: IndexConfiguration.IndexConfiguration) -> None:

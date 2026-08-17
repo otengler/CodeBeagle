@@ -138,6 +138,7 @@ def configTypeInfo (config: Config.Config) -> None:
     config.setType("previewLines",  Config.typeDefaultInt(5))
     config.setType("commonKeywords", Config.typeDefaultString(""))
     config.setType("updateCheckPeriod",  Config.typeDefaultInt(0))
+    config.setType("updateIndexLog", Config.typeDefaultString(""))
     config.setType("matchOverFiles",  Config.typeDefaultBool(False))
     config.setType("activateFirstMatch", Config.typeDefaultBool(False))
     config.setType("theme", Config.typeDefaultString(""))
