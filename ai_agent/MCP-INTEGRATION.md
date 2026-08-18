@@ -190,10 +190,9 @@ Searches file contents and returns matches with context lines.
 | `extension_filter` | string | – | Comma-separated extensions, `-` prefix excludes (`.py, .js, -test.py`). |
 | `case_sensitive` | boolean | false | Case-sensitive matching. |
 | `exclude_comments` | boolean | true | Exclude matches inside comments. |
-| `context_lines` | integer | 2 | Context lines before/after each match (0–20). |
+| `context_lines` | integer | 2 | Context lines before/after each match (0–20). Set to 0 for compact output: matches are returned as `"path:line: full matching line"` strings. |
 | `limit` | integer | 100 | Maximum number of matches (1–10000). |
 | `page_offset` | object | – | Pagination cursor from a previous response (`{"fileIndex": int, "matchIndex": int?}`). |
-| `format` | string | json | `json` (full response) or `compact` (`path:line: full matching line`, no context). |
 
 **Return value** — JSON object with `totalFiles`, `matches` (file, line, fullLine, optional
 matchText/contextBefore/contextAfter), and a `pageOffset` cursor when more results exist.
@@ -204,13 +203,12 @@ Searches file names with wildcard support.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `query` | string | – (required) | File name pattern with `*` and `?` wildcards (`Factory*`, `*test*.py`). A trailing dot-part becomes an extension filter. |
+| `query` | string or string[] | – (required) | File name pattern or list of patterns (OR logic) with `*` and `?` wildcards (`Factory*`, `*test*.py`, `Makefile`). When a list is provided, files matching ANY pattern are returned. A trailing dot-part becomes an extension filter. |
 | `folder` / `location` | string | – | As for `search_content`. |
 | `folder_filter` / `extension_filter` | string | – | As for `search_content`. |
 | `case_sensitive` | boolean | false | Case-sensitive matching. |
 | `limit` | integer | 100 | Maximum number of files (1–10000). |
 | `page_offset` | object | – | Pagination cursor (`{"fileIndex": int}`). |
-| `format` | string | json | `json` (full response) or `compact` (one file path per line). |
 
 **Return value** — JSON object with `totalFiles`, `files` (full paths), and a `pageOffset`
 cursor when more results exist.
@@ -534,8 +532,8 @@ needed for the MVP — the LLM learns the workflow from the tool descriptions
 (`list_locations` → `search_content` → paginate via `page_offset`) without server-side
 prompts. Skip; revisit only if a specific client does not surface tool descriptions well.
 
-**Kept because they are cheap and already paid off:** the `format=compact` output
-(`path:line: full matching line`) which keeps token usage low for large result sets.
+**Kept because they are cheap and already paid off:** the compact output via `context_lines=0`
+(`path:line: full matching line` as strings) which keeps token usage low for large result sets.
 
 If the scope later grows, `codebeagle://file/{path}` is the single most valuable
 addition (needs a new `GET /api/v1/file?path=...` HTTP endpoint that validates the
@@ -631,11 +629,11 @@ models in `types.py`; `page_offset` serialises as `object` with integer
     },
     {
       "name": "search_content",
-      "description": "Full-text search across CodeBeagle-indexed source code. Query syntax: keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), unknown-word gaps ('error **2 network'), regex ('code <!\\d+!>'). Specify either 'location' (name from list_locations) or 'folder' (root path; the server resolves the best matching index). Returns matching lines with surrounding context and a pageOffset if more results exist; pass that pageOffset back as the page_offset parameter to fetch the next page. Set format='json' (default) for the full JSON response or format='compact' for 'path:line: full matching line' output (no context lines).",
+      "description": "Full-text search across CodeBeagle-indexed source code. Query syntax: keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), unknown-word gaps ('error **2 network'), regex ('code <!\\d+!>'). Pass a list of queries for OR logic: files matching ANY expression are returned. Specify either 'location' or 'folder'. Returns matching lines with surrounding context and a pageOffset if more results exist; pass that pageOffset back as the page_offset parameter to fetch the next page. Set context_lines=0 for compact output: matches are returned as 'path:line: full matching line' strings.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "query": { "type": "string" },
+          "query": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
           "folder": { "type": "string" },
           "location": { "type": "string" },
           "folder_filter": { "type": "string" },
@@ -644,27 +642,25 @@ models in `types.py`; `page_offset` serialises as `object` with integer
           "exclude_comments": { "type": "boolean", "default": true },
           "context_lines": { "type": "integer", "default": 2, "minimum": 0, "maximum": 20 },
           "limit": { "type": "integer", "default": 100, "minimum": 1, "maximum": 10000 },
-          "page_offset": { "type": "object", "additionalProperties": { "type": "integer" } },
-          "format": { "enum": ["json", "compact"] }
+          "page_offset": { "type": "object", "additionalProperties": { "type": "integer" } }
         },
         "required": ["query"]
       }
     },
     {
       "name": "search_filename",
-      "description": "Search for files by name across CodeBeagle-indexed source code. The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). If the query contains a dot, the part after the last dot is used as an extension filter. Returns full file paths and a pageOffset if more results exist; pass that pageOffset back as the page_offset parameter to fetch the next page. Set format='json' (default) for the full JSON response or format='compact' for one file path per line.",
+      "description": "Search for files by name across CodeBeagle-indexed source code. The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). Pass a list of queries for OR logic: files matching ANY pattern are returned. If the query contains a dot, the part after the last dot is used as an extension filter. Returns full file paths and a pageOffset if more results exist; pass that pageOffset back as the page_offset parameter to fetch the next page.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "query": { "type": "string" },
+          "query": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
           "folder": { "type": "string" },
           "location": { "type": "string" },
           "folder_filter": { "type": "string" },
           "extension_filter": { "type": "string" },
           "case_sensitive": { "type": "boolean", "default": false },
           "limit": { "type": "integer", "default": 100, "minimum": 1, "maximum": 10000 },
-          "page_offset": { "type": "object", "additionalProperties": { "type": "integer" } },
-          "format": { "enum": ["json", "compact"] }
+          "page_offset": { "type": "object", "additionalProperties": { "type": "integer" } }
         },
         "required": ["query"]
       }

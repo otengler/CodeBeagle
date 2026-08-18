@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Set, Union, cast
 from PyQt5.QtGui import QFont
 from AppConfig import appConfig
 from tools.FileTools import freadall
@@ -135,7 +135,7 @@ class SearchProvider:
             matchingFiles, searchData, contextLines, limit, pageOffset
         )
 
-    def searchFileName(self, query: str, *,
+    def searchFileName(self, query: Union[str, List[str]], *,
                            location: Optional[str] = None,
                            folder: Optional[str] = None,
                            pathFilter: str = "",
@@ -147,7 +147,9 @@ class SearchProvider:
         Search file names.
 
         Args:
-            query: File name pattern (supports * and ? wildcards).
+            query: File name pattern or list of patterns (OR logic).
+                   Each pattern supports * and ? wildcards.
+                   When a list is provided, files matching ANY pattern are returned.
             location: Name of the search location (from getLocations()).
             folder: Root folder path to search in (alternative to location).
             pathFilter: Optional path filter pattern. Can be a full file path to select a single file.
@@ -159,27 +161,42 @@ class SearchProvider:
         Returns:
             FileSearchResult with matching files and pagination cursor.
         """
+        if isinstance(query, list) and not query:
+            return FileSearchResult(totalFiles=0, files=[], pageOffset=None)
+
         indexConf = self._indexResolver.resolve(location, folder, "filename", extensionFilter)
         self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
 
-        params = QueryParams(
-            strSearch=query,
-            strFolderFilter=pathFilter,
-            strExtensionFilter=extensionFilter,
-            bCaseSensitive=caseSensitive
-        )
-        searchData = FileQuery(params)
+        queries = query if isinstance(query, list) else [query]
 
-        # Check file list cache
-        cacheKey = self._makeFileNameCacheKey(searchData, indexConf, pathFilter, extensionFilter)
-        allFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
+        allFiles: List[str] = []
+        seen: Set[str] = set()
 
-        if allFiles is None:
-            ftiSearch = SearchMethods()
-            resultSet = ftiSearch.searchFileName(searchData, indexConf)
-            allFiles = resultSet.matches  # List of file paths
-            self._fileListCache.set(cacheKey, allFiles)
+        for q in queries:
+            params = QueryParams(
+                strSearch=q,
+                strFolderFilter=pathFilter,
+                strExtensionFilter=extensionFilter,
+                bCaseSensitive=caseSensitive
+            )
+            searchData = FileQuery(params)
 
+            # Check file list cache
+            cacheKey = self._makeFileNameCacheKey(searchData, indexConf, pathFilter, extensionFilter)
+            files = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
+
+            if files is None:
+                ftiSearch = SearchMethods()
+                resultSet = ftiSearch.searchFileName(searchData, indexConf)
+                files = resultSet.matches  # List of file paths
+                self._fileListCache.set(cacheKey, files)
+
+            for f in files:
+                if f not in seen:
+                    seen.add(f)
+                    allFiles.append(f)
+
+        allFiles.sort()
         totalFiles = len(allFiles)
 
         # Apply pagination

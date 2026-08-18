@@ -69,21 +69,22 @@ _DESC_SEARCH_CONTENT = (
     "Full-text search across CodeBeagle-indexed source code. Query syntax: "
     "keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), "
     "unknown-word gaps ('error **2 network'), regex ('code <!\\d+!>'). "
-    "Specify either 'location' (name from list_locations) or 'folder' (root path; "
-    "the server resolves the best matching index). Returns matching lines with "
-    "surrounding context and a pageOffset if more results exist; pass that "
-    "pageOffset back as the page_offset parameter to fetch the next page. "
-    "Set format='json' (default) for the full JSON response or format='compact' "
-    "for 'path:line: full matching line' output (no context lines)."
+    "Pass a list of queries for OR logic: files matching ANY expression "
+    "are returned. Specify either 'location' (name from list_locations) or "
+    "'folder' (root path; the server resolves the best matching index). "
+    "Returns matching lines with surrounding context and a pageOffset if more "
+    "results exist; pass that pageOffset back as the page_offset parameter to "
+    "fetch the next page. Set context_lines=0 for compact output: matches "
+    "are returned as 'path:line: full matching line' strings."
 )
 _DESC_SEARCH_FILENAME = (
     "Search for files by name across CodeBeagle-indexed source code. "
     "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). "
-    "If the query contains a dot, the part after the last dot is used as an "
-    "extension filter. Returns full file paths and a pageOffset if more "
-    "results exist; pass that pageOffset back as the page_offset parameter to "
-    "fetch the next page. Set format='json' (default) for the full JSON response "
-    "or format='compact' for one file path per line."
+    "A list of patterns can be provided for OR logic: files matching ANY pattern "
+    "are returned. If the query contains a dot, the part after the last dot is "
+    "used as an extension filter. Returns full file paths and a pageOffset if "
+    "more results exist; pass that pageOffset back as the page_offset parameter "
+    "to fetch the next page."
 )
 
 _EMPTY_SCHEMA: Dict[str, Any] = {"type": "object", "properties": {}, "required": []}

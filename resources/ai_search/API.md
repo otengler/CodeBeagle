@@ -118,7 +118,7 @@ Search within file contents. Returns matching lines with surrounding context.
 | `extensionFilter` | string | no | `""` | Filter results by file extension. See [Extension Filter](#folder-and-extension-filters). |
 | `caseSensitive` | bool | no | `false` | If `true`, search is case-sensitive. |
 | `excludeComments` | bool | no | `true` | If `true`, matches inside comments are excluded (e.g. `//` in C/C++, `#` in Python). |
-| `contextLines` | int | no | `2` | Number of lines of context before and after each match. Set to `0` to omit context lines entirely (the `contextBefore`/`contextAfter` fields are then not included in the response). |
+| `contextLines` | int | no | `2` | Number of lines of context before and after each match. Set to `0` for compact output: the `matches` array contains strings formatted as `"file:line: full matching line"` instead of objects. No `contextBefore`/`contextAfter` fields are included. |
 | `limit` | int | no | `100` | Maximum number of matches per page. |
 | `pageOffset` | object | no | `null` | Pagination cursor from a previous response. See [Pagination](#pagination). |
 
@@ -178,7 +178,7 @@ Search within file contents. Returns matching lines with surrounding context.
 
 Search for file names. Wildcard matching with `*` and `?` is always enabled.
 
-**Request body:**
+**Request body (single query):**
 
 ```json
 {
@@ -193,11 +193,21 @@ Search for file names. Wildcard matching with `*` and `?` is always enabled.
 }
 ```
 
+**Request body (multiple queries, OR logic):**
+
+```json
+{
+  "query": ["Factory*", "*test*"],
+  "folder": "C:\\src\\project",
+  "limit": 100
+}
+```
+
 **Parameters:**
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `query` | string | **yes** | — | File name pattern. Supports `*` and `?` wildcards. See [Search Syntax](#search-syntax). |
+| `query` | string or string[] | **yes** | — | File name pattern or list of patterns (OR logic). Each pattern supports `*` and `?` wildcards. When a list is provided, files matching ANY pattern are returned. See [Search Syntax](#search-syntax). |
 | `location` | string | no* | — | Name of a search location from `GET /locations`. |
 | `folder` | string | no* | — | Root folder path to search in. |
 | `pathFilter` | string | no | `""` | Filter results by path. Can be a full file path to select a single file. |
@@ -438,6 +448,6 @@ agent {
 
 9. **Use `excludeComments` (default `true`) to filter out trivial matches** in comments (e.g. TODO notes, documentation). Set `"excludeComments": false` if you want matches in comments too.
 
-10. **For compact output set `"contextLines": 0`** — the response then contains no `contextBefore`/`contextAfter` lines, only `file`, `line`, `matchText` and `fullLine` per match. This reduces response size. The PI extension automatically uses compact output when contextLines=0.
+10. **For compact output set `"contextLines": 0`** — the `matches` array then contains strings formatted as `"file:line: full matching line"` instead of objects. This reduces response size token consumption. The PI extension automatically uses this compact format when contextLines=0.
 
 11. **Performance:** Searches are typically fast (milliseconds to seconds). The server uses caching to avoid re-scanning files for paginated requests. The cache has a 5-minute TTL.

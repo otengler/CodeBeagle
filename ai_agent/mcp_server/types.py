@@ -115,11 +115,13 @@ class ContentSearchInput(BaseModel):
 class FileNameSearchInput(BaseModel):
     """Parameters for a file name search (search_filename tool)."""
 
-    query: str = Field(
+    query: Union[str, List[str]] = Field(
         description=(
-            "File name pattern. Supports * and ? wildcards. "
+            "File name pattern or list of patterns (OR logic). "
+            "Each pattern supports * and ? wildcards. "
             "Example: 'Factory*', '*test*.py', 'test?.py'. If the query contains "
-            "a dot, the part after the last dot is used as an extension filter."
+            "a dot, the part after the last dot is used as an extension filter. "
+            "When a list is provided, files matching ANY pattern are returned."
         )
     )
     folder: Optional[str] = Field(

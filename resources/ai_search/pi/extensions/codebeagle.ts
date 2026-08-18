@@ -207,16 +207,21 @@ export default function (pi: ExtensionAPI) {
       "Search for files by name across CodeBeagle-indexed source code. " +
       "This replaces the 'find' command for indexed locations. " +
       "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). " +
+      "Pass a list of queries for OR logic: files matching ANY pattern are returned. " +
       "If the query contains a dot, the part after the last dot is used as an extension filter. " +
       "Specify either 'location' or 'folder'. " +
       "Pagination: pass pageOffset from a previous response to fetch the next page.",
     promptSnippet: "Search CodeBeagle-indexed location for file names.",
     promptGuidelines: [
       "Use codebeagle_file_search when the user asks to find files by name. It replaces calls to `find`. " +
+      "Pass multiple queries as an array for OR matching. " +
       "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
     ],
     parameters: Type.Object({
-      query: Type.String({ description: "File name pattern, e.g. 'main*', '*test*.py', 'Makefile'" }),
+      query: Type.Union([
+        Type.String({ description: "File name pattern, e.g. 'main*', '*test*.py', 'Makefile'" }),
+        Type.Array(Type.String(), { description: "List of file name patterns (OR logic). Files matching ANY pattern are returned." }),
+      ]),
       location: Type.Optional(Type.String({ description: "Search location name from codebeagle_list_indexes" })),
       folder: Type.Optional(Type.String({ description: "Root folder path" })),
       pathFilter: Type.Optional(Type.String({ description: "Path filter. Can be a full file path to select a single file, e.g. 'src/main.cpp'" })),

@@ -381,7 +381,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             )
         except ValueError as e:
             raise HttpError(404, str(e))
-        self._sendJson(200, _contentResultToJson(query, result))
+        self._sendJson(200, _contentResultToJson(query, contextLines, result))
 
     def _handleFileNameSearch(self) -> None:
         data = self._readJsonBody()
@@ -389,7 +389,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         folder = self._getOptionalString(data, "folder")
         if folder is not None:
             folder = _correctPathSeparator(folder)
-        query = self._getString(data, "query")
+        query = self._getStringOrList(data, "query")
         pathFilter = _correctPathSeparator(self._getString(data, "pathFilter", ""))
         extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
@@ -407,7 +407,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             )
         except ValueError as e:
             raise HttpError(404, str(e))
-        self._sendJson(200, _fileNameResultToJson(result))
+        self._sendJson(200, _fileNameResultToJson(query, result))
 
 def _correctPathSeparator(path: str) -> str:
     """Normalise path separators to the local OS convention."""
@@ -429,25 +429,33 @@ def _hasExcludeFromHistory(path: str) -> bool:
     return any(key == "excludeFromHistory" for key, _ in parse_qsl(query, keep_blank_values=True))
 
 
-def _contentResultToJson(query: Union[str, List[str]], result: ContentSearchResult) -> Dict[str, object]:
-    matches: List[Dict[str, object]] = []
-    for m in result.matches:
-        match = {
-            "file": m.file,
-            "line": m.line,
-            "fullLine": m.fullLine
-        }
-        if isinstance(query, str):
-            if query != m.matchText:
-                match["matchText"] = m.matchText
-        else:
-            if m.matchText not in query:
-                match["matchText"] = m.matchText
-        if m.contextBefore:
-            match["contextBefore"] = m.contextBefore
-        if m.contextAfter:
-            match["contextAfter"] = m.contextAfter
-        matches.append(match)
+def _contentResultToJson(query: Union[str, List[str]], contextLines: int, result: ContentSearchResult) -> Dict[str, object]:
+    if contextLines == 0:
+        # Compact format: return matches as strings
+        matches: List[str] = [
+            f"{m.file}:{m.line}: {m.fullLine}"
+            for m in result.matches
+        ]
+    else:
+        # Full format: return matches as objects
+        matches = []
+        for m in result.matches:
+            match: Dict[str, object] = {
+                "file": m.file,
+                "line": m.line,
+                "fullLine": m.fullLine
+            }
+            if isinstance(query, str):
+                if query != m.matchText:
+                    match["matchText"] = m.matchText
+            else:
+                if m.matchText not in query:
+                    match["matchText"] = m.matchText
+            if m.contextBefore:
+                match["contextBefore"] = m.contextBefore
+            if m.contextAfter:
+                match["contextAfter"] = m.contextAfter
+            matches.append(match)
     jsonResult: Dict[str, object] = {
         "totalFiles": result.totalFiles,
         "matches": matches,
@@ -456,7 +464,7 @@ def _contentResultToJson(query: Union[str, List[str]], result: ContentSearchResu
         jsonResult["pageOffset"] = result.pageOffset
     return jsonResult
 
-def _fileNameResultToJson(result: FileSearchResult) -> Dict[str, object]:
+def _fileNameResultToJson(query: Union[str, List[str]], result: FileSearchResult) -> Dict[str, object]:
     jsonResult: Dict[str, object] = {
         "totalFiles": result.totalFiles,
         "files": result.files,

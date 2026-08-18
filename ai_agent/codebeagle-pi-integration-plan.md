@@ -97,13 +97,13 @@ Each tool maps 1:1 to an existing HTTP endpoint.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `query` | string | yes | CodeBeagle query syntax: `keyword`, `keyword*` (wildcard), `<!regex!>` (regex), `**N` (N unknown words), `#ifdef` |
+| `query` | string or string[] | yes | CodeBeagle query syntax: `keyword`, `keyword*` (wildcard), `<!regex!>` (regex), `**N` (N unknown words), `#ifdef`. Pass a list for OR logic: files matching ANY expression are returned. |
 | `location` | string | no | Search location name (from `codebeagle_list_indexes`). Mutually exclusive with `folder`. |
 | `folder` | string | no | Root folder to search in; server resolves best matching index |
 | `folderFilter` | string | no | Folder include/exclude, e.g. `"src/, -test/"` |
 | `extensionFilter` | string | no | Extension filter, e.g. `".cpp,.h,-.hpp"` |
 | `caseSensitive` | boolean | no | Default: false |
-| `contextLines` | integer | no | Context lines around each match (default 2) |
+| `contextLines` | integer | no | Context lines around each match (default 2). Set to 0 for compact output (matches returned as `"path:line: full matching line"` strings) |
 | `limit` | integer | no | Max matches per page (default 100) |
 | `pageOffset` | object | no | Opaque cursor from a previous response |
 
@@ -113,7 +113,7 @@ Each tool maps 1:1 to an existing HTTP endpoint.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `query` | string | yes | File name pattern, supports `*` and `?` |
+| `query` | string or string[] | yes | File name pattern or list of patterns (OR logic), supports `*` and `?` |
 | `location` | string | no | Search location name |
 | `folder` | string | no | Root folder |
 | `folderFilter` | string | no | Folder filter |
