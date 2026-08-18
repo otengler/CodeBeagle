@@ -113,11 +113,6 @@ class SearchProvider:
         )
         searchData = ContentQuery(params)
 
-        # Set comment rule fetcher if comment exclusion is requested
-        if excludeComments:
-            searchData.bExcludeComments = True
-            searchData.commentRuleFetcher = self.__commentRuleForFile
-
         # Check file list cache
         cacheKey = self._makeFileListCacheKey(searchData, indexConf, pathFilter, extensionFilter, excludeComments)
         matchingFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
@@ -129,6 +124,11 @@ class SearchProvider:
 
         if not matchingFiles:
             return ContentSearchResult(totalFiles=0, matches=[], pageOffset=None)
+
+        # Set comment rule fetcher if comment exclusion is requested
+        if excludeComments:
+            searchData.bExcludeComments = True
+            searchData.commentRuleFetcher = self.__commentRuleForFile
 
         # Build paginated matches from the matching files
         return self._buildContentResults(
