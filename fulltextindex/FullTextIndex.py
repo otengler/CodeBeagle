@@ -104,21 +104,19 @@ class FullTextIndex (IndexDatabase):
         # The result is a list of lists of Keyword objects
         kwList: KeywordList = []
         with perfReport.newAction("Finding keywords") as action:
-            if query.orSearchFor:
-                # OR query: keywords are grouped by position across alternatives.
-                # Each group becomes one keyword-list (union within position),
-                # then __findDocsByKeywordsManualIntersect intersects across positions.
-                for keywordGroup in query.indexedPartsLowerGrouped():
-                    groupKw: List[Keyword] = []
-                    for kw in keywordGroup:
-                        # Look up each word in the group and collect all keyword IDs
-                        result = self.__getKeywords(q, [kw], reportAction=None)
-                        if result and result[0]:
-                            groupKw.extend(result[0])
-                    if groupKw:
-                        kwList.append(groupKw)
-            else:
-                kwList = self.__getKeywords(q, query.indexedPartsLower(), reportAction=action)
+            # OR query: keywords are grouped by position across alternatives.
+            # Each group becomes one keyword-list (union within position),
+            # then __findDocsByKeywordsManualIntersect intersects across positions.
+            for keywordGroup in query.indexedPartsLowerGrouped():
+                groupKw: List[Keyword] = []
+                # Look up each word in the group and collect all keyword IDs
+                queryResults = self.__getKeywords(q, keywordGroup, reportAction=None)
+                for kwEntry in queryResults:
+                    if kwEntry:
+                        groupKw.extend(kwEntry)
+                if groupKw:
+                    kwList.append(groupKw)
+            
             if not kwList:
                 return []
 
@@ -226,6 +224,7 @@ class FullTextIndex (IndexDatabase):
         badKeywords = [keywords for unusedQuality, keywords in sorted(badKeywordsTemp, reverse=True)]
 
         # Sort good keywords by length descending, the hope is that longer keywords are more unique
+        # TODO: this is wrong "len" is the length of the list -> but I want the shortest entry as quality
         return sorted(goodKeywords,reverse=True,key=len), badKeywords
 
     # Receives a list of keywords which might contain wildcards. For every passed keyword a list of Keyword objects

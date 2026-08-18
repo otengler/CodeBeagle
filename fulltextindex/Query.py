@@ -352,16 +352,16 @@ class ContentQuery(Query):
             else:
                 return
 
-    # All indexed parts
-    def indexedPartsLower(self) -> Iterator[str]:
-        for partList in self.partLists:
-            for part in partList:
-                if part[0] == TokenType.IndexPart:
-                    yield part[1].lower()
-
     # Indexed parts grouped by position across OR alternatives.
     # Each yielded list contains the keywords at the same position from all OR parts.
     # Used by FullTextIndex to compute (union per position) then intersect across positions.
+    # Consider: a* b c | d e
+    # Assuming "a*" evals to "a1" and "a2"
+    # This gives:
+    # 1. a1,a2,d 
+    # 2. b,e
+    # Done. "c" is not used because there is nothing left in the other group which means we can't further
+    # shrink down the result set by intersecting.
     def indexedPartsLowerGrouped(self) -> Iterator[List[str]]:
         # Collect IndexParts from each part list separately
         partsPerGroup: List[List[str]] = []
@@ -369,8 +369,8 @@ class ContentQuery(Query):
             partsPerGroup.append([part[1].lower() for part in partList if part[0] == TokenType.IndexPart])
         if not partsPerGroup:
             return
-        maxLen = max(len(g) for g in partsPerGroup)
-        for pos in range(maxLen):
+        minLen = min(len(g) for g in partsPerGroup)
+        for pos in range(minLen):
             group: List[str] = []
             for g in partsPerGroup:
                 if pos < len(g):
