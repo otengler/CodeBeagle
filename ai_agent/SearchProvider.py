@@ -114,7 +114,7 @@ class SearchProvider:
         searchData = ContentQuery(params)
 
         # Check file list cache
-        cacheKey = self._makeFileListCacheKey(searchData, indexConf, pathFilter, extensionFilter, excludeComments)
+        cacheKey = self._makeFileListCacheKey(searchData, indexConf)
         matchingFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
         if matchingFiles is None:
             ftiSearch = SearchMethods()
@@ -182,7 +182,7 @@ class SearchProvider:
             searchData = FileQuery(params)
 
             # Check file list cache
-            cacheKey = self._makeFileNameCacheKey(searchData, indexConf, pathFilter, extensionFilter)
+            cacheKey = self._makeFileNameCacheKey(searchData, indexConf)
             files = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
 
             if files is None:
@@ -317,18 +317,16 @@ class SearchProvider:
             else:
                 self._commonKeywordMap = {}
     
-    def _makeFileListCacheKey(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                                   pathFilter: str, extensionFilter: str, excludeComments: bool = False) -> str:
+    def _makeFileListCacheKey(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration) -> str:
             """Build a cache key for the file list of a content search."""
             orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
-            return f"fl:{indexConf.displayName()}|{searchData.search}|{orPart}|{pathFilter}|{extensionFilter}|{searchData.bCaseSensitive}|{excludeComments}"
+            return f"fl:{indexConf.displayName()}|{searchData.search}|{orPart}|{searchData.folderFilter}|{searchData.extensionFilter}|{searchData.bCaseSensitive}"
     
     def _makeFileMatchCacheKey(self, searchData: ContentQuery, filePath: str) -> str:
             """Build a cache key for the matches inside a single file."""
             orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
             return f"fm:{searchData.search}|{orPart}|{searchData.bCaseSensitive}|{searchData.bExcludeComments}|{filePath}"
 
-    def _makeFileNameCacheKey(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                               pathFilter: str, extensionFilter: str) -> str:
+    def _makeFileNameCacheKey(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration) -> str:
         """Build a cache key for the file list of a file name search."""
-        return f"fn:{indexConf.displayName()}|{searchData.search}|{pathFilter}|{extensionFilter}|{searchData.bCaseSensitive}"
+        return f"fn:{indexConf.displayName()}|{searchData.search}|{searchData.folderFilter}|{searchData.extensionFilter}|{searchData.bCaseSensitive}"
