@@ -203,6 +203,20 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         self._lastBody = data
         return data
 
+    def _getStringOrList(self, data: Dict[str, Any], key: str) -> Union[str,List[str]]:
+        value = data.get(key)
+        if value is None:
+            raise HttpError(400, f"Field '{key}' is mandatory")    
+        if isinstance(value, str):
+            if not value:
+                raise HttpError(400, f"Field '{key}' must not be empty")
+            return value
+        if isinstance(value, list):
+            if not value or any(not q for q in value):
+                raise HttpError(400, f"Field '{key}' must not be empty and must not contain empty strings")
+            return value
+        raise HttpError(400, f"Field '{key}' contains invalid data")        
+
     def _getString(self, data: Dict[str, Any], key: str,
                    default: str = "") -> str:
         value = data.get(key, default)
@@ -346,11 +360,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         folder = self._getOptionalString(data, "folder")
         if folder is not None:
             folder = _correctPathSeparator(folder)
-        query = self._getStringOrList(data, "query")
-        if isinstance(query, str) and not query:
-            raise HttpError(400, "Field 'query' must not be empty")
-        if isinstance(query, list) and any(not q for q in query):
-            raise HttpError(400, "Field 'query' must not contain empty strings")
+        query =self._getStringOrList(data, "query")
         pathFilter = _correctPathSeparator(self._getString(data, "pathFilter", ""))
         extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
@@ -379,11 +389,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         folder = self._getOptionalString(data, "folder")
         if folder is not None:
             folder = _correctPathSeparator(folder)
-        query = self._getStringOrList(data, "query")
-        if isinstance(query, str) and not query:
-            raise HttpError(400, "Field 'query' must not be empty")
-        if isinstance(query, list) and any(not q for q in query):
-            raise HttpError(400, "Field 'query' must not contain empty strings")
+        query = self._getString(data, "query")
         pathFilter = _correctPathSeparator(self._getString(data, "pathFilter", ""))
         extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
