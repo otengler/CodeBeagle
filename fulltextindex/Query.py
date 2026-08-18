@@ -380,7 +380,7 @@ class ContentQuery(Query):
 
     def requiresReadingFile(self) -> bool:
         """True if the query relies on a regex. That is e.g. true if you search for more than one keyword or case sensitive."""
-        if self.hasPartListWithMoreThanOneElement() and self.hasPartTypeUnequalTo(TokenType.IndexPart):
+        if self.hasPartListWithMoreThanOneElement():
             return True
         if self.bCaseSensitive or self.bExcludeComments:
             return True
