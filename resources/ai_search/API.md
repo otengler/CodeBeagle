@@ -79,14 +79,14 @@ in the content or file name search.
 
 Search within file contents. Returns matching lines with surrounding context.
 
-**Request body:**
+**Request body (single query):**
 
 ```json
 {
   "query": "class MyClass*",
   "location": null,
   "folder": "C:\\src\\project",
-  "folderFilter": "",
+  "pathFilter": "",
   "extensionFilter": "",
   "caseSensitive": false,
   "excludeComments": true,
@@ -96,14 +96,25 @@ Search within file contents. Returns matching lines with surrounding context.
 }
 ```
 
+**Request body (multiple queries, OR logic):**
+
+```json
+{
+  "query": ["class Factory", "function createNode"],
+  "folder": "C:\\src\\project",
+  "contextLines": 2,
+  "limit": 100
+}
+```
+
 **Parameters:**
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `query` | string | **yes** | — | Search expression. See [Search Syntax](#search-syntax) below. |
+| `query` | string or string[] | **yes** | — | Search expression or list of expressions (OR logic). See [Search Syntax](#search-syntax) below. |
 | `location` | string | no* | — | Name of a search location from `GET /locations`. |
 | `folder` | string | no* | — | Root folder path to search in. The server resolves this to the best matching location. |
-| `folderFilter` | string | no | `""` | Filter results by folder path. See [Folder Filter](#folder-and-extension-filters). |
+| `pathFilter` | string | no | `""` | Filter results by path. Can be a full file path to select a single file. See [Path Filter](#path-and-extension-filters). |
 | `extensionFilter` | string | no | `""` | Filter results by file extension. See [Extension Filter](#folder-and-extension-filters). |
 | `caseSensitive` | bool | no | `false` | If `true`, search is case-sensitive. |
 | `excludeComments` | bool | no | `true` | If `true`, matches inside comments are excluded (e.g. `//` in C/C++, `#` in Python). |
@@ -174,7 +185,7 @@ Search for file names. Wildcard matching with `*` and `?` is always enabled.
   "query": "Factory*",
   "location": null,
   "folder": "C:\\src\\project",
-  "folderFilter": "",
+  "pathFilter": "",
   "extensionFilter": "",
   "caseSensitive": false,
   "limit": 100,
@@ -189,7 +200,7 @@ Search for file names. Wildcard matching with `*` and `?` is always enabled.
 | `query` | string | **yes** | — | File name pattern. Supports `*` and `?` wildcards. See [Search Syntax](#search-syntax). |
 | `location` | string | no* | — | Name of a search location from `GET /locations`. |
 | `folder` | string | no* | — | Root folder path to search in. |
-| `folderFilter` | string | no | `""` | Filter results by folder path. |
+| `pathFilter` | string | no | `""` | Filter results by path. Can be a full file path to select a single file. |
 | `extensionFilter` | string | no | `""` | Filter results by file extension. |
 | `caseSensitive` | bool | no | `false` | If `true`, search is case-sensitive. |
 | `limit` | int | no | `100` | Maximum number of files per page. |
@@ -280,14 +291,15 @@ Filename search supports `*` and `?` wildcards:
 
 When the query contains a `.`, the part after the last `.` is treated as an extension filter. For example, `*.py` searches for files with any name and `.py` extension. Search for `Factory` to find files named exactly `Factory` (with any extension).
 
-### Folder and Extension Filters
+### Path and Extension Filters
 
 Both content and filename search support optional filters.
 
-**Folder filter** (`folderFilter`):
-- Comma-separated list of folder name patterns.
+**Path filter** (`pathFilter`):
+- Comma-separated list of path patterns.
+- Can be a full file path (e.g. `src/main.cpp`) to select a single file.
 - `*` matches any characters, `?` matches any single character.
-- Prefix with `-` to exclude. Example: `test, -test/mock` matches folders containing "test" but not "test/mock".
+- Prefix with `-` to exclude. Example: `src, -test/mock` matches paths containing "src" but not "test/mock".
 - Applied to the full file path (case-insensitive).
 
 **Extension filter** (`extensionFilter`):
@@ -426,6 +438,6 @@ agent {
 
 9. **Use `excludeComments` (default `true`) to filter out trivial matches** in comments (e.g. TODO notes, documentation). Set `"excludeComments": false` if you want matches in comments too.
 
-10. **For compact output set `"contextLines": 0`** — the response then contains no `contextBefore`/`contextAfter` lines, only `file`, `line`, `matchText` and `fullLine` per match. This reduces response size and is what the PI extension's compact format does.
+10. **For compact output set `"contextLines": 0`** — the response then contains no `contextBefore`/`contextAfter` lines, only `file`, `line`, `matchText` and `fullLine` per match. This reduces response size. The PI extension automatically uses compact output when contextLines=0.
 
 11. **Performance:** Searches are typically fast (milliseconds to seconds). The server uses caching to avoid re-scanning files for paginated requests. The cache has a 5-minute TTL.

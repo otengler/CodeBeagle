@@ -23,27 +23,21 @@ Field names use snake_case; toHttpParams() translates them to the
 camelCase field names expected by the CodeBeagle HTTP API.
 """
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
-# Output format of a tool result, mirroring the PI extension.
-OutputFormat = Literal["json", "compact"]
-
-_OUTPUT_FORMAT_DESCRIPTION = (
-    "Output format: 'json' (default) returns the full JSON response, "
-    "'compact' returns one line per match/file ('path:line: full matching line', "
-    "no context lines)."
-)
 
 class ContentSearchInput(BaseModel):
     """Parameters for a full-text content search (search_content tool)."""
 
-    query: str = Field(
+    query: Union[str, List[str]] = Field(
         description=(
-            "Search expression. Supports keywords ('createNode ( CComVariant'), "
+            "Search expression or list of expressions (OR logic). "
+            "Supports keywords ('createNode ( CComVariant'), "
             "trailing wildcards ('Fact*'), unknown-word gaps ('error **2 network') "
-            "and regex ('code <!\\d+!>')."
+            "and regex ('code <!\\d+!>'). "
+            "When a list is provided, files matching ANY expression are returned."
         )
     )
     folder: Optional[str] = Field(
@@ -59,11 +53,11 @@ class ContentSearchInput(BaseModel):
             "Named search location (from list_locations). Mutually exclusive with 'folder'."
         ),
     )
-    folder_filter: Optional[str] = Field(
+    path_filter: Optional[str] = Field(
         default=None,
         description=(
-            "Comma-separated folder patterns. Prefix with '-' to exclude. "
-            "Example: 'test, -test/mock'"
+            "Path filter pattern. Can be a full file path to select a single file. "
+            "Prefix with '-' to exclude. Example: 'src/, -test/mock'"
         ),
     )
     extension_filter: Optional[str] = Field(
@@ -85,7 +79,7 @@ class ContentSearchInput(BaseModel):
         default=2,
         ge=0,
         le=20,
-        description="Number of context lines before and after each match (default: 2).",
+        description="Number of context lines before and after each match (default: 2). Set to 0 for compact output (no context lines).",
     )
     limit: int = Field(
         default=100,
@@ -101,25 +95,22 @@ class ContentSearchInput(BaseModel):
             "(integer) and optionally 'matchIndex' (integer)."
         ),
     )
-    format: Optional[OutputFormat] = Field(default=None, description=_OUTPUT_FORMAT_DESCRIPTION)
 
     def toHttpParams(self) -> Dict[str, Any]:
-        """Translate to the field names used by the HTTP API, dropping None values.
-
-        Compact output needs no context lines, so contextLines is forced to 0.
-        """
+        """Translate to the field names used by the HTTP API, dropping None values."""
         return _dropNone({
             "query": self.query,
             "folder": self.folder,
             "location": self.location,
-            "folderFilter": self.folder_filter,
+            "pathFilter": self.path_filter,
             "extensionFilter": self.extension_filter,
             "caseSensitive": self.case_sensitive,
             "excludeComments": self.exclude_comments,
-            "contextLines": 0 if self.format == "compact" else self.context_lines,
+            "contextLines": self.context_lines,
             "limit": self.limit,
             "pageOffset": self.page_offset,
         })
+
 
 class FileNameSearchInput(BaseModel):
     """Parameters for a file name search (search_filename tool)."""
@@ -144,11 +135,11 @@ class FileNameSearchInput(BaseModel):
             "Named search location (from list_locations). Mutually exclusive with 'folder'."
         ),
     )
-    folder_filter: Optional[str] = Field(
+    path_filter: Optional[str] = Field(
         default=None,
         description=(
-            "Comma-separated folder patterns. Prefix with '-' to exclude. "
-            "Example: 'src, -test'"
+            "Path filter pattern. Can be a full file path to select a single file. "
+            "Prefix with '-' to exclude. Example: 'src, -test'"
         ),
     )
     extension_filter: Optional[str] = Field(
@@ -173,7 +164,6 @@ class FileNameSearchInput(BaseModel):
             "(integer) and optionally 'matchIndex' (integer)."
         ),
     )
-    format: Optional[OutputFormat] = Field(default=None, description=_OUTPUT_FORMAT_DESCRIPTION)
 
     def toHttpParams(self) -> Dict[str, Any]:
         """Translate to the field names used by the HTTP API, dropping None values."""
@@ -181,12 +171,13 @@ class FileNameSearchInput(BaseModel):
             "query": self.query,
             "folder": self.folder,
             "location": self.location,
-            "folderFilter": self.folder_filter,
+            "pathFilter": self.path_filter,
             "extensionFilter": self.extension_filter,
             "caseSensitive": self.case_sensitive,
             "limit": self.limit,
             "pageOffset": self.page_offset,
         })
+
 
 def _dropNone(data: Dict[str, Any]) -> Dict[str, Any]:
     """Return a copy of the dict without entries whose value is None."""

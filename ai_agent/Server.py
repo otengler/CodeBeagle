@@ -24,7 +24,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import parse_qsl
 from AppConfig import appConfig
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
@@ -54,7 +54,7 @@ class AgentHTTPServer(ThreadingMixIn, HTTPServer):
         self.defaultLimit = defaultLimit
         # History of API calls (thread-safe, capped at 500 entries)
         self.history = AgentHistory()
-        # File list cache: keyed by (query, indexConf.displayName(), folderFilter, extensionFilter, caseSensitive, excludeComments)
+        # File list cache: keyed by (query, indexConf.displayName(), pathFilter, extensionFilter, caseSensitive, excludeComments)
         self.fileListCache = TTLCache(cacheTTL)
         # File matches cache: keyed by (query, caseSensitive, excludeComments, filePath)
         self.fileMatchesCache = TTLCache(cacheTTL)
@@ -346,10 +346,12 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         folder = self._getOptionalString(data, "folder")
         if folder is not None:
             folder = _correctPathSeparator(folder)
-        query = self._getString(data, "query")
-        if not query:
+        query = self._getStringOrList(data, "query")
+        if isinstance(query, str) and not query:
             raise HttpError(400, "Field 'query' must not be empty")
-        folderFilter = _correctPathSeparator(self._getString(data, "folderFilter", ""))
+        if isinstance(query, list) and any(not q for q in query):
+            raise HttpError(400, "Field 'query' must not contain empty strings")
+        pathFilter = _correctPathSeparator(self._getString(data, "pathFilter", ""))
         extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
         excludeComments = self._getBool(data, "excludeComments", True)
@@ -363,7 +365,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         try:
             result = self.server.provider.searchContent(
                 query, location=location, folder=folder,
-                folderFilter=folderFilter, extensionFilter=extensionFilter,
+                pathFilter=pathFilter, extensionFilter=extensionFilter,
                 caseSensitive=caseSensitive, excludeComments=excludeComments,
                 contextLines=contextLines, limit=limit, pageOffset=pageOffset
             )
@@ -377,10 +379,12 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         folder = self._getOptionalString(data, "folder")
         if folder is not None:
             folder = _correctPathSeparator(folder)
-        query = self._getString(data, "query")
-        if not query:
+        query = self._getStringOrList(data, "query")
+        if isinstance(query, str) and not query:
             raise HttpError(400, "Field 'query' must not be empty")
-        folderFilter = _correctPathSeparator(self._getString(data, "folderFilter", ""))
+        if isinstance(query, list) and any(not q for q in query):
+            raise HttpError(400, "Field 'query' must not contain empty strings")
+        pathFilter = _correctPathSeparator(self._getString(data, "pathFilter", ""))
         extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
         limit = self._getInt(data, "limit", self.server.defaultLimit)
@@ -392,7 +396,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         try:
             result = self.server.provider.searchFileName(
                 query, location=location, folder=folder,
-                folderFilter=folderFilter, extensionFilter=extensionFilter,
+                pathFilter=pathFilter, extensionFilter=extensionFilter,
                 caseSensitive=caseSensitive, limit=limit, pageOffset=pageOffset
             )
         except ValueError as e:
@@ -419,7 +423,7 @@ def _hasExcludeFromHistory(path: str) -> bool:
     return any(key == "excludeFromHistory" for key, _ in parse_qsl(query, keep_blank_values=True))
 
 
-def _contentResultToJson(query: str, result: ContentSearchResult) -> Dict[str, object]:
+def _contentResultToJson(query: Union[str, List[str]], result: ContentSearchResult) -> Dict[str, object]:
     matches: List[Dict[str, object]] = []
     for m in result.matches:
         match = {
@@ -427,8 +431,12 @@ def _contentResultToJson(query: str, result: ContentSearchResult) -> Dict[str, o
             "line": m.line,
             "fullLine": m.fullLine
         }
-        if query != m.matchText:
-            match["matchText"] = m.matchText
+        if isinstance(query, str):
+            if query != m.matchText:
+                match["matchText"] = m.matchText
+        else:
+            if m.matchText not in query:
+                match["matchText"] = m.matchText
         if m.contextBefore:
             match["contextBefore"] = m.contextBefore
         if m.contextAfter:

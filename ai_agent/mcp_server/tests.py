@@ -193,18 +193,24 @@ class TestInputTypes(unittest.TestCase):
         })
         # None values must not be sent to the HTTP API.
         self.assertNotIn("location", params)
-        self.assertNotIn("folderFilter", params)
+        self.assertNotIn("pathFilter", params)
         self.assertNotIn("extensionFilter", params)
 
-    def test_compactContentSearchForcesNoContext(self) -> None:
-        params = ContentSearchInput(query="target", context_lines=5, format="compact").toHttpParams()
-        self.assertEqual(params["contextLines"], 0)
-        self.assertNotIn("format", params)
-
-    def test_jsonContentSearchKeepsContext(self) -> None:
-        params = ContentSearchInput(query="target", context_lines=5, format="json").toHttpParams()
+    def test_contentSearchContextLinesPassedThrough(self) -> None:
+        params = ContentSearchInput(query="target", context_lines=5).toHttpParams()
         self.assertEqual(params["contextLines"], 5)
-        self.assertNotIn("format", params)
+
+    def test_contentSearchWithQueryList(self) -> None:
+        params = ContentSearchInput(query=["target", "other"]).toHttpParams()
+        self.assertEqual(params["query"], ["target", "other"])
+
+    def test_contentSearchWithPathFilter(self) -> None:
+        params = ContentSearchInput(query="target", path_filter="src/main.cpp").toHttpParams()
+        self.assertEqual(params["pathFilter"], "src/main.cpp")
+
+    def test_fileNameSearchWithPathFilter(self) -> None:
+        params = FileNameSearchInput(query="*.py", path_filter="src/").toHttpParams()
+        self.assertEqual(params["pathFilter"], "src/")
 
     def test_fileNameSearchToHttpParams(self) -> None:
         params = FileNameSearchInput(query="*.py").toHttpParams()
@@ -289,41 +295,6 @@ class TestMCPServer(unittest.TestCase):
             "limit": 5,
         })
         self.assertIn("C:/src/proj/a.py", self._text(result))
-
-    def test_searchContentCompact(self) -> None:
-        self.client.searchContent.return_value = {"totalFiles": 2, "matches": [
-            {"file": "C:/src/proj/a.py", "line": 3, "fullLine": "def target():"},
-            {"file": "C:/src/proj/b.py", "line": 7, "fullLine": "target = 1"},
-        ]}
-        result = self._call("search_content", {"query": "target", "context_lines": 5, "format": "compact"})
-        self.assertFalse(result.is_error)
-        # Compact mode must not request context lines from the HTTP API.
-        self.client.searchContent.assert_called_once_with({
-            "query": "target", "excludeComments": True, "contextLines": 0,
-            "caseSensitive": False, "limit": 100,
-        })
-        self.assertEqual(
-            self._text(result),
-            "C:/src/proj/a.py:3: def target():\nC:/src/proj/b.py:7: target = 1",
-        )
-
-    def test_searchContentCompactEmpty(self) -> None:
-        self.client.searchContent.return_value = {"totalFiles": 0, "matches": []}
-        result = self._call("search_content", {"query": "zzz", "format": "compact"})
-        self.assertFalse(result.is_error)
-        self.assertEqual(self._text(result), "")
-
-    def test_searchFileNameCompact(self) -> None:
-        self.client.searchFileName.return_value = {"totalFiles": 2, "files": ["a.py", "b.py"]}
-        result = self._call("search_filename", {"query": "*.py", "format": "compact"})
-        self.assertFalse(result.is_error)
-        self.assertEqual(self._text(result), "a.py\nb.py")
-
-    def test_invalidFormatRejected(self) -> None:
-        result = self._call("search_content", {"query": "x", "format": "yaml"})
-        self.assertTrue(result.is_error)
-        self.assertIn("format", self._text(result))
-        self.client.searchContent.assert_not_called()
 
     def test_searchContentValidationError(self) -> None:
         result = self._call("search_content", {"context_lines": 50})

@@ -104,7 +104,21 @@ class FullTextIndex (IndexDatabase):
         # The result is a list of lists of Keyword objects
         kwList: KeywordList = []
         with perfReport.newAction("Finding keywords") as action:
-            kwList = self.__getKeywords(q, query.indexedPartsLower(), reportAction=action)
+            if query.orSearchFor:
+                # OR query: keywords are grouped by position across alternatives.
+                # Each group becomes one keyword-list (union within position),
+                # then __findDocsByKeywordsManualIntersect intersects across positions.
+                for keywordGroup in query.indexedPartsLowerGrouped():
+                    groupKw: List[Keyword] = []
+                    for kw in keywordGroup:
+                        # Look up each word in the group and collect all keyword IDs
+                        result = self.__getKeywords(q, [kw], reportAction=None)
+                        if result and result[0]:
+                            groupKw.extend(result[0])
+                    if groupKw:
+                        kwList.append(groupKw)
+            else:
+                kwList = self.__getKeywords(q, query.indexedPartsLower(), reportAction=action)
             if not kwList:
                 return []
 
@@ -116,7 +130,8 @@ class FullTextIndex (IndexDatabase):
             if not result:
                 return []
 
-        if query.requiresReadingFile():
+        # OR queries always need regex scanning to verify which alternative matched
+        if query.requiresReadingFile() or query.orSearchFor:
             with perfReport.newAction("Filtering results") as action:
                 return self.__filterDocsBySearchPhrase(action, (r[0] for r in result), query, cancelEvent, reportProgress, len(result))
         else:

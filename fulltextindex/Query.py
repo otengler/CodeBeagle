@@ -217,8 +217,9 @@ class QueryError(RuntimeError):
 CommentRuleFetcher = Callable[[str], Optional[CommentRule]]
 
 class QueryParams:
-    def __init__(self, strSearch: str, strFolderFilter: str = "", strExtensionFilter: str = "", bCaseSensitive: bool = False, bExcludeComments: bool = False, commentRuleFetcher: Optional[CommentRuleFetcher] = None) -> None:
+    def __init__(self, strSearch: str, strFolderFilter: str = "", strExtensionFilter: str = "", bCaseSensitive: bool = False, bExcludeComments: bool = False, commentRuleFetcher: Optional[CommentRuleFetcher] = None, orSearchFor: Optional[List[str]] = None) -> None:
         self.strSearch = strSearch
+        self.orSearchFor = orSearchFor
         self.strFolderFilter = strFolderFilter
         self.strExtensionFilter = strExtensionFilter
         self.bCaseSensitive = bCaseSensitive
@@ -228,6 +229,7 @@ class QueryParams:
 class Query (IStringMatcher):
     def __init__(self, params: QueryParams) -> None:
         self.search = params.strSearch
+        self.orSearchFor = params.orSearchFor or []
         self.folderFilterString = params.strFolderFilter
         self.extensionFilterString = params.strExtensionFilter
         self.folderFilter = createFolderFilter(params.strFolderFilter)
@@ -277,34 +279,40 @@ class ContentQuery(Query):
         self.reFlags = 0
         if not self.bCaseSensitive:
             self.reFlags = re.IGNORECASE
-        self.parts = splitSearchParts(self.search)
+        self.partLists = [splitSearchParts(self.search)]
+        for orPart in self.orSearchFor: 
+            self.partLists.append(splitSearchParts(orPart))
+        
         # Check that the search contains at least one indexed part.
         if not self.hasPartTypeEqualTo(TokenType.IndexPart):
             raise QueryError("Sorry, you can't search for that.")
 
     # Returns a list of regular expressions which match all found occurances in a document
     def regExForMatches(self) -> Pattern[str]:
-        regParts = []
-        for t, s in self.parts:
-            if TokenType.IndexPart == t:
-                regParts.append(kwExpr(s))
-            elif TokenType.ScanPart == t:
-                # Regex special characters [\^$.|?*+()
-                for c in s:
-                    if c in regexEscape:
-                        regParts.append("\\" + c)
-                    else:
-                        regParts.append(c)
-            elif TokenType.MatchWordsPart == t:
-                wordCount = int(s)
-                if wordCount:
-                    part = r"\S+"
-                    if wordCount > 1:
-                        part += r"(?:\s+\S+){0,%u}" % (wordCount-1)
-                    regParts.append(part)
-            elif TokenType.RegExPart == t:
-                regParts.append("(?:"+s+")")
-        reExpr = re.compile(r"\s*".join(regParts), self.reFlags)
+        totalRegParts = []
+        for partList in self.partLists:
+            regParts = []
+            for t, s in partList:
+                if TokenType.IndexPart == t:
+                    regParts.append(kwExpr(s))
+                elif TokenType.ScanPart == t:
+                    # Regex special characters [\^$.|?*+()
+                    for c in s:
+                        if c in regexEscape:
+                            regParts.append("\\" + c)
+                        else:
+                            regParts.append(c)
+                elif TokenType.MatchWordsPart == t:
+                    wordCount = int(s)
+                    if wordCount:
+                        part = r"\S+"
+                        if wordCount > 1:
+                            part += r"(?:\s+\S+){0,%u}" % (wordCount-1)
+                        regParts.append(part)
+                elif TokenType.RegExPart == t:
+                    regParts.append("(?:"+s+")")
+            totalRegParts.append(r"\s*".join(regParts))
+        reExpr = re.compile("|".join(totalRegParts), self.reFlags)
         return reExpr
 
     # Yields all matches in str. Each match is returned as the touple (position,length)
@@ -346,36 +354,63 @@ class ContentQuery(Query):
 
     # All indexed parts
     def indexedPartsLower(self) -> Iterator[str]:
-        return (part[1].lower() for part in self.parts if part[0] == TokenType.IndexPart)
+        for partList in self.partLists:
+            for part in partList:
+                if part[0] == TokenType.IndexPart:
+                    yield part[1].lower()
+
+    # Indexed parts grouped by position across OR alternatives.
+    # Each yielded list contains the keywords at the same position from all OR parts.
+    # Used by FullTextIndex to compute (union per position) then intersect across positions.
+    def indexedPartsLowerGrouped(self) -> Iterator[List[str]]:
+        # Collect IndexParts from each part list separately
+        partsPerGroup: List[List[str]] = []
+        for partList in self.partLists:
+            partsPerGroup.append([part[1].lower() for part in partList if part[0] == TokenType.IndexPart])
+        if not partsPerGroup:
+            return
+        maxLen = max(len(g) for g in partsPerGroup)
+        for pos in range(maxLen):
+            group: List[str] = []
+            for g in partsPerGroup:
+                if pos < len(g):
+                    group.append(g[pos])
+            if group:
+                yield group
 
     def requiresReadingFile(self) -> bool:
         """True if the query relies on a regex. That is e.g. true if you search for more than one keyword or case sensitive."""
-        if self.partCount() > 1 and self.hasPartTypeUnequalTo(TokenType.IndexPart):
+        if self.hasPartListWithMoreThanOneElement() and self.hasPartTypeUnequalTo(TokenType.IndexPart):
             return True
         if self.bCaseSensitive or self.bExcludeComments:
             return True
         return False
 
     def hasPartTypeEqualTo(self, partType: TokenType) -> bool:
-        for part in self.parts:
-            if part[0] == partType:
-                return True
+        for partList in self.partLists:
+            for part in partList:
+                if part[0] == partType:
+                    return True
         return False
 
     def hasPartTypeUnequalTo(self, partType: TokenType) -> bool:
-        for part in self.parts:
-            if part[0] != partType:
-                return True
+        for partList in self.partLists:
+            for part in partList:
+                if part[0] != partType:
+                    return True
         return False
 
-    def partCount(self) -> int:
-        return len(self.parts)
+    def hasPartListWithMoreThanOneElement(self) -> bool:
+        for partList in self.partLists:
+            if len(partList) > 1:
+                return True
+        return False
 
 class TestQuery(unittest.TestCase):
     def test(self) -> None:
         self.assertRaises(RuntimeError, ContentQuery, QueryParams("!"))
         s1 = ContentQuery(QueryParams("a < b"))
-        self.assertEqual(s1.parts, [(TokenType.IndexPart, "a"), (TokenType.ScanPart, "<"), (TokenType.IndexPart, "b")])
+        self.assertEqual(s1.partLists, [[(TokenType.IndexPart, "a"), (TokenType.ScanPart, "<"), (TokenType.IndexPart, "b")]])
         self.assertEqual(s1.bCaseSensitive, False)
         s3 = ContentQuery(QueryParams("linux *"))
         self.assertEqual(s3.regExForMatches().pattern, r"\blinux\b\s*\*")

@@ -83,6 +83,25 @@ class TestJsonConversion(unittest.TestCase):
         self.assertIn("pageOffset", j)
         self.assertEqual(j["pageOffset"], {"fileIndex": 2, "matchIndex": 1})
 
+    def test_contentResultToJsonWithListQuery(self) -> None:
+        matches = [
+            ContentMatch(
+                file="C:/test/main.py",
+                line=10,
+                matchText="def main",
+                contextBefore=[], contextAfter=[],
+                fullLine="def main():"
+            )
+        ]
+        result = ContentSearchResult(totalFiles=1, matches=matches)
+        # When matchText is in the query list, it should not be included
+        j: Dict[str, Any] = _contentResultToJson(["def main", "other"], result)
+        self.assertNotIn("matchText", cast(Dict[str, Any], j["matches"][0]))
+
+        # When matchText is not in the query list, it should be included
+        j2: Dict[str, Any] = _contentResultToJson(["other"], result)
+        self.assertIn("matchText", cast(Dict[str, Any], j2["matches"][0]))
+
     def test_fileNameResultToJson(self) -> None:
         result = FileSearchResult(
             totalFiles=5, files=["a.py", "b.py"],
@@ -407,6 +426,86 @@ class TestContentSearchPagination(unittest.TestCase):
                          [("f2.py", 1), ("f2.py", 2)])
         self.assertIsNone(page2.pageOffset)
 
+    def test_searchContentWithMultipleQueries_union(self) -> None:
+        """OR logic: files matching ANY query are returned, even if each file only
+        matches one of the alternatives. This proves the combined regex works."""
+        provider = object.__new__(SearchProvider)
+        provider._fileListCache = TTLCache(60)
+        provider._fileMatchesCache = TTLCache(60)
+        provider._commonKeywordMap = {}
+        provider._indexResolver = SearchIndexResolver(mock.MagicMock())
+        indexConf = mock.MagicMock()
+        indexConf.displayName.return_value = "loc1"
+        # Each file matches only ONE of the two queries
+        content: Dict[str, Optional[str]] = {
+            "C:/test/f1.py": "alpha target only here\n",
+            "C:/test/f2.py": "gamma different only here\n",
+        }
+
+        def read(filePath: str) -> str:
+            value = content[filePath]
+            if value is None:
+                raise OSError(filePath)
+            return value
+
+        with mock.patch.object(provider._indexResolver, "resolve", return_value=indexConf), \
+             mock.patch("ai_agent.SearchProvider.SearchMethods") as sm, \
+             mock.patch("ai_agent.SearchProvider.freadall", side_effect=read):
+            sm.return_value.searchContent.return_value = ResultSet(matches=list(content))
+
+            result = provider.searchContent(["target", "different"], limit=10, excludeComments=False)
+            # Both files should be returned (OR: f1 matches "target", f2 matches "different")
+            self.assertEqual(result.totalFiles, 2)
+            self.assertEqual(len(result.matches), 2)
+            # Verify the match text shows each file matched the correct alternative
+            self.assertEqual(result.matches[0].file, "C:/test/f1.py")
+            self.assertEqual(result.matches[0].matchText, "target")
+            self.assertEqual(result.matches[1].file, "C:/test/f2.py")
+            self.assertEqual(result.matches[1].matchText, "different")
+            # Only a single search call (orSearchFor is passed in QueryParams)
+            self.assertEqual(sm.return_value.searchContent.call_count, 1)
+            # Verify orSearchFor was passed through
+            callArgs = sm.return_value.searchContent.call_args[0]
+            self.assertEqual(callArgs[0].orSearchFor, ["different"])
+
+    def test_searchContentMultipleQueries_areOrNotAnd(self) -> None:
+        """Prove OR vs AND: a file with 'target' but NOT 'different' is still
+        returned when searching for ['target', 'different']. With AND it would
+        be excluded."""
+        provider = object.__new__(SearchProvider)
+        provider._fileListCache = TTLCache(60)
+        provider._fileMatchesCache = TTLCache(60)
+        provider._commonKeywordMap = {}
+        provider._indexResolver = SearchIndexResolver(mock.MagicMock())
+        indexConf = mock.MagicMock()
+        indexConf.displayName.return_value = "loc1"
+        # f1 has only "target", f2 has only "different"
+        content: Dict[str, Optional[str]] = {
+            "C:/test/f1.py": "only target here\n",
+            "C:/test/f2.py": "only different here\n",
+        }
+
+        def read(filePath: str) -> str:
+            value = content[filePath]
+            if value is None:
+                raise OSError(filePath)
+            return value
+
+        with mock.patch.object(provider._indexResolver, "resolve", return_value=indexConf), \
+             mock.patch("ai_agent.SearchProvider.SearchMethods") as sm, \
+             mock.patch("ai_agent.SearchProvider.freadall", side_effect=read):
+            sm.return_value.searchContent.return_value = ResultSet(matches=list(content))
+
+            result = provider.searchContent(["target", "different"], limit=10, excludeComments=False)
+            # Both files must be present (OR)
+            self.assertEqual(result.totalFiles, 2)
+            self.assertEqual(len(result.matches), 2)
+
+            # Single query "target" would only find f1
+            result2 = provider.searchContent("target", limit=10, excludeComments=False)
+            self.assertEqual(len(result2.matches), 1)
+            self.assertEqual(os.path.basename(result2.matches[0].file), "f1.py")
+
 class TestFileNameSearchPagination(unittest.TestCase):
     """Tests for the pagination logic of SearchProvider.searchFileName."""
 
@@ -426,6 +525,20 @@ class TestFileNameSearchPagination(unittest.TestCase):
             sm.return_value.searchFileName.return_value = ResultSet(matches=list(self.allFiles))
             result = self.provider.searchFileName("*.py", limit=limit, pageOffset=pageOffset)
             return result, sm
+
+    def test_emptyQueryListReturnsEmpty(self) -> None:
+        """An empty list of queries should return an empty result."""
+        provider = object.__new__(SearchProvider)
+        provider._fileListCache = TTLCache(60)
+        provider._fileMatchesCache = TTLCache(60)
+        provider._commonKeywordMap = {}
+        provider._indexResolver = SearchIndexResolver(mock.MagicMock())
+        indexConf = mock.MagicMock()
+        indexConf.displayName.return_value = "loc1"
+        with mock.patch.object(provider._indexResolver, "resolve", return_value=indexConf):
+            result = provider.searchContent([], limit=10, excludeComments=False)
+            self.assertEqual(result.totalFiles, 0)
+            self.assertEqual(result.matches, [])
 
     def test_firstPage(self) -> None:
         result, _ = self._search(limit=3)

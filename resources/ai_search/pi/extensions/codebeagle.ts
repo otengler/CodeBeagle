@@ -26,7 +26,6 @@ import {
   DEFAULT_MAX_LINES,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { spawn, type ChildProcess } from "node:child_process";
 import { dirname, join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -120,18 +119,6 @@ const PageOffset = Type.Object({
   matchIndex: Type.Optional(Type.Integer({ description: "Match index within the file" })),
 });
 
-/** Output format: json (default) returns full JSON response; compact returns path:line: text (no context lines). */
-const OutputFormat = Type.Optional(
-  Type.Union([
-    Type.Literal("json", { description: "Full JSON result" }),
-    Type.Literal("compact", { description: "path:line: full matching line (no context lines)" }),
-  ], { description: "Output format (default: json). Compact mode sets contextLines=0 automatically, so no context lines are returned." }),
-);
-
-function formatCompactMatches(matches: any[]): string {
-  return matches.map((m) => `${m.file}:${m.line}: ${m.fullLine}`).join("\n");
-}
-
 function truncate(text: string): string {
   const t = truncateHead(text, { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES });
   let out = t.content;
@@ -155,20 +142,23 @@ export default function (pi: ExtensionAPI) {
       "unknown-word gaps ('error **2 network', regex ('code <!\\d+!>'). " +
       "Specify either 'location' (name from codebeagle_list_indexes) or 'folder' (root path; " +
       "the server resolves the best matching index). Returns matching lines with surrounding context. " +
-      "Set format='json' (default) for JSON output, format='compact' for path:line: text " +
-      "(compact mode returns no context lines). " +
+      "Set contextLines=0 for compact output (path:line: full matching line, no context lines). " +
       "Keep contextLines low (2-3) to bound token usage. " +
       "Pagination: pass pageOffset from a previous response to fetch the next page.",
     promptSnippet: "Search CodeBeagle-indexed location for content (keywords, wildcards, regex, context lines)",
     promptGuidelines: [
-      "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`. " + 
+      "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`. " +
       "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
     ],
     parameters: Type.Object({
-      query: Type.String({
-        description:
-          "Search query. Examples: 'malloc', 'createNode ( CComVariant', 'error **5 <!\\d+!>'",
-      }),
+      query: Type.Union([
+        Type.String({
+          description: "Search query. Examples: 'malloc', 'createNode ( CComVariant', 'error **5 <!\\d+!>'",
+        }),
+        Type.Array(Type.String(), {
+          description: "List of search queries (OR logic). Files matching ANY query are returned.",
+        }),
+      ]),
       location: Type.Optional(
         Type.String({
           description: "Search location name from codebeagle_list_indexes. Mutually exclusive with folder.",
@@ -179,31 +169,25 @@ export default function (pi: ExtensionAPI) {
           description: "Root folder path; the server resolves the best matching index. Mutually exclusive with location.",
         }),
       ),
-      folderFilter: Type.Optional(Type.String({ description: "Folder filter, e.g. 'src/, -test/'" })),
+      pathFilter: Type.Optional(Type.String({ description: "Path filter. Can be a full file path to select a single file, e.g. 'src/main.cpp'" })),
       extensionFilter: Type.Optional(
         Type.String({ description: "Extension filter, e.g. '.cpp,.h,-.hpp'" }),
       ),
       caseSensitive: Type.Optional(Type.Boolean({ description: "Case-sensitive search (default: false)" })),
       excludeComments: Type.Optional(Type.Boolean({ description: "Exclude matches inside comments (default: true)" })),
       contextLines: Type.Optional(
-        Type.Integer({ description: "Context lines before/after each match (default 2)" }),
+        Type.Integer({ description: "Context lines before/after each match (default 2). Set to 0 for compact output (no context lines)." }),
       ),
       limit: Type.Optional(Type.Integer({ description: "Max matches per page (default 100)" })),
       pageOffset: Type.Optional(PageOffset),
-      format: OutputFormat,
     }),
     async execute(_toolCallId: any, params: any, signal: any, _onUpdate: any) {
-      const { format: outputFormat, ...apiParams } = params;
-      if (outputFormat === "compact") {
-        apiParams.contextLines = 0; // no context lines in compact mode
-      }
-      const result = await callApi("/api/v1/search/content", "POST", apiParams, signal);
+      const result = await callApi("/api/v1/search/content", "POST", params, signal);
       let body: string;
-      if (outputFormat === "compact") {
-        // path:line: full matching line
-        body = formatCompactMatches(result.matches);
+      if (params.contextLines === 0) {
+        // Compact output: path:line: full matching line
+        body = (result.matches || []).map((m: any) => `${m.file}:${m.line}: ${m.fullLine}`).join("\n");
       } else {
-        // Default: raw JSON for programmatic consumption
         body = JSON.stringify(result, null, 2);
       }
       const more = result.pageOffset
@@ -221,36 +205,29 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: Search File Names",
     description:
       "Search for files by name across CodeBeagle-indexed source code. " +
+      "This replaces the 'find' command for indexed locations. " +
       "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). " +
       "If the query contains a dot, the part after the last dot is used as an extension filter. " +
       "Specify either 'location' or 'folder'. " +
-      "Set format='json' (default) for JSON output, format='compact' for file paths. " +
       "Pagination: pass pageOffset from a previous response to fetch the next page.",
     promptSnippet: "Search CodeBeagle-indexed location for file names.",
     promptGuidelines: [
-      "Use codebeagle_file_search when the user asks to find files by name. " +
+      "Use codebeagle_file_search when the user asks to find files by name. It replaces calls to `find`. " +
       "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
     ],
     parameters: Type.Object({
       query: Type.String({ description: "File name pattern, e.g. 'main*', '*test*.py', 'Makefile'" }),
       location: Type.Optional(Type.String({ description: "Search location name from codebeagle_list_indexes" })),
       folder: Type.Optional(Type.String({ description: "Root folder path" })),
-      folderFilter: Type.Optional(Type.String({ description: "Folder filter, e.g. 'src/, -test/'" })),
+      pathFilter: Type.Optional(Type.String({ description: "Path filter. Can be a full file path to select a single file, e.g. 'src/main.cpp'" })),
       extensionFilter: Type.Optional(Type.String({ description: "Extension filter, e.g. '.py,.js'" })),
       caseSensitive: Type.Optional(Type.Boolean({ description: "Case-sensitive search (default: false)" })),
       limit: Type.Optional(Type.Integer({ description: "Max files per page (default 100)" })),
       pageOffset: Type.Optional(PageOffset),
-      format: OutputFormat,
     }),
     async execute(_toolCallId: any, params: any, signal: any) {
-      const { format: outputFormat, ...apiParams } = params;
-      const result = await callApi("/api/v1/search/filename", "POST", apiParams, signal);
-      let body: string;
-      if (outputFormat === "compact") {
-        body = result.files.join("\n");
-      } else {
-        body = JSON.stringify(result, null, 2);
-      }
+      const result = await callApi("/api/v1/search/filename", "POST", params, signal);
+      const body = JSON.stringify(result, null, 2);
       const more = result.pageOffset
         ? `\n\nMore results available. Call codebeagle_file_search again with the same parameters plus pageOffset=${JSON.stringify(result.pageOffset)}.`
         : "";

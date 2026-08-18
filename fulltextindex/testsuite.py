@@ -445,6 +445,106 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual(good[1], [Keyword(102, "true")])
         self.assertEqual(bad[0], [Keyword(100, "whi"), Keyword(101, "while")])
 
+    def testContentSearchOR(self) -> None:
+        """
+        Test OR logic: orSearchFor in QueryParams causes files matching ANY
+        query alternative to be returned (both at DB keyword level and regex level).
+        """
+        testPath = os.getcwd()
+        testDb = "test-or.dat"
+        testDir = "data_or"
+
+        delFile(testDb)
+        if os.path.exists(testDir):
+            delDir(testDir)
+        os.mkdir(testDir)
+
+        # Four files: A matches only query1, B matches only query2,
+        # C matches both, D matches neither.
+        with open(os.path.join(testDir, "file_a.c"), "w") as f:
+            f.write("onlyBambi")
+        with open(os.path.join(testDir, "file_b.c"), "w") as f:
+            f.write("onlyTom")
+        with open(os.path.join(testDir, "file_c.c"), "w") as f:
+            f.write("onlyBambi onlyTom")
+        with open(os.path.join(testDir, "file_d.c"), "w") as f:
+            f.write("neither")
+
+        forAllFiles(testDir, setTime)
+
+        config = IndexConfiguration("test", ".c", os.path.join(testPath, testDir), indexdb=testDb)
+        updateStats = UpdateStatistics()
+        updater = IndexUpdater(testDb)
+        updater.updateIndex(config, updateStats)
+        self.assertEqual(updateStats.nNew, 4)
+
+        fti = FullTextIndex(testDb)
+
+        print("\n================== ContentSearch OR Test1 ==================")
+        # Single query "onlyBambi" finds A and C
+        q = ContentQuery(QueryParams("onlyBambi"))
+        result = fti.searchContent(q)
+        exp = [
+            os.path.join(testPath, testDir, "file_a.c"),
+            os.path.join(testPath, testDir, "file_c.c"),
+        ]
+        self.assertEqual(result, exp)
+
+        print("\n================== ContentSearch OR Test2 ==================")
+        # Single query "onlyTom" finds B and C
+        q = ContentQuery(QueryParams("onlyTom"))
+        result = fti.searchContent(q)
+        exp = [
+            os.path.join(testPath, testDir, "file_b.c"),
+            os.path.join(testPath, testDir, "file_c.c"),
+        ]
+        self.assertEqual(result, exp)
+
+        print("\n================== ContentSearch OR Test3 ==================")
+        # OR query: "onlyBambi" with orSearchFor=["onlyTom"] finds A, B, C
+        q = ContentQuery(QueryParams("onlyBambi", orSearchFor=["onlyTom"]))
+        result = fti.searchContent(q)
+        exp = [
+            os.path.join(testPath, testDir, "file_a.c"),
+            os.path.join(testPath, testDir, "file_b.c"),
+            os.path.join(testPath, testDir, "file_c.c"),
+        ]
+        self.assertEqual(result, exp)
+
+        print("\n================== ContentSearch OR Test4 ==================")
+        # Verify that file_d ("neither") is NOT in the results
+        self.assertNotIn(os.path.join(testPath, testDir, "file_d.c"), result)
+
+        print("\n================== ContentSearch OR Test5 ==================")
+        # OR with "neither": finds A (matches "onlyBambi"), C (matches "onlyBambi"), D (matches "neither")
+        q = ContentQuery(QueryParams("onlyBambi", orSearchFor=["neither"]))
+        result = fti.searchContent(q)
+        exp = [
+            os.path.join(testPath, testDir, "file_a.c"),
+            os.path.join(testPath, testDir, "file_c.c"),
+            os.path.join(testPath, testDir, "file_d.c"),
+        ]
+        self.assertEqual(result, exp)
+
+        print("\n================== ContentSearch OR Test6 ==================")
+        # OR with regex alternatives: search for "onlyTom" OR "neither"
+        q = ContentQuery(QueryParams("onlyTom", orSearchFor=["neither"]))
+        result = fti.searchContent(q)
+        exp = [
+            os.path.join(testPath, testDir, "file_b.c"),
+            os.path.join(testPath, testDir, "file_c.c"),
+            os.path.join(testPath, testDir, "file_d.c"),
+        ]
+        self.assertEqual(result, exp)
+
+        # Clean up (fti must be released before deleting the database)
+        fti.conn.close()  # type: ignore[attr-defined]
+        updater.conn.close()
+        fti = None  # type: ignore[assignment]
+        updater = None
+        delDir(testDir)
+        delFile(testDb)
+
     def testExcludedExtensions(self) -> None:
         """Test that excluded file extensions are correctly tracked in the database."""
         testPath = os.getcwd()

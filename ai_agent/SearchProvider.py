@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional, Union, cast
 from PyQt5.QtGui import QFont
 from AppConfig import appConfig
 from tools.FileTools import freadall
@@ -61,10 +61,10 @@ class SearchProvider:
         indexConfigs = IndexConfiguration.readConfig(self._config)
         return [SearchLocation(c) for c in indexConfigs]
 
-    def searchContent(self, query: str, *,
+    def searchContent(self, query: Union[str, List[str]], *,
                       location: Optional[str] = None,
                       folder: Optional[str] = None,
-                      folderFilter: str = "",
+                      pathFilter: str = "",
                       extensionFilter: str = "",
                       caseSensitive: bool = False,
                       excludeComments: bool = True,
@@ -75,33 +75,51 @@ class SearchProvider:
         Search file content.
 
         Args:
-            query: Search string (same syntax as GUI search box, wildcards supported).
+            query: Search string or list of strings (same syntax as GUI search box, wildcards supported).
+                   When a list is provided, files matching ANY of the queries are returned (OR logic).
             location: Name of the search location (from getLocations()).
             folder: Root folder path to search in (alternative to location).
-            folderFilter: Optional folder filter pattern.
+            pathFilter: Optional path filter pattern. Can be a full file path to select a single file.
             extensionFilter: Optional extension filter pattern.
             caseSensitive: Whether to search case-sensitively.
             excludeComments: If True (default), exclude matches inside comments.
-            contextLines: Number of context lines before/after each match.
+            contextLines: Number of context lines before/after each match. Set to 0 for compact output (no context lines).
             limit: Maximum number of matches to return.
             pageOffset: Cursor for pagination, from a previous response.
 
         Returns:
             ContentSearchResult with matches and pagination cursor.
         """
+        if isinstance(query, list) and not query:
+            return ContentSearchResult(totalFiles=0, matches=[], pageOffset=None)
 
         indexConf = self._indexResolver.resolve(location, folder, "content", extensionFilter)
         self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
 
+        # Use orSearchFor to combine multiple queries into a single index + regex scan
+        if isinstance(query, list):
+            orSearchFor = list(query[1:])
+            search = query[0]
+        else:
+            orSearchFor = []
+            search = query
+
         params = QueryParams(
-            strSearch=query,
-            strFolderFilter=folderFilter,
+            strSearch=search,
+            strFolderFilter=pathFilter,
             strExtensionFilter=extensionFilter,
-            bCaseSensitive=caseSensitive
+            bCaseSensitive=caseSensitive,
+            orSearchFor=orSearchFor
         )
         searchData = ContentQuery(params)
+
+        # Set comment rule fetcher if comment exclusion is requested
+        if excludeComments:
+            searchData.bExcludeComments = True
+            searchData.commentRuleFetcher = self.__commentRuleForFile
+
         # Check file list cache
-        cacheKey = self._makeFileListCacheKey(searchData, indexConf, folderFilter, extensionFilter, excludeComments)
+        cacheKey = self._makeFileListCacheKey(searchData, indexConf, pathFilter, extensionFilter, excludeComments)
         matchingFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
         if matchingFiles is None:
             ftiSearch = SearchMethods()
@@ -112,11 +130,6 @@ class SearchProvider:
         if not matchingFiles:
             return ContentSearchResult(totalFiles=0, matches=[], pageOffset=None)
 
-        # Build comment rule fetcher if comment exclusion is requested
-        if excludeComments:
-            searchData.bExcludeComments = True
-            searchData.commentRuleFetcher = self.__commentRuleForFile
-
         # Build paginated matches from the matching files
         return self._buildContentResults(
             matchingFiles, searchData, contextLines, limit, pageOffset
@@ -125,7 +138,7 @@ class SearchProvider:
     def searchFileName(self, query: str, *,
                            location: Optional[str] = None,
                            folder: Optional[str] = None,
-                           folderFilter: str = "",
+                           pathFilter: str = "",
                            extensionFilter: str = "",
                            caseSensitive: bool = False,
                            limit: int = 100,
@@ -137,7 +150,7 @@ class SearchProvider:
             query: File name pattern (supports * and ? wildcards).
             location: Name of the search location (from getLocations()).
             folder: Root folder path to search in (alternative to location).
-            folderFilter: Optional folder filter pattern.
+            pathFilter: Optional path filter pattern. Can be a full file path to select a single file.
             extensionFilter: Optional extension filter pattern.
             caseSensitive: Whether to search case-sensitively.
             limit: Maximum number of files to return.
@@ -151,14 +164,14 @@ class SearchProvider:
 
         params = QueryParams(
             strSearch=query,
-            strFolderFilter=folderFilter,
+            strFolderFilter=pathFilter,
             strExtensionFilter=extensionFilter,
             bCaseSensitive=caseSensitive
         )
         searchData = FileQuery(params)
 
         # Check file list cache
-        cacheKey = self._makeFileNameCacheKey(searchData, indexConf, folderFilter, extensionFilter)
+        cacheKey = self._makeFileNameCacheKey(searchData, indexConf, pathFilter, extensionFilter)
         allFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
 
         if allFiles is None:
@@ -288,15 +301,17 @@ class SearchProvider:
                 self._commonKeywordMap = {}
     
     def _makeFileListCacheKey(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                                   folderFilter: str, extensionFilter: str, excludeComments: bool = False) -> str:
+                                   pathFilter: str, extensionFilter: str, excludeComments: bool = False) -> str:
             """Build a cache key for the file list of a content search."""
-            return f"fl:{indexConf.displayName()}|{searchData.search}|{folderFilter}|{extensionFilter}|{searchData.bCaseSensitive}|{excludeComments}"
+            orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
+            return f"fl:{indexConf.displayName()}|{searchData.search}|{orPart}|{pathFilter}|{extensionFilter}|{searchData.bCaseSensitive}|{excludeComments}"
     
     def _makeFileMatchCacheKey(self, searchData: ContentQuery, filePath: str) -> str:
             """Build a cache key for the matches inside a single file."""
-            return f"fm:{searchData.search}|{searchData.bCaseSensitive}|{searchData.bExcludeComments}|{filePath}"
+            orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
+            return f"fm:{searchData.search}|{orPart}|{searchData.bCaseSensitive}|{searchData.bExcludeComments}|{filePath}"
 
     def _makeFileNameCacheKey(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration,
-                               folderFilter: str, extensionFilter: str) -> str:
+                               pathFilter: str, extensionFilter: str) -> str:
         """Build a cache key for the file list of a file name search."""
-        return f"fn:{indexConf.displayName()}|{searchData.search}|{folderFilter}|{extensionFilter}|{searchData.bCaseSensitive}"
+        return f"fn:{indexConf.displayName()}|{searchData.search}|{pathFilter}|{extensionFilter}|{searchData.bCaseSensitive}"

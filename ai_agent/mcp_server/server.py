@@ -147,7 +147,7 @@ class CodeBeagleMCPServer:
         except Exception as e:
             logger.exception("Tool %s failed", name)
             return _toolError(f"Internal error: {e}")
-        text = _formatResult(name, data, arguments.get("format"))
+        text = _formatResult(name, data)
         return types.CallToolResult(content=[types.TextContent(type="text", text=text)])
 
     # ---- Tool implementations ----
@@ -163,21 +163,8 @@ class CodeBeagleMCPServer:
 
 # ---- Result formatting helpers ----
 
-def _formatResult(name: str, data: Dict[str, Any], outputFormat: Any) -> str:
-    """Format a tool result: JSON (default) or compact path:line lines."""
-    if outputFormat == "compact":
-        if name == "search_content":
-            matches = data.get("matches")
-            if isinstance(matches, list):
-                return "\n".join(
-                    f"{m.get('file')}:{m.get('line')}: {m.get('fullLine')}"
-                    for m in matches
-                    if isinstance(m, dict)
-                )
-        if name == "search_filename":
-            files = data.get("files")
-            if isinstance(files, list):
-                return "\n".join(str(f) for f in files)
+def _formatResult(name: str, data: Dict[str, Any]) -> str:
+    """Format a tool result as JSON."""
     return json.dumps(data, ensure_ascii=False, indent=2)
 
 def _toolError(message: str) -> types.CallToolResult:
