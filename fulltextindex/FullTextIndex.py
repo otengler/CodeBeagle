@@ -126,8 +126,7 @@ class FullTextIndex (IndexDatabase):
             if not result:
                 return []
 
-        # OR queries always need regex scanning to verify which alternative matched
-        if query.requiresReadingFile() or query.orSearchFor:
+        if query.requiresReadingFile():
             with perfReport.newAction("Filtering results") as action:
                 return self.__filterDocsBySearchPhrase(action, (r[0] for r in result), query, cancelEvent, reportProgress, len(result))
         else:
