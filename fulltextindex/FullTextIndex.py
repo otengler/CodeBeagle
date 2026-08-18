@@ -110,10 +110,8 @@ class FullTextIndex (IndexDatabase):
             for keywordGroup in query.indexedPartsLowerGrouped():
                 groupKw: List[Keyword] = []
                 # Look up each word in the group and collect all keyword IDs
-                queryResults = self.__getKeywords(q, keywordGroup, reportAction=None)
-                for kwEntry in queryResults:
-                    if kwEntry:
-                        groupKw.extend(kwEntry)
+                for kwEntry in self.__getKeywords(q, keywordGroup, reportAction=None):
+                    groupKw.extend(kwEntry)
                 if groupKw:
                     kwList.append(groupKw)
             
