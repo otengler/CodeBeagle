@@ -71,7 +71,7 @@ const BASE_URL = resolveBaseUrl();
 
 const SERVER_DOWN_HINT =
   `The CodeBeagle agent server is not reachable at ${BASE_URL}. ` +
-  `Run the CodeBeagle GUI and enable the 'AI agent' or use the standalone CodeBeagleAgentServer).`;
+  `Run the CodeBeagle GUI and enable the 'AI agent' or use the standalone CodeBeagleAgentServer.`;
 
 const NOT_INDEXED_HINT =
   `The requested path is not indexed. Fallback to searching without codebeagle_content_search or codebeagle_file_search.`
@@ -140,15 +140,17 @@ export default function (pi: ExtensionAPI) {
       "Full-text search across CodeBeagle-indexed source code. " +
       "Query syntax: keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), " +
       "unknown-word gaps ('error **2 network', regex ('code <!\\d+!>'). " +
-      "Specify either 'location' (name from codebeagle_list_indexes) or 'folder' (root path; " +
-      "the server resolves the best matching index). Returns matching lines with surrounding context. " +
+      "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
+      "By default returns matching lines with surrounding context. " +
       "Set contextLines=0 for compact output (path:line: full matching line, no context lines). " +
       "Keep contextLines low (2-3) to bound token usage. " +
-      "Pagination: pass pageOffset from a previous response to fetch the next page.",
+      "Pagination: pass pageOffset from a previous response to fetch the next page." + 
+      "This tool replaces 'grep'. ",
     promptSnippet: "Search CodeBeagle-indexed location for content (keywords, wildcards, regex, context lines)",
     promptGuidelines: [
       "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`. " +
-      "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
+      "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. " + 
+      "Use codebeagle_content_search with 'folder' and handle error 'The requested path is not indexed'. Fallback to 'grep' can then still be used.
     ],
     parameters: Type.Object({
       query: Type.Union([
@@ -205,16 +207,15 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: Search File Names",
     description:
       "Search for files by name across CodeBeagle-indexed source code. " +
-      "This replaces the 'find' command for indexed locations. " +
       "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). " +
       "Pass a list of queries for OR logic: files matching ANY pattern are returned. " +
-      "If the query contains a dot, the part after the last dot is used as an extension filter. " +
-      "Specify either 'location' or 'folder'. " +
-      "Pagination: pass pageOffset from a previous response to fetch the next page.",
+      "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
+      "Pagination: pass pageOffset from a previous response to fetch the next page." + 
+      "This tool replaces 'find'.",
     promptSnippet: "Search CodeBeagle-indexed location for file names.",
     promptGuidelines: [
       "Use codebeagle_file_search when the user asks to find files by name. It replaces calls to `find`. " +
-      "Pass multiple queries as an array for OR matching. " +
+      "Pass multiple queries as an array for OR matching. E.g. searching for all 'h' and 'cpp' means using ['*.h', '*.cpp'] as 'query'" +
       "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
     ],
     parameters: Type.Object({
@@ -225,7 +226,7 @@ export default function (pi: ExtensionAPI) {
       location: Type.Optional(Type.String({ description: "Search location name from codebeagle_list_indexes" })),
       folder: Type.Optional(Type.String({ description: "Root folder path" })),
       pathFilter: Type.Optional(Type.String({ description: "Path filter. Can be a full file path to select a single file, e.g. 'src/main.cpp'" })),
-      extensionFilter: Type.Optional(Type.String({ description: "Extension filter, e.g. '.py,.js'" })),
+      extensionFilter: Type.Optional(Type.String({ description: "Extension filter, e.g. '.py,.js'. Has precedance over the extensions in query string. Rarely needed." })),
       caseSensitive: Type.Optional(Type.Boolean({ description: "Case-sensitive search (default: false)" })),
       limit: Type.Optional(Type.Integer({ description: "Max files per page (default 100)" })),
       pageOffset: Type.Optional(PageOffset),
@@ -248,7 +249,7 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: List Search Locations",
     description:
       "List all available CodeBeagle search locations (indexes): name, folders, extensions, index mode. " +
-      "Call this first to discover what is searchable, then pass the location name to codebeagle_content_search / codebeagle_file_search.",
+      "Call this to discover what is searchable, then pass the location name to codebeagle_content_search / codebeagle_file_search.",
     promptSnippet: "List CodeBeagle search locations (indexes)",
     promptGuidelines: [
       "Call codebeagle_list_indexes when the user wants to find files or search inside files (like grep), to discover available search locations. " +
