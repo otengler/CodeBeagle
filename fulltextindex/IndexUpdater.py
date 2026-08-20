@@ -31,8 +31,9 @@ from .IndexConfiguration import IndexConfiguration, IndexType, indexTypeToString
 reTokenize = re.compile(r"[\w#]+")
 
 def __fixExtension(ext: str) -> str:
+    """A single dot means no extension"""
     if ext != ".":
-        return ext
+        return ext 
     return ""
 
 def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]=None, ignoredExts: Optional[Dict[str, int]]=None) -> Iterator[Tuple[str,str]]:
@@ -55,7 +56,7 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]
                 continue
         for name in filelist:
             ext = os.path.splitext(name)[1].lower()
-            if ext in filepatFixed:
+            if not filepatFixed or ext in filepatFixed:
                 yield (path, name)
             elif ignoredExts is not None:
                 ignoredExts[ext] = ignoredExts.get(ext, 0) + 1

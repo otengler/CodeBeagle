@@ -62,29 +62,29 @@ ToolDef = Tuple[
 
 _DESC_LIST_LOCATIONS = (
     "List all configured CodeBeagle search locations (indexes): name, folders, "
-    "extensions and index mode. Call this first to discover what is searchable, "
+    "extensions and index mode. Call this to discover what is searchable, "
     "then pass the location name to search_content / search_filename."
 )
+
 _DESC_SEARCH_CONTENT = (
-    "Full-text search across CodeBeagle-indexed source code. Query syntax: "
-    "keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), "
-    "unknown-word gaps ('error **2 network'), regex ('code <!\\d+!>'). "
-    "Pass a list of queries for OR logic: files matching ANY expression "
-    "are returned. Specify either 'location' (name from list_locations) or "
-    "'folder' (root path; the server resolves the best matching index). "
-    "Returns matching lines with surrounding context and a pageOffset if more "
-    "results exist; pass that pageOffset back as the page_offset parameter to "
-    "fetch the next page. Set context_lines=0 for compact output: matches "
-    "are returned as 'path:line: full matching line' strings."
+    "Full-text search across CodeBeagle-indexed source code. " +
+    "Query syntax: keywords ('createNode ( CComVariant'), wildcards ('Fact* *ban*na'), " +
+    "unknown-word gaps ('error **2 network', regex ('code <!\\d+!>'). " +
+    "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
+    "By default returns matching lines with surrounding context. " +
+    "Set contextLines=0 for compact output (path:line: full matching line, no context lines). " +
+    "Keep contextLines low (2-3) to bound token usage. " +
+    "Pagination: pass pageOffset from a previous response to fetch the next page." + 
+    "This tool replaces 'grep'. "
 )
+
 _DESC_SEARCH_FILENAME = (
-    "Search for files by name across CodeBeagle-indexed source code. "
-    "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). "
-    "A list of patterns can be provided for OR logic: files matching ANY pattern "
-    "are returned. If the query contains a dot, the part after the last dot is "
-    "used as an extension filter. Returns full file paths and a pageOffset if "
-    "more results exist; pass that pageOffset back as the page_offset parameter "
-    "to fetch the next page."
+    "Search for files by name across CodeBeagle-indexed source code. " +
+    "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). " +
+    "Pass a list of queries for OR logic: files matching ANY pattern are returned. " +
+    "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
+    "Pagination: pass pageOffset from a previous response to fetch the next page." + 
+    "This tool replaces 'find'."
 )
 
 _EMPTY_SCHEMA: Dict[str, Any] = {"type": "object", "properties": {}, "required": []}

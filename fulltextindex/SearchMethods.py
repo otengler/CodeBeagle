@@ -87,6 +87,10 @@ class SearchMethods:
     def searchFileName(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         try:
             if indexConf.isFileNameIndexed():
+                if searchData.orSearchFor:
+                    # The file name search splits name and extension. It can't search for foo.h OR bar.cpp. You will then also get foo.cpp and bar.h.
+                    # The direct search can handle this.
+                    raise RuntimeError("OR is not supported for file name search")
                 return self.__searchFileNameIndexed(searchData, indexConf, cancelEvent)
             return self.__searchFileNameDirect(searchData, indexConf, cancelEvent)
         finally:
@@ -103,18 +107,27 @@ class SearchMethods:
         return result
 
     def __searchFileNameDirect(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration, cancelEvent: Optional[threading.Event]=None) -> ResultSet:
-        search = searchData.search
-        searchLower = search.lower()
+        queries = [searchData.search]
+        if searchData.orSearchFor:
+            queries.extend(searchData.orSearchFor)
 
-        hasWildcards = hasFileNameWildcard(search)
+        hasWildcards = any(hasFileNameWildcard(search) for search in queries)
         bCaseSensitive = searchData.bCaseSensitive
 
+        directMatch = set()
         searchPattern: Pattern[str]
-        if hasWildcards:
+
+        if not hasWildcards:
+            for search in queries:
+                if bCaseSensitive:
+                    directMatch.add(search)
+                else:
+                    directMatch.add(search.lower())
+        else:
             reFlags = 0
             if not bCaseSensitive:
                 reFlags = re.IGNORECASE
-            searchPattern = re.compile(createPathMatchPattern(search, True), reFlags)
+            searchPattern = re.compile("|".join(createPathMatchPattern(search, True) for search in queries), reFlags)
 
         matches: List[str] = []
         for directory in indexConf.directories:
@@ -123,10 +136,10 @@ class SearchMethods:
                 name, ext = os.path.splitext(fileName)
                 if not hasWildcards:
                     if bCaseSensitive:
-                        if name != search:
+                        if not name in directMatch:
                             continue
                     else:
-                        if name.lower() != searchLower:
+                        if name.lower() not in directMatch:
                             continue
                 elif not searchPattern.match(name):
                     continue

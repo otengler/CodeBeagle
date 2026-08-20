@@ -138,7 +138,7 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: Search Content",
     description:
       "Full-text search across CodeBeagle-indexed source code. " +
-      "Query syntax: keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), " +
+      "Query syntax: keywords ('createNode ( CComVariant'), wildcards ('Fact* *ban*na'), " +
       "unknown-word gaps ('error **2 network', regex ('code <!\\d+!>'). " +
       "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
       "By default returns matching lines with surrounding context. " +
@@ -226,7 +226,6 @@ export default function (pi: ExtensionAPI) {
       location: Type.Optional(Type.String({ description: "Search location name from codebeagle_list_indexes" })),
       folder: Type.Optional(Type.String({ description: "Root folder path" })),
       pathFilter: Type.Optional(Type.String({ description: "Path filter. Can be a full file path to select a single file, e.g. 'src/main.cpp'" })),
-      extensionFilter: Type.Optional(Type.String({ description: "Extension filter, e.g. '.py,.js'. Has precedance over the extensions in query string. Rarely needed." })),
       caseSensitive: Type.Optional(Type.Boolean({ description: "Case-sensitive search (default: false)" })),
       limit: Type.Optional(Type.Integer({ description: "Max files per page (default 100)" })),
       pageOffset: Type.Optional(PageOffset),

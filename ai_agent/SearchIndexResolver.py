@@ -39,7 +39,7 @@ class SearchIndexResolver:
     def resolve(self, location: Optional[str] = None,
                 folder: Optional[str] = None,
                 searchType: str = "content",
-                extensionFilter: str = "") -> IndexConfiguration.IndexConfiguration:
+                extensionFilter: str = "") -> Optional[IndexConfiguration.IndexConfiguration]:
         """
         Resolve an IndexConfiguration from either a location name or a folder path.
 
@@ -56,14 +56,13 @@ class SearchIndexResolver:
         if location and folder:
             raise ValueError("Only one of 'location' or 'folder' may be specified")
 
-        indexConfigs = IndexConfiguration.readConfig(self._config)
-        if not indexConfigs:
-            raise ValueError("No search locations configured")
+        indexConfigs = IndexConfiguration.readConfig(self._config) or []
 
         if location:
             for conf in indexConfigs:
                 if conf.displayName() == location:
                     return conf
+
             raise ValueError(f"Search location '{location}' not found")
 
         if folder:
@@ -74,11 +73,12 @@ class SearchIndexResolver:
                 conf for conf in indexConfigs
                 if self._folderCovered(conf, folder)
             ]
-            if not candidates:
-                raise ValueError(f"No search location found for folder '{folder}'")
-            return self._preferIndexed(candidates, searchType, extensionFilter)
+            if candidates:
+                return self._preferIndexed(candidates, searchType, extensionFilter)
 
-        raise ValueError("Either 'location' or 'folder' must be specified")
+            return None
+        
+        raise ValueError("Either 'location' or 'folder' must be specified")       
 
     def checkExtensionFilter(self, extensionFilter: str,
                              indexConf: IndexConfiguration.IndexConfiguration) -> None:

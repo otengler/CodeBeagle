@@ -391,7 +391,6 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             folder = _correctPathSeparator(folder)
         query = self._getStringOrList(data, "query")
         pathFilter = _correctPathSeparator(self._getString(data, "pathFilter", ""))
-        extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
         limit = self._getInt(data, "limit", self.server.defaultLimit)
         pageOffset = self._getPageOffset(data)
@@ -402,8 +401,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         try:
             result = self.server.provider.searchFileName(
                 query, location=location, folder=folder,
-                pathFilter=pathFilter, extensionFilter=extensionFilter,
-                caseSensitive=caseSensitive, limit=limit, pageOffset=pageOffset
+                pathFilter=pathFilter, caseSensitive=caseSensitive, limit=limit, pageOffset=pageOffset
             )
         except ValueError as e:
             raise HttpError(404, str(e))
@@ -430,15 +428,15 @@ def _hasExcludeFromHistory(path: str) -> bool:
 
 
 def _contentResultToJson(query: Union[str, List[str]], contextLines: int, result: ContentSearchResult) -> Dict[str, object]:
+    matches: List[Union[str, Dict[str, object]]] = []
     if contextLines == 0:
         # Compact format: return matches as strings
-        matches: List[str] = [
+        matches = [
             f"{m.file}:{m.line}: {m.fullLine}"
             for m in result.matches
         ]
     else:
         # Full format: return matches as objects
-        matches = []
         for m in result.matches:
             match: Dict[str, object] = {
                 "file": m.file,
@@ -449,8 +447,7 @@ def _contentResultToJson(query: Union[str, List[str]], contextLines: int, result
                 if query != m.matchText:
                     match["matchText"] = m.matchText
             else:
-                if m.matchText not in query:
-                    match["matchText"] = m.matchText
+                match["matchText"] = m.matchText # or requires the matchText, otherwise we don't know what has matched
             if m.contextBefore:
                 match["contextBefore"] = m.contextBefore
             if m.contextAfter:

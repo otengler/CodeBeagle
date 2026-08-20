@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import Dict, List, Optional, Set, Union, cast
+from typing import Dict, List, Optional, Set, Union, Tuple, cast
 from PyQt5.QtGui import QFont
 from AppConfig import appConfig
 from tools.FileTools import freadall
@@ -28,12 +28,24 @@ from fulltextindex.IStringMatcher import MatchPosition
 from fulltextindex.Query import QueryParams, ContentQuery, FileQuery
 from fulltextindex.SearchMethods import SearchMethods
 from fulltextindex.CommentRule import CommentRule
+from fulltextindex.IndexConfiguration import IndexMode
 from HighlightingRulesCache import rules as highlightingRules
 from .DataModel import ContentMatch, ContentSearchResult, FileSearchResult, SearchLocation
 from .SearchIndexResolver import SearchIndexResolver
 from .TtlCache import TTLCache
 
 __all__ = ['ContentMatch', 'ContentSearchResult', 'FileSearchResult', 'SearchLocation']
+
+TempFallbackName = "__temp_fallback__"
+
+def splitQueries(query: Union[str, List[str]]) -> Tuple[str, List[str]]: 
+    if isinstance(query, list):
+        orSearchFor = list(query[1:])
+        search = query[0]
+    else:
+        orSearchFor = []
+        search = query
+    return (search, orSearchFor) 
 
 class SearchProvider:
     """Interface to CodeBeagle's search engine for the AI agent API."""
@@ -94,22 +106,21 @@ class SearchProvider:
             return ContentSearchResult(totalFiles=0, matches=[], pageOffset=None)
 
         indexConf = self._indexResolver.resolve(location, folder, "content", extensionFilter)
-        self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
+        if not indexConf:
+            folder = cast(str, folder)
+            indexConf = self.__createTempLocation(folder, extensionFilter)
+        else:
+            self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
 
         # Use orSearchFor to combine multiple queries into a single index + regex scan
-        if isinstance(query, list):
-            orSearchFor = list(query[1:])
-            search = query[0]
-        else:
-            orSearchFor = []
-            search = query
+        search, orSearchFor = splitQueries(query)
 
         params = QueryParams(
             strSearch=search,
+            orSearchFor=orSearchFor,
             strFolderFilter=pathFilter,
             strExtensionFilter=extensionFilter,
-            bCaseSensitive=caseSensitive,
-            orSearchFor=orSearchFor
+            bCaseSensitive=caseSensitive
         )
         searchData = ContentQuery(params)
 
@@ -139,7 +150,6 @@ class SearchProvider:
                            location: Optional[str] = None,
                            folder: Optional[str] = None,
                            pathFilter: str = "",
-                           extensionFilter: str = "",
                            caseSensitive: bool = False,
                            limit: int = 100,
                            pageOffset: Optional[Dict[str, int]] = None) -> FileSearchResult:
@@ -153,7 +163,6 @@ class SearchProvider:
             location: Name of the search location (from getLocations()).
             folder: Root folder path to search in (alternative to location).
             pathFilter: Optional path filter pattern. Can be a full file path to select a single file.
-            extensionFilter: Optional extension filter pattern.
             caseSensitive: Whether to search case-sensitively.
             limit: Maximum number of files to return.
             pageOffset: Cursor for pagination, from a previous response.
@@ -164,21 +173,56 @@ class SearchProvider:
         if isinstance(query, list) and not query:
             return FileSearchResult(totalFiles=0, files=[], pageOffset=None)
 
-        indexConf = self._indexResolver.resolve(location, folder, "filename", extensionFilter)
-        self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
-
         queries = query if isinstance(query, list) else [query]
+        exts = set()
+        for name in queries:
+            _, ext = FileQuery.correctSearchAndExt(name)
+            exts.add(ext)
+        extensionFilter = ",".join(exts)
+
+        indexConf = self._indexResolver.resolve(location, folder, "filename", extensionFilter)
+        if not indexConf:
+            folder = cast(str, folder)
+            indexConf = self.__createTempLocation(folder, extensionFilter)
+        else:
+            self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
 
         allFiles: List[str] = []
-        seen: Set[str] = set()
 
-        for q in queries:
+        if indexConf.generatesIndex():
+            # via DB: or is not supported, does not fit into the system
+            seen: Set[str] = set()
+
+            for q in queries:
+                params = QueryParams(
+                    strSearch=q,
+                    strFolderFilter=pathFilter,
+                    bCaseSensitive=caseSensitive
+                )
+                searchData = FileQuery(params)
+
+                # Check file list cache
+                cacheKey = self._makeFileNameCacheKey(searchData, indexConf)
+                files = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
+
+                if files is None:
+                    ftiSearch = SearchMethods()
+                    resultSet = ftiSearch.searchFileName(searchData, indexConf)
+                    files = resultSet.matches  # List of file paths
+                    self._fileListCache.set(cacheKey, files)
+
+                for f in files:
+                    if f not in seen:
+                        seen.add(f)
+                        allFiles.append(f)
+        else:
+            search, orSearchFor = splitQueries(query)
             params = QueryParams(
-                strSearch=q,
-                strFolderFilter=pathFilter,
-                strExtensionFilter=extensionFilter,
-                bCaseSensitive=caseSensitive
-            )
+                                strSearch=search,
+                                orSearchFor=orSearchFor,
+                                strFolderFilter=pathFilter,
+                                bCaseSensitive=caseSensitive
+                            )
             searchData = FileQuery(params)
 
             # Check file list cache
@@ -191,10 +235,7 @@ class SearchProvider:
                 files = resultSet.matches  # List of file paths
                 self._fileListCache.set(cacheKey, files)
 
-            for f in files:
-                if f not in seen:
-                    seen.add(f)
-                    allFiles.append(f)
+            allFiles = files
 
         allFiles.sort()
         totalFiles = len(allFiles)
@@ -210,6 +251,13 @@ class SearchProvider:
             nextOffset = {"fileIndex": startIndex + limit}
 
         return FileSearchResult(totalFiles, pageFiles, nextOffset)
+
+    def __createTempLocation(self, folder: str, extensionFilter: str) -> IndexConfiguration.IndexConfiguration:
+        return IndexConfiguration.IndexConfiguration(
+                indexName=TempFallbackName,
+                extensions=extensionFilter,
+                directories=folder,
+                indexUpdateMode=IndexMode.NoIndexWanted)
 
     def _buildContentResults(self, matchingFiles: List[str], searchData: ContentQuery,
                               contextLines: int, limit: int,
@@ -318,15 +366,16 @@ class SearchProvider:
                 self._commonKeywordMap = {}
     
     def _makeFileListCacheKey(self, searchData: ContentQuery, indexConf: IndexConfiguration.IndexConfiguration) -> str:
-            """Build a cache key for the file list of a content search."""
-            orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
-            return f"fl:{indexConf.displayName()}|{searchData.search}|{orPart}|{searchData.folderFilter}|{searchData.extensionFilter}|{searchData.bCaseSensitive}"
+        """Build a cache key for the file list of a content search."""
+        orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
+        return f"fl:{indexConf.displayName()}|{searchData.search}|{orPart}|{searchData.folderFilter}|{searchData.extensionFilter}|{searchData.bCaseSensitive}"
     
     def _makeFileMatchCacheKey(self, searchData: ContentQuery, filePath: str) -> str:
-            """Build a cache key for the matches inside a single file."""
-            orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
-            return f"fm:{searchData.search}|{orPart}|{searchData.bCaseSensitive}|{searchData.bExcludeComments}|{filePath}"
+        """Build a cache key for the matches inside a single file."""
+        orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
+        return f"fm:{searchData.search}|{orPart}|{searchData.bCaseSensitive}|{searchData.bExcludeComments}|{filePath}"
 
     def _makeFileNameCacheKey(self, searchData: FileQuery, indexConf: IndexConfiguration.IndexConfiguration) -> str:
         """Build a cache key for the file list of a file name search."""
-        return f"fn:{indexConf.displayName()}|{searchData.search}|{searchData.folderFilter}|{searchData.extensionFilter}|{searchData.bCaseSensitive}"
+        orPart = "|".join(searchData.orSearchFor) if searchData.orSearchFor else ""
+        return f"fn:{indexConf.displayName()}|{searchData.search}|{orPart}|{searchData.folderFilter}|{searchData.extensionFilter}|{searchData.bCaseSensitive}"

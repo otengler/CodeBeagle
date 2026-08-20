@@ -144,10 +144,6 @@ class FileNameSearchInput(BaseModel):
             "Prefix with '-' to exclude. Example: 'src, -test'"
         ),
     )
-    extension_filter: Optional[str] = Field(
-        default=None,
-        description="Comma-separated extensions. Prefix with '-' to exclude. Example: '.py, .js'.",
-    )
     case_sensitive: bool = Field(
         default=False,
         description="Enable case-sensitive matching (default: false).",
@@ -174,7 +170,6 @@ class FileNameSearchInput(BaseModel):
             "folder": self.folder,
             "location": self.location,
             "pathFilter": self.path_filter,
-            "extensionFilter": self.extension_filter,
             "caseSensitive": self.case_sensitive,
             "limit": self.limit,
             "pageOffset": self.page_offset,

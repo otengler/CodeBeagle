@@ -538,10 +538,10 @@ class TestFullTextIndex(unittest.TestCase):
         self.assertEqual(result, exp)
 
         # Clean up (fti must be released before deleting the database)
-        fti.conn.close()  # type: ignore[attr-defined]
+        fti.conn.close() 
         updater.conn.close()
         fti = None  # type: ignore[assignment]
-        updater = None
+        del updater
         delDir(testDir)
         delFile(testDb)
 

@@ -64,7 +64,7 @@ class TestJsonConversion(unittest.TestCase):
             )
         ]
         result = ContentSearchResult(totalFiles=1, matches=matches)
-        j: Dict[str, Any] = _contentResultToJson("query that differs", result)
+        j: Dict[str, Any] = _contentResultToJson("query that differs", 2, result)
         self.assertEqual(j["totalFiles"], 1)
         self.assertEqual(len(cast(List[Any], j["matches"])), 1)
         self.assertNotIn("pageOffset", j)
@@ -79,7 +79,7 @@ class TestJsonConversion(unittest.TestCase):
             totalFiles=10, matches=[],
             pageOffset={"fileIndex": 2, "matchIndex": 1}
         )
-        j: Dict[str, Any] = _contentResultToJson("", result)
+        j: Dict[str, Any] = _contentResultToJson("", 2, result)
         self.assertIn("pageOffset", j)
         self.assertEqual(j["pageOffset"], {"fileIndex": 2, "matchIndex": 1})
 
@@ -95,11 +95,11 @@ class TestJsonConversion(unittest.TestCase):
         ]
         result = ContentSearchResult(totalFiles=1, matches=matches)
         # When matchText is in the query list, it should not be included
-        j: Dict[str, Any] = _contentResultToJson(["def main", "other"], result)
+        j: Dict[str, Any] = _contentResultToJson(["def main", "other"], 2, result)
         self.assertNotIn("matchText", cast(Dict[str, Any], j["matches"][0]))
 
         # When matchText is not in the query list, it should be included
-        j2: Dict[str, Any] = _contentResultToJson(["other"], result)
+        j2: Dict[str, Any] = _contentResultToJson(["other"], 2, result)
         self.assertIn("matchText", cast(Dict[str, Any], j2["matches"][0]))
 
     def test_fileNameResultToJson(self) -> None:
@@ -107,14 +107,14 @@ class TestJsonConversion(unittest.TestCase):
             totalFiles=5, files=["a.py", "b.py"],
             pageOffset={"fileIndex": 2}
         )
-        j: Dict[str, Any] = _fileNameResultToJson(result)
+        j: Dict[str, Any] = _fileNameResultToJson("", result)
         self.assertEqual(j["totalFiles"], 5)
         self.assertEqual(j["files"], ["a.py", "b.py"])
         self.assertEqual(j["pageOffset"], {"fileIndex": 2})
 
     def test_fileNameResultNoPageOffset(self) -> None:
         result = FileSearchResult(totalFiles=3, files=["x.py"])
-        j: Dict[str, Any] = _fileNameResultToJson(result)
+        j: Dict[str, Any] = _fileNameResultToJson("", result)
         self.assertNotIn("pageOffset", j)
 
     def test_historyToJson(self) -> None:
@@ -603,28 +603,10 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider = self._provider([conf])
         self.assertEqual(provider._indexResolver.resolve(location="loc1"), conf)
 
-    def test_locationNotFound(self) -> None:
-        conf = self._conf("loc1", "C:/src/proj")
-        provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.resolve(location="nope")
-
-    def test_neitherLocationNorFolderRaises(self) -> None:
-        conf = self._conf("loc1", "C:/src/proj")
-        provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.resolve()
-
     def test_folderInSubdirectory(self) -> None:
         conf = self._conf("loc1", "C:/src/proj")
         provider = self._provider([conf])
         self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/sub/dir"), conf)
-
-    def test_folderNotCoveredRaises(self) -> None:
-        conf = self._conf("loc1", "C:/src/proj")
-        provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.resolve(folder="C:/other/proj")
 
     def test_prefersContentIndexed(self) -> None:
         noIndex = self._conf("plain", "C:/src/proj", indexUpdateMode=IndexMode.NoIndexWanted)
@@ -644,12 +626,6 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider = self._provider([contentOnly, fileName])
         self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", searchType="content"), contentOnly)
 
-    def test_folderExcludedByDirExcludes(self) -> None:
-        conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
-        provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.resolve(folder="C:/src/proj/build")
-
     def test_folderNotExcluded(self) -> None:
         conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
         provider = self._provider([conf])
@@ -663,29 +639,43 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider = self._provider([conf])
         self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/build/sub/deep"), conf)
 
-    def test_wildcardExclude(self) -> None:
-        conf = self._conf("loc1", "C:/src/proj", dirExcludes="*/build")
-        provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.resolve(folder="C:/src/proj/build")
-
-    def test_questionMarkExclude(self) -> None:
-        conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/buil?")
-        provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.resolve(folder="C:/src/proj/build")
-
-    def test_excludeIsCaseInsensitive(self) -> None:
-        conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/SRC/PROJ/BUILD")
-        provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.resolve(folder="C:/src/proj/build")
-
     def test_excludedConfigSkippedInFavorOfCoveringConfig(self) -> None:
         excluded = self._conf("excluded", "C:/src/proj", dirExcludes="C:/src/proj/build")
         covering = self._conf("covering", "C:/src/proj")
         provider = self._provider([excluded, covering])
         self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/build"), covering)
+
+    def test_noConfigsAndNoFolder_raises(self) -> None:
+        """When there are no index configs and no folder, we can't search."""
+        provider = self._provider([])
+        with self.assertRaises(ValueError):
+            provider._indexResolver.resolve()
+
+    def test_noIndexFallbackInContentSearch(self) -> None:
+        """searchContent with an uncovered folder uses direct search (no error for unmatched extension)."""
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._fileListCache = mock.MagicMock()
+        provider._fileListCache.get.return_value = None
+        provider._commonKeywordMap = {}
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            # Uncovered folder + unmatched extension should NOT raise because
+            # we fall back to non-indexed search which skips extension filter validation
+            result = provider.searchContent("foo", folder="C:/other/proj", extensionFilter="*.java")
+            self.assertIsNotNone(result)
+
+    def test_noIndexFallbackInFileNameSearch(self) -> None:
+        """searchFileName with an uncovered folder uses direct search (no error for unmatched extension)."""
+        conf = self._confWithExtensions("loc1", ".py")
+        provider = self._provider([conf])
+        provider._fileListCache = mock.MagicMock()
+        provider._fileListCache.get.return_value = None
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchFileName.return_value = ResultSet(matches=[])
+            # Uncovered folder + unmatched extension should NOT raise
+            result = provider.searchFileName("*.py", folder="C:/other/proj")
+            self.assertIsNotNone(result)
 
     def _confExt(self, name: str, extensions: str,
                  indexType: IndexType = IndexType.FileContentAndName) -> IndexConfiguration.IndexConfiguration:
@@ -796,9 +786,11 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider._commonKeywordMap = {}
         with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
             sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            # *.java is not covered by the .py config, so checkExtensionFilter raises
             with self.assertRaises(ValueError):
-                provider.searchContent("foo", folder="C:/src/proj", extensionFilter="*.java")
-            provider.searchContent("foo", folder="C:/src/proj", extensionFilter="*.py")
+                provider.searchContent("foo", location="loc1", extensionFilter="*.java")
+            # Using location="loc1" matches the config, so extension filter is checked
+            provider.searchContent("foo", location="loc1", extensionFilter="*.py")
 
     def test_extensionCheckRunsInFileNameSearch(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
@@ -807,9 +799,10 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider._fileListCache.get.return_value = None
         with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
             sm.return_value.searchFileName.return_value = ResultSet(matches=[])
+            # Using location="loc1" matches the config, so extension filter is checked
             with self.assertRaises(ValueError):
-                provider.searchFileName("*.py", folder="C:/src/proj", extensionFilter="*.java")
-            provider.searchFileName("*.py", folder="C:/src/proj", extensionFilter="*.py")
+                provider.searchFileName("*.py", location="loc1")
+            provider.searchFileName("*.py", location="loc1")
 
 class TestAgentState(unittest.TestCase):
     """Tests for the central agent server start/stop helpers."""

@@ -122,7 +122,7 @@ def createPathMatchPattern(pathMatch: str, fullMatch: bool) -> str:
         else:
             pattern += c
     if fullMatch:
-        pattern += "$"
+        pattern = f"^{pattern}$"
     return pattern
 
 class IncludeExcludePattern:
@@ -185,12 +185,12 @@ def createExtensionFilter(strFilter: str) -> List[Tuple[str,bool]]:
         return filterParts
     for item in (item.strip() for item in strFilter.lower().split(",")):
         if item:
-            if item.startswith("*."):
-                item = item[2:]    
             bPositiveFilter = True
             if item.startswith("-"):
                 item = item[1:]
                 bPositiveFilter = False
+            if item.startswith("*"):
+                item = item[1:]    
             if not item.startswith("."):
                 item = "." + item
             if item == ".": # os.path.splitext returns an empty string if there is no extension
@@ -425,15 +425,31 @@ class FileQuery(Query):
     def __init__(self, params: QueryParams) -> None:
         # If the search term contains a "." we use the part after that as the extension. But only if the extension filter is
         # not specified as that takes precedance.
-        if params.strSearch.find('.') != -1 and not params.strExtensionFilter:
-            search, extensionFilter = os.path.splitext(params.strSearch)
-            if extensionFilter == ".*":
+        if not params.strExtensionFilter:
+            search = params.strSearch
+            orSearchFor = params.orSearchFor or []
+            exts = set()
+            search, ext = FileQuery.correctSearchAndExt(search)
+            exts.add(ext)
+            for i in range(len(orSearchFor)):
+                orSearchFor[i], ext = FileQuery.correctSearchAndExt(orSearchFor[i])
+                exts.add(ext)
+            extensionFilter = ",".join(exts)
+            if "*.*" in extensionFilter:
                 extensionFilter = ""
-            params = QueryParams(search, params.strFolderFilter, extensionFilter, params.bCaseSensitive)
+            params = QueryParams(search, params.strFolderFilter, extensionFilter, params.bCaseSensitive, orSearchFor=orSearchFor)
         super().__init__(params)
 
     def matches(self, data: str, filename: str = "") -> Iterable[MatchPosition]:
         return []
+
+    @staticmethod
+    def correctSearchAndExt(search: str) -> Tuple[str, str]:
+        if search.find('.') != -1:
+            search, ext = os.path.splitext(search)
+            if ext == ".*":
+                ext = ""
+        return (search,ext)
 
 class ReportAction:
     def __init__(self, name: str) -> None:
