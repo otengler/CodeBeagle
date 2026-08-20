@@ -46,9 +46,9 @@ class AsynchronousTask (QThread):
 
     def run(self) -> None:
         try:
-            kwArgs: dict[str, Any]  = {
-                "cancelEvent": self.cancelEvent
-            }
+            kwArgs: dict[str, Any]  = {}
+            if self.cancelEvent:
+                kwArgs["cancelEvent"] = self.cancelEvent
             if self.emitProgress:
                 kwArgs["reportProgress"] = self._emitProgress
             self.result = self.function(*self.args, **kwArgs)

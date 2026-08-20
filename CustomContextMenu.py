@@ -26,6 +26,7 @@ from tools.ExceptionTools import exceptionAsString
 import subprocess
 import shlex
 from typing import Optional
+import logging
 
 class ContextMenuError:
     def __init__(self,  program: str,  failedFiles: List[str],  exception: Optional[str]=None) -> None:
@@ -99,7 +100,8 @@ class ExecuteProgramTask (ContextMenuTask):
             else:
                 subprocess.Popen ([self.program] + argList)
             return True
-        except:
+        except Exception as e:
+            logging.error(f"Failed to run context menu program '{self.program}': {e}")
             return False
 
 class CustomScriptTask (ContextMenuTask):
