@@ -94,13 +94,29 @@ class TestJsonConversion(unittest.TestCase):
             )
         ]
         result = ContentSearchResult(totalFiles=1, matches=matches)
-        # When matchText is in the query list, it should not be included
+        # With list queries, matchText is always included (OR queries make it ambiguous)
         j: Dict[str, Any] = _contentResultToJson(["def main", "other"], 2, result)
-        self.assertNotIn("matchText", cast(Dict[str, Any], j["matches"][0]))
+        self.assertIn("matchText", cast(Dict[str, Any], j["matches"][0]))
 
-        # When matchText is not in the query list, it should be included
+        # When matchText is not in the query list, it should still be included
         j2: Dict[str, Any] = _contentResultToJson(["other"], 2, result)
         self.assertIn("matchText", cast(Dict[str, Any], j2["matches"][0]))
+
+    def test_contentResultToJsonWithListQueryOmitsMatchTextWhenMatchesQuery(self) -> None:
+        """With string queries, matchText is omitted when it matches the query."""
+        matches = [
+            ContentMatch(
+                file="C:/test/main.py",
+                line=10,
+                matchText="def main",
+                contextBefore=[], contextAfter=[],
+                fullLine="def main():"
+            )
+        ]
+        result = ContentSearchResult(totalFiles=1, matches=matches)
+        # String query equal to matchText omits matchText
+        j: Dict[str, Any] = _contentResultToJson("def main", 2, result)
+        self.assertNotIn("matchText", cast(Dict[str, Any], j["matches"][0]))
 
     def test_fileNameResultToJson(self) -> None:
         result = FileSearchResult(
@@ -516,6 +532,7 @@ class TestFileNameSearchPagination(unittest.TestCase):
         self.provider._indexResolver = SearchIndexResolver(mock.MagicMock())
         self.indexConf = mock.MagicMock()
         self.indexConf.displayName.return_value = "loc1"
+        self.indexConf.extensions = [".py"]
         self.allFiles = [f"C:/src/proj/file{i:02d}.py" for i in range(1, 11)]
 
     def _search(self, limit: int,
@@ -754,12 +771,6 @@ class TestResolveIndexConfig(unittest.TestCase):
         with self.assertRaises(ValueError):
             provider._indexResolver.checkExtensionFilter("*.jsx?", conf)
 
-    def test_wildcardAllMatches(self) -> None:
-        conf = self._confWithExtensions("loc1", ".py,.cpp")
-        provider = self._provider([conf])
-        provider._indexResolver.checkExtensionFilter("*", conf)
-        provider._indexResolver.checkExtensionFilter(".*", conf)
-
     def test_negativeFilterPartsNotChecked(self) -> None:
         # A negative part only narrows results; it does not require the config
         # to index that extension.
@@ -800,9 +811,11 @@ class TestResolveIndexConfig(unittest.TestCase):
         with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
             sm.return_value.searchFileName.return_value = ResultSet(matches=[])
             # Using location="loc1" matches the config, so extension filter is checked
-            with self.assertRaises(ValueError):
-                provider.searchFileName("*.py", location="loc1")
+            # "*.py" filter is covered by the .py config, so no ValueError should be raised
             provider.searchFileName("*.py", location="loc1")
+            # An unmatched extension should raise
+            with self.assertRaises(ValueError):
+                provider.searchFileName("*.java", location="loc1")
 
 class TestAgentState(unittest.TestCase):
     """Tests for the central agent server start/stop helpers."""

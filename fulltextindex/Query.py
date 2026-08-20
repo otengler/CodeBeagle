@@ -435,8 +435,6 @@ class FileQuery(Query):
                 orSearchFor[i], ext = FileQuery.correctSearchAndExt(orSearchFor[i])
                 exts.add(ext)
             extensionFilter = ",".join(exts)
-            if "*.*" in extensionFilter:
-                extensionFilter = ""
             params = QueryParams(search, params.strFolderFilter, extensionFilter, params.bCaseSensitive, orSearchFor=orSearchFor)
         super().__init__(params)
 
@@ -445,11 +443,12 @@ class FileQuery(Query):
 
     @staticmethod
     def correctSearchAndExt(search: str) -> Tuple[str, str]:
+        ext = ""
         if search.find('.') != -1:
             search, ext = os.path.splitext(search)
             if ext == ".*":
                 ext = ""
-        return (search,ext)
+        return (search, ext)
 
 class ReportAction:
     def __init__(self, name: str) -> None:
