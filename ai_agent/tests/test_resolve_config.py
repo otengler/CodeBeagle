@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Tests for SearchIndexResolver.resolve and checkExtensionFilter.
 """
 
+import os
 import unittest
 from typing import List
 from unittest import mock
@@ -127,6 +128,65 @@ class TestResolveIndexConfig(unittest.TestCase):
             sm.return_value.searchFileName.return_value = ResultSet(matches=[])
             # Uncovered folder + unmatched extension should NOT raise
             result = provider.searchFileName("*.py", folder="C:/other/proj")
+            self.assertIsNotNone(result)
+
+    # ── Temp fallback: resolve properties ──────────────────────────────────
+
+    def test_noConfigsWithFolderCreatesTempFallback(self) -> None:
+        """No index configs, but a folder is provided — resolve returns a temp fallback."""
+        provider = self._provider([])
+        temp = provider._indexResolver.resolve(folder="C:/uncovered/proj")
+        self.assertEqual(temp.indexName, "__temp_fallback__")
+        self.assertEqual(temp.directories, [os.path.normpath("C:/uncovered/proj")])
+        self.assertFalse(temp.generatesIndex())
+
+    def test_noConfigsWithFolderAndExtensionFilter(self) -> None:
+        """No configs, folder + extension filter — temp fallback includes the filter's extensions."""
+        provider = self._provider([])
+        temp = provider._indexResolver.resolve(folder="C:/uncovered/proj", extensionFilter="*.py")
+        self.assertEqual(temp.indexName, "__temp_fallback__")
+        self.assertIn("py", temp.extensions)
+        self.assertFalse(temp.generatesIndex())
+
+    def test_configExistsFolderNotCoveredCreatesTempFallback(self) -> None:
+        """Config exists but folder is outside its directories — resolve returns temp fallback."""
+        conf = self._conf("loc1", "C:/src/proj")
+        provider = self._provider([conf])
+        temp = provider._indexResolver.resolve(folder="C:/other/proj")
+        self.assertEqual(temp.indexName, "__temp_fallback__")
+        self.assertEqual(temp.directories, [os.path.normpath("C:/other/proj")])
+        self.assertFalse(temp.generatesIndex())
+
+    def test_locationMatchExtensionNotCoveredTempFallbackUsesConfigDirectories(self) -> None:
+        """Location matches but extensions not covered — temp fallback merges the config's directories."""
+        conf = self._conf("loc1", "C:/src/proj,C:/src/other")
+        provider = self._provider([conf])
+        temp = provider._indexResolver.resolve(location="loc1", extensionFilter="*.java")
+        self.assertEqual(temp.indexName, "__temp_fallback__")
+        self.assertEqual(temp.directories, [os.path.normpath("C:/src/proj"), os.path.normpath("C:/src/other")])
+        self.assertFalse(temp.generatesIndex())
+
+    # ── Temp fallback: end-to-end through provider ─────────────────────────
+
+    def test_searchContentWithNoConfigsWorks(self) -> None:
+        """searchContent with no index configs falls back to direct search and succeeds."""
+        provider = self._provider([])
+        provider._fileListCache = mock.MagicMock()
+        provider._fileListCache.get.return_value = None
+        provider._commonKeywordMap = {}
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            result = provider.searchContent("foo", folder="C:/any/proj")
+            self.assertIsNotNone(result)
+
+    def test_searchFileNameWithNoConfigsWorks(self) -> None:
+        """searchFileName with no index configs falls back to direct search and succeeds."""
+        provider = self._provider([])
+        provider._fileListCache = mock.MagicMock()
+        provider._fileListCache.get.return_value = None
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchFileName.return_value = ResultSet(matches=[])
+            result = provider.searchFileName("*.py", folder="C:/any/proj")
             self.assertIsNotNone(result)
 
     def _confExt(self, name: str, extensions: str,
