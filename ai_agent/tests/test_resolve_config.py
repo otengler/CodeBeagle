@@ -154,8 +154,11 @@ class TestResolveIndexConfig(unittest.TestCase):
         pyConf = self._confExt("py", ".py")
         cppConf = self._confExt("cpp", ".cpp")
         provider = self._provider([pyConf, cppConf])
-        # neither py nor cpp covers both .py and .cpp — falls back to first indexed
-        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj", extensionFilter="*.py,*.cpp"), pyConf)
+        # Neither py nor cpp covers both .py and .cpp — resolve falls back to
+        # a temporary config that can handle the requested extensions.
+        result = provider._indexResolver.resolve(folder="C:/src/proj", extensionFilter="*.py,*.cpp")
+        self.assertEqual(result.indexName, "__temp_fallback__")
+        self.assertEqual(result.extensions, {"py", "cpp"})
 
     def test_negativeOnlyFilterDoesNotAffectSelection(self) -> None:
         pyConf = self._confExt("py", ".py")
@@ -180,49 +183,46 @@ class TestResolveIndexConfig(unittest.TestCase):
     def test_extensionCovered(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._indexResolver.checkExtensionFilter("*.py", conf)
+        self.assertTrue(provider._indexResolver.extensionsCovered(conf, "*.py"))
 
-    def test_extensionNotCoveredRaises(self) -> None:
+    def test_extensionNotCovered(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.checkExtensionFilter("*.txt", conf)
+        self.assertFalse(provider._indexResolver.extensionsCovered(conf, "*.txt"))
 
     def test_emptyFilterIsFine(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._indexResolver.checkExtensionFilter("", conf)
+        self.assertTrue(provider._indexResolver.extensionsCovered(conf, ""))
 
     def test_wildcardExtensionCovered(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._indexResolver.checkExtensionFilter("*.p?", conf)
+        self.assertTrue(provider._indexResolver.extensionsCovered(conf, "*.p?"))
 
-    def test_wildcardMatchingNothingRaises(self) -> None:
+    def test_wildcardMatchingNothing(self) -> None:
         # '.jsx?' matches '.jsxx' but not '.js': the pattern covers nothing
-        # the config indexes, so it must raise.
+        # the config indexes, so it must return False.
         conf = self._confWithExtensions("loc1", ".js")
         provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.checkExtensionFilter("*.jsx?", conf)
+        self.assertFalse(provider._indexResolver.extensionsCovered(conf, "*.jsx?"))
 
     def test_negativeFilterPartsNotChecked(self) -> None:
         # A negative part only narrows results; it does not require the config
         # to index that extension.
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._indexResolver.checkExtensionFilter("*.py,-*.txt", conf)
+        self.assertTrue(provider._indexResolver.extensionsCovered(conf, "*.py,-*.txt"))
 
     def test_negativeFilterOnly(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
         provider = self._provider([conf])
-        provider._indexResolver.checkExtensionFilter("-*.txt", conf)
+        self.assertTrue(provider._indexResolver.extensionsCovered(conf, "-*.txt"))
 
-    def test_multiplePositiveOneMissingRaises(self) -> None:
+    def test_multiplePositiveOneMissing(self) -> None:
         conf = self._confWithExtensions("loc1", ".py,.cpp")
         provider = self._provider([conf])
-        with self.assertRaises(ValueError):
-            provider._indexResolver.checkExtensionFilter("*.py,*.java", conf)
+        self.assertFalse(provider._indexResolver.extensionsCovered(conf, "*.py,*.java"))
 
     def test_extensionCheckRunsInContentSearch(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")
@@ -232,10 +232,10 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider._commonKeywordMap = {}
         with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
             sm.return_value.searchContent.return_value = ResultSet(matches=[])
-            # *.java is not covered by the .py config, so checkExtensionFilter raises
-            with self.assertRaises(ValueError):
-                provider.searchContent("foo", location="loc1", extensionFilter="*.java")
-            # Using location="loc1" matches the config, so extension filter is checked
+            # *.java is not covered by the .py config, but resolve now creates
+            # a temp fallback instead of raising ValueError.
+            provider.searchContent("foo", location="loc1", extensionFilter="*.java")
+            # Using location="loc1" matches the config, extension aligned
             provider.searchContent("foo", location="loc1", extensionFilter="*.py")
 
     def test_extensionCheckRunsInFileNameSearch(self) -> None:
@@ -245,9 +245,8 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider._fileListCache.get.return_value = None
         with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
             sm.return_value.searchFileName.return_value = ResultSet(matches=[])
-            # Using location="loc1" matches the config, so extension filter is checked
-            # "*.py" filter is covered by the .py config, so no ValueError should be raised
+            # Using location="loc1" matches the config, so resolve checks extensions.
+            # "*.py" filter is covered by the .py config, no problem.
             provider.searchFileName("*.py", location="loc1")
-            # An unmatched extension should raise
-            with self.assertRaises(ValueError):
-                provider.searchFileName("*.java", location="loc1")
+            # An unmatched extension no longer raises; resolve creates a temp fallback.
+            provider.searchFileName("*.java", location="loc1")

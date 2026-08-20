@@ -57,7 +57,7 @@ This generates `Ui_*.py` files from Qt Designer `.ui` files.
 
 ### Testing
 
-Run unit tests:
+The tests must be run in the virtual environment `.env`: 
 ```bash
 python UnitTests.py
 ```
