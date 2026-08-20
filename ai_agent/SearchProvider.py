@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
 from typing import Dict, List, Optional, Set, Union, Tuple, cast
 from PyQt5.QtGui import QFont
 from AppConfig import appConfig
@@ -28,15 +27,12 @@ from fulltextindex.IStringMatcher import MatchPosition
 from fulltextindex.Query import QueryParams, ContentQuery, FileQuery
 from fulltextindex.SearchMethods import SearchMethods
 from fulltextindex.CommentRule import CommentRule
-from fulltextindex.IndexConfiguration import IndexMode
 from HighlightingRulesCache import rules as highlightingRules
 from .DataModel import ContentMatch, ContentSearchResult, FileSearchResult, SearchLocation
 from .SearchIndexResolver import SearchIndexResolver
 from .TtlCache import TTLCache
 
 __all__ = ['ContentMatch', 'ContentSearchResult', 'FileSearchResult', 'SearchLocation']
-
-TempFallbackName = "__temp_fallback__"
 
 def splitQueries(query: Union[str, List[str]]) -> Tuple[str, List[str]]: 
     if isinstance(query, list):
@@ -106,11 +102,6 @@ class SearchProvider:
             return ContentSearchResult(totalFiles=0, matches=[], pageOffset=None)
 
         indexConf = self._indexResolver.resolve(location, folder, "content", extensionFilter)
-        if not indexConf:
-            folder = cast(str, folder)
-            indexConf = self.__createTempLocation(folder, extensionFilter)
-        else:
-            self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
 
         # Use orSearchFor to combine multiple queries into a single index + regex scan
         search, orSearchFor = splitQueries(query)
@@ -181,11 +172,6 @@ class SearchProvider:
         extensionFilter = ",".join(exts)
 
         indexConf = self._indexResolver.resolve(location, folder, "filename", extensionFilter)
-        if not indexConf:
-            folder = cast(str, folder)
-            indexConf = self.__createTempLocation(folder, extensionFilter)
-        else:
-            self._indexResolver.checkExtensionFilter(extensionFilter, indexConf)
 
         allFiles: List[str] = []
 
@@ -251,13 +237,6 @@ class SearchProvider:
             nextOffset = {"fileIndex": startIndex + limit}
 
         return FileSearchResult(totalFiles, pageFiles, nextOffset)
-
-    def __createTempLocation(self, folder: str, extensionFilter: str) -> IndexConfiguration.IndexConfiguration:
-        return IndexConfiguration.IndexConfiguration(
-                indexName=TempFallbackName,
-                extensions=extensionFilter,
-                directories=folder,
-                indexUpdateMode=IndexMode.NoIndexWanted)
 
     def _buildContentResults(self, matchingFiles: List[str], searchData: ContentQuery,
                               contextLines: int, limit: int,

@@ -18,10 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from fnmatch import fnmatch
-from typing import List, Optional
+from typing import List, Optional, cast
 from tools import Config
 from fulltextindex import IndexConfiguration
 from fulltextindex.Query import createExtensionFilter
+from fulltextindex.IndexConfiguration import IndexMode
+
+TempFallbackName = "__temp_fallback__"
 
 class SearchIndexResolver:
     """
@@ -39,7 +42,7 @@ class SearchIndexResolver:
     def resolve(self, location: Optional[str] = None,
                 folder: Optional[str] = None,
                 searchType: str = "content",
-                extensionFilter: str = "") -> Optional[IndexConfiguration.IndexConfiguration]:
+                extensionFilter: str = "") -> IndexConfiguration.IndexConfiguration:
         """
         Resolve an IndexConfiguration from either a location name or a folder path.
 
@@ -52,7 +55,24 @@ class SearchIndexResolver:
         the caller must explicitly choose a search location.
         If several configurations qualify, one that has a matching index is preferred
         over one without a matching index.
+
+        If there is no location to run the search or the location does not support 
+        the file extensions fallback to a temporary (ad hoc) configuration.
         """
+        indexConf = self._resolve(location, folder, searchType, extensionFilter)
+        if not indexConf:
+            folder = cast(str, folder)
+            indexConf = self._createTempLocation(folder, extensionFilter)
+        else:
+            if not self.extensionsCovered(indexConf, extensionFilter):
+                indexConf = self._createTempLocation(",".join(indexConf.directories), extensionFilter)
+        return indexConf
+
+    def _resolve(self, location: Optional[str] = None,
+                folder: Optional[str] = None,
+                searchType: str = "content",
+                extensionFilter: str = "") -> Optional[IndexConfiguration.IndexConfiguration]:
+        
         if location and folder:
             raise ValueError("Only one of 'location' or 'folder' may be specified")
 
@@ -80,24 +100,12 @@ class SearchIndexResolver:
         
         raise ValueError("Either 'location' or 'folder' must be specified")       
 
-    def checkExtensionFilter(self, extensionFilter: str,
-                             indexConf: IndexConfiguration.IndexConfiguration) -> None:
-        """
-        Verify that all positive extensions in the filter are covered by the config.
-
-        Raises ValueError if an extension pattern in the filter does not match
-        any extension indexed by the config. Negative (excluded) extensions are
-        not checked since they only narrow results.
-        """
-        if self._extensionsCovered(indexConf, extensionFilter):
-            return
-        parts = createExtensionFilter(extensionFilter)
-        uncovered = [ext for ext, isPositive in parts
-                     if isPositive and not any(fnmatch(confExt, ext) for confExt in indexConf.extensions)]
-        raise ValueError(
-            f"Extension(s) {', '.join(uncovered)} from filter '{extensionFilter}' are not indexed "
-            f"in search location '{indexConf.displayName()}' "
-            f"(indexed extensions: {', '.join(sorted(indexConf.extensions))})")
+    def _createTempLocation(self, folder: str, extensionFilter: str) -> IndexConfiguration.IndexConfiguration:           
+        return IndexConfiguration.IndexConfiguration(
+                indexName=TempFallbackName,
+                extensions=extensionFilter,
+                directories=folder,
+                indexUpdateMode=IndexMode.NoIndexWanted)
 
     def _folderCovered(self, conf: IndexConfiguration.IndexConfiguration, folder: str) -> bool:
         """
@@ -118,7 +126,7 @@ class SearchIndexResolver:
                 return True
         return False
 
-    def _extensionsCovered(self, indexConf: IndexConfiguration.IndexConfiguration,
+    def extensionsCovered(self, indexConf: IndexConfiguration.IndexConfiguration,
                            extensionFilter: str) -> bool:
         """True if all positive extension patterns of the filter are indexed by the config."""
         if not extensionFilter:
@@ -146,6 +154,6 @@ class SearchIndexResolver:
         else:
             indexed = [c for c in configs if c.isContentIndexed()]
         for conf in indexed:
-            if self._extensionsCovered(conf, extensionFilter):
+            if self.extensionsCovered(conf, extensionFilter):
                 return conf
         return indexed[0] if indexed else configs[0]
