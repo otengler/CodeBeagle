@@ -31,6 +31,7 @@ Run via stdio with:  python CodeBeagleMCP.py
 import asyncio
 import json
 import logging
+import os
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import mcp_types as types
@@ -58,34 +59,21 @@ ToolDef = Tuple[
     Callable[..., Dict[str, Any]],
 ]
 
-# ---- Tool descriptions ----
+# ---- Tool descriptions (loaded from tool_desc.json) ----
 
-_DESC_LIST_LOCATIONS = (
-    "List all configured CodeBeagle search locations (indexes): name, folders, "
-    "extensions and index mode. Call this to discover what is searchable, "
-    "then pass the location name to search_content / search_filename."
+_TOOL_DESC_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+    "resources", "ai_search", "tool_desc.json",
 )
+try:
+    with open(_TOOL_DESC_PATH, "r", encoding="utf-8") as _f:
+        _TOOL_DESC_DATA = json.load(_f)
+except Exception as e:
+    raise RuntimeError("Could not load tool_desc.json from %s: %s", _TOOL_DESC_PATH, e)
 
-_DESC_SEARCH_CONTENT = (
-    "Full-text search across CodeBeagle-indexed source code. " +
-    "Query syntax: keywords ('createNode ( CComVariant'), wildcards ('Fact* *ban*na'), " +
-    "unknown-word gaps ('error **2 network', regex ('code <!\\d+!>'). " +
-    "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
-    "By default returns matching lines with surrounding context. " +
-    "Set contextLines=0 for compact output (path:line: full matching line, no context lines). " +
-    "Keep contextLines low (2-3) to bound token usage. " +
-    "Pagination: pass pageOffset from a previous response to fetch the next page." + 
-    "This tool replaces 'grep'. "
-)
-
-_DESC_SEARCH_FILENAME = (
-    "Search for files by name across CodeBeagle-indexed source code. " +
-    "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). " +
-    "Pass a list of queries for OR logic: files matching ANY pattern are returned. " +
-    "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
-    "Pagination: pass pageOffset from a previous response to fetch the next page." + 
-    "This tool replaces 'find'."
-)
+_DESC_LIST_LOCATIONS = "".join(_TOOL_DESC_DATA.get("codebeagle_list_indexes", {}).get("desc", [])) 
+_DESC_SEARCH_CONTENT = "".join(_TOOL_DESC_DATA.get("codebeagle_content_search", {}).get("desc", []))
+_DESC_SEARCH_FILENAME = "".join(_TOOL_DESC_DATA.get("codebeagle_file_search", {}).get("desc", [])) 
 
 _EMPTY_SCHEMA: Dict[str, Any] = {"type": "object", "properties": {}, "required": []}
 
@@ -102,9 +90,9 @@ class CodeBeagleMCPServer:
     def __init__(self, baseUrl: str) -> None:
         self.client = CodeBeagleClient(baseUrl)
         self._tools: Dict[str, ToolDef] = {
-            "list_locations": (None, _DESC_LIST_LOCATIONS, self._listLocations),
-            "search_content": (ContentSearchInput, _DESC_SEARCH_CONTENT, self._searchContent),
-            "search_filename": (FileNameSearchInput, _DESC_SEARCH_FILENAME, self._searchFileName),
+            "codebeagle_list_locations": (None, _DESC_LIST_LOCATIONS, self._listLocations),
+            "codebeagle_search_content": (ContentSearchInput, _DESC_SEARCH_CONTENT, self._searchContent),
+            "codebeagle_search_filename": (FileNameSearchInput, _DESC_SEARCH_FILENAME, self._searchFileName),
         }
         self._server = Server(
             SERVER_NAME,

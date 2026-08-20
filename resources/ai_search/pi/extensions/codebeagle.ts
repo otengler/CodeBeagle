@@ -136,16 +136,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "codebeagle_content_search",
     label: "CodeBeagle: Search Content",
-    description:
-      "Full-text search across CodeBeagle-indexed source code. " +
-      "Query syntax: keywords ('createNode ( CComVariant'), wildcards ('Fact* *ban*na'), " +
-      "unknown-word gaps ('error **2 network', regex ('code <!\\d+!>'). " +
-      "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
-      "By default returns matching lines with surrounding context. " +
-      "Set contextLines=0 for compact output (path:line: full matching line, no context lines). " +
-      "Keep contextLines low (2-3) to bound token usage. " +
-      "Pagination: pass pageOffset from a previous response to fetch the next page." + 
-      "This tool replaces 'grep'. ",
+    description: "__TOOL_DESC_CONTENT_SEARCH__",
     promptSnippet: "Search CodeBeagle-indexed location for content (keywords, wildcards, regex, context lines)",
     promptGuidelines: [
       "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`. " +
@@ -205,13 +196,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "codebeagle_file_search",
     label: "CodeBeagle: Search File Names",
-    description:
-      "Search for files by name across CodeBeagle-indexed source code. " +
-      "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). " +
-      "Pass a list of queries for OR logic: files matching ANY pattern are returned. " +
-      "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes) " +
-      "Pagination: pass pageOffset from a previous response to fetch the next page." + 
-      "This tool replaces 'find'.",
+    description: "__TOOL_DESC_FILE_SEARCH__",
     promptSnippet: "Search CodeBeagle-indexed location for file names.",
     promptGuidelines: [
       "Use codebeagle_file_search when the user asks to find files by name. It replaces calls to `find`. " +
@@ -246,9 +231,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "codebeagle_list_indexes",
     label: "CodeBeagle: List Search Locations",
-    description:
-      "List all available CodeBeagle search locations (indexes): name, folders, extensions, index mode. " +
-      "Call this to discover what is searchable, then pass the location name to codebeagle_content_search / codebeagle_file_search.",
+    description: "__TOOL_DESC_LIST_INDEXES__",
     promptSnippet: "List CodeBeagle search locations (indexes)",
     promptGuidelines: [
       "Call codebeagle_list_indexes when the user wants to find files or search inside files (like grep), to discover available search locations. " +
@@ -276,9 +259,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "codebeagle_health",
     label: "CodeBeagle: Server Health",
-    description:
-      "Check whether the CodeBeagle agent server is running and reachable. " +
-      "Use this when a codebeagle_* tool reports that the server is down.",
+    description: "__TOOL_DESC_HEALTH__",
     parameters: Type.Object({}),
     async execute() {
       const result = await callApi("/api/v1/health", "GET");

@@ -295,12 +295,41 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self._sendError(500, str(e))
 
     def _servePiExtension(self) -> None:
-        """Serve the PI extension TypeScript file for download."""
-        self._serveResourceFile(
-            os.path.join("resources", "ai_search", "pi", "extensions", "codebeagle.ts"),
-            "text/typescript",
-            "codebeagle.ts"
-        )
+        """Serve the PI extension TypeScript file for download.
+        Replaces __TOOL_DESC_*__ markers with actual tool descriptions from tool_desc.json.
+        """
+        relPath = os.path.join("resources", "ai_search", "pi", "extensions", "codebeagle.ts")
+        toolDescPath = os.path.join("resources", "ai_search", "tool_desc.json")
+        try:
+            with open(relPath, "r", encoding="utf-8") as f:
+                content = f.read()
+            # Replace description markers with content from tool_desc.json
+            if os.path.isfile(toolDescPath):
+                with open(toolDescPath, "r", encoding="utf-8") as f:
+                    toolDesc = json.load(f)
+                for key, marker in [
+                    ("codebeagle_content_search", "\"__TOOL_DESC_CONTENT_SEARCH__\""),
+                    ("codebeagle_file_search", "\"__TOOL_DESC_FILE_SEARCH__\""),
+                    ("codebeagle_list_indexes", "\"__TOOL_DESC_LIST_INDEXES__\""),
+                    ("codebeagle_health", "\"__TOOL_DESC_HEALTH__\""),
+                ]:
+                    entry = toolDesc.get(key, {})
+                    desc = "".join(entry.get("desc", []))
+                    content = content.replace(marker, json.dumps(desc))
+            body = content.encode("utf-8")
+            self._statusCode = 200
+            self.send_response(200)
+            self.send_header("Content-Type", "text/typescript; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Content-Disposition", 'attachment; filename="codebeagle.ts"')
+            self._sendCorsHeaders()
+            self.end_headers()
+            self.wfile.write(body)
+        except FileNotFoundError:
+            self._sendError(404, f"Resource not found: {relPath}")
+        except Exception as e:
+            logger.exception("Failed to serve PI extension")
+            self._sendError(500, str(e))
 
     def _serveResourceFile(self, relPath: str, contentType: str, downloadName: str) -> None:
         """

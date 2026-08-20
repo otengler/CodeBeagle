@@ -1,0 +1,37 @@
+{
+    "codebeagle_content_search": {
+        "desc": [
+            "Full-text search across CodeBeagle-indexed source code. ",
+            "Query syntax: keywords ('createNode ( CComVariant'), wildcards ('Fact* *ban*na'), ",
+            "unknown-word gaps ('error **2 network'), regex ('code <!\\d+!>'). ",
+            "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes). ",
+            "By default returns matching lines with surrounding context. ",
+            "Set contextLines=0 for compact output (path:line: full matching line, no context lines). ",
+            "Keep contextLines low (2-3) to bound token usage. ",
+            "Pagination: pass pageOffset from a previous response to fetch the next page. ",
+            "This tool replaces 'grep'."
+        ]
+    },
+    "codebeagle_file_search": {
+        "desc": [
+            "Search for files by name across CodeBeagle-indexed source code. ",
+            "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile'). ",
+            "Pass a list of queries for OR logic: files matching ANY pattern are returned. ",
+            "Specify either root 'folder' where to search (preferred) or 'location' (name from codebeagle_list_indexes). ",
+            "Pagination: pass pageOffset from a previous response to fetch the next page. ",
+            "This tool replaces 'find'."
+        ]
+    },
+    "codebeagle_list_indexes": {
+        "desc": [
+            "List all configured CodeBeagle search locations (indexes): name, folders, extensions and index mode. ",
+            "Call this to discover what is searchable, then pass the location name to codebeagle_content_search or codebeagle_file_search."
+        ]
+    },
+    "codebeagle_health": {
+        "desc": [
+            "Check whether the CodeBeagle agent server is running and reachable. ",
+            "Use this when a codebeagle_* tool reports that the server is down."
+        ]
+    }
+}
