@@ -122,6 +122,7 @@ def agentConfig() -> Config.Config:
     agent.setType("enabled", Config.typeDefaultBool(False))
     agent.setType("contextLines", Config.typeDefaultInt(2))
     agent.setType("defaultLimit", Config.typeDefaultInt(100))
+    agent.setType("defaultExcludeDirs", Config.typeDefaultString(""))
     agent.setType("allowOrigin", Config.typeDefaultString(""))
     return agent
 

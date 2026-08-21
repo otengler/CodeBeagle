@@ -141,7 +141,7 @@ export default function (pi: ExtensionAPI) {
     promptGuidelines: [
       "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`. " +
       "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. " + 
-      "Use codebeagle_content_search with 'folder' and handle error 'The requested path is not indexed'. Fallback to 'grep' can then still be used.
+      "Use codebeagle_content_search with 'folder' and handle error 'The requested path is not indexed'. Fallback to 'grep' can then still be used. "
     ],
     parameters: Type.Object({
       query: Type.Union([

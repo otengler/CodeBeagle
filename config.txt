@@ -72,4 +72,8 @@ import UserConfig.txt
 #    bind = 127.0.0.1
 #    contextLines = 2
 #    defaultLimit = 100
+#    # Comma-separated list of directory patterns to exclude when searching
+#    # a non-indexed location. Patterns support * and ?
+#    # wildcards.
+#    defaultExcludeDirs = *\node_modules\*,*\.git\*,*\.svn\*,*\bin\*,*\obj\*,*\target\*
 #}

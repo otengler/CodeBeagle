@@ -100,11 +100,13 @@ class SearchIndexResolver:
         
         raise ValueError("Either 'location' or 'folder' must be specified")       
 
-    def _createTempLocation(self, folder: str, extensionFilter: str) -> IndexConfiguration.IndexConfiguration:           
+    def _createTempLocation(self, folder: str, extensionFilter: str) -> IndexConfiguration.IndexConfiguration:
+        defaultExcludeDirs = self._config.agent.defaultExcludeDirs
         return IndexConfiguration.IndexConfiguration(
                 indexName=TempFallbackName,
                 extensions=extensionFilter,
                 directories=folder,
+                dirExcludes=defaultExcludeDirs,
                 indexUpdateMode=IndexMode.NoIndexWanted)
 
     def _folderCovered(self, conf: IndexConfiguration.IndexConfiguration, folder: str) -> bool:
