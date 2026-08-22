@@ -86,6 +86,8 @@ cp VERSION $BUILDDIR
 mkdir -p $BUILDDIR/scripts && cp scripts/* $BUILDDIR/scripts/
 mkdir -p $BUILDDIR/config && cp config/* $BUILDDIR/config/
 mkdir -p $BUILDDIR/resources && cp -r resources/* $BUILDDIR/resources/
+# ai_agent start
+mkdir -p $BUILDDIR/resources/ai_agent && cp -r ai_agent/resources/* $BUILDDIR/resources/
 
 mv $BUILDDIR build/CodeBeagle
 

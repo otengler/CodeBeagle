@@ -272,9 +272,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
     def _serveApiDoc(self) -> None:
         """Serve the API documentation markdown file at the root URL."""
-        # Prefer the distribution copy under resources/ai_search/, fall back to
+        # Prefer the distribution copy under resources/ai_agent/, fall back to
         # the source tree location for development without a build.
-        docPath = os.path.join("resources", "ai_search", "API.md")
+        docPath = os.path.join("resources", "ai_agent", "API.md")
         if not os.path.isfile(docPath):
             docPath = os.path.join(os.path.dirname(__file__), "API.md")
         try:
@@ -298,8 +298,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         """Serve the PI extension TypeScript file for download.
         Replaces __TOOL_DESC_*__ markers with actual tool descriptions from tool_desc.json.
         """
-        relPath = os.path.join("resources", "ai_search", "pi", "extensions", "codebeagle.ts")
-        toolDescPath = os.path.join("resources", "ai_search", "tool_desc.json")
+        relPath = os.path.join("resources", "ai_agent", "pi", "extensions", "codebeagle.ts")
+        toolDescPath = os.path.join("resources", "ai_agent", "tool_desc.json")
         try:
             with open(relPath, "r", encoding="utf-8") as f:
                 content = f.read()

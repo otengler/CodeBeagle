@@ -63,7 +63,7 @@ ToolDef = Tuple[
 
 _TOOL_DESC_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-    "resources", "ai_search", "tool_desc.json",
+    "resources", "ai_agent", "tool_desc.json",
 )
 try:
     with open(_TOOL_DESC_PATH, "r", encoding="utf-8") as _f:
