@@ -23,77 +23,76 @@ Field names use snake_case; toHttpParams() translates them to the
 camelCase field names expected by the CodeBeagle HTTP API.
 """
 
-from typing import Any, Dict, List, Optional, Union
+import json
+import os
+from typing import Any, Dict, List, Optional, Union, cast
 
 from pydantic import BaseModel, Field
+
+
+# ---- Load parameter descriptions from tool_desc.json ----
+
+_TOOL_DESC_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+    "resources", "ai_agent", "tool_desc.json",
+)
+try:
+    with open(_TOOL_DESC_PATH, "r", encoding="utf-8") as _f:
+        _TOOL_DESC_DATA = json.load(_f)
+except Exception as e:
+    raise RuntimeError("Could not load tool_desc.json from %s: %s", _TOOL_DESC_PATH, e)
+
+
+def _param_desc(tool_key: str, param_key: str) -> str:
+    """Look up a parameter description from tool_desc.json."""
+    return cast(str, _TOOL_DESC_DATA.get(tool_key, {}).get("params", {}).get(param_key, ""))
 
 
 class ContentSearchInput(BaseModel):
     """Parameters for a full-text content search (search_content tool)."""
 
     query: Union[str, List[str]] = Field(
-        description=(
-            "Search expression or list of expressions (OR logic). "
-            "Supports keywords ('createNode ( CComVariant'), "
-            "trailing wildcards ('Fact*'), unknown-word gaps ('error **2 network') "
-            "and regex ('code <!\\d+!>'). "
-            "When a list is provided, files matching ANY expression are returned."
-        )
+        description=_param_desc("codebeagle_content_search", "query")
     )
     folder: Optional[str] = Field(
         default=None,
-        description=(
-            "Root folder path to search in. The server resolves the best matching "
-            "index. Mutually exclusive with 'location'."
-        ),
+        description=_param_desc("codebeagle_content_search", "folder"),
     )
     location: Optional[str] = Field(
         default=None,
-        description=(
-            "Named search location (from list_locations). Mutually exclusive with 'folder'."
-        ),
+        description=_param_desc("codebeagle_content_search", "location"),
     )
     path_filter: Optional[str] = Field(
         default=None,
-        description=(
-            "Path filter pattern. Can be a full file path to select a single file. "
-            "Prefix with '-' to exclude. Example: 'src/, -test/mock'"
-        ),
+        description=_param_desc("codebeagle_content_search", "pathFilter"),
     )
     extension_filter: Optional[str] = Field(
         default=None,
-        description=(
-            "Comma-separated extensions. Prefix with '-' to exclude. "
-            "Example: '.py, .js, -test.py'"
-        ),
+        description=_param_desc("codebeagle_content_search", "extensionFilter"),
     )
     case_sensitive: bool = Field(
         default=False,
-        description="Enable case-sensitive matching (default: false).",
+        description=_param_desc("codebeagle_content_search", "caseSensitive"),
     )
     exclude_comments: bool = Field(
         default=True,
-        description="Exclude matches inside comments (default: true).",
+        description=_param_desc("codebeagle_content_search", "excludeComments"),
     )
     context_lines: int = Field(
         default=2,
         ge=0,
         le=20,
-        description="Number of context lines before and after each match (default: 2). Set to 0 for compact output (no context lines).",
+        description=_param_desc("codebeagle_content_search", "contextLines"),
     )
     limit: int = Field(
         default=100,
         ge=1,
         le=10000,
-        description="Maximum number of matches to return (default: 100).",
+        description=_param_desc("codebeagle_content_search", "limit"),
     )
     page_offset: Optional[Dict[str, int]] = Field(
         default=None,
-        description=(
-            "Pagination cursor from a previous response. Pass the 'pageOffset' "
-            "object exactly as returned by the server. Must contain 'fileIndex' "
-            "(integer) and optionally 'matchIndex' (integer)."
-        ),
+        description=_param_desc("codebeagle_content_search", "pageOffset"),
     )
 
     def toHttpParams(self) -> Dict[str, Any]:
@@ -116,51 +115,33 @@ class FileNameSearchInput(BaseModel):
     """Parameters for a file name search (search_filename tool)."""
 
     query: Union[str, List[str]] = Field(
-        description=(
-            "File name pattern or list of patterns (OR logic). "
-            "Each pattern supports * and ? wildcards. "
-            "Example: 'Factory*', '*test*.py', 'test?.py'. If the query contains "
-            "a dot, the part after the last dot is used as an extension filter. "
-            "When a list is provided, files matching ANY pattern are returned."
-        )
+        description=_param_desc("codebeagle_file_search", "query")
     )
     folder: Optional[str] = Field(
         default=None,
-        description=(
-            "Root folder path to search in. The server resolves the best matching "
-            "index. Mutually exclusive with 'location'."
-        ),
+        description=_param_desc("codebeagle_file_search", "folder"),
     )
     location: Optional[str] = Field(
         default=None,
-        description=(
-            "Named search location (from list_locations). Mutually exclusive with 'folder'."
-        ),
+        description=_param_desc("codebeagle_file_search", "location"),
     )
     path_filter: Optional[str] = Field(
         default=None,
-        description=(
-            "Path filter pattern. Can be a full file path to select a single file. "
-            "Prefix with '-' to exclude. Example: 'src, -test'"
-        ),
+        description=_param_desc("codebeagle_file_search", "pathFilter"),
     )
     case_sensitive: bool = Field(
         default=False,
-        description="Enable case-sensitive matching (default: false).",
+        description=_param_desc("codebeagle_file_search", "caseSensitive"),
     )
     limit: int = Field(
         default=100,
         ge=1,
         le=10000,
-        description="Maximum number of files to return (default: 100).",
+        description=_param_desc("codebeagle_file_search", "limit"),
     )
     page_offset: Optional[Dict[str, int]] = Field(
         default=None,
-        description=(
-            "Pagination cursor from a previous response. Pass the 'pageOffset' "
-            "object exactly as returned by the server. Must contain 'fileIndex' "
-            "(integer) and optionally 'matchIndex' (integer)."
-        ),
+        description=_param_desc("codebeagle_file_search", "pageOffset"),
     )
 
     def toHttpParams(self) -> Dict[str, Any]:

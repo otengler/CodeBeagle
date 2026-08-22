@@ -115,8 +115,8 @@ async function callApi(
 
 /** Opaque server-side pagination cursor ({fileIndex} / {fileIndex, matchIndex}). */
 const PageOffset = Type.Object({
-  fileIndex: Type.Optional(Type.Integer({ description: "File index cursor" })),
-  matchIndex: Type.Optional(Type.Integer({ description: "Match index within the file" })),
+  fileIndex: Type.Optional(Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_PAGEOFFSET_FILEINDEX__" })),
+  matchIndex: Type.Optional(Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_PAGEOFFSET_MATCHINDEX__" })),
 });
 
 function truncate(text: string): string {
@@ -137,41 +137,37 @@ export default function (pi: ExtensionAPI) {
     name: "codebeagle_content_search",
     label: "CodeBeagle: Search Content",
     description: "__TOOL_DESC_CONTENT_SEARCH__",
-    promptSnippet: "Search CodeBeagle-indexed location for content (keywords, wildcards, regex, context lines)",
-    promptGuidelines: [
-      "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`.",
-      "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available.",
-      "Use codebeagle_content_search with 'folder' and handle error 'The requested path is not indexed'. Fallback to 'grep' can then still be used."
-    ],
+    promptSnippet: "__PROMPT_SNIPPET_CONTENT_SEARCH__",
+    promptGuidelines: ["__PROMPT_GUIDELINES_CONTENT_SEARCH__"],
     parameters: Type.Object({
       query: Type.Union([
         Type.String({
-          description: "Search query. Examples: 'malloc', 'createNode ( CComVariant', 'error **5 <!\\d+!>'",
+          description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",
         }),
         Type.Array(Type.String(), {
-          description: "List of search queries (OR logic). Files matching ANY query are returned.",
+          description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",
         }),
       ]),
       location: Type.Optional(
         Type.String({
-          description: "Search location name from codebeagle_list_indexes. Mutually exclusive with folder.",
+          description: "__PARAM_DESC_CONTENT_SEARCH_LOCATION__",
         }),
       ),
       folder: Type.Optional(
         Type.String({
-          description: "Root folder path; the server resolves the best matching index. Mutually exclusive with location.",
+          description: "__PARAM_DESC_CONTENT_SEARCH_FOLDER__",
         }),
       ),
-      pathFilter: Type.Optional(Type.String({ description: "Path filter. Can be a full file path to select a single file, e.g. 'src/main.cpp'" })),
+      pathFilter: Type.Optional(Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_PATHFILTER__" })),
       extensionFilter: Type.Optional(
-        Type.String({ description: "Extension filter, e.g. '.cpp,.h,-.hpp'" }),
+        Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_EXTENSIONFILTER__" }),
       ),
-      caseSensitive: Type.Optional(Type.Boolean({ description: "Case-sensitive search (default: false)" })),
-      excludeComments: Type.Optional(Type.Boolean({ description: "Exclude matches inside comments (default: true)" })),
+      caseSensitive: Type.Optional(Type.Boolean({ description: "__PARAM_DESC_CONTENT_SEARCH_CASESENSITIVE__" })),
+      excludeComments: Type.Optional(Type.Boolean({ description: "__PARAM_DESC_CONTENT_SEARCH_EXCLUDECOMMENTS__" })),
       contextLines: Type.Optional(
-        Type.Integer({ description: "Context lines before/after each match (default 2). Set to 0 for compact output (no context lines)." }),
+        Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_CONTEXTLINES__" }),
       ),
-      limit: Type.Optional(Type.Integer({ description: "Max matches per page (default 100)" })),
+      limit: Type.Optional(Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_LIMIT__" })),
       pageOffset: Type.Optional(PageOffset),
     }),
     async execute(_toolCallId: any, params: any, signal: any, _onUpdate: any) {
@@ -197,22 +193,18 @@ export default function (pi: ExtensionAPI) {
     name: "codebeagle_file_search",
     label: "CodeBeagle: Search File Names",
     description: "__TOOL_DESC_FILE_SEARCH__",
-    promptSnippet: "Search CodeBeagle-indexed location for file names.",
-    promptGuidelines: [
-      "Use codebeagle_file_search when the user asks to find files by name. It replaces calls to `find`. " +
-      "Pass multiple queries as an array for OR matching. E.g. searching for all 'h' and 'cpp' means using ['*.h', '*.cpp'] as 'query'" +
-      "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
-    ],
+    promptSnippet: "__PROMPT_SNIPPET_FILE_SEARCH__",
+    promptGuidelines: ["__PROMPT_GUIDELINES_FILE_SEARCH__"],
     parameters: Type.Object({
       query: Type.Union([
-        Type.String({ description: "File name pattern, e.g. 'main*', '*test*.py', 'Makefile'" }),
-        Type.Array(Type.String(), { description: "List of file name patterns (OR logic). Files matching ANY pattern are returned." }),
+        Type.String({ description: "__PARAM_DESC_FILE_SEARCH_QUERY__" }),
+        Type.Array(Type.String(), { description: "__PARAM_DESC_FILE_SEARCH_QUERY__" }),
       ]),
-      location: Type.Optional(Type.String({ description: "Search location name from codebeagle_list_indexes" })),
-      folder: Type.Optional(Type.String({ description: "Root folder path" })),
-      pathFilter: Type.Optional(Type.String({ description: "Path filter. Can be a full file path to select a single file, e.g. 'src/main.cpp'" })),
-      caseSensitive: Type.Optional(Type.Boolean({ description: "Case-sensitive search (default: false)" })),
-      limit: Type.Optional(Type.Integer({ description: "Max files per page (default 100)" })),
+      location: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_LOCATION__" })),
+      folder: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_FOLDER__" })),
+      pathFilter: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_PATHFILTER__" })),
+      caseSensitive: Type.Optional(Type.Boolean({ description: "__PARAM_DESC_FILE_SEARCH_CASESENSITIVE__" })),
+      limit: Type.Optional(Type.Integer({ description: "__PARAM_DESC_FILE_SEARCH_LIMIT__" })),
       pageOffset: Type.Optional(PageOffset),
     }),
     async execute(_toolCallId: any, params: any, signal: any) {
@@ -232,11 +224,8 @@ export default function (pi: ExtensionAPI) {
     name: "codebeagle_list_indexes",
     label: "CodeBeagle: List Search Locations",
     description: "__TOOL_DESC_LIST_INDEXES__",
-    promptSnippet: "List CodeBeagle search locations (indexes)",
-    promptGuidelines: [
-      "Call codebeagle_list_indexes when the user wants to find files or search inside files (like grep), to discover available search locations. " +
-      "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available. "
-    ],
+    promptSnippet: "__PROMPT_SNIPPET_LIST_INDEXES__",
+    promptGuidelines: ["__PROMPT_GUIDELINES_LIST_INDEXES__"],
     parameters: Type.Object({}),
     async execute(_toolCallId: any, _params: any, signal: any) {
       const result = await callApi("/api/v1/locations", "GET", undefined, signal);

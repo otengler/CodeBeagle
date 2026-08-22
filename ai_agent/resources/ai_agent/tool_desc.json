@@ -10,7 +10,27 @@
             "Keep contextLines low (2-3) to bound token usage. ",
             "Pagination: pass pageOffset from a previous response to fetch the next page. ",
             "This tool replaces 'grep'."
-        ]
+        ],
+        "promptSnippet": "Search CodeBeagle-indexed location for content (keywords, wildcards, regex, context lines)",
+        "promptGuidelines": [
+            "Use codebeagle_content_search when the user asks to find content inside files. It replaces calls to `grep`.",
+            "Use codebeagle_health before any other tool use to make sure CodeBeagle services are available.",
+            "Use codebeagle_content_search with 'folder' and handle error 'The requested path is not indexed'. Fallback to 'grep' can then still be used."
+        ],
+        "params": {
+            "query": "Search expression or list of expressions (OR logic). Supports keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), unknown-word gaps ('error **2 network') and regex ('code <!\\d+!>'). When a list is provided, files matching ANY expression are returned.",
+            "location": "Named search location (from codebeagle_list_indexes). Mutually exclusive with folder.",
+            "folder": "Root folder path to search in. The server resolves the best matching index. Mutually exclusive with location.",
+            "pathFilter": "Path filter pattern. Can be a full file path to select a single file, e.g. 'src/main.cpp'. Prefix with '-' to exclude. Example: 'src/, -test/mock'",
+            "extensionFilter": "Comma-separated extensions. Prefix with '-' to exclude. Example: '.cpp,.h,-.hpp'",
+            "caseSensitive": "Enable case-sensitive matching (default: false).",
+            "excludeComments": "Exclude matches inside comments (default: true).",
+            "contextLines": "Number of context lines before and after each match (default: 2). Set to 0 for compact output (path:line: full matching line, no context lines).",
+            "limit": "Maximum number of matches to return per page (default: 100).",
+            "pageOffset": "Pagination cursor from a previous response. Pass the 'pageOffset' object exactly as returned by the server. Must contain 'fileIndex' (integer) and optionally 'matchIndex' (integer).",
+            "pageOffset.fileIndex": "File index cursor for pagination. Zero-based index into the list of matching files.",
+            "pageOffset.matchIndex": "Match index within the file for pagination. Zero-based index of the match inside that file."
+        }
     },
     "codebeagle_file_search": {
         "desc": [
@@ -20,12 +40,32 @@
             "Specify the root 'folder' where to search. ",
             "Pagination: pass pageOffset from a previous response to fetch the next page. ",
             "This tool replaces 'find'."
-        ]
+        ],
+        "promptSnippet": "Search CodeBeagle-indexed location for file names.",
+        "promptGuidelines": [
+            "Use codebeagle_file_search when the user asks to find files by name. It replaces calls to `find`. Pass multiple queries as an array for OR matching. E.g. searching for all 'h' and 'cpp' means using ['*.h', '*.cpp'] as 'query'Use codebeagle_health before any other tool use to make sure CodeBeagle services are available."
+        ],
+        "params": {
+            "query": "File name pattern or list of patterns (OR logic). Each pattern supports * and ? wildcards. Example: 'Factory*', '*test*.py', 'Makefile'. If the query contains a dot, the part after the last dot is used as an extension filter. When a list is provided, files matching ANY pattern are returned.",
+            "location": "Named search location (from codebeagle_list_indexes). Mutually exclusive with folder.",
+            "folder": "Root folder path to search in. The server resolves the best matching index. Mutually exclusive with location.",
+            "pathFilter": "Path filter pattern. Can be a full file path to select a single file, e.g. 'src/main.cpp'. Prefix with '-' to exclude. Example: 'src, -test'",
+            "extensionFilter": "Comma-separated extensions. Prefix with '-' to exclude. Example: '.py,.js'",
+            "caseSensitive": "Enable case-sensitive matching (default: false).",
+            "limit": "Maximum number of files to return per page (default: 100).",
+            "pageOffset": "Pagination cursor from a previous response. Pass the 'pageOffset' object exactly as returned by the server. Must contain 'fileIndex' (integer) and optionally 'matchIndex' (integer).",
+            "pageOffset.fileIndex": "File index cursor for pagination. Zero-based index into the list of matching files.",
+            "pageOffset.matchIndex": "Match index within the file for pagination. Zero-based index of the match inside that file."
+        }
     },
     "codebeagle_list_indexes": {
         "desc": [
             "List all configured CodeBeagle search locations (indexes): name, folders, extensions and index mode. ",
             "Call this to discover what is searchable, then pass the location name to codebeagle_content_search or codebeagle_file_search."
+        ],
+        "promptSnippet": "List CodeBeagle search locations (indexes)",
+        "promptGuidelines": [
+            "Call codebeagle_list_indexes when the user wants to find files or search inside files (like grep), to discover available search locations. Use codebeagle_health before any other tool use to make sure CodeBeagle services are available."
         ]
     },
     "codebeagle_health": {

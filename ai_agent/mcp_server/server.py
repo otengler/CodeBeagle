@@ -71,9 +71,18 @@ try:
 except Exception as e:
     raise RuntimeError("Could not load tool_desc.json from %s: %s", _TOOL_DESC_PATH, e)
 
-_DESC_LIST_LOCATIONS = "".join(_TOOL_DESC_DATA.get("codebeagle_list_indexes", {}).get("desc", [])) 
-_DESC_SEARCH_CONTENT = "".join(_TOOL_DESC_DATA.get("codebeagle_content_search", {}).get("desc", []))
-_DESC_SEARCH_FILENAME = "".join(_TOOL_DESC_DATA.get("codebeagle_file_search", {}).get("desc", [])) 
+def _buildDesc(tool_key: str) -> str:
+    """Join desc and append promptGuidelines (if any) for MCP tool description."""
+    entry = _TOOL_DESC_DATA.get(tool_key, {})
+    parts = list(entry.get("desc", []))
+    guidelines = entry.get("promptGuidelines", [])
+    if guidelines:
+        parts.append(" " + " ".join(guidelines))
+    return "".join(parts)
+
+_DESC_LIST_LOCATIONS = _buildDesc("codebeagle_list_indexes")
+_DESC_SEARCH_CONTENT = _buildDesc("codebeagle_content_search")
+_DESC_SEARCH_FILENAME = _buildDesc("codebeagle_file_search")
 
 _EMPTY_SCHEMA: Dict[str, Any] = {"type": "object", "properties": {}, "required": []}
 

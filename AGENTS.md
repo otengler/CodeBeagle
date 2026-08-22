@@ -197,6 +197,7 @@ themes/                     # Light/dark themes
 config.txt                  # Global config
 help.html                   # User documentation
 setup.py                    # cx_Freeze build configuration
+build/                      # Build output folder
 ```
 
 ## Development Notes
