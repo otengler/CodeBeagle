@@ -23,7 +23,7 @@ import logging
 import urllib.error
 import urllib.request
 from typing import Callable, List, Optional
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide2.QtCore import QObject, Signal
 from AppConfig import appConfig
 from .AgentHistory import AgentHistory, HistoryEntry
 from .Server import AgentServer
@@ -39,7 +39,7 @@ _externalServerRunning = False
 
 class AgentServerEvents(QObject):
     """Signal hub which notifies the UI about AI agent server state changes."""
-    serverChanged = pyqtSignal()
+    serverChanged = Signal()
 
 
 # Module-level signal hub. Created before QApplication, which is safe for

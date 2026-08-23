@@ -334,7 +334,7 @@ The extension must therefore:
 
 - **No new server code required** for the core tools — the web API already implements search,
   pagination, caching, context lines, and location discovery.
-- **`fulltextindex/` is independent of PyQt5** — the server uses it via the Qt-free `SearchProvider`.
+- **`fulltextindex/` is independent of PySide2** — the server uses it via the Qt-free `SearchProvider`.
 - **Indexes must exist and be up to date** — the API searches existing indexes; refresh via
   `UpdateIndex.py` if results are stale.
 - **Localhost-only by default** — server binds to `127.0.0.1:8080`; the extension should

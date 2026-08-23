@@ -280,7 +280,7 @@ class SettingsDialog (QDialog):
         self.ui.buttonMcpAgentInstructions.clicked.connect(self.showMcpAgentInstructions)
         self.ui.buttonOtherAgentInstructions.clicked.connect(self.showOtherAgentInstructions)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def __agentEnabledToggled(self, checked: bool) -> None:
         """Start or stop the AI agent server immediately - no restart required."""
         try:
@@ -316,13 +316,13 @@ class SettingsDialog (QDialog):
         """Select the AI agent page of the settings dialog."""
         self.ui.tabWidget.setCurrentWidget(self.ui.tabAgent)
 
-    @pyqtSlot()
+    @Slot()
     def showPiAgentInstructions(self) -> None:
         port = self.ui.editAgentPort.text()
         dialog = AgentInstructionsDialog(self, self.tr("PI agent instructions"), piAgentInstructions.format(port=port))
         dialog.exec()
 
-    @pyqtSlot()
+    @Slot()
     def showMcpAgentInstructions(self) -> None:
         mcp_executable = os.path.join(os.getcwd(), "CodeBeagleMCP")
         if sys.platform == "win32":
@@ -331,7 +331,7 @@ class SettingsDialog (QDialog):
                                          "Find the instructions for your Coding agent below:")
         dialog.exec()
 
-    @pyqtSlot()
+    @Slot()
     def showOtherAgentInstructions(self) -> None:
         port = self.ui.editAgentPort.text()
         dialog = AgentInstructionsDialog(self, self.tr("Other agents"), otherAgentInstructions.format(port=port))
@@ -463,7 +463,7 @@ class SettingsDialog (QDialog):
         else:
             self.reject()
 
-    @pyqtSlot()
+    @Slot()
     def reject(self) -> None:
         config = AppConfig.appConfig()
         self.__applyAgentServerChanges(config.agent.enabled, config.agent.port)

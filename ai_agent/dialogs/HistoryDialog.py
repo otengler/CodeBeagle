@@ -17,9 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import List, Optional
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
+from PySide2.QtCore import QTimer
+from PySide2.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
                              QHeaderView, QLabel, QPushButton, QTableWidget,
                              QTableWidgetItem, QVBoxLayout, QWidget)
 from ..AgentHistory import AgentHistory, HistoryEntry
