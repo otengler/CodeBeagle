@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, Pattern, List, Optional, Iterable
 import re
 import threading
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QFocusEvent, QColor
+from PySide2.QtCore import Qt, QTimer, Signal, Slot
+from PySide2.QtWidgets import QWidget
+from PySide2.QtGui import QFocusEvent, QColor
 from tools.AsynchronousTask import AsynchronousTask
 from .Ui_InDocumentSearchWidget import Ui_InDocumentSearchWidget
 from fulltextindex.IStringMatcher import IStringMatcher, MatchPosition
@@ -76,8 +76,8 @@ class InDocumentSearchWidget(QWidget):
     notFoundColor = QColor(255, 127, 84)
     searchDelay = 300
 
-    searchFinished = pyqtSignal(InDocumentSearchResult)
-    currentMatchChanged = pyqtSignal(int, int, int) # num, index, length
+    searchFinished = Signal(InDocumentSearchResult)
+    currentMatchChanged = Signal(int, int, int) # num, index, length
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
@@ -111,11 +111,11 @@ class InDocumentSearchWidget(QWidget):
         self.__resetColor()
         self.__startSearch()
 
-    @pyqtSlot()
+    @Slot()
     def nextMatch(self) -> None:
         self.setCurrentMatch(self.currentMatch + 1)
 
-    @pyqtSlot()
+    @Slot()
     def previousMatch(self) -> None:
         self.setCurrentMatch(self.currentMatch - 1)
 

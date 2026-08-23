@@ -18,9 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Tuple, Optional, Iterator, cast
 from enum import IntEnum
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QRectF
-from PyQt5.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor, QColor, QWheelEvent
-from PyQt5.QtWidgets import QPlainTextEdit, QWidget
+from typing import Optional, Union
+from PySide2.QtCore import Qt, Signal, QRect, QRectF
+from PySide2.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor, QColor, QWheelEvent
+from PySide2.QtWidgets import QPlainTextEdit, QWidget
 from .LineNumberArea import LineNumberArea
 from .SyntaxHighlighter import SyntaxHighlighter
 
@@ -29,11 +30,11 @@ class HighlightStyle(IntEnum):
     Solid = 2
 
 class HighlightingTextEdit (QPlainTextEdit):
-    updateNeeded = pyqtSignal()
+    updateNeeded = Signal()
     
-    highlightOutlineColor: QColor|Qt.GlobalColor = Qt.GlobalColor.darkGray
-    highlightSolidBackgroundColor: QColor|Qt.GlobalColor = Qt.GlobalColor.lightGray
-    highlightSolidForegroundColor: Optional[QColor|Qt.GlobalColor] = Qt.GlobalColor.black
+    highlightOutlineColor: Union[QColor, Qt.GlobalColor] = Qt.GlobalColor.darkGray
+    highlightSolidBackgroundColor: Union[QColor, Qt.GlobalColor] = Qt.GlobalColor.lightGray
+    highlightSolidForegroundColor: Optional[Union[QColor, Qt.GlobalColor]] = Qt.GlobalColor.black
 
     def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)

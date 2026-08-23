@@ -20,9 +20,9 @@ import sys
 import re
 from typing import List, Optional, Pattern, Match, Union
 from enum import IntEnum
-from PyQt5.QtCore import Qt, QObject, pyqtSlot
-from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
-from PyQt5.QtWidgets import QDialog, QApplication, QWidget
+from PySide2.QtCore import Qt, QObject, Slot
+from PySide2.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
+from PySide2.QtWidgets import QDialog, QApplication, QWidget
 from .Ui_RegExTesterDlg import Ui_RegExTesterDlg
 
 class ExprHighlighter(QSyntaxHighlighter):
@@ -131,23 +131,23 @@ class RegExTesterDlg (QDialog):
         self.exprHighlighter = ExprHighlighter(self.ui.textEditExpr.document())
         self.textHighlighter = TextHighlighter(self.ui.textEditText.document())
 
-    @pyqtSlot ()
+    @Slot ()
     def exprTextChanged(self) -> None:
         self.textHighlighter.setExpr(self.ui.textEditExpr.toPlainText())
 
-    @pyqtSlot ()
+    @Slot ()
     def setModeSearchFirst(self) -> None:
         self.textHighlighter.setMode(SearchModes.SearchFirst)
 
-    @pyqtSlot ()
+    @Slot ()
     def setModeSearchAll(self) -> None:
         self.textHighlighter.setMode(SearchModes.SearchAll)
 
-    @pyqtSlot ()
+    @Slot ()
     def setModeMatch(self) -> None:
         self.textHighlighter.setMode(SearchModes.Match)
 
-    @pyqtSlot (bool)
+    @Slot (bool)
     def checkColorizeGroups(self,  bChecked: bool) -> None:
         self.textHighlighter.setColorizeGroups(bChecked)
 

@@ -10,11 +10,12 @@ import logging
 import os
 import platform
 import pathlib
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QFile, QTextStream
-from PyQt5.QtGui import QColor, QPalette
+if TYPE_CHECKING:
+    from PySide2.QtWidgets import QApplication
+    from PySide2.QtCore import QFile, QTextStream
+    from PySide2.QtGui import QColor, QPalette
 
 # Local imports
 from .palette import DarkPalette as DarkPalette
@@ -48,7 +49,7 @@ def _apply_os_patches() -> str:
 
     return os_fix
 
-def _apply_application_patches(app: QApplication) -> None:
+def _apply_application_patches(app: 'QApplication') -> None:
     """
     Apply application level fixes on the QPalette.
 
@@ -57,6 +58,7 @@ def _apply_application_patches(app: QApplication) -> None:
     that moment for setting reasons.
     """
     # See issue #139
+    from PySide2.QtGui import QColor, QPalette
     color = DarkPalette.COLOR_SELECTION_LIGHT
     qcolor = QColor(color)
 
@@ -73,13 +75,17 @@ def _apply_application_patches(app: QApplication) -> None:
                         "instantiation of QApplication to take effect. ")
 
 
-def apply_stylesheet(app: QApplication, additionalStyles: str = "") -> None:
+def apply_stylesheet(app: 'QApplication', additionalStyles: str = "") -> None:
     """
-    Load the stylesheet for use in a PyQt5 application.
+    Load the stylesheet for use in a PySide2 application.
 
     Returns:
         str: the stylesheet string.
     """
+
+    from PySide2.QtWidgets import QApplication  # noqa: needed for type
+    from PySide2.QtCore import QFile, QTextStream
+    from PySide2.QtGui import QColor, QPalette
 
     # Thus, by importing the binary we can access the resources
     scriptDir = pathlib.Path(__file__).parent.resolve()

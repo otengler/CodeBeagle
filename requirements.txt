@@ -1,5 +1,5 @@
-PyQt5
-PyQt5-stubs
+PySide2
+shiboken2
 cx_Freeze
 mypy
 certifi

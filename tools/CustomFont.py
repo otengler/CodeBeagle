@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtGui import QFontDatabase
+from PySide2.QtGui import QFontDatabase
 
 def installCustomFont() -> None:
     fontDir = os.path.join("resources", "font")

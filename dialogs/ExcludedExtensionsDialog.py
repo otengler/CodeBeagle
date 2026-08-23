@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import List, Optional, Tuple, Any
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import QDialog, QWidget, QTableWidgetItem, QMessageBox
+from PySide2.QtCore import Qt, Slot
+from PySide2.QtWidgets import QDialog, QWidget, QTableWidgetItem, QMessageBox
 from fulltextindex.IndexConfiguration import IndexConfiguration
 from fulltextindex.IndexUpdater import IndexUpdater
 from .Ui_ExcludedExtensionsDialog import Ui_ExcludedExtensionsDialog
@@ -129,7 +129,7 @@ class ExcludedExtensionsDialog(QDialog):
             countItem.setData(Qt.ItemDataRole.DisplayRole, str(count))
             countItem.setData(Qt.ItemDataRole.UserRole, count)  # Store numeric value for sorting
             countItem.setFlags(countItem.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            countItem.setTextAlignment(int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter))
+            countItem.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.ui.tableExtensions.setItem(row, 1, countItem)
 
             # Relevance column
@@ -137,7 +137,7 @@ class ExcludedExtensionsDialog(QDialog):
             relevanceItem = SortableTableWidgetItem(relevance)
             relevanceItem.setData(Qt.ItemDataRole.UserRole, relevance_order[relevance])  # Store numeric order for sorting
             relevanceItem.setFlags(relevanceItem.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            relevanceItem.setTextAlignment(int(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter))
+            relevanceItem.setTextAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
             self.ui.tableExtensions.setItem(row, 2, relevanceItem)
 
         # Re-enable sorting and sort by relevance (column 2) in ascending order (High first)
@@ -150,14 +150,14 @@ class ExcludedExtensionsDialog(QDialog):
     def __showNoDataMessage(self) -> None:
         """Show message when no excluded extensions data is available."""
         QMessageBox.information(self,
-            self.tr("No Data"),
+            self.tr("No Data"),  # type: ignore[arg-type]
             self.tr("No excluded extensions data available. This could mean:\n\n"
                    "1. The index has not been updated yet\n"
                    "2. All files in the directories matched the configured extensions\n"
-                   "3. The index database is from an older version"))
+                   "3. The index database is from an older version"))  # type: ignore[arg-type]
         self.reject()
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def selectAll(self, checked: bool) -> None:
         """Select or deselect all rows."""
         if checked:

@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import Callable, TYPE_CHECKING
-from PyQt5.QtCore import Qt, QObject, pyqtSlot
+from PySide2.QtCore import Qt, QObject, Slot
 from tools.QHelper import createQAction
 from BookmarkStorage import getBookmarkStorage
 
@@ -37,7 +37,7 @@ class SearchPageBookmarks (QObject):
         numberKeys = [Qt.Key.Key_1,Qt.Key.Key_2,Qt.Key.Key_3,Qt.Key.Key_4,Qt.Key.Key_5,Qt.Key.Key_6,Qt.Key.Key_7,Qt.Key.Key_8,Qt.Key.Key_9]
         for idx, key in enumerate(numberKeys):
             number = idx + 1
-            self.searchPage.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.KeyboardModifier.ShiftModifier+key, triggered=self.__createSetNumberedBookmarkFunc(number)))
+            self.searchPage.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier | key, triggered=self.__createSetNumberedBookmarkFunc(number)))  # type: ignore[arg-type]
             self.searchPage.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+key, triggered=self.__createJumpToNumberedBookmarkFunc(number)))
 
     def __createSetNumberedBookmarkFunc(self, number: int) -> Callable[[], None]:
@@ -45,27 +45,27 @@ class SearchPageBookmarks (QObject):
     def __createJumpToNumberedBookmarkFunc(self, number: int) -> Callable[[], None]:
         return lambda: self.jumpToNumberedBookmark(number)
 
-    @pyqtSlot()
+    @Slot()
     def setBookmark(self) -> None:
         self.searchPage.ui.sourceViewer.setBookmark()
 
-    @pyqtSlot()
+    @Slot()
     def setNumberedBookmark(self, number: int) -> None:
         self.searchPage.ui.sourceViewer.setNumberedBookmark(number)
 
-    @pyqtSlot()
+    @Slot()
     def nextBookmark(self) -> None:
         if bookmark := getBookmarkStorage().nextBookmark():
             fileName, line = bookmark
             self.__navigateToBookmark(fileName, line)
 
-    @pyqtSlot()
+    @Slot()
     def previousBookmark(self) -> None:
         if bookmark := getBookmarkStorage().previousBookmark():
             fileName, line = bookmark
             self.__navigateToBookmark(fileName, line)
 
-    @pyqtSlot()
+    @Slot()
     def jumpToNumberedBookmark(self, number: int) -> None:
         if numberedBookmark := getBookmarkStorage().getNumberedBookmark(number):
             self.__navigateToBookmark(numberedBookmark.fileName, numberedBookmark.line)

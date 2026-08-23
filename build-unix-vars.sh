@@ -5,5 +5,5 @@
 #
 
 export PYTHON=python3
-export PYUIC=pyuic5
+export PYUIC=pyside2-uic
 export SASS=node_modules/.bin/sass

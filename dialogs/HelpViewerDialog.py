@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QDialog, QApplication, QWidget
+from PySide2.QtCore import Qt
+from PySide2.QtWidgets import QDialog, QApplication, QWidget
 from tools.FileTools import freadall
 from typing import cast, Optional
 from .Ui_HelpViewerDialog import Ui_HelpViewerDialog
@@ -34,7 +34,7 @@ class HelpViewerDialog (QDialog):
         try:
             text = freadall(name)
         except:
-            text = self.tr("Failed to open file")
+            text = self.tr("Failed to open file")  # type: ignore[arg-type]
 
         self.ui.textBrowserHelp.setHtml (text)
 

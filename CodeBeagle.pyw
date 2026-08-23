@@ -23,9 +23,9 @@ from tools import FileTools
 FileTools.switchToAppDir()
 
 import os, sys, subprocess, shutil
-from PyQt5.QtCore import QSettings, QUrl, pyqtSlot, Qt
-from PyQt5.QtGui import QDesktopServices, QCloseEvent, QColor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PySide2.QtCore import QSettings, QUrl, Slot, Qt
+from PySide2.QtGui import QDesktopServices, QCloseEvent, QColor
+from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 from dialogs.UserHintDialog import ButtonType, showUserHint
 from dialogs.RegExTesterDlg import RegExTesterDlg
 import AppConfig
@@ -119,8 +119,8 @@ class MainWindow(QMainWindow):
             return
         if AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
-                                       self.tr("Really close?"),
-                                       self.tr("Do you really want to close the application?"),
+                                       self.tr("Really close?"),  # type: ignore[arg-type]
+                                       self.tr("Do you really want to close the application?"),  # type: ignore[arg-type]
                                        QMessageBox.StandardButtons(QMessageBox.No | QMessageBox.Yes),
                                        QMessageBox.Yes)
             if QMessageBox.Yes != res:
@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
 
     def newerVersionFound(self, version: str) -> None:
         text = userHintNewVersionAvailable % {"version": version}
-        result = showUserHint(self, "newVersion" + version, self.tr("New version available"), text,
+        result = showUserHint(self, "newVersion" + version, self.tr("New version available"), text,  # type: ignore[arg-type]
                               ButtonType.Yes, True, ButtonType.No, False, bShowHintAgain=True)
         if result == ButtonType.Yes:
             url = QUrl("https://github.com/otengler/CodeBeagle/releases/latest")
@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
         self.appSettings.setValue("geometry", self.saveGeometry())
         self.appSettings.setValue("windowState", self.saveState())
 
-    @pyqtSlot(str)
+    @Slot(str)
     def changeWindowTitle(self, name: str) -> None:
         if name:
             self.setWindowTitle(self.initialWindowTitle + "  -  " + name)

@@ -16,10 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
+
 from typing import Optional, Tuple, Any
 import json, unittest, os
 from bisect import bisect_left, bisect_right
-from PyQt5.QtCore import QSettings
+from PySide2.QtCore import QSettings
 from tools.ExceptionTools import ignoreExcepion
 import AppConfig
 

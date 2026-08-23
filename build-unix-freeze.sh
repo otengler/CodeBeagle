@@ -62,11 +62,11 @@ if [ "$1" == "linux" ]; then
   rm -r $BUILDDIR/lib/multiprocessing
   rm -r $BUILDDIR/lib/xml
   rm -r $BUILDDIR/lib/xmlrpc
-  # PyQt
-  rm -r $BUILDDIR/lib/PyQt5/Qt5/translations
+  # PySide2
+  rm -r $BUILDDIR/lib/PySide2/translations
   # Clean all files in lib from the other directories. They are duplicates
-  SOURCE_LIB_DIR="$BUILDDIR/lib/PyQt5/Qt5/lib"
-  PLUGIN_DIR="$BUILDDIR/lib/PyQt5/Qt5/plugins"
+  SOURCE_LIB_DIR="$BUILDDIR/lib/PySide2"
+  PLUGIN_DIR="$BUILDDIR/lib/PySide2/plugins"
   # Ensure both directories exist
   if [[ ! -d "$SOURCE_LIB_DIR" || ! -d "$PLUGIN_DIR" ]]; then
     echo "Error: lib or plugins directory does not exist"

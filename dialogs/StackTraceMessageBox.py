@@ -17,9 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import Optional
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QDialog, QWidget
+from PySide2.QtCore import Qt, Slot
+from PySide2.QtGui import QFont
+from PySide2.QtWidgets import QDialog, QWidget
 from tools.ExceptionTools import exceptionAsString
 from widgets.SyntaxHighlighter import HighlightingRules
 from .Ui_StackTraceMessageBox import Ui_StackTraceMessageBox
@@ -49,7 +49,7 @@ class StackTraceMessageBox (QDialog):
     def setText(self, text: str) -> None:
         self.ui.labelText.setText (text)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def showDetails(self, bShow: bool) -> None:
         self.ui.stackTraceTextEdit.setVisible(bShow)
         self.adjustSize()
@@ -59,11 +59,11 @@ class StackTraceMessageBox (QDialog):
 def show (parent: Optional[QWidget], title: str, text: str) -> None:
     stackTrace = exceptionAsString(None)
     dlg = StackTraceMessageBox(parent, title, text, stackTrace)
-    dlg.exec()
+    dlg.exec_()
 
 def main() -> None:
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PySide2.QtWidgets import QApplication
     app = QApplication(sys.argv)
     try:
         1/0

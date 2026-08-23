@@ -8,24 +8,30 @@
 
 "$PYTHON" GenerateStylesheet.py
 
-"$PYUIC" --from-imports -o widgets/Ui_LeaveLastTabWidget.py -x widgets/LeaveLastTabWidget.ui 
-"$PYUIC" --from-imports -o widgets/Ui_InDocumentSearchWidget.py -x widgets/InDocumentSearchWidget.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_SettingsItem.py -x dialogs/SettingsItem.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_SettingsDialog.py -x dialogs/SettingsDialog.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_AboutDialog.py -x dialogs/AboutDialog.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_StackTraceMessageBox.py -x dialogs/StackTraceMessageBox.ui
-"$PYUIC" --from-imports -o dialogs/Ui_ProgressBar.py -x dialogs/ProgressBar.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_CheckableItemsDialog.py -x dialogs/CheckableItemsDialog.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_ExcludedExtensionsDialog.py -x dialogs/ExcludedExtensionsDialog.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_UserHintDialog.py -x dialogs/UserHintDialog.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_GotoLineDialog.py -x dialogs/GotoLineDialog.ui
-"$PYUIC" --from-imports -o dialogs/Ui_HelpViewerDialog.py -x dialogs/HelpViewerDialog.ui 
-"$PYUIC" --from-imports -o dialogs/Ui_RegExTesterDlg.py -x dialogs/RegExTesterDlg.ui
-"$PYUIC" -o Ui_MainWindow.py -x MainWindow.ui 
-"$PYUIC" -o Ui_SearchPage.py -x SearchPage.ui 
-"$PYUIC" -o Ui_SourceViewer.py -x SourceViewer.ui 
-"$PYUIC" -o Ui_MatchesOverview.py -x MatchesOverview.ui 
-"$PYUIC" -o Ui_MatchesOverviewLabel.py -x MatchesOverviewLabel.ui 
+function compile_ui {
+    output=$1
+    uiFile=$2
+    "$PYUIC" -o "$output" "$uiFile" 2>/dev/null
+    if [ $? -eq 0 ]; then
+        "$PYTHON" fix_uic_imports.py "$output"
+    fi
+}
 
-
-
+compile_ui widgets/Ui_LeaveLastTabWidget.py widgets/LeaveLastTabWidget.ui
+compile_ui widgets/Ui_InDocumentSearchWidget.py widgets/InDocumentSearchWidget.ui
+compile_ui dialogs/Ui_SettingsItem.py dialogs/SettingsItem.ui
+compile_ui dialogs/Ui_SettingsDialog.py dialogs/SettingsDialog.ui
+compile_ui dialogs/Ui_AboutDialog.py dialogs/AboutDialog.ui
+compile_ui dialogs/Ui_StackTraceMessageBox.py dialogs/StackTraceMessageBox.ui
+compile_ui dialogs/Ui_ProgressBar.py dialogs/ProgressBar.ui
+compile_ui dialogs/Ui_CheckableItemsDialog.py dialogs/CheckableItemsDialog.ui
+compile_ui dialogs/Ui_ExcludedExtensionsDialog.py dialogs/ExcludedExtensionsDialog.ui
+compile_ui dialogs/Ui_UserHintDialog.py dialogs/UserHintDialog.ui
+compile_ui dialogs/Ui_GotoLineDialog.py dialogs/GotoLineDialog.ui
+compile_ui dialogs/Ui_HelpViewerDialog.py dialogs/HelpViewerDialog.ui
+compile_ui dialogs/Ui_RegExTesterDlg.py dialogs/RegExTesterDlg.ui
+compile_ui Ui_MainWindow.py MainWindow.ui
+compile_ui Ui_SearchPage.py SearchPage.ui
+compile_ui Ui_SourceViewer.py SourceViewer.ui
+compile_ui Ui_MatchesOverview.py MatchesOverview.ui
+compile_ui Ui_MatchesOverviewLabel.py MatchesOverviewLabel.ui

@@ -14,9 +14,9 @@ import tempfile
 from typing import Dict, List, Tuple, Any
 
 # Third party imports
-from PyQt5.QtCore import QSize
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication
+from PySide2.QtCore import QSize
+from PySide2.QtGui import QIcon
+from PySide2.QtWidgets import QApplication
 
 # Local imports
 from .constants import (IMAGES_PATH, STYLES_SCSS_FILEPATH, QRC_FILEPATH, RC_PATH, SVG_PATH)

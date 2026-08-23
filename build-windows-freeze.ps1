@@ -34,32 +34,31 @@ if (Test-Path "$LIB\unicodedata.pyd")
     del "$LIB\unicodedata.pyd" -Force
 }
 
-mkdir $LIB\PyQt5.new\Qt5\bin
-mkdir $LIB\PyQt5.new\Qt5\plugins\imageformats
-mkdir $LIB\PyQt5.new\Qt5\plugins\platforms
-mkdir $LIB\PyQt5.new\Qt5\plugins\styles
+mkdir $LIB\PySide2.new\plugins\imageformats
+mkdir $LIB\PySide2.new\plugins\platforms
+mkdir $LIB\PySide2.new\plugins\styles
 
-copy $LIB\PyQt5\__init__.pyc $LIB\PyQt5.new 
-copy $LIB\PyQt5\_cx_freeze_debug.pyc $LIB\PyQt5.new 
-copy $LIB\PyQt5\QtCore.pyd $LIB\PyQt5.new
-copy $LIB\PyQt5\QtWidgets.pyd $LIB\PyQt5.new
-copy $LIB\PyQt5\QtGui.pyd $LIB\PyQt5.new
-copy $LIB\PyQt5\sip.cp* $LIB\PyQt5.new
-copy $LIB\PyQt5\Qt5\bin\Qt5Core.dll $LIB\PyQt5.new\Qt5\bin\
-copy $LIB\PyQt5\Qt5\bin\Qt5Widgets.dll $LIB\PyQt5.new\Qt5\bin\
-copy $LIB\PyQt5\Qt5\bin\Qt5Gui.dll $LIB\PyQt5.new\Qt5\bin\
-copy $LIB\PyQt5\Qt5\plugins\imageformats\qgif.dll $LIB\PyQt5.new\Qt5\plugins\imageformats\
-copy $LIB\PyQt5\Qt5\plugins\platforms\qwindows.dll $LIB\PyQt5.new\Qt5\plugins\platforms\
-copy $LIB\PyQt5\Qt5\plugins\styles\qwindowsvistastyle.dll $LIB\PyQt5.new\Qt5\plugins\styles\
+# Copy all root files cx_Freeze placed in PySide2 (init, debug module, pyds, DLLs, etc.)
+Get-ChildItem "$LIB\PySide2" -File | ForEach-Object { copy $_.FullName $LIB\PySide2.new }
+# Copy necessary plugin DLLs
+copy "$LIB\PySide2\plugins\imageformats\qgif.dll" $LIB\PySide2.new\plugins\imageformats\
+copy "$LIB\PySide2\plugins\platforms\qwindows.dll" $LIB\PySide2.new\plugins\platforms\
+copy "$LIB\PySide2\plugins\styles\qwindowsvistastyle.dll" $LIB\PySide2.new\plugins\styles\
 
-rmdir "$LIB\PyQt5" -Recurse -Force
-move $LIB\PyQt5.new $LIB\PyQt5
+rmdir "$LIB\PySide2" -Recurse -Force
+move $LIB\PySide2.new $LIB\PySide2
+
+# Remove extra Qt DLLs not needed by CodeBeagle
+del "$LIB\PySide2\Qt5DBus.dll" -Force
+del "$LIB\PySide2\Qt5Pdf.dll" -Force
+del "$LIB\PySide2\Qt5QmlModels.dll" -Force
+del "$LIB\PySide2\Qt5Quick.dll" -Force
+del "$LIB\PySide2\Qt5Svg.dll" -Force
+del "$LIB\PySide2\Qt5VirtualKeyboard.dll" -Force
+del "$LIB\PySide2\Qt5WebSockets.dll" -Force
 
 rmdir "$LIB\themes\dark\qss" -Recurse -Force
 rmdir "$LIB\themes\dark\svg" -Recurse -Force
-
-rmdir "$LIB\_pyrepl" -Recurse -Force
-del "$LIB\libcrypto-3.dll" -Force
 
 xcopy config.txt $BUILDDIR
 xcopy help.html $BUILDDIR

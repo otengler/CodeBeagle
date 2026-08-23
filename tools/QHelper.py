@@ -16,16 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtWidgets import QAction
-from PyQt5.QtCore import QObject, pyqtBoundSignal
-from PyQt5.QtGui import QKeySequence
-from typing import Optional, Union, Callable, Any
+from PySide2.QtWidgets import QAction
+from PySide2.QtCore import QObject, Signal, Qt, SignalInstance
+from PySide2.QtGui import QKeySequence
+from typing import Optional, Union, Callable, Any, cast
 
 def createQAction(parent: Optional[QObject],
-                  shortcut: Optional[Union[QKeySequence, QKeySequence.StandardKey, str, int]],
-                  triggered: Union[Callable[..., Any], pyqtBoundSignal]) -> QAction:
+                  shortcut: Optional[Union[QKeySequence, QKeySequence.StandardKey, str, int, Qt.Key]],
+                  triggered: Union[Callable[..., Any], SignalInstance]) -> QAction:
     action = QAction(parent)
     if shortcut is not None:
-        action.setShortcut(shortcut)
+        if isinstance(shortcut, QKeySequence):
+            action.setShortcut(shortcut)
+        else:
+            action.setShortcut(QKeySequence(cast(int, shortcut)))
     action.triggered.connect(triggered)
     return action

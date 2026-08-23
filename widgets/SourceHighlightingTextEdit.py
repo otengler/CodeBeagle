@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QRect
-from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtGui import QPainter, QFontMetrics, QTextBlock
+from PySide2.QtCore import Qt, Signal, Slot, QRect
+from PySide2.QtWidgets import QApplication, QWidget
+from PySide2.QtGui import QPainter, QFontMetrics, QTextBlock
 from .HighlightingTextEdit import HighlightingTextEdit, HighlightStyle
 from typing import Optional, Tuple
 
@@ -26,7 +26,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
     parentheses = [('(',')'), ('[',']'), ('{', '}')]
 
     # Triggered if a selection was finished while holding a modifier key down
-    selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
+    selectionFinishedWithKeyboardModifier = Signal('QString',  int)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -43,7 +43,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
         if viewport := self.viewport():
             viewport.update()
 
-    @pyqtSlot()
+    @Slot()
     def cursorChanged(self) -> None:
         document = self.document()
         if not document:
@@ -64,7 +64,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
         else:
             self.setParenthesisPair(None)
 
-    @pyqtSlot()
+    @Slot()
     def onSelectionChanged(self) -> None:
         text = self.textCursor().selectedText().strip()
 
@@ -84,7 +84,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
             else:
                 self.setDynamicHighlight(text)
 
-    @pyqtSlot()
+    @Slot()
     def jumpToMatchingBrace(self) -> None:
         if self.parenthesisPair:
             self.scrollToPosition(self.parenthesisPair[1], self.parenthesisPair[1] - self.parenthesisPair[0])
@@ -143,9 +143,9 @@ class TestBraceMatchingWithStrings(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up a text edit widget with syntax highlighting."""
-        from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtGui import QFont, QBrush
-        from PyQt5.QtCore import Qt, QCoreApplication
+        from PySide2.QtWidgets import QApplication
+        from PySide2.QtGui import QFont, QBrush
+        from PySide2.QtCore import Qt, QCoreApplication
         from widgets.SyntaxHighlighter import HighlightingRules
         import sys
 

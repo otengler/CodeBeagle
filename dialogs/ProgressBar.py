@@ -16,14 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtGui import QKeyEvent
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QDialog, QWidget
+from PySide2.QtGui import QKeyEvent
+from PySide2.QtCore import Qt, Signal, Slot
+from PySide2.QtWidgets import QDialog, QWidget
 from typing import Optional
 from .Ui_ProgressBar import Ui_ProgressBar
 
 class ProgressBar (QDialog):
-    onCancelClicked = pyqtSignal()
+    onCancelClicked = Signal()
 
     def __init__ (self, parent: Optional[QWidget], bEnableCancel: bool=False) -> None:
         super().__init__(parent, Qt.WindowType.SplashScreen)
@@ -40,12 +40,12 @@ class ProgressBar (QDialog):
         else:
             self.onCancelClicked.emit()
 
-    @pyqtSlot()
+    @Slot()
     def cancelClicked(self) -> None:
         self.ui.buttonCancel.setEnabled(False)
         self.onCancelClicked.emit()
 
-    @pyqtSlot(int)
+    @Slot(int)
     def setProgress(self, percent: int) -> None:
         """Update the progress bar to show the given percentage (0-100)."""
         if self.ui.progressBar.maximum() != 100:

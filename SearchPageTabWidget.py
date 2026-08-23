@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import sys
 from typing import List, Optional, cast
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
-from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPushButton
+from PySide2.QtCore import Qt, Signal, Slot, QTimer
+from PySide2.QtGui import QKeySequence
+from PySide2.QtWidgets import QWidget, QHBoxLayout, QLabel, QAction, QToolTip, QPushButton
 from widgets.LeaveLastTabWidget import LeaveLastTabWidget
 from widgets.AnimatedProgressWidget import AnimatedProgressWidget
 from tools import FileTools
@@ -45,8 +45,8 @@ userHintDarkTheme="""
 """
 
 class SearchPageTabWidget (LeaveLastTabWidget):
-    configChanged = pyqtSignal(list)
-    requestWindowTitleChange = pyqtSignal(str)
+    configChanged = Signal(list)
+    requestWindowTitleChange = Signal(str)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         self.buttonSettings: QPushButton
@@ -58,8 +58,8 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
         super().__init__(parent)
 
-        self.setNewTabButtonText(self.tr("New search"))
-        self.setPrototypeForNewTab(SearchPage, self.tr("Search"))
+        self.setNewTabButtonText(self.tr("New search"))  # type: ignore[arg-type]
+        self.setPrototypeForNewTab(SearchPage, self.tr("Search"))  # type: ignore[arg-type]
         self.addNewTab()
 
         # Add new tab (QKeySequence.AddTab is the same as Qt.CTRL + Qt.Key_T)
@@ -107,37 +107,37 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         """
         UpdateIndex.handleUncleanShutdown(self.indexTriggerPath, removeTriggerFiles = True)
 
-    @pyqtSlot()
+    @Slot()
     def activateTab1(self) -> None:
         self.setCurrentIndex(0)
-    @pyqtSlot()
+    @Slot()
     def activateTab2(self) -> None:
         self.setCurrentIndex(1)
-    @pyqtSlot()
+    @Slot()
     def activateTab3(self) -> None:
         self.setCurrentIndex(2)
-    @pyqtSlot()
+    @Slot()
     def activateTab4(self) -> None:
         self.setCurrentIndex(3)
-    @pyqtSlot()
+    @Slot()
     def activateTab5(self) -> None:
         self.setCurrentIndex(4)
-    @pyqtSlot()
+    @Slot()
     def activateTab6(self) -> None:
         self.setCurrentIndex(5)
 
     # Register a button in the corner widget to open the settings dialog. This function is called by the base class.
     def addWidgetsToCornerWidget (self,  hbox: QHBoxLayout) -> None:
         super ().addWidgetsToCornerWidget(hbox)
-        self.buttonSettings = self.addButtonToCornerWidget (hbox,  self.tr("Settings"),  "Settings.png",  self.openSettings)
-        self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.tr("Update index"),  "Update.png",  self.updateIndex)
+        self.buttonSettings = self.addButtonToCornerWidget (hbox,  self.tr("Settings"),  "Settings.png",  self.openSettings)  # type: ignore[arg-type]
+        self.buttonUpdate = self.addButtonToCornerWidget (hbox,  self.tr("Update index"),  "Update.png",  self.updateIndex)  # type: ignore[arg-type]
         self.indexOfUpdateButton = hbox.count()-1
-        self.buttonHelp = self.addButtonToCornerWidget (hbox,  self.tr("Help"),  "Help.png",  self.openHelp)
-        self.buttonAbout = self.addButtonToCornerWidget (hbox,  self.tr("About"),  "CodeBeagle.png",  self.openAbout)
+        self.buttonHelp = self.addButtonToCornerWidget (hbox,  self.tr("Help"),  "Help.png",  self.openHelp)  # type: ignore[arg-type]
+        self.buttonAbout = self.addButtonToCornerWidget (hbox,  self.tr("About"),  "CodeBeagle.png",  self.openAbout)  # type: ignore[arg-type]
         self.labelUpdate = None
 
     # The settings allow to configure search locations.
-    @pyqtSlot()
+    @Slot()
     def openSettings(self, createInitialLocation: bool=False, locationToAdd: Optional[IndexConfiguration.IndexConfiguration] = None) -> None:
         try:
             config = AppConfig.userConfig()
@@ -155,25 +155,25 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     settingsDlg.addLocation()
                 if locationToAdd:
                     settingsDlg.addExistingLocation(locationToAdd)
-                if settingsDlg.exec():
+                if settingsDlg.exec_():
                     # Refresh config
                     AppConfig.refreshConfig()
                     searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
                     self.configChanged.emit(searchLocations)
             except:
                 StackTraceMessageBox.show(self,
-                                      self.tr("Error in settings dialog"),
-                                      self.tr("""Please report the stack trace"""))
+                                      self.tr("Error in settings dialog"),  # type: ignore[arg-type]
+                                      self.tr("""Please report the stack trace"""))  # type: ignore[arg-type]
 
-    @pyqtSlot(str)
+    @Slot(str)
     def addSearchLocationFromPath (self, directory: str) -> None:
         """This is called when a directory is dropped on the application. This is a shortcut to create a search location."""
         ext = FileTools.getMostCommonExtensionInDirectory (directory)
-        location = IndexConfiguration.IndexConfiguration(self.tr("Search") + " '" + directory + "'", ext,  directory, "", "", IndexConfiguration.IndexMode.NoIndexWanted)
+        location = IndexConfiguration.IndexConfiguration(self.tr("Search") + " '" + directory + "'", ext,  directory, "", "", IndexConfiguration.IndexMode.NoIndexWanted)  # type: ignore[arg-type]
 
         self.openSettings (locationToAdd=location)
 
-    @pyqtSlot()
+    @Slot()
     def updateIndex(self) -> None:
         try:
             config = AppConfig.userConfig()
@@ -183,16 +183,16 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             searchLocations = IndexConfiguration.readConfig(config)
             displayNames = [conf.displayName() for conf in searchLocations if conf.generatesIndex()]
             from dialogs.CheckableItemsDialog import CheckableItemsDialog
-            updateDialog = CheckableItemsDialog(self.tr("Choose indexes to update"),  True, self)
+            updateDialog = CheckableItemsDialog(self.tr("Choose indexes to update"),  True, self)  # type: ignore[arg-type]
             for name in displayNames:
                 updateDialog.addItem(name)
             updateDialog.checkAll(True)
-            if updateDialog.exec():
+            if updateDialog.exec_():
                 # The items returned are touples: (index,value)
                 updateDisplayNames = [name for i, name in updateDialog.checkedItems()]
                 self.triggerIndexUpdate (updateDisplayNames)
 
-    @pyqtSlot()
+    @Slot()
     def openHelp(self) -> None:
         from dialogs.HelpViewerDialog import HelpViewerDialog
         helpDialog = HelpViewerDialog(self)
@@ -200,13 +200,13 @@ class SearchPageTabWidget (LeaveLastTabWidget):
         helpDialog.showFile("help.html")
         helpDialog.show()
 
-    @pyqtSlot()
+    @Slot()
     def openAbout(self) -> None:
         from dialogs.AboutDialog import AboutDialog
         aboutDialog = AboutDialog(self)
-        aboutDialog.exec()
+        aboutDialog.exec_()
 
-    @pyqtSlot(list)
+    @Slot(list)
     def triggerIndexUpdate (self,  updateDisplayNames: List[str]) -> None:
         try:
             self.__triggerIndexUpdate (updateDisplayNames)
@@ -297,7 +297,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     def __showIndexUpdateInProgress (self, bInProgress: bool) -> None:
         if not self.labelUpdate:
-            self.labelUpdate = self.__addAnimatedUpdateLabel (self.cornerWidgetLayout(),  self.tr("Update running..."))
+            self.labelUpdate = self.__addAnimatedUpdateLabel (self.cornerWidgetLayout(),  self.tr("Update running..."))  # type: ignore[arg-type]
         if bInProgress:
             self.buttonUpdate.hide()
             self.labelUpdate.show()
@@ -329,7 +329,7 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             prevTab = cast(SearchPage, prevTabWidget)
             newTab.setCurrentSearchLocation(prevTab.currentConfigName)
 
-    @pyqtSlot(str, str)
+    @Slot(str, str)
     def searchInNewTab (self, text: str, searchLocationName: str) -> None:
         widget = self.addNewTab ()
         if widget:
@@ -337,27 +337,27 @@ class SearchPageTabWidget (LeaveLastTabWidget):
             searchPage.setCurrentSearchLocation(searchLocationName)
             searchPage.searchForText(text)
 
-    @pyqtSlot(QWidget, str)
+    @Slot(QWidget, str)
     def changeTabName (self,  searchPage: SearchPage,  text: str) -> None:
         index = self.indexOf(searchPage)
         if -1 != index:
             if text:
                 self.setTabText(index, text)
             else:
-                self.setTabText(index, self.tr("Search"))
+                self.setTabText(index, self.tr("Search"))  # type: ignore[arg-type]
 
-    @pyqtSlot()
+    @Slot()
     def initialSetup(self) -> None:
         if hintWouldBeShown("noLocations"):
             locations = IndexConfiguration.readConfig(AppConfig.appConfig())
             if not locations:
-                text = self.tr(userHintInitialSetup)
-                res = showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  ButtonType.Yes,  True,  ButtonType.No)
+                text = self.tr(userHintInitialSetup)  # type: ignore[arg-type]
+                res = showUserHint (self, "noLocations",  self.tr("Initial setup"), text,  ButtonType.Yes,  True,  ButtonType.No)  # type: ignore[arg-type]
                 if res == ButtonType.Yes:
                     self.openSettings(createInitialLocation=True)
         if AppConfig.appConfig().theme != AppConfig.darkTheme:
-            text = self.tr(userHintDarkTheme)
-            if showUserHint (self, "darkTheme",  self.tr("Dark theme"), text,  ButtonType.Yes, True, ButtonType.No) == ButtonType.Yes:
+            text = self.tr(userHintDarkTheme)  # type: ignore[arg-type]
+            if showUserHint (self, "darkTheme",  self.tr("Dark theme"), text,  ButtonType.Yes, True, ButtonType.No) == ButtonType.Yes:  # type: ignore[arg-type]
                 AppConfig.appConfig().theme = AppConfig.darkTheme
                 AppConfig.saveUserConfig(AppConfig.appConfig())
                 self.__restartCodeBeagle()
@@ -379,10 +379,10 @@ class SearchPageTabWidget (LeaveLastTabWidget):
 
     def userConfigFailedToLoadMessage(self) -> None:
         StackTraceMessageBox.show(self,
-                                  self.tr("Failed to load user config"),
-                                  self.tr("The user config file could not be loaded from the user profile"))
+                                  self.tr("Failed to load user config"),  # type: ignore[arg-type]
+                                  self.tr("The user config file could not be loaded from the user profile"))  # type: ignore[arg-type]
 
     def failedToUpdateIndexesMessage(self) -> None:
         StackTraceMessageBox.show(self,
-                                  self.tr("Error during index update"),
-                                  self.tr("The update process failed to update the desired indexes"))
+                                  self.tr("Error during index update"),  # type: ignore[arg-type]
+                                  self.tr("The update process failed to update the desired indexes"))  # type: ignore[arg-type]

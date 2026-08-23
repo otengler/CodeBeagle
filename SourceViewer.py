@@ -16,11 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
+
 import os
 from typing import Optional, List
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent, QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QDialog, QTextEdit
+from PySide2.QtCore import Qt, Slot, Signal
+from PySide2.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent, QIcon, QPixmap
+from PySide2.QtWidgets import QWidget, QListWidgetItem, QDialog, QTextEdit
 from tools.FileTools import Encoding, freadallEx
 from AppConfig import appConfig
 from fulltextindex import FullTextIndex, IStringMatcher
@@ -39,11 +41,11 @@ class EditorState:
 
 class SourceViewer (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
-    selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
-    noPreviousMatch = pyqtSignal()
-    noNextMatch = pyqtSignal()
-    directoryDropped = pyqtSignal('QString')
-    currentMatchChanged = pyqtSignal(int)
+    selectionFinishedWithKeyboardModifier = Signal('QString',  int)
+    noPreviousMatch = Signal()
+    noNextMatch = Signal()
+    directoryDropped = Signal('QString')
+    currentMatchChanged = Signal(int)
 
     currentLineBackgroundColor = QColor(240,240,240)
     currentMatchLineBackgroundColor = QColor(170,255,127)
@@ -104,19 +106,19 @@ class SourceViewer (QWidget):
         # Encoding info label
         self.ui.labelEncoding.hide()
 
-    @pyqtSlot(int)
+    @Slot(int)
     def matchListRowChanged(self, row: int) -> None:
         if row != -1:
             self.setCurrentMatch(row)
 
-    @pyqtSlot(QListWidgetItem)
+    @Slot(QListWidgetItem)
     def matchListItemDoubleClicked(self, _: QListWidgetItem) -> None:
         """Force jumping to a match. Useful to jump to the same match again."""
         row = self.ui.listMatchesWidget.currentRow()
         if row != -1:
             self.setCurrentMatch(row, True)
 
-    @pyqtSlot()
+    @Slot()
     def textEditUpdateNeeded (self) -> None:
         self.ui.textEdit.viewport().update ()
 
@@ -139,7 +141,7 @@ class SourceViewer (QWidget):
             if self.ui.textEdit.lineNumberArea:
                 self.ui.textEdit.lineNumberArea.bookmarkChanged.connect(self.bookmarkChanged)
 
-    @pyqtSlot(int)
+    @Slot(int)
     def bookmarkChanged(self, line: int) -> None:
         if self.currentFile and self.ui.textEdit.lineNumberArea:
             lines = getBookmarkStorage().toggleBookmarkForFile(self.currentFile, line)
@@ -150,7 +152,7 @@ class SourceViewer (QWidget):
         self.matches = [] # touples with position and length
         self.__setMatchIndex(-1)
         self.ui.labelCursor.setText("")
-        self.ui.labelFile.setText(self.tr("No document loaded"))
+        self.ui.labelFile.setText(self.tr("No document loaded"))  # type: ignore[arg-type]
         self.ui.textEdit.clear()
         self.__resetTextCursor()
         self.__setInfoLabel()
@@ -176,7 +178,7 @@ class SourceViewer (QWidget):
         try:
             text, encoding = freadallEx(name)
         except:
-            text = self.tr("Failed to open file")
+            text = self.tr("Failed to open file")  # type: ignore[arg-type]
             self.ui.labelEncoding.hide()
         else:
             self.ui.labelEncoding.show()
@@ -220,26 +222,26 @@ class SourceViewer (QWidget):
         if editorState:
             self.restoreEditorState(editorState)
 
-    @pyqtSlot()
+    @Slot()
     def setBookmark(self) -> None:
         self.bookmarkChanged(self.ui.textEdit.currentLineNumber())
 
-    @pyqtSlot()
+    @Slot()
     def setNumberedBookmark(self, number: int) -> None:
         numberedBookmarks = getBookmarkStorage().toggleNumberedBookmark(number, self.currentFile, self.ui.textEdit.currentLineNumber())
         if lineNumberArea := self.ui.textEdit.lineNumberArea:
             lineNumberArea.setNumberedBookmarks(numberedBookmarks)
 
-    @pyqtSlot()
+    @Slot()
     def reloadFile(self) -> None:
         if self.currentFile:
             self.showFile(self.currentFile)
 
-    @pyqtSlot()
+    @Slot()
     def showGotoLineDialog(self) -> None:
         from dialogs.GotoLineDialog import GotoLineDialog
         gotoDialog = GotoLineDialog(self)
-        if gotoDialog.exec() == QDialog.Accepted:
+        if gotoDialog.exec_() == QDialog.Accepted:
             self.gotoLine(gotoDialog.getLine())
 
     def gotoLine(self, line: int) -> None:
@@ -253,7 +255,7 @@ class SourceViewer (QWidget):
             dir = block.position() - self.ui.textEdit.textCursor().position()
             self.ui.textEdit.scrollToPosition(block.position(), dir)
 
-    @pyqtSlot()
+    @Slot()
     def nextMatch (self) -> None:
         if self.curMatch < len(self.matches)-1:
             self.setCurrentMatch(self.curMatch + 1)
@@ -261,7 +263,7 @@ class SourceViewer (QWidget):
             if self.bMatchOverFiles:
                 self.noNextMatch.emit()
 
-    @pyqtSlot()
+    @Slot()
     def previousMatch (self) -> None:
         if self.curMatch > 0:
             self.setCurrentMatch(self.curMatch - 1)
@@ -269,7 +271,7 @@ class SourceViewer (QWidget):
             if self.bMatchOverFiles:
                 self.noPreviousMatch.emit()
 
-    @pyqtSlot()
+    @Slot()
     def jumpToCurrentMatch(self) -> None:
         if self.curMatch >= 0:
             match = self.matches[self.curMatch]
@@ -283,10 +285,10 @@ class SourceViewer (QWidget):
             self.__setInfoLabel ()
             self.__enableNextPrevious()
 
-    @pyqtSlot()
+    @Slot()
     def updateCurrentLine (self) -> None:
         line = self.ui.textEdit.currentLineNumber()
-        self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))
+        self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))  # type: ignore[arg-type]
 
         if lineSpan := self.ui.textEdit.getLineByLineNumber(line):
             lineStart, _, lineText = lineSpan
@@ -332,7 +334,7 @@ class SourceViewer (QWidget):
                 extras.append(extra)
         return (extras, matchCount)
 
-    @pyqtSlot()
+    @Slot()
     def toggleSearchFrame(self) -> None:
         text = self.ui.textEdit.textCursor().selectedText().strip()
         self.ui.widgetInDocumentSearch.setSearch(text)
@@ -342,11 +344,11 @@ class SourceViewer (QWidget):
             self.ui.buttonSearch.setChecked(True)
         self.showSearchFrame()
 
-    @pyqtSlot(int, int, int)
+    @Slot(int, int, int)
     def inDocumentSearchMatchChanged(self, _: int, index: int, length: int) -> None:
         self.__scrollToMatch(index, length)
 
-    @pyqtSlot()
+    @Slot()
     def showSearchFrame(self) -> None:
         if self.ui.buttonSearch.isChecked():
             self.ui.widgetInDocumentSearch.show()
@@ -356,7 +358,7 @@ class SourceViewer (QWidget):
             self.ui.widgetInDocumentSearch.setSearch("")
             self.__clearInDocumentSearchHighlighting()
 
-    @pyqtSlot(InDocumentSearchResult)
+    @Slot(InDocumentSearchResult)
     def inDocumentSearchFinished(self, searchResult: InDocumentSearchResult) -> None:
         if searchResult.results:
             self.ui.textEdit.highlighter.setSearchData2 (searchResult.matcher)
@@ -478,7 +480,7 @@ class SourceViewer (QWidget):
 
 def main() -> None:
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PySide2.QtWidgets import QApplication
     app = QApplication(sys.argv)
     w = SourceViewer(None)
     w.show()

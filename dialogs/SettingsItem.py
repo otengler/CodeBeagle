@@ -18,17 +18,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from typing import cast, Optional
-from PyQt5.QtGui import QFocusEvent
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QWidget, QFileDialog
+from PySide2.QtGui import QFocusEvent
+from PySide2.QtCore import Qt, Signal, Slot
+from PySide2.QtWidgets import QWidget, QFileDialog
 from tools import FileTools
 import AppConfig
 from fulltextindex.IndexConfiguration import IndexMode, IndexType
 from .Ui_SettingsItem import Ui_SettingsItem
 
 class SettingsItem (QWidget):
-    dataChanged = pyqtSignal()
-    showExcludedExtensionsClicked = pyqtSignal()
+    dataChanged = Signal()
+    showExcludedExtensionsClicked = Signal()
 
     def __init__ (self, parent: QWidget) -> None:
         super ().__init__(parent)
@@ -68,7 +68,7 @@ class SettingsItem (QWidget):
     def focusInEvent (self, _: Optional[QFocusEvent]) -> None:
         self.ui.editName.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
-    @pyqtSlot(str)
+    @Slot(str)
     def nameEdited(self, text: str) -> None:
         """Suggest a name for the index db."""
         if self.buildDBName and self.indexGenerationEnabled():
@@ -79,14 +79,14 @@ class SettingsItem (QWidget):
         location = os.path.join (location,  FileTools.removeInvalidFileChars(text)+".dat")
         self.ui.editIndexDB.setText(location)
 
-    @pyqtSlot(str)
+    @Slot(str)
     def indexDBEdited(self, text: str) -> None:
         if text:
             self.buildDBName = False
         else:
             self.buildDBName = True
 
-    @pyqtSlot(int)
+    @Slot(int)
     def updateIndexModeChanged (self,  index: IndexMode) -> None:
         self.__enableBasedOnUpdateModeSetting(index)
         indexWanted = (index != IndexMode.NoIndexWanted)
@@ -94,11 +94,11 @@ class SettingsItem (QWidget):
             self.__updateDBName(self.name())
         self.dataChanged.emit()
 
-    @pyqtSlot()
+    @Slot()
     def browseForDirectory(self) -> None:
         directory = QFileDialog.getExistingDirectory (
             self,
-            self.tr("Choose directory to search or index"),
+            self.tr("Choose directory to search or index"),  # type: ignore[arg-type]
             "",
             QFileDialog.Options(QFileDialog.ShowDirsOnly))
 
@@ -106,14 +106,13 @@ class SettingsItem (QWidget):
             self.ui.editDirectories.setText (FileTools.correctPath(directory))
             self.dataChanged.emit()
 
-    @pyqtSlot()
+    @Slot()
     def browseForIndexDB(self) -> None:
         indexDB = QFileDialog.getSaveFileName(
             None,
-            self.tr("Choose file for index DB"),
+            self.tr("Choose file for index DB"),  # type: ignore[arg-type]
             "",
-            self.tr("*.dat"),
-            "",
+            self.tr("*.dat"),  # type: ignore[arg-type]
             QFileDialog.Options(QFileDialog.DontConfirmOverwrite))[0] # tuple returned, selection and used filter
 
         if indexDB:
@@ -193,7 +192,7 @@ class SettingsItem (QWidget):
         self.ui.comboIndexType.setEnabled(indexWanted)
         self.ui.buttonBrowseIndexLocation.setEnabled(indexWanted)
 
-    @pyqtSlot()
+    @Slot()
     def showExcludedExtensions(self) -> None:
         """Emit signal to show excluded extensions dialog."""
         self.showExcludedExtensionsClicked.emit()
