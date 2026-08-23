@@ -157,6 +157,14 @@ class FileNameSearchInput(BaseModel):
         })
 
 
+class FileUpdateInput(BaseModel):
+    """Parameters for the update_file tool (codebeagle_update_file)."""
+
+    file: str = Field(
+        description=_param_desc("codebeagle_update_file", "file")
+    )
+
+
 def _dropNone(data: Dict[str, Any]) -> Dict[str, Any]:
     """Return a copy of the dict without entries whose value is None."""
     return {key: value for key, value in data.items() if value is not None}

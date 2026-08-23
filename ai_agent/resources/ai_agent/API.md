@@ -21,6 +21,11 @@ curl -X POST http://localhost:8080/api/v1/search/filename \
 
 # List available search locations
 curl http://localhost:8080/api/v1/locations
+
+# Update index for a single file after writing it
+curl -X POST http://localhost:8080/api/v1/index/update \
+  -H "Content-Type: application/json" \
+  -d '{"file": "c:\\src\\project\\main.py"}'
 ```
 
 ## Base URL
@@ -247,6 +252,56 @@ Search for file names. Wildcard matching with `*` and `?` is always enabled.
 | `totalFiles` | int | Total number of matching files. |
 | `pageOffset` | object or null | Present if there are more results. Omitted when no more data. |
 | `files` | string[] | Array of full file paths matching the query. |
+
+---
+
+### `POST /api/v1/index/update`
+
+Update the CodeBeagle full-text index for a single file. Use this after writing or modifying a file to make it immediately searchable.
+
+**Request body:**
+
+```json
+{
+  "file": "C:\\src\\project\\main.py"
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `file` | string | **yes** | — | Absolute path to the file to update in the index. |
+
+**Behaviour:**
+- The server finds the index configuration whose source directories cover the file path and whose extensions match the file.
+- The file is re-indexed for both content and file name search (depending on the index configuration).
+- If the file is new, it is added to the index. If it already exists, its content tokens are refreshed.
+- If the file's content has not changed, the index is left unchanged.
+
+**Response:**
+
+```json
+{
+  "updated": true,
+  "detail": "New docs: 1, Updated docs: 0, Unchanged: 0",
+  "file": "C:\\src\\project\\main.py",
+  "index": "myproject"
+}
+```
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `updated` | bool | True if the file was newly added or its content changed. |
+| `detail` | string | Human-readable update statistics. |
+| `file` | string | The file path that was updated. |
+| `index` | string | The name of the index configuration used. |
+
+**Errors:**
+- `404` if the file does not exist.
+- `400` if no index configuration covers the file path.
 
 ---
 

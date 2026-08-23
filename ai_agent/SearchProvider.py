@@ -16,12 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+from fnmatch import fnmatch
 from typing import Dict, List, Optional, Set, Union, Tuple, cast
 from PyQt5.QtGui import QFont
 from AppConfig import appConfig
 from tools.FileTools import freadall
 from tools.ContextExtraction import LineMapping
 from fulltextindex import IndexConfiguration
+from fulltextindex.IndexUpdater import IndexUpdater, UpdateStatistics
 from fulltextindex.FullTextIndex import buildMapFromCommonKeywordFile, CommonKeywordMap
 from fulltextindex.IStringMatcher import MatchPosition
 from fulltextindex.Query import QueryParams, ContentQuery, FileQuery
@@ -335,6 +338,80 @@ class SearchProvider:
             for i in range(lineNumber + 1, end + 1):
                 lines.append(lineIndex.getLine(i))
         return lines
+
+    def updateFile(self, filePath: str) -> Dict[str, object]:
+        """
+        Update the index for a single file.
+
+        This re-indexes the given file in-place without running a full index
+        update. Only the index configuration whose source directories cover
+        the file path and whose extensions match the file is updated.
+
+        Args:
+            filePath: Full path to the file to update.
+
+        Returns:
+            Dict with keys:
+              - "updated": True if the file was updated, False if unchanged.
+              - "detail": Description of the update result.
+              - "file": The file path that was updated.
+              - "index": The name of the index configuration used.
+
+        Raises:
+            FileNotFoundError: If filePath does not exist.
+            ValueError: If no index configuration covers the file path.
+        """
+        if not os.path.isfile(filePath):
+            raise FileNotFoundError(f"File not found: {filePath}")
+
+        # Find the index configuration that covers this file
+        indexConfigs = IndexConfiguration.readConfig(self._config)
+        extension = os.path.splitext(filePath)[1].lower()
+
+        matchingConf = None
+        for conf in indexConfigs:
+            if not conf.generatesIndex():
+                continue
+            # Check if the file is under one of the source directories
+            fileDir = os.path.normpath(os.path.dirname(filePath)).lower()
+            for srcDir in conf.directories:
+                normSrc = os.path.normpath(srcDir).lower()
+                if fileDir == normSrc or fileDir.startswith(normSrc + os.sep):
+                    # Check extension match
+                    if extension and extension not in conf.extensions:
+                        continue
+                    # Check directory exclude patterns
+                    excluded = False
+                    for exclude in conf.dirExcludes:
+                        if fnmatch(fileDir, exclude.lower()):
+                            excluded = True
+                            break
+                    if excluded:
+                        continue
+                    matchingConf = conf
+                    break
+            if matchingConf:
+                break
+
+        if matchingConf is None:
+            raise ValueError(
+                f"No indexed search location covers the file path '{filePath}'. "
+                "Add the file's directory to an index in CodeBeagle settings."
+            )
+
+        updater = IndexUpdater(matchingConf.indexdb)
+        stats = UpdateStatistics()
+        updater.updateFile(matchingConf, filePath, stats)
+
+        detail = str(stats)
+        updated = stats.nUpdated > 0 or stats.nNew > 0
+
+        return {
+            "updated": updated,
+            "detail": detail,
+            "file": filePath,
+            "index": matchingConf.displayName(),
+        }
 
     def _loadCommonKeywords(self) -> None:
             """Load the common keyword map from config if configured."""

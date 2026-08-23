@@ -253,3 +253,19 @@ Example: Windows uses `.pyw` extension and `Win32GUI` base for cx_Freeze, Linux/
 ### Index Update Tool
 
 `UpdateIndex.py` is a separate executable for updating indexes from command line or scheduled tasks. It can be run independently of the main GUI.
+
+### AI Agent Integration: codebeagle_update_file
+
+When the CodeBeagle AI agent server is running, the `codebeagle_update_file` tool (PI/MCP) must be called **after every `write` tool call** that creates or modifies a file. No exception.
+
+- This ensures the file is immediately searchable via `codebeagle_content_search` and `codebeagle_file_search`.
+- The tool calls `POST /api/v1/index/update` with the absolute file path.
+- The server finds the correct index configuration based on the file's directory and extension.
+- If the file is not covered by any indexed location, the tool returns an error and the file's directory must be added to a CodeBeagle index first.
+
+Implementation layers:
+1. `fulltextindex/IndexUpdater.updateFile()` — Core logic: updates a single file in the SQLite index database.
+2. `ai_agent/SearchProvider.updateFile()` — Resolves the index configuration for the file path and delegates to IndexUpdater.
+3. `ai_agent/Server.py` — HTTP endpoint `POST /api/v1/index/update`.
+4. `ai_agent/mcp_server/` — MCP tool `codebeagle_update_file`.
+5. `ai_agent/resources/ai_agent/pi/extensions/codebeagle.ts` — PI tool `codebeagle_update_file`.

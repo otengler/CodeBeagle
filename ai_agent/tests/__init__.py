@@ -23,6 +23,7 @@ from .test_content_pagination import TestContentSearchPagination
 from .test_filename_pagination import TestFileNameSearchPagination
 from .test_resolve_config import TestResolveIndexConfig
 from .test_agent_state import TestAgentState
+from .test_update_file import TestIndexUpdaterUpdateFile, TestSearchProviderUpdateFile, TestIndexUpdateEndpoint
 
 __all__ = [
     "TestTTLCache",
@@ -34,4 +35,7 @@ __all__ = [
     "TestFileNameSearchPagination",
     "TestResolveIndexConfig",
     "TestAgentState",
+    "TestIndexUpdaterUpdateFile",
+    "TestSearchProviderUpdateFile",
+    "TestIndexUpdateEndpoint",
 ]

@@ -116,6 +116,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                 self._handleContentSearch()
             elif path in ("/api/v1/search/filename", "/search/filename"):
                 self._handleFileNameSearch()
+            elif path in ("/api/v1/index/update", "/index/update"):
+                self._handleIndexUpdate()
             else:
                 self._sendError(404, f"Unknown endpoint: {path}")
         except HttpError as e:
@@ -312,10 +314,33 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                     ("codebeagle_file_search", "\"__TOOL_DESC_FILE_SEARCH__\""),
                     ("codebeagle_list_indexes", "\"__TOOL_DESC_LIST_INDEXES__\""),
                     ("codebeagle_health", "\"__TOOL_DESC_HEALTH__\""),
+                    ("codebeagle_update_file", "\"__TOOL_DESC_UPDATE_FILE__\""),
                 ]:
                     entry = toolDesc.get(key, {})
                     desc = "".join(entry.get("desc", []))
                     content = content.replace(marker, json.dumps(desc))
+                # Replace prompt snippet markers
+                for key, marker in [
+                    ("codebeagle_content_search", "\"__PROMPT_SNIPPET_CONTENT_SEARCH__\""),
+                    ("codebeagle_file_search", "\"__PROMPT_SNIPPET_FILE_SEARCH__\""),
+                    ("codebeagle_list_indexes", "\"__PROMPT_SNIPPET_LIST_INDEXES__\""),
+                    ("codebeagle_update_file", "\"__PROMPT_SNIPPET_UPDATE_FILE__\""),
+                ]:
+                    entry = toolDesc.get(key, {})
+                    snippet = entry.get("promptSnippet", "")
+                    content = content.replace(marker, json.dumps(snippet))
+                # Replace prompt guidelines markers
+                for key, marker in [
+                    ("codebeagle_content_search", "\"__PROMPT_GUIDELINES_CONTENT_SEARCH__\""),
+                    ("codebeagle_file_search", "\"__PROMPT_GUIDELINES_FILE_SEARCH__\""),
+                    ("codebeagle_list_indexes", "\"__PROMPT_GUIDELINES_LIST_INDEXES__\""),
+                    ("codebeagle_update_file", "\"__PROMPT_GUIDELINES_UPDATE_FILE__\""),
+                ]:
+                    entry = toolDesc.get(key, {})
+                    guidelines = entry.get("promptGuidelines", [])
+                    # Guidelines are an array of strings, the marker is a string literal
+                    # Format as JSON array so it's a valid TypeScript string array
+                    content = content.replace(marker, json.dumps(guidelines))
             body = content.encode("utf-8")
             self._statusCode = 200
             self.send_response(200)
@@ -435,6 +460,22 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         except ValueError as e:
             raise HttpError(404, str(e))
         self._sendJson(200, _fileNameResultToJson(query, result))
+
+    def _handleIndexUpdate(self) -> None:
+        """Handle POST /api/v1/index/update - update index for a single file."""
+        data = self._readJsonBody()
+        filePath = self._getString(data, "file")
+        if not filePath:
+            raise HttpError(400, "Field 'file' must not be empty")
+        filePath = _correctPathSeparator(filePath)
+
+        try:
+            result = self.server.provider.updateFile(filePath)
+        except FileNotFoundError as e:
+            raise HttpError(404, str(e))
+        except ValueError as e:
+            raise HttpError(400, str(e))
+        self._sendJson(200, result)
 
 def _correctPathSeparator(path: str) -> str:
     """Normalise path separators to the local OS convention."""

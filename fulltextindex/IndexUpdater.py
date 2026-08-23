@@ -174,6 +174,87 @@ class IndexUpdater (IndexDatabase):
         logging.info("Cleaning excluded extensions")
         c.execute("DELETE FROM excludedExtensions WHERE indexID < :index", {"index":nextIndexID})
 
+    def updateFile(self, config: IndexConfiguration, filePath: str, statistics: Optional[UpdateStatistics] = None) -> None:
+        """
+        Update the index for a single file.
+
+        This is a lightweight alternative to updateIndex() which only processes
+        the given file. It reuses the latest index run ID so that a subsequent
+        full updateIndex() still works correctly.
+
+        Args:
+            config: The index configuration that covers this file.
+            filePath: Full path to the file to update.
+            statistics: Optional statistics collector.
+
+        Raises:
+            FileNotFoundError: If filePath does not exist.
+            ValueError: If the file's extension is not in the configuration.
+        """
+        if not os.path.isfile(filePath):
+            raise FileNotFoundError(f"File not found: {filePath}")
+
+        ext = os.path.splitext(filePath)[1].lower()
+        if ext and ext not in config.extensions:
+            raise ValueError(f"Extension '{ext}' is not indexed by this configuration")
+
+        indexType = config.indexType
+        mTime = os.stat(filePath).st_mtime
+        kwCache: dict[str, int] = {}
+        _, fileName = os.path.split(filePath)
+
+        c = self.conn.cursor()
+        q = self.conn.cursor()
+
+        with self.conn:
+            # Get the latest index run ID (or create one if none exists)
+            c.execute("SELECT MAX(id) FROM indexInfo")
+            row = c.fetchone()
+            if row and row[0] is not None:
+                currentIndexID = int(row[0])
+            else:
+                c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
+                currentIndexID = cast(int, c.lastrowid)
+                if currentIndexID is None:
+                    raise RuntimeError("No index ID for new index run returned")
+
+            # Insert or get the document
+            c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)",
+                       (mTime, filePath))
+            if c.rowcount == 1 and c.lastrowid and c.lastrowid != 0:
+                docID = c.lastrowid
+                timestamp = 0
+                newFile = True
+            else:
+                q.execute("SELECT id,timestamp FROM documents WHERE fullpath=:fp", {"fp": filePath})
+                result = q.fetchone()
+                if result is None:
+                    raise RuntimeError(f"Failed to find or insert document: {filePath}")
+                docID, timestamp = result
+                newFile = False
+
+            # Update filename index if needed
+            if indexType != IndexType.FileContent:
+                self.__addFileName(c, q, docID, fileName)
+
+            # Update content index if needed
+            if indexType != IndexType.FileName:
+                self.__updateFile(c, q, docID, filePath, kwCache)
+                if timestamp != mTime:
+                    c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts": mTime, "id": docID})
+
+            # Associate document with current index run
+            c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)",
+                       (docID, currentIndexID))
+
+            if statistics:
+                if newFile:
+                    statistics.incNew()
+                elif timestamp != mTime:
+                    statistics.incUpdated()
+                else:
+                    statistics.incUnchanged()
+
     def __updateFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, strFullPath: str, kwCache: dict[str, int]) -> None:
         # Delete old associations
         c.execute("DELETE FROM kw2doc WHERE docID=?", (docID,))

@@ -9,6 +9,7 @@
  *  - codebeagle_content_search -> POST /api/v1/search/content
  *  - codebeagle_file_search    -> POST /api/v1/search/filename
  *  - codebeagle_list_indexes   -> GET  /api/v1/locations
+ *  - codebeagle_update_file    -> POST /api/v1/index/update
  *
  * Base URL resolution:
  *  - CODEBEAGLE_API_URL env var (highest precedence)
@@ -256,6 +257,25 @@ export default function (pi: ExtensionAPI) {
         content: [
           { type: "text", text: `CodeBeagle agent server at ${BASE_URL}: ${JSON.stringify(result)}` },
         ],
+        details: result,
+      };
+    },
+  });
+
+  pi.registerTool({
+    name: "codebeagle_update_file",
+    label: "CodeBeagle: Update Index for Single File",
+    description: "__TOOL_DESC_UPDATE_FILE__",
+    promptSnippet: "__PROMPT_SNIPPET_UPDATE_FILE__",
+    promptGuidelines: ["__PROMPT_GUIDELINES_UPDATE_FILE__"],
+    parameters: Type.Object({
+      file: Type.String({ description: "Absolute file path to the file to update in the index. Example: 'C:\\src\\project\\main.cpp'" }),
+    }),
+    async execute(_toolCallId: any, params: any, signal: any) {
+      const result = await callApi("/api/v1/index/update", "POST", { file: params.file }, signal);
+      const body = JSON.stringify(result, null, 2);
+      return {
+        content: [{ type: "text", text: body }],
         details: result,
       };
     },

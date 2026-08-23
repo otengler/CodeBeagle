@@ -73,5 +73,26 @@
             "Check whether the CodeBeagle agent server is running and reachable. ",
             "Use this when a codebeagle_* tool reports that the server is down."
         ]
+    },
+    "codebeagle_update_file": {
+        "desc": [
+            "Updates the CodeBeagle full-text index for a single file. ",
+            "IMPORTANT: Call this tool AFTER EVERY write operation that creates or modifies a file. ",
+            "No exception. This ensures the file is immediately searchable through codebeagle_content_search and codebeagle_file_search. ",
+            "The tool re-indexes the file in-place: it updates the full-text index with the file's new content and file name. ",
+            "Pass the absolute file path in the 'file' parameter. ",
+            "The server finds the correct index configuration based on the file's directory and extension. ",
+            "Returns whether the file was updated, unchanged, or newly added."
+        ],
+        "promptSnippet": "Update CodeBeagle index for a single file after writing it",
+        "promptGuidelines": [
+            "Call codebeagle_update_file AFTER EVERY 'write' tool call that creates or modifies a file. No exception.",
+            "Pass the absolute file path of the written file. The server will find the correct index.",
+            "If the file is not covered by any indexed location, the tool returns an error. Add the file's directory to a CodeBeagle index first.",
+            "After codebeagle_update_file succeeds, the file is immediately searchable via codebeagle_content_search and codebeagle_file_search."
+        ],
+        "params": {
+            "file": "Absolute file path to the file to update in the index. Example: 'C:\\src\\project\\main.cpp'"
+        }
     }
 }

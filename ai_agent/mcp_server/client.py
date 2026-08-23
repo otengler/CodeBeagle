@@ -78,6 +78,10 @@ class CodeBeagleClient:
         """Run a file name search; see the HTTP API for the accepted fields."""
         return self.post("/api/v1/search/filename", params)
 
+    def updateFile(self, filePath: str) -> Dict[str, Any]:
+        """Update the CodeBeagle index for a single file."""
+        return self.post("/api/v1/index/update", {"file": filePath})
+
     # ---- Internals ----
 
     def _request(self, method: str, path: str,

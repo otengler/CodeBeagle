@@ -42,7 +42,7 @@ from mcp_types import ServerCapabilities, ToolsCapability
 from pydantic import BaseModel, ValidationError
 
 from .client import ApiError, CodeBeagleClient, ServerUnreachable
-from .types import ContentSearchInput, FileNameSearchInput
+from .types import ContentSearchInput, FileNameSearchInput, FileUpdateInput
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,7 @@ def _buildDesc(tool_key: str) -> str:
 _DESC_LIST_LOCATIONS = _buildDesc("codebeagle_list_indexes")
 _DESC_SEARCH_CONTENT = _buildDesc("codebeagle_content_search")
 _DESC_SEARCH_FILENAME = _buildDesc("codebeagle_file_search")
+_DESC_UPDATE_FILE = _buildDesc("codebeagle_update_file")
 
 _EMPTY_SCHEMA: Dict[str, Any] = {"type": "object", "properties": {}, "required": []}
 
@@ -102,6 +103,7 @@ class CodeBeagleMCPServer:
             "codebeagle_list_locations": (None, _DESC_LIST_LOCATIONS, self._listLocations),
             "codebeagle_search_content": (ContentSearchInput, _DESC_SEARCH_CONTENT, self._searchContent),
             "codebeagle_search_filename": (FileNameSearchInput, _DESC_SEARCH_FILENAME, self._searchFileName),
+            "codebeagle_update_file": (FileUpdateInput, _DESC_UPDATE_FILE, self._updateFile),
         }
         self._server = Server(
             SERVER_NAME,
@@ -158,6 +160,9 @@ class CodeBeagleMCPServer:
 
     def _searchFileName(self, input_: FileNameSearchInput) -> Dict[str, Any]:
         return self.client.searchFileName(input_.toHttpParams())
+
+    def _updateFile(self, input_: FileUpdateInput) -> Dict[str, Any]:
+        return self.client.updateFile(input_.file)
 
 # ---- Result formatting helpers ----
 
