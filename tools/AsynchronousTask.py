@@ -16,10 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+#TODO: remove after upgrade to >= python 3.10
+from __future__ import annotations
+
 import threading
 from typing import Callable, Any, Optional, cast
-from PyQt5.QtCore import QThread, pyqtSlot, QObject, pyqtSignal
-from PyQt5.QtWidgets import QWidget
+from PySide2.QtCore import QThread, Slot, QObject, Signal
+from PySide2.QtWidgets import QWidget
 from dialogs.ProgressBar import ProgressBar
 
 
@@ -28,7 +31,7 @@ ProgressFunction = Callable[[int], None]
 
 
 class AsynchronousTask (QThread):
-    progressChanged = pyqtSignal(int)
+    progressChanged = Signal(int)
 
     def __init__(self, function: Callable[..., Any], *args: Any, bEnableCancel: bool=False, cancelAction: Optional[CancelFunction]=None, emitProgress: bool = False) -> None:
         super().__init__(None) # Called with None to get rid of the thread once the python object is destroyed
@@ -56,7 +59,7 @@ class AsynchronousTask (QThread):
             self.exception = e
             self.hasException = True
 
-    @pyqtSlot()
+    @Slot()
     def cancel(self) -> None:
         if self.cancelEvent:
             self.cancelEvent.set()
@@ -90,7 +93,7 @@ def execute(parent: QObject, func: Callable[..., Any], *args: Any, bEnableCancel
         progress.show()
 
         searchTask.start()
-        progress.exec()
+        progress.exec_()
         searchTask.wait()
 
         # If the thread raised an exception re-raise it in the main thread

@@ -16,13 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QRect, QSize
-from PyQt5.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent, QFont, QFontMetrics
-from PyQt5.QtWidgets import QWidget, QPlainTextEdit
+#TODO: remove after upgrade to >= python 3.10
+from __future__ import annotations
+
+from PySide2.QtCore import Qt, Slot, Signal, QRect, QSize
+from PySide2.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent, QFont, QFontMetrics
+from PySide2.QtWidgets import QWidget, QPlainTextEdit
 from typing import Optional, Iterator, Tuple
 
 class LineNumberArea (QWidget):
-    bookmarkChanged = pyqtSignal(int) # line where bookmark is set or removed
+    bookmarkChanged = Signal(int) # line where bookmark is set or removed
 
     padding = 12
     bookmarkIconLeft = 3
@@ -70,11 +73,11 @@ class LineNumberArea (QWidget):
         self.textEdit.setViewportMargins(0, 0, 0, 0)
         return True
 
-    @pyqtSlot(int)
+    @Slot(int)
     def adjustAreaWidth(self, newBlockCount: int = 0) -> None:
         self.textEdit.setViewportMargins(self.areaWidth(newBlockCount), 0, 0, 0)
 
-    @pyqtSlot(QRect, int)
+    @Slot(QRect, int)
     def scrollArea(self, rect: QRect, dy: int) -> None:
         if dy:
             self.scroll(0, dy)

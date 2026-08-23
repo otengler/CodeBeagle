@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from typing import Optional, Dict, Any, cast
-from PyQt5.QtCore import Qt, QAbstractItemModel, QAbstractListModel, QSettings, QModelIndex, QVariant
+from PySide2.QtCore import Qt, QAbstractItemModel, QAbstractListModel, QSettings, QModelIndex
 import AppConfig
    
 # This is like QStringListModel with the only exception that setData does not raise signals.
@@ -14,12 +16,12 @@ class MyStringListModel(QAbstractListModel):
             return 0  # No children for any row (flat list)
         return len(self._data)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
-            return QVariant()
+            return None
         if role in [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole]:
             return self._data[index.row()]
-        return QVariant()
+        return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:
         if not index.isValid():
@@ -38,7 +40,7 @@ class MyStringListModel(QAbstractListModel):
         self._data = self._data[0:row] + [""] * count + self._data[row:]
         return True
 
-    def setData(self, index: QModelIndex, value: Any, role: int = Qt.ItemDataRole.DisplayRole) -> bool:
+    def setData(self, index: QModelIndex, value: Any, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> bool:
         if index.isValid() and role in [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole]:
             self._data[index.row()] = value
             # Normally we should now raise "dataChanged". But we explicitly do not do this because it changes the selected item
@@ -63,7 +65,7 @@ class SearchParamHistory:
 
         if self.itemModel.insertRow(0):
             firstRow = self.itemModel.index(0, 0)
-            self.itemModel.setItemData(firstRow, {Qt.ItemDataRole.DisplayRole: item})
+            self.itemModel.setItemData(firstRow, {int(Qt.ItemDataRole.DisplayRole): item})
 
         storeItems = [item]
         if self.itemModel.rowCount() > 0:    
@@ -96,7 +98,7 @@ class SearchParamHistory:
             self.itemModel.beginInsertRows(QModelIndex(), 0, len(strList)-1)
             if self.itemModel.insertRows(0, len(strList)):
                 for row in range(len(strList)):
-                    self.itemModel.setItemData(self.itemModel.index(row, 0), {Qt.ItemDataRole.DisplayRole: strList[row]})
+                    self.itemModel.setItemData(self.itemModel.index(row, 0), {int(Qt.ItemDataRole.DisplayRole): strList[row]})
             self.itemModel.endInsertRows()
         else:
             # Clear model

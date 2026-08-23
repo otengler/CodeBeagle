@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json, sys, logging
 from typing import Optional
 from urllib.request import urlopen
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, QDateTime
+from PySide2.QtCore import QThread, QObject, Signal, QDateTime
 import AppConfig
 
 def formatVersion (version: str) -> str:
@@ -55,7 +55,7 @@ class UpdateCheck (QObject):
     """
     Check for program updates.
     """
-    newerVersionFound = pyqtSignal('QString')
+    newerVersionFound = Signal('QString')
 
     def __init__ (self,  parent: Optional[QObject] = None, lastUpdateCheck: Optional[int] = None) -> None:
         super().__init__(parent)
@@ -95,7 +95,7 @@ class UpdateCheck (QObject):
 
 if __name__ == "__main__":
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PySide2.QtWidgets import QApplication
     app = QApplication(sys.argv)
     checker = UpdateCheck()
     checker.checkForUpdates()

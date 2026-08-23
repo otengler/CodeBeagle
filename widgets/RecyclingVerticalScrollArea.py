@@ -16,13 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+#TODO: remove after upgrade to >= python 3.10
+from __future__ import annotations
+
 from typing import Any, List, Iterator, Tuple, Dict, DefaultDict, Optional, cast
 from abc import ABC,abstractmethod
 import bisect
 import collections
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QLabel, QLayout, QLayoutItem, QScrollArea, QWidget
+from PySide2.QtCore import Qt, QSize
+from PySide2.QtGui import QResizeEvent
+from PySide2.QtWidgets import QLabel, QLayout, QLayoutItem, QScrollArea, QWidget
 
 def doLinesIntersect (y1: int, length1: int, y2: int, length2: int) -> bool:
     if y1 < y2:
@@ -125,11 +128,9 @@ class EmptyLayout(QLayout):
     This layout works around the problem that child wigets of the scrollarea widget are invisible if the scrollarea widget
     has no layout. If this is a bug or as designed - I don't know.
     """
-    def itemAt(self, _: int) -> Optional[QLayoutItem]:  # type: ignore[override]
-        return None
+    def itemAt(self, _: int) -> Optional[QLayoutItem]:        return None
 
-    def takeAt(self, _: int) -> Optional[QLayoutItem]:  # type: ignore[override]
-        return None
+    def takeAt(self, _: int) -> Optional[QLayoutItem]:        return None
 
     def count(self) -> int:
         return 0
@@ -238,7 +239,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
 
 def main() -> None:
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PySide2.QtWidgets import QApplication
     app = QApplication(sys.argv)
 
     items = ScrollAreaItemList()

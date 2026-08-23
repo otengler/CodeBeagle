@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import QSize
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
-from PyQt5.QtGui import QMovie
+from PySide2.QtCore import QSize
+from PySide2.QtWidgets import QWidget, QHBoxLayout, QLabel
+from PySide2.QtGui import QMovie
 from typing import Optional
 
 class AnimatedProgressWidget(QWidget):

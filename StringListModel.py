@@ -16,12 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
+
 import os
 from typing import List, Dict, Optional, Any
-from PyQt5.QtCore import Qt, QFileInfo, QAbstractListModel, QModelIndex, QSize
-from PyQt5.QtWidgets import QWidget
+from PySide2.QtCore import Qt, QFileInfo, QAbstractListModel, QModelIndex, QSize
+from PySide2.QtWidgets import QWidget
 import SourceViewer
-from typing import Optional
 
 # Returns the first difference in two strings
 def firstDifference(s1: str, s2: str) -> int:
@@ -79,7 +80,7 @@ class StringListModel(QAbstractListModel):
     def rowCount(self, _:QModelIndex = QModelIndex()) -> int:
         return len(self.filelist)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
         if role == Qt.ItemDataRole.DisplayRole:

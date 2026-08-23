@@ -17,17 +17,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from typing import List, Optional
-from PyQt5.QtCore import Qt, QRect, QSize, QModelIndex
-from PyQt5.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
-from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
+from typing import List, Optional, Union
+from PySide2.QtCore import Qt, QRect, QSize, QModelIndex
+from PySide2.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
+from PySide2.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
 
 class PathVisualizerDelegate (QStyledItemDelegate):
-    newPathColor: QColor|QPen = QColor(50, 50, 50)
-    samePathColor: QColor|QPen = QColor(150, 150, 150)
-    fileColor: QColor|QPen = QColor(0, 0, 50)
-    selectedPathColor: QColor|QPen = QColor(50, 50, 50)
-    selectedFileColor: QColor|QPen = QColor(0, 0, 50)
+    newPathColor: Union[QColor, QPen] = QColor(50, 50, 50)
+    samePathColor: Union[QColor, QPen] = QColor(150, 150, 150)
+    fileColor: Union[QColor, QPen] = QColor(0, 0, 50)
+    selectedPathColor: Union[QColor, QPen] = QColor(50, 50, 50)
+    selectedFileColor: Union[QColor, QPen] = QColor(0, 0, 50)
     selectionBackground: QColor = QColor(205, 232, 255)
 
     """Parent must be the view (otherwise the focus drawing doesn't work)"""

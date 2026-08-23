@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from typing import Optional, Dict
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QColor
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QFont, QColor
 from tools.FileTools import freadall
 from widgets.SyntaxHighlighter import HighlightingRules
 import HighlighterConfiguration

@@ -17,9 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import Callable, Optional
-from PyQt5.QtWidgets import QTabWidget, QWidget, QHBoxLayout, QPushButton, QMenu
-from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent
-from PyQt5.QtCore import Qt, pyqtSlot
+from PySide2.QtWidgets import QTabWidget, QWidget, QHBoxLayout, QPushButton, QMenu
+from PySide2.QtGui import QIcon, QPixmap, QMouseEvent
+from PySide2.QtCore import Qt, Slot
 from .Ui_LeaveLastTabWidget import Ui_LeaveLastTabWidget
 
 class LeaveLastTabWidget (QTabWidget):
@@ -49,7 +49,7 @@ class LeaveLastTabWidget (QTabWidget):
 
     def addWidgetsToCornerWidget (self, hbox: QHBoxLayout) -> None:
         """Derived classes can implement this to add additional buttons to the corner widget."""
-        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.tr("New tab"),  "NewTab.png",  self.addNewTab) 
+        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.tr("New tab"),  "NewTab.png",  self.addNewTab)  # type: ignore[arg-type]   # type: ignore[arg-type]
 
     def addButtonToCornerWidget (self, hbox: QHBoxLayout, name: str, iconFile: str, handler: Callable[[], Optional[QWidget]]) -> QPushButton:
         button = QPushButton(name, self)
@@ -61,7 +61,7 @@ class LeaveLastTabWidget (QTabWidget):
         button.clicked.connect(handler)
         return button
 
-    @pyqtSlot(int)
+    @Slot(int)
     def removeTabButNotLast (self, index: int) -> None:
         if self.count() <= 1:
             return
@@ -78,7 +78,7 @@ class LeaveLastTabWidget (QTabWidget):
         self.objType = objType
         self.strTabName = strTabName
 
-    @pyqtSlot()
+    @Slot()
     def addNewTab(self) -> Optional[QWidget]:
         if not self.objType:
             return None
@@ -98,7 +98,7 @@ class LeaveLastTabWidget (QTabWidget):
         if -1 != index:
             self.removeTabButNotLast(index)
 
-    @pyqtSlot(int)
+    @Slot(int)
     def focusSetter(self, index: int) -> None:
         widget = self.widget(index)
         if widget:
@@ -117,23 +117,23 @@ class LeaveLastTabWidget (QTabWidget):
         if tabIndex == -1:
             return
         menu = QMenu()
-        menu.addAction(self.tr("Close &others tabs"), lambda: self.__closeAllTabsExceptThis(tabIndex))
+        menu.addAction(self.tr("Close &others tabs"), lambda: self.__closeAllTabsExceptThis(tabIndex))  # type: ignore[arg-type]
         if tabIndex > 0:
-            menu.addAction(self.tr("Close all to the &left"), lambda: self.__closeAllToTheLeft(tabIndex))
+            menu.addAction(self.tr("Close all to the &left"), lambda: self.__closeAllToTheLeft(tabIndex))  # type: ignore[arg-type]
         if tabIndex < self.count()-1:
-            menu.addAction(self.tr("Close all to the &right"), lambda: self.__closeAllToTheRight(tabIndex))
+            menu.addAction(self.tr("Close all to the &right"), lambda: self.__closeAllToTheRight(tabIndex))  # type: ignore[arg-type]
 
-        menu.exec(self.ui.tab.mapToGlobal(event.pos()))
+        menu.exec_(self.ui.tab.mapToGlobal(event.pos()))
 
-    @pyqtSlot(int)
+    @Slot(int)
     def __closeAllTabsExceptThis(self, tabIndex: int) -> None:
         self.__closeTabs(lambda index : index != tabIndex)
 
-    @pyqtSlot(int)
+    @Slot(int)
     def __closeAllToTheLeft(self, tabIndex: int) -> None:
         self.__closeTabs(lambda index: index < tabIndex)
 
-    @pyqtSlot(int)
+    @Slot(int)
     def __closeAllToTheRight(self, tabIndex: int) -> None:
         self.__closeTabs(lambda index: index > tabIndex)
 

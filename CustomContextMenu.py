@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os, sys
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide2.QtCore import QObject, Signal
 from tools import Config
 from tools.FileTools import fopen
 from tools.ExceptionTools import exceptionAsString
@@ -43,7 +43,7 @@ class ContextMenuTask(ABC):
         pass
 
 class CustomContextMenu (QObject):
-    executionFailed = pyqtSignal(ContextMenuError)
+    executionFailed = Signal(ContextMenuError)
 
     def __init__(self, title: str, filePair: bool, task: ContextMenuTask) -> None:
         super().__init__()

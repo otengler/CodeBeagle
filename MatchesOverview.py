@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from typing import List, Optional, Callable, cast
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QFontMetrics, QFont
-from PyQt5.QtWidgets import QWidget
+from PySide2.QtCore import Qt, Signal, Slot
+from PySide2.QtGui import QFontMetrics, QFont
+from PySide2.QtWidgets import QWidget
 from tools import AsynchronousTask
 from tools.ContextExtraction import extractMatches
 from fulltextindex import FullTextIndex
@@ -41,8 +41,8 @@ class FixedSizeSourcePreview(SourceHighlightingTextEdit):
 
 class MatchesOverview (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
-    selectionFinishedWithKeyboardModifier = pyqtSignal('QString',  int)
-    navigateToFile = pyqtSignal(str, int) # fileName and start line
+    selectionFinishedWithKeyboardModifier = Signal('QString',  int)
+    navigateToFile = Signal(str, int) # fileName and start line
 
     def __init__ (self, parent: Optional[QWidget]) -> None:
         super().__init__(parent)
@@ -133,7 +133,7 @@ class MatchesOverview (QWidget):
     def __createNavigateToFileFunc(self, labelItem: MatchesOverviewLabelItem) -> Callable[[], None]:
         return lambda: self.emitNavigateToFile(labelItem)
 
-    @pyqtSlot(MatchesOverviewLabelItem)
+    @Slot(MatchesOverviewLabelItem)
     def emitNavigateToFile(self, item: MatchesOverviewLabelItem) -> None:
         self.navigateToFile.emit(item.fileName, item.startLine)
 
@@ -166,7 +166,7 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
 
 def main() -> None:
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PySide2.QtWidgets import QApplication
     app = QApplication(sys.argv)
     w = MatchesOverview(None)
     w.show()

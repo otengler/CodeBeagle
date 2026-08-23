@@ -20,12 +20,13 @@ from typing import Tuple, List, Optional, Pattern, Union
 import bisect
 import re
 import unittest
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QTextCharFormat, QFont, QBrush, QColor
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.IStringMatcher import IStringMatcher
 from fulltextindex.CommentDetection import TextSpan, analyzeText, isInsideTextSpan
 
-type foregroundType = QBrush|Qt.GlobalColor|QColor
+foregroundType = Union[QBrush, Qt.GlobalColor, QColor]
+fontWeightType = Union[int, QFont.Weight]
 
 class HighlightingRules:
     def __init__(self, font: QFont) -> None:
@@ -40,7 +41,7 @@ class HighlightingRules:
         self.defaultFormat: Optional[QTextCharFormat] = None
         self.hasTripleQuotes = False
       
-    def addKeywords (self, keywords: str, fontWeight: int, foreground: foregroundType) -> None:
+    def addKeywords (self, keywords: str, fontWeight: fontWeightType, foreground: foregroundType) -> None:
         """Adds a list of comma separated keywords."""
         keywords = keywords.strip()
         kwList = keywords.split(",")
@@ -48,11 +49,11 @@ class HighlightingRules:
         expr = "|".join(("\\b" + kw + "\\b" for kw in kwList))
         self.addRule (expr, fontWeight, foreground)
 
-    def setStrings(self, fontWeight: int, foreground: foregroundType, supportTripleQuotes: bool = False) -> None:
+    def setStrings(self, fontWeight: fontWeightType, foreground: foregroundType, supportTripleQuotes: bool = False) -> None:
         self.hasTripleQuotes = supportTripleQuotes
         self.stringFormat = self.__createFormat(fontWeight, foreground)
 
-    def addCommentRule (self, singleLine: str, multiLineStart: str, multiLineEnd: str, fontWeight: int, foreground: QBrush) -> None:
+    def addCommentRule (self, singleLine: str, multiLineStart: str, multiLineEnd: str, fontWeight: fontWeightType, foreground: QBrush) -> None:
         """Adds comment rules. Each parameter is a regular expression  string. The multi line parameter are optional and can be empty."""
         self.commentFormat = self.__createFormat(fontWeight,  foreground)
         self.lineComment = re.compile(singleLine)
@@ -60,7 +61,7 @@ class HighlightingRules:
             self.multiCommentStart = re.compile(multiLineStart)
             self.multiCommentStop = re.compile(multiLineEnd)
 
-    def addRule (self, expr: str, fontWeight: int, foreground: foregroundType) -> None:
+    def addRule (self, expr: str, fontWeight: fontWeightType, foreground: foregroundType) -> None:
         """Adds an arbitrary highlighting rule."""
         fmt = self.__createFormat(fontWeight, foreground)
         self.__addRule (expr, fmt)
@@ -84,7 +85,7 @@ class HighlightingRules:
     def __addRule (self, expr: str, fmt: QTextCharFormat) -> None:
         self.rules.append((re.compile(expr), fmt))
 
-    def __createFormat (self, fontWeight:int, foreground: foregroundType) -> QTextCharFormat:
+    def __createFormat (self, fontWeight: fontWeightType, foreground: foregroundType) -> QTextCharFormat:
         fmt = QTextCharFormat()
         fmt.setFont(self.font)
         fmt.setFontWeight(fontWeight)
@@ -215,8 +216,8 @@ class TestCommentDetectionWithStrings(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up a highlighter with C-style comment rules."""
-        from PyQt5.QtGui import QFont, QBrush
-        from PyQt5.QtCore import Qt
+        from PySide2.QtGui import QFont, QBrush
+        from PySide2.QtCore import Qt
 
         self.rules = HighlightingRules(QFont())
         self.rules.addCommentRule(r'//.*', r'/\*', r'\*/', 400, QBrush(Qt.GlobalColor.darkGreen))
