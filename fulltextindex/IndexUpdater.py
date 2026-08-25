@@ -108,44 +108,8 @@ class IndexUpdater (IndexDatabase):
                 for dirName, fileName in genFind(extensions, strRootDir, dirExcludes, ignoredExtCount):
                     strFullPath = os.path.join(dirName, fileName)
                     mTime = os.stat(strFullPath).st_mtime
-
-                    newFile = False
-                    c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
-                    docID: int
-                    if c.rowcount == 1 and c.lastrowid != 0:
-                        # New document must always be processed
-                        docID = cast(int, c.lastrowid)
-                        if docID is None:
-                            raise RuntimeError("No document ID for new document returned")
-                        timestamp = 0
-                        newFile = True
-                    else:
-                        q.execute("SELECT id,timestamp FROM documents WHERE fullpath=:fp", {"fp":strFullPath})
-                        docID, timestamp = q.fetchone()
-
-                    if indexType != IndexType.FileContent:
-                        self.__addFileName(c, q, docID, fileName)
-
-                    try:
-                        if indexType != IndexType.FileName:
-                            if timestamp != mTime:
-                                self.__updateFile(c, q, docID, strFullPath, kwCache)
-                                c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
-                                if statistics and timestamp != 0:
-                                    statistics.incUpdated()
-                            else:
-                                if statistics:
-                                    statistics.incUnchanged()
-                    except Exception as e:
-                        logging.error("Failed to process file '%s'", strFullPath)
-                        logging.error(str(e))
-                        # Write an nextIndexID of -1 which makes sure the document is removed in the cleanup phase
-                        c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, -1))
-                    else:
-                        # We always write the next index ID. This is needed to find old files which still have lower indexID values.
-                        c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, nextIndexID))
-                        if statistics and newFile:
-                            statistics.incNew()
+                    docIdAndTimestamp = self.__getDocumentId(c, q, strFullPath, mTime)
+                    self.__handleSingleFile(c, q, strFullPath, fileName, docIdAndTimestamp, mTime, indexType, statistics, kwCache)
                 if ignoredExtCount:
                     logging.info("Ignored files with these extensions: %s", sorted(ignoredExtCount.keys()))
                     self.__saveExcludedExtensions(c, nextIndexID, ignoredExtCount)
@@ -153,31 +117,57 @@ class IndexUpdater (IndexDatabase):
             self.__cleanup(c, nextIndexID)
         logging.info("Done")
 
+    def __handleSingleFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, strFullPath: str, fileName: str, docIdAndTimestamp: Tuple[int, float], 
+                           mTime: float, indexType: IndexType, nextIndexID: Optional[int],  
+                           statistics: Optional[UpdateStatistics], kwCache: dict[str, int]):
+        docID, timestamp = docIdAndTimestamp
+        newFile = timestamp is None
+
+        if indexType != IndexType.FileContent:
+            self.__addFileName(c, q, docID, fileName)
+
+        try:
+            if indexType != IndexType.FileName:
+                if timestamp != mTime:
+                    self.__updateFile(c, q, docID, strFullPath, kwCache)
+                    c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts":mTime, "id":docID})
+                    if statistics and not newFile:
+                        statistics.incUpdated()
+                else:
+                    if statistics:
+                        statistics.incUnchanged()
+        except Exception as e:
+            logging.error("Failed to process file '%s'", strFullPath)
+            logging.error(str(e))
+            # Write an nextIndexID of -1 which makes sure the document is removed in the cleanup phase
+            c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, -1))
+        else:
+            # We always write the next index ID. This is needed to find old files which still have lower indexID values.
+            if nextIndexID is not None:
+                c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, nextIndexID))
+                if statistics and newFile:
+                    statistics.incNew()
+
+    def __getDocumentId(self, c: sqlite3.Cursor, q: sqlite3.Cursor, strFullPath: str, mTime: float) -> Tuple[int, Optional[float]]: 
+        c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
+        docID: int
+        if c.rowcount == 1 and c.lastrowid != 0:
+            # New document must always be processed
+            docID = cast(int, c.lastrowid)
+            if docID is None:
+                raise RuntimeError("No document ID for new document returned")
+            return (docID, None)
+        else:
+            q.execute("SELECT id,timestamp FROM documents WHERE fullpath=:fp", {"fp":strFullPath})
+            return q.fetchone()
+
     def __saveExcludedExtensions(self, c: sqlite3.Cursor, indexID: int, extCounts: Dict[str, int]) -> None:
         """Save excluded extension statistics to database."""
         for ext, count in extCounts.items():
             c.execute("INSERT INTO excludedExtensions (id,indexID,extension,fileCount) VALUES (NULL,?,?,?)",
                      (indexID, ext, count))
 
-    def __cleanup(self, c: sqlite3.Cursor, nextIndexID:int) -> None:
-        logging.info("Cleaning associations")
-        c.execute("DELETE FROM kw2doc WHERE docID IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
-        logging.info("Cleaning documents")
-        c.execute("DELETE FROM documents WHERE id IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
-        logging.info("Cleaning document index")
-        c.execute("DELETE FROM documentInIndex WHERE indexID < :index", {"index":nextIndexID})
-        logging.info("Removing orphaned keywords")
-        c.execute("DELETE FROM keywords WHERE id NOT IN (SELECT kwID FROM kw2doc)")
-        logging.info("Cleaning file name associations")
-        c.execute("DELETE FROM fileName2doc WHERE docID NOT IN (SELECT id FROM documents)")
-        logging.info("Cleaning file names")
-        c.execute("DELETE FROM fileName WHERE id NOT IN (SELECT fileNameID FROM fileName2doc)")
-        logging.info("Removing old indexInfo entry")
-        c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
-        logging.info("Cleaning excluded extensions")
-        c.execute("DELETE FROM excludedExtensions WHERE indexID < :index", {"index":nextIndexID})
-
-    def updateFile(self, config: IndexConfiguration, filePath: str, statistics: Optional[UpdateStatistics] = None) -> None:
+    def updateFile(self, config: IndexConfiguration, strFullPath: str, statistics: Optional[UpdateStatistics] = None) -> None:
         """
         Update the index for a single file.
 
@@ -188,75 +178,30 @@ class IndexUpdater (IndexDatabase):
         Args:
             config: The index configuration that covers this file.
             filePath: Full path to the file to update.
-            statistics: Optional statistics collector.
 
         Raises:
             FileNotFoundError: If filePath does not exist.
             ValueError: If the file's extension is not in the configuration.
         """
-        if not os.path.isfile(filePath):
-            raise FileNotFoundError(f"File not found: {filePath}")
+        if not os.path.isfile(strFullPath):
+            raise FileNotFoundError(f"File not found: {strFullPath}")
 
-        ext = os.path.splitext(filePath)[1].lower()
+        ext = os.path.splitext(strFullPath)[1].lower()
         if ext and ext not in config.extensions:
             raise ValueError(f"Extension '{ext}' is not indexed by this configuration")
 
         indexType = config.indexType
-        mTime = os.stat(filePath).st_mtime
         kwCache: dict[str, int] = {}
-        _, fileName = os.path.split(filePath)
+        _, fileName = os.path.split(strFullPath)
+        mTime = os.stat(strFullPath).st_mtime
 
         c = self.conn.cursor()
         q = self.conn.cursor()
 
         with self.conn:
-            # Get the latest index run ID (or create one if none exists)
-            c.execute("SELECT MAX(id) FROM indexInfo")
-            row = c.fetchone()
-            if row and row[0] is not None:
-                currentIndexID = int(row[0])
-            else:
-                c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
-                currentIndexID = cast(int, c.lastrowid)
-                if currentIndexID is None:
-                    raise RuntimeError("No index ID for new index run returned")
-
-            # Insert or get the document
-            c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)",
-                       (mTime, filePath))
-            if c.rowcount == 1 and c.lastrowid and c.lastrowid != 0:
-                docID = c.lastrowid
-                timestamp = 0
-                newFile = True
-            else:
-                q.execute("SELECT id,timestamp FROM documents WHERE fullpath=:fp", {"fp": filePath})
-                result = q.fetchone()
-                if result is None:
-                    raise RuntimeError(f"Failed to find or insert document: {filePath}")
-                docID, timestamp = result
-                newFile = False
-
-            # Update filename index if needed
-            if indexType != IndexType.FileContent:
-                self.__addFileName(c, q, docID, fileName)
-
-            # Update content index if needed
-            if indexType != IndexType.FileName:
-                self.__updateFile(c, q, docID, filePath, kwCache)
-                if timestamp != mTime:
-                    c.execute("UPDATE documents SET timestamp=:ts WHERE id=:id", {"ts": mTime, "id": docID})
-
-            # Associate document with current index run
-            c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)",
-                       (docID, currentIndexID))
-
-            if statistics:
-                if newFile:
-                    statistics.incNew()
-                elif timestamp != mTime:
-                    statistics.incUpdated()
-                else:
-                    statistics.incUnchanged()
+            docIdAndTimestamp = self.__getDocumentId(c, q, strFullPath, mTime)
+            c.execute("DELETE FROM kw2doc WHERE docID = :docID", {"docID": docIdAndTimestamp[0]})
+            self.__handleSingleFile(c, q, strFullPath, fileName, docIdAndTimestamp, mTime, indexType, None, statistics, kwCache)
 
     def __updateFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, strFullPath: str, kwCache: dict[str, int]) -> None:
         # Delete old associations
@@ -290,6 +235,24 @@ class IndexUpdater (IndexDatabase):
             fileID = q.fetchone()[0]
 
         c.execute("INSERT OR IGNORE INTO fileName2doc (fileNameID, docID) VALUES (?,?)", (fileID, docID))
+
+    def __cleanup(self, c: sqlite3.Cursor, nextIndexID:int) -> None:
+        logging.info("Cleaning associations")
+        c.execute("DELETE FROM kw2doc WHERE docID IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
+        logging.info("Cleaning documents")
+        c.execute("DELETE FROM documents WHERE id IN (SELECT docID FROM documentInIndex WHERE indexID < :index)", {"index":nextIndexID})
+        logging.info("Cleaning document index")
+        c.execute("DELETE FROM documentInIndex WHERE indexID < :index", {"index":nextIndexID})
+        logging.info("Removing orphaned keywords")
+        c.execute("DELETE FROM keywords WHERE id NOT IN (SELECT kwID FROM kw2doc)")
+        logging.info("Cleaning file name associations")
+        c.execute("DELETE FROM fileName2doc WHERE docID NOT IN (SELECT id FROM documents)")
+        logging.info("Cleaning file names")
+        c.execute("DELETE FROM fileName WHERE id NOT IN (SELECT fileNameID FROM fileName2doc)")
+        logging.info("Removing old indexInfo entry")
+        c.execute("DELETE FROM indexInfo WHERE id < :index", {"index":nextIndexID})
+        logging.info("Cleaning excluded extensions")
+        c.execute("DELETE FROM excludedExtensions WHERE indexID < :index", {"index":nextIndexID})
 
     def __getNextIndexRun(self, c: sqlite3.Cursor) -> int:
         c.execute("INSERT INTO indexInfo (id,timestamp) VALUES (NULL,?)", (int(time.time()),))
