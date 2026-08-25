@@ -109,7 +109,7 @@ class IndexUpdater (IndexDatabase):
                     strFullPath = os.path.join(dirName, fileName)
                     mTime = os.stat(strFullPath).st_mtime
                     docIdAndTimestamp = self.__getDocumentId(c, q, strFullPath, mTime)
-                    self.__handleSingleFile(c, q, strFullPath, fileName, docIdAndTimestamp, mTime, indexType, statistics, kwCache)
+                    self.__handleSingleFile(c, q, strFullPath, fileName, docIdAndTimestamp, mTime, indexType, nextIndexID, statistics, kwCache)
                 if ignoredExtCount:
                     logging.info("Ignored files with these extensions: %s", sorted(ignoredExtCount.keys()))
                     self.__saveExcludedExtensions(c, nextIndexID, ignoredExtCount)
