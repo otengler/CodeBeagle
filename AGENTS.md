@@ -57,7 +57,7 @@ This generates `Ui_*.py` files from Qt Designer `.ui` files.
 
 ### Testing
 
-The tests must be run in the virtual environment `.env`: 
+The tests must be run in the virtual environment `.venv`: 
 ```bash
 python UnitTests.py
 ```
@@ -78,11 +78,13 @@ The project uses strict mypy settings configured in `mypy.ini`:
 
 ### Dependencies
 
-The application uses a virtual environemt under .venv.
+The application uses a virtual environemt under `.venv`.
 
 Install Python dependencies:
 ```bash
-pip install PySide2 shiboken2 cx_Freeze
+uv venv --python 3.10 .venv 
+.venv\Scripts\activate
+uv pip install -r requirements.txt
 ```
 
 Install Node dependencies (for SASS compilation):

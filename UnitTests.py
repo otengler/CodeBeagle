@@ -17,8 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
-import os
-from typing import cast
+import os, shutil
 
 testmodules = [
     'widgets.SyntaxHighlighter',
@@ -43,7 +42,11 @@ def getModulePath() -> str:
     return os.path.split(__main__.__file__)[0]
 
 if __name__ == "__main__":
-    testPath = os.path.join(getModulePath (), "tests")
+    root = getModulePath ()
+    os.chdir(root)
+    shutil.copytree(os.path.join("ai_agent", "resources"), "resources", dirs_exist_ok=True)
+
+    testPath = os.path.join(root, "tests")
     os.chdir(testPath)
 
     suite = unittest.TestSuite()

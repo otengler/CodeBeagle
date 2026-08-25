@@ -3,3 +3,5 @@ shiboken2
 cx_Freeze
 mypy
 certifi
+mcp
+pydantic

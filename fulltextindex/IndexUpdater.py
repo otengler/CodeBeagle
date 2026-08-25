@@ -145,8 +145,8 @@ class IndexUpdater (IndexDatabase):
             # We always write the next index ID. This is needed to find old files which still have lower indexID values.
             if nextIndexID is not None:
                 c.execute("INSERT OR REPLACE INTO documentInIndex (docID,indexID) VALUES (?,?)", (docID, nextIndexID))
-                if statistics and newFile:
-                    statistics.incNew()
+            if statistics and newFile:
+                statistics.incNew()
 
     def __getDocumentId(self, c: sqlite3.Cursor, q: sqlite3.Cursor, strFullPath: str, mTime: float) -> Tuple[int, Optional[float]]: 
         c.execute("INSERT OR IGNORE INTO documents (id,timestamp,fullpath) VALUES (NULL,?,?)", (mTime, strFullPath))
@@ -200,7 +200,10 @@ class IndexUpdater (IndexDatabase):
 
         with self.conn:
             docIdAndTimestamp = self.__getDocumentId(c, q, strFullPath, mTime)
+            # Rempve all document keyword associated and reset the timestamp. In case the __updateSingleFile
+            # fails at least the next full index update will fix it.
             c.execute("DELETE FROM kw2doc WHERE docID = :docID", {"docID": docIdAndTimestamp[0]})
+            c.execute("UPDATE documents SET timestamp=0 WHERE id=:id", {"id":docIdAndTimestamp[0]})
             self.__handleSingleFile(c, q, strFullPath, fileName, docIdAndTimestamp, mTime, indexType, None, statistics, kwCache)
 
     def __updateFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, docID: int, strFullPath: str, kwCache: dict[str, int]) -> None:

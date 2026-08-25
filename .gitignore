@@ -14,3 +14,4 @@ qdarkstyle/qss/_styles.scss.processed
 node_modules/
 tests/data_or/
 tests/data_excluded/
+resources/ai_agent/
