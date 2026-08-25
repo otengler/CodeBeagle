@@ -15,3 +15,4 @@ node_modules/
 tests/data_or/
 tests/data_excluded/
 resources/ai_agent/
+CodeBeagle.egg-info/

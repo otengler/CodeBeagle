@@ -64,6 +64,6 @@ xcopy scripts\* $BUILDDIR\scripts\
 xcopy config\* $BUILDDIR\config\
 xcopy /S resources\* $BUILDDIR\resources\
 # ai_agent start
-xcopy /S ai_agent\resources\* $BUILDDIR\resources\
+xcopy /S /Y ai_agent\resources\* $BUILDDIR\resources\
 
 move $BUILDDIR build\CodeBeagle

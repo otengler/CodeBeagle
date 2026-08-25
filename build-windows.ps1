@@ -1,4 +1,4 @@
-& .\.venv310\Scripts\Activate.ps1
+& .\.venv\Scripts\Activate.ps1
 & .\build-windows-freeze.ps1
 
 #
