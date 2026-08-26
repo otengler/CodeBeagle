@@ -4,7 +4,7 @@ import AppConfig
 
 options = {
     "build_exe": {
-        "zip_include_packages": "logging,http,collections,encodings,sqlite3,urllib,asyncio,concurrent,dialogs"
+        "zip_include_packages": "logging,http,collections,encodings,sqlite3,unittest,urllib,asyncio,concurrent,dialogs,email,importlib"
     }
 }
 
