@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-#TODO: remove after upgrade to >= python 3.10
-from __future__ import annotations
-
 from typing import Any
 import os, subprocess
 from .constants import MAIN_SCSS_FILEPATH, STYLES_SCSS_FILEPATH_PROCESSED, QSS_FILEPATH, VARIABLES_SCSS_FILEPATH

@@ -16,9 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-#TODO: remove after upgrade to >= python 3.10
-from __future__ import annotations
-
 from PySide6.QtCore import Qt, Slot, Signal, QRect, QSize
 from PySide6.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent, QFont, QFontMetrics
 from PySide6.QtWidgets import QWidget, QPlainTextEdit

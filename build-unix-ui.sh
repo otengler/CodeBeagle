@@ -12,9 +12,6 @@ function compile_ui {
     output=$1
     uiFile=$2
     "$PYUIC" -o "$output" "$uiFile" 2>/dev/null
-    if [ $? -eq 0 ]; then
-        "$PYTHON" fix_uic_imports.py "$output"
-    fi
 }
 
 compile_ui widgets/Ui_LeaveLastTabWidget.py widgets/LeaveLastTabWidget.ui

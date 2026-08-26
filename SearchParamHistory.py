@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Optional, Dict, Any, cast
 from PySide6.QtCore import Qt, QAbstractItemModel, QAbstractListModel, QSettings, QModelIndex, QPersistentModelIndex
 import AppConfig

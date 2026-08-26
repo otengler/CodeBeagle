@@ -16,9 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-#TODO: remove after upgrade to >= python 3.10
-from __future__ import annotations
-
 import threading
 from typing import Callable, Any, Optional, cast
 from PySide6.QtCore import QThread, Slot, QObject, Signal

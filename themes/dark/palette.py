@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 """QDarkStyle default palette."""
 
-#TODO: remove after upgrade to >= python 3.10
-from __future__ import annotations
-
 # Standard library imports
 from collections import OrderedDict
 from typing import Any

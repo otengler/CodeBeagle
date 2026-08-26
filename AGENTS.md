@@ -82,7 +82,7 @@ The application uses a virtual environemt under `.venv`.
 
 Install Python dependencies:
 ```bash
-uv venv --python 3.10 .venv 
+uv venv --python 3.14 .venv 
 .venv\Scripts\activate
 uv pip install -r requirements.txt
 ```

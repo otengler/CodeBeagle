@@ -886,7 +886,10 @@ QPushButton {
   border-radius: 4px;
   padding: 3px;
   outline: none;
-  /* Issue #194 - Special case of QPushButton inside dialogs, for better UI */
+}
+
+/* Issue #194 - Special case of QPushButton inside dialogs, for better UI */
+QDialog QPushButton {
   min-width: 80px;
 }
 QPushButton:disabled {

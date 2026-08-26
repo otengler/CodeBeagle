@@ -12,8 +12,6 @@ function Compile-Ui($output, $uiFile) {
     Write-Host "  Compiling $uiFile -> $output"
     & $env:PYUIC -o $outputPath $inputPath
     if ($LASTEXITCODE -ne 0) { throw "pyside6-uic failed for $uiFile" }
-    python fix_uic_imports.py $outputPath
-    if (-not $?) { throw "fix_uic_imports.py failed for $output" }
 }
 
 Compile-Ui "widgets\Ui_LeaveLastTabWidget.py" "widgets\LeaveLastTabWidget.ui"
