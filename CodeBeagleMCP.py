@@ -40,9 +40,6 @@ import sys
 
 from tools.SetupLogger import setupLogging
 from tools import FileTools
-# Switch to application directory to be able to load the configuration even
-# if we are executed from a different working directory.
-FileTools.switchToAppDir()
 
 def _serverReachable(baseUrl: str) -> bool:
     """Check whether a CodeBeagle agent HTTP server is already running."""
@@ -73,4 +70,7 @@ def main() -> None:
     runMCP(baseUrl)
 
 if __name__ == "__main__":
+    # Switch to application directory to be able to load the configuration even
+    # if we are executed from a different working directory.
+    FileTools.switchToAppDir()
     main()

@@ -31,7 +31,6 @@ Run via stdio with:  python CodeBeagleMCP.py
 import asyncio
 import json
 import logging
-import os
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import mcp_types as types
@@ -43,6 +42,7 @@ from pydantic import BaseModel, ValidationError
 
 from .client import ApiError, CodeBeagleClient, ServerUnreachable
 from .types import ContentSearchInput, FileNameSearchInput, FileUpdateInput
+from .config import tool_desc
 
 logger = logging.getLogger(__name__)
 
@@ -61,30 +61,6 @@ ToolDef = Tuple[
 
 # ---- Tool descriptions (loaded from tool_desc.json) ----
 
-_TOOL_DESC_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-    "resources", "ai_agent", "tool_desc.json",
-)
-try:
-    with open(_TOOL_DESC_PATH, "r", encoding="utf-8") as _f:
-        _TOOL_DESC_DATA = json.load(_f)
-except Exception as e:
-    raise RuntimeError("Could not load tool_desc.json from %s: %s", _TOOL_DESC_PATH, e)
-
-def _buildDesc(tool_key: str) -> str:
-    """Join desc and append promptGuidelines (if any) for MCP tool description."""
-    entry = _TOOL_DESC_DATA.get(tool_key, {})
-    parts = list(entry.get("desc", []))
-    guidelines = entry.get("promptGuidelines", [])
-    if guidelines:
-        parts.append(" " + " ".join(guidelines))
-    return "".join(parts)
-
-_DESC_LIST_LOCATIONS = _buildDesc("codebeagle_list_indexes")
-_DESC_SEARCH_CONTENT = _buildDesc("codebeagle_content_search")
-_DESC_SEARCH_FILENAME = _buildDesc("codebeagle_file_search")
-_DESC_UPDATE_FILE = _buildDesc("codebeagle_update_file")
-
 _EMPTY_SCHEMA: Dict[str, Any] = {"type": "object", "properties": {}, "required": []}
 
 class CodeBeagleMCPServer:
@@ -100,10 +76,10 @@ class CodeBeagleMCPServer:
     def __init__(self, baseUrl: str) -> None:
         self.client = CodeBeagleClient(baseUrl)
         self._tools: Dict[str, ToolDef] = {
-            "codebeagle_list_locations": (None, _DESC_LIST_LOCATIONS, self._listLocations),
-            "codebeagle_search_content": (ContentSearchInput, _DESC_SEARCH_CONTENT, self._searchContent),
-            "codebeagle_search_filename": (FileNameSearchInput, _DESC_SEARCH_FILENAME, self._searchFileName),
-            "codebeagle_update_file": (FileUpdateInput, _DESC_UPDATE_FILE, self._updateFile),
+            "codebeagle_list_locations": (None, tool_desc("codebeagle_list_locations"), self._listLocations),
+            "codebeagle_search_content": (ContentSearchInput, tool_desc("codebeagle_search_content"), self._searchContent),
+            "codebeagle_search_filename": (FileNameSearchInput, tool_desc("codebeagle_search_filename"), self._searchFileName),
+            "codebeagle_update_file": (FileUpdateInput, tool_desc("codebeagle_update_file"), self._updateFile),
         }
         self._server = Server(
             SERVER_NAME,
@@ -230,4 +206,5 @@ async def runStdioServer(baseUrl: str) -> None:
 
 def main(baseUrl: str) -> None:
     """Entry point for the stdio server (blocking)."""
+    loadToolDescription()
     asyncio.run(runStdioServer(baseUrl))
