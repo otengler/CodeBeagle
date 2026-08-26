@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Post-process a pyside2-uic generated file to use module-qualified imports."""
+"""Post-process a PySide6-uic generated file to use module-qualified imports."""
 from __future__ import annotations
 import re
 import sys
@@ -22,9 +22,9 @@ def fix_file(path: str) -> None:
         content = f.read()
 
     # Replace star imports with module imports
-    content = re.sub(r"from PySide2\.QtCore import \*", "from PySide2 import QtCore, QtGui, QtWidgets", content)
-    content = content.replace("from PySide2.QtGui import *", "")
-    content = content.replace("from PySide2.QtWidgets import *", "")
+    content = re.sub(r"from PySide6\.QtCore import \*", "from PySide6 import QtCore, QtGui, QtWidgets", content)
+    content = content.replace("from PySide6.QtGui import *", "")
+    content = content.replace("from PySide6.QtWidgets import *", "")
 
     lines = content.split("\n")
     new_lines = []

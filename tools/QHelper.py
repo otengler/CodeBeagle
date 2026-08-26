@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PySide2.QtWidgets import QAction
-from PySide2.QtCore import QObject, Signal, Qt, SignalInstance
-from PySide2.QtGui import QKeySequence
+from PySide6.QtGui import QAction
+from PySide6.QtCore import QObject, Signal, Qt, SignalInstance
+from PySide6.QtGui import QKeySequence
 from typing import Optional, Union, Callable, Any, cast
 
 def createQAction(parent: Optional[QObject],

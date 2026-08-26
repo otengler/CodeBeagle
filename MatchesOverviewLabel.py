@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import Optional, Callable, cast
-from PySide2.QtWidgets import QWidget
-from PySide2.QtGui import QIcon, QPixmap
+from PySide6.QtWidgets import QWidget
+from PySide6.QtGui import QIcon, QPixmap
 from widgets.RecyclingVerticalScrollArea import ScrollAreaItem
 from Ui_MatchesOverviewLabel import Ui_MatchesOverviewLabel
 import AppConfig

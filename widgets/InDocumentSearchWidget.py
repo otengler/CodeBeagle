@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, Pattern, List, Optional, Iterable
 import re
 import threading
-from PySide2.QtCore import Qt, QTimer, Signal, Slot
-from PySide2.QtWidgets import QWidget
-from PySide2.QtGui import QFocusEvent, QColor
+from PySide6.QtCore import Qt, QTimer, Signal, Slot
+from PySide6.QtWidgets import QWidget
+from PySide6.QtGui import QFocusEvent, QColor
 from tools.AsynchronousTask import AsynchronousTask
 from .Ui_InDocumentSearchWidget import Ui_InDocumentSearchWidget
 from fulltextindex.IStringMatcher import IStringMatcher, MatchPosition

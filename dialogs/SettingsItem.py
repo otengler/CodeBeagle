@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from typing import cast, Optional
-from PySide2.QtGui import QFocusEvent
-from PySide2.QtCore import Qt, Signal, Slot
-from PySide2.QtWidgets import QWidget, QFileDialog
+from PySide6.QtGui import QFocusEvent
+from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtWidgets import QWidget, QFileDialog
 from tools import FileTools
 import AppConfig
 from fulltextindex.IndexConfiguration import IndexMode, IndexType
@@ -41,7 +41,8 @@ class SettingsItem (QWidget):
 
         self.ui.editName.textEdited.connect(self.dataChanged)
         self.ui.editDirectories.textEdited.connect(self.dataChanged)
-        self.ui.comboExtensions.lineEdit().textEdited.connect(self.dataChanged)
+        if extLineEdit := self.ui.comboExtensions.lineEdit():
+            extLineEdit.textEdited.connect(self.dataChanged)
         self.ui.comboIndexUpdateMode.currentIndexChanged.connect(self.updateIndexModeChanged)
         self.__addEntriesForExtensionsCombo()
         self.__addEntriesForIndexUpdateModeCombo()
@@ -98,9 +99,9 @@ class SettingsItem (QWidget):
     def browseForDirectory(self) -> None:
         directory = QFileDialog.getExistingDirectory (
             self,
-            self.tr("Choose directory to search or index"),  # type: ignore[arg-type]
+            self.tr("Choose directory to search or index"),
             "",
-            QFileDialog.Options(QFileDialog.ShowDirsOnly))
+            QFileDialog.Option(QFileDialog.Option.ShowDirsOnly))
 
         if directory:
             self.ui.editDirectories.setText (FileTools.correctPath(directory))
@@ -110,10 +111,10 @@ class SettingsItem (QWidget):
     def browseForIndexDB(self) -> None:
         indexDB = QFileDialog.getSaveFileName(
             None,
-            self.tr("Choose file for index DB"),  # type: ignore[arg-type]
+            self.tr("Choose file for index DB"),
             "",
-            self.tr("*.dat"),  # type: ignore[arg-type]
-            QFileDialog.Options(QFileDialog.DontConfirmOverwrite))[0] # tuple returned, selection and used filter
+            self.tr("*.dat"),
+            options=QFileDialog.Option(QFileDialog.Option.DontConfirmOverwrite))[0] # tuple returned, selection and used filter
 
         if indexDB:
             self.ui.editIndexDB.setText (FileTools.correctPath(indexDB))
@@ -125,7 +126,9 @@ class SettingsItem (QWidget):
         self.ui.editName.setText (name)
         self.ui.editDirectories.setText (directories)
         self.ui.editExcludeDirectories.setText (dirExcludes)
-        self.ui.comboExtensions.lineEdit().setText (extensions)
+        extLineEdit = self.ui.comboExtensions.lineEdit()
+        if extLineEdit:
+            extLineEdit.setText (extensions)
 
         self.buildDBName = False
         if indexDB:
@@ -167,7 +170,8 @@ class SettingsItem (QWidget):
     def resetAndDisable(self) -> None:
         self.ui.editName.setText("")
         self.ui.editExcludeDirectories.setText("")
-        self.ui.comboExtensions.lineEdit().setText("")
+        if le := self.ui.comboExtensions.lineEdit():
+            le.setText("")
         self.ui.editDirectories.setText("")
         self.ui.editIndexDB.setText("")
         self.ui.comboIndexType.setCurrentIndex(IndexType.FileContentAndName)

@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PySide2.QtCore import Qt, Signal, Slot, QRect
-from PySide2.QtWidgets import QApplication, QWidget
-from PySide2.QtGui import QPainter, QFontMetrics, QTextBlock
+from PySide6.QtCore import Qt, Signal, Slot, QRect
+from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtGui import QPainter, QFontMetrics, QTextBlock
 from .HighlightingTextEdit import HighlightingTextEdit, HighlightStyle
 from typing import Optional, Tuple
 
@@ -26,7 +26,7 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
     parentheses = [('(',')'), ('[',']'), ('{', '}')]
 
     # Triggered if a selection was finished while holding a modifier key down
-    selectionFinishedWithKeyboardModifier = Signal('QString',  int)
+    selectionFinishedWithKeyboardModifier = Signal(str, int)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -78,9 +78,9 @@ class SourceHighlightingTextEdit (HighlightingTextEdit):
         # Enable dynamic highlighting of selected text (outline matches)
         if text and len(text)<=64:
             # Allow other components to react on selection of tokens with keyboard modifiers
-            modifiers = int(QApplication.keyboardModifiers())
+            modifiers = QApplication.keyboardModifiers()
             if modifiers != Qt.KeyboardModifier.NoModifier:
-                self.selectionFinishedWithKeyboardModifier.emit(text, modifiers)
+                self.selectionFinishedWithKeyboardModifier.emit(text, modifiers.value)
             else:
                 self.setDynamicHighlight(text)
 
@@ -143,9 +143,9 @@ class TestBraceMatchingWithStrings(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up a text edit widget with syntax highlighting."""
-        from PySide2.QtWidgets import QApplication
-        from PySide2.QtGui import QFont, QBrush
-        from PySide2.QtCore import Qt, QCoreApplication
+        from PySide6.QtWidgets import QApplication
+        from PySide6.QtGui import QFont, QBrush
+        from PySide6.QtCore import Qt, QCoreApplication
         from widgets.SyntaxHighlighter import HighlightingRules
         import sys
 

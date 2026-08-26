@@ -3,5 +3,5 @@
 #
 
 $env:PYTHON="python"
-$env:PYUIC="pyside2-uic"
+$env:PYUIC="pyside6-uic"
 $env:SASS="node_modules\.bin\sass.cmd"

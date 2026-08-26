@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QDialog, QApplication, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QApplication, QWidget
 from AppConfig import appConfig
 from tools.FileTools import freadall
 from typing import cast, Optional
@@ -25,7 +25,7 @@ from .Ui_HelpViewerDialog import Ui_HelpViewerDialog
 
 class HelpViewerDialog (QDialog):
     def __init__ (self, parent: Optional[QWidget]) -> None:
-        super().__init__(parent,  cast(Qt.WindowType, Qt.WindowType.Dialog | Qt.WindowType.WindowMinMaxButtonsHint))
+        super().__init__(parent,  Qt.WindowType.Dialog | Qt.WindowType.WindowMinMaxButtonsHint)
         self.ui = Ui_HelpViewerDialog()
         self.ui.setupUi(self)  # type: ignore[no-untyped-call]
         self.ui.okButton.clicked.connect(self.accept)
@@ -35,7 +35,7 @@ class HelpViewerDialog (QDialog):
         try:
             text = freadall(name)
         except:
-            text = self.tr("Failed to open file")  # type: ignore[arg-type]
+            text = self.tr("Failed to open file")
 
         # Replace the API server port placeholder with the configured port
         text = text.replace("__PORT__", str(appConfig().agent.port))
@@ -47,7 +47,7 @@ def main() -> None:
     w = HelpViewerDialog(None)
     w.showFile("help.html")
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

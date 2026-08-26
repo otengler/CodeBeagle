@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PySide2.QtCore import Qt, QUrl, QMimeData, QPoint
-from PySide2.QtGui import QDrag, QMouseEvent
-from PySide2.QtWidgets import QListView, QApplication, QWidget
+from PySide6.QtCore import Qt, QUrl, QMimeData, QPoint
+from PySide6.QtGui import QDrag, QMouseEvent
+from PySide6.QtWidgets import QListView, QApplication, QWidget
 from typing import Optional
 
 class PathDragListView (QListView):
@@ -46,4 +46,4 @@ class PathDragListView (QListView):
             mimeData.setUrls (urls)
             drag = QDrag(self)
             drag.setMimeData(mimeData)
-            drag.exec_(Qt.DropAction.CopyAction)
+            drag.exec(Qt.DropAction.CopyAction)

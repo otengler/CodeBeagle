@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from typing import List, Optional, Union
-from PySide2.QtCore import Qt, QRect, QSize, QModelIndex
-from PySide2.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
-from PySide2.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
+from PySide6.QtCore import Qt, QRect, QSize, QModelIndex, QPersistentModelIndex
+from PySide6.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
+from PySide6.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
 
 class PathVisualizerDelegate (QStyledItemDelegate):
     newPathColor: Union[QColor, QPen] = QColor(50, 50, 50)
@@ -46,8 +46,8 @@ class PathVisualizerDelegate (QStyledItemDelegate):
         self.pathBoldFont.setBold (True)
         self.pathBoldFontMetrics = QFontMetrics(self.pathBoldFont)
 
-    def paint (self, painter: Optional[QPainter], option: QStyleOptionViewItem, index: QModelIndex) -> None:
-        if not painter or option.type != QStyleOption.SO_ViewItem:
+    def paint (self, painter: Optional[QPainter], option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:
+        if not painter or option.type != QStyleOption.OptionType.SO_ViewItem.value:
             return
 
         model = index.model()

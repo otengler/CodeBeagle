@@ -21,8 +21,8 @@ from __future__ import annotations
 
 import threading
 from typing import Callable, Any, Optional, cast
-from PySide2.QtCore import QThread, Slot, QObject, Signal
-from PySide2.QtWidgets import QWidget
+from PySide6.QtCore import QThread, Slot, QObject, Signal
+from PySide6.QtWidgets import QWidget
 from dialogs.ProgressBar import ProgressBar
 
 
@@ -93,7 +93,7 @@ def execute(parent: QObject, func: Callable[..., Any], *args: Any, bEnableCancel
         progress.show()
 
         searchTask.start()
-        progress.exec_()
+        progress.exec()
         searchTask.wait()
 
         # If the thread raised an exception re-raise it in the main thread

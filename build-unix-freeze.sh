@@ -56,11 +56,11 @@ if [ "$1" == "linux" ]; then
   rm -r $BUILDDIR/lib/ctypes
   rm -r $BUILDDIR/lib/xml
   rm -r $BUILDDIR/lib/xmlrpc
-  # PySide2
-  rm -r $BUILDDIR/lib/PySide2/translations
+  # PySide6
+  rm -r $BUILDDIR/lib/PySide6/translations
   # Clean all files in lib from the other directories. They are duplicates
-  SOURCE_LIB_DIR="$BUILDDIR/lib/PySide2"
-  PLUGIN_DIR="$BUILDDIR/lib/PySide2/plugins"
+  SOURCE_LIB_DIR="$BUILDDIR/lib/PySide6"
+  PLUGIN_DIR="$BUILDDIR/lib/PySide6/plugins"
   # Ensure both directories exist
   if [[ ! -d "$SOURCE_LIB_DIR" || ! -d "$PLUGIN_DIR" ]]; then
     echo "Error: lib or plugins directory does not exist"

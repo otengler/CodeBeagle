@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from typing import Tuple, Optional, Iterator, cast
 from enum import IntEnum
 from typing import Optional, Union
-from PySide2.QtCore import Qt, Signal, QRect, QRectF
-from PySide2.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor, QColor, QWheelEvent
-from PySide2.QtWidgets import QPlainTextEdit, QWidget
+from PySide6.QtCore import Qt, Signal, QRect, QRectF
+from PySide6.QtGui import QFont, QFontMetrics, QTextLayout, QPainter, QPaintEvent, QTextBlock, QResizeEvent, QTextCursor, QColor, QWheelEvent
+from PySide6.QtWidgets import QPlainTextEdit, QWidget
 from .LineNumberArea import LineNumberArea
 from .SyntaxHighlighter import SyntaxHighlighter
 
@@ -42,9 +42,9 @@ class HighlightingTextEdit (QPlainTextEdit):
         self.__highlightUpdateCounter = 0 # Increment every time the highlight changes
         self.dynamicHighlight: Optional[str] = None
         self.setUndoRedoEnabled(False)
-        self.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.setReadOnly(True)
-        self.setTextInteractionFlags(cast(Qt.TextInteractionFlag, Qt.TextInteractionFlag.TextSelectableByKeyboard|Qt.TextInteractionFlag.TextSelectableByMouse))
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByKeyboard|Qt.TextInteractionFlag.TextSelectableByMouse)
 
         self.lineNumberArea: Optional[LineNumberArea] = None
 
@@ -119,7 +119,7 @@ class HighlightingTextEdit (QPlainTextEdit):
             if viewport := self.viewport():
                 viewport.update()
 
-    def setFont(self, font: QFont) -> None:
+    def setFont(self, font: QFont) -> None:  # type: ignore[override]
         super().setFont (font)
         viewport = self.viewport()
         if viewport:
@@ -182,8 +182,8 @@ class HighlightingTextEdit (QPlainTextEdit):
         # Can be used by sub classes
         text = block.text()[startIndex:startIndex+length]
         partBefore = block.text()[:startIndex]
-        rectBefore = metrics.boundingRect(bound, Qt.TextFlag.TextExpandTabs, partBefore,  self.tabStopWidth())
-        rectText = metrics.boundingRect(bound, Qt.TextFlag.TextExpandTabs,  text, self.tabStopWidth())
+        rectBefore = metrics.boundingRect(bound, int(Qt.TextFlag.TextExpandTabs), partBefore,  int(self.tabStopDistance()))
+        rectText = metrics.boundingRect(bound, int(Qt.TextFlag.TextExpandTabs),  text, int(self.tabStopDistance()))
 
         if style == HighlightStyle.Outline:
             rectResult = QRect(rectBefore.right()+4,  rectBefore.top()+1,  rectText.width()+2,  rectText.height()-2)
@@ -220,7 +220,7 @@ class HighlightingTextEdit (QPlainTextEdit):
                     if formatRange.length >= 0:
                         addFormats.append(formatRange)
                 if layout := block.layout():
-                    layout.setAdditionalFormats(addFormats)
+                    layout.setFormats(addFormats)
                 block.setUserState(self.__highlightUpdateCounter)
         return bColorizedBlocks
 

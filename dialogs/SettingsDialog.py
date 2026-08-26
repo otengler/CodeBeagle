@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import List, Set, Optional, cast
 import os, sys
-from PySide2.QtCore import Qt, QRect, QSize, Signal, Slot, QModelIndex, QObject
-from PySide2.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QPainter
-from PySide2.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QMessageBox, QWidget, QCheckBox, QListView
+from PySide6.QtCore import Qt, QRect, QSize, Signal, Slot, QModelIndex, QPersistentModelIndex, QObject
+from PySide6.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QPainter
+from PySide6.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QMessageBox, QWidget, QCheckBox, QListView
 from fulltextindex.IndexConfiguration import IndexConfiguration, indexTypeInfo, IndexMode
 from tools.Config import Config
 import tools.FileTools as FileTools
@@ -59,7 +59,7 @@ class SettingsEditorDelegate(QStyledItemDelegate):
     def setDefaultLocationRow(self, row: int) -> None:
         self.defaultLocationRow = row
 
-    def paint(self, painter: Optional[QPainter], option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def paint(self, painter: Optional[QPainter], option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:
         if not painter:
             return
         
@@ -82,23 +82,23 @@ class SettingsEditorDelegate(QStyledItemDelegate):
         location = index.data(Qt.ItemDataRole.UserRole+1)
 
         if location.directories:
-            dirs = self.tr("Directories: ") + location.directoriesAsString()  # type: ignore[arg-type]
+            dirs = self.tr("Directories: ") + location.directoriesAsString()
             if location.extensions:
                 dirs += " ("
-                dirs += self.tr("Extensions: ") + location.extensionsAsString()  # type: ignore[arg-type]
+                dirs += self.tr("Extensions: ") + location.extensionsAsString()
                 dirs += ")"
             painter.drawText(rect2, Qt.AlignmentFlag.AlignVCenter + Qt.TextFlag.TextWordWrap, dirs)
 
         painter.setFont(self.boldFont)
         locationName = location.displayName()
         if index.row() == self.defaultLocationRow:
-            locationName = locationName + self.tr(" (Default)")  # type: ignore[arg-type]
+            locationName = locationName + self.tr(" (Default)")
             painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize//2, self.defaultPixmapSize, self.defaultPixmapSize, self.defaultPixmap)
         painter.drawText(rect1, Qt.AlignmentFlag.AlignVCenter + Qt.TextFlag.TextWordWrap, locationName)
 
         painter.restore()
 
-    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> QSize:
         baseHint = super().sizeHint(option, index)
         return QSize(baseHint.width(), self.itemHeight)
 
@@ -361,7 +361,7 @@ class SettingsDialog (QDialog):
 
     @Slot()
     def addLocation (self) -> None:
-        location = IndexConfiguration(self.tr("New location"))  # type: ignore[arg-type]
+        location = IndexConfiguration(self.tr("New location"))
         self.addExistingLocation(location, True)
 
     @Slot()
@@ -392,13 +392,13 @@ class SettingsDialog (QDialog):
         try:
             from dialogs.ExcludedExtensionsDialog import ExcludedExtensionsDialog
             dialog = ExcludedExtensionsDialog(self, location)
-            if dialog.exec_():
+            if dialog.exec():
                 selectedExts = dialog.getSelectedExtensions()
                 if selectedExts:
                     self.__addExtensionsToLocation(selectedExts)
         except Exception as e:
             StackTraceMessageBox.show(self,
-                self.tr("Error showing excluded extensions"),  # type: ignore[arg-type]
+                self.tr("Error showing excluded extensions"),
                 str(e))
 
     def __addExtensionsToLocation(self, extensions: List[str]) -> None:
@@ -406,7 +406,9 @@ class SettingsDialog (QDialog):
         currentExts = self.ui.settingsItem.extensions()
         extSet = set(ext.strip() for ext in currentExts.split(",") if ext.strip())
         extSet.update(extensions)
-        self.ui.settingsItem.ui.comboExtensions.lineEdit().setText(",".join(sorted(extSet)))
+        le = self.ui.settingsItem.ui.comboExtensions.lineEdit()
+        assert le
+        le.setText(",".join(sorted(extSet)))
         self.ui.settingsItem.dataChanged.emit()
 
     def __defaultLocationChanged(self, listviewCurrent: QListView, listviewOther: QListView, newDefaultRow: int) -> None:
@@ -427,7 +429,7 @@ class SettingsDialog (QDialog):
         index = self.ui.listViewLocations.currentIndex ()
         if index.isValid():
             location = index.data(Qt.ItemDataRole.UserRole+1)
-            duplicated = IndexConfiguration (self.tr("Duplicated ") + location.displayName(),  # type: ignore[arg-type]
+            duplicated = IndexConfiguration (self.tr("Duplicated ") + location.displayName(),
                                              location.extensionsAsString(),
                                              location.directoriesAsString(),
                                              location.dirExcludesAsString(),
@@ -453,9 +455,9 @@ class SettingsDialog (QDialog):
             name = location.displayName().lower()
             if name in names:
                 QMessageBox.warning(self,
-                                    self.tr("Duplicate search location names"),  # type: ignore[arg-type]
-                                    self.tr("Please choose a unique name for each search location.") + " '" + location.displayName() + "' " +   self.tr("is used more than once."),  # type: ignore[arg-type]
-                                    QMessageBox.StandardButtons(QMessageBox.Ok))
+                                    self.tr("Duplicate search location names"),
+                                    self.tr("Please choose a unique name for each search location.") + " '" + location.displayName() + "' " +   self.tr("is used more than once."),
+                                    QMessageBox.StandardButton(QMessageBox.StandardButton.Ok))
                 return
             names.add(name)
         if self.__saveUserConfig():
@@ -516,8 +518,8 @@ class SettingsDialog (QDialog):
                 for displayName in updateDisplayNames:
                     locationsHtml += "<li>" + displayName + "</li>"
                 locationsHtml += "</ul>"
-                text = self.tr(userHintUpdateIndex) % {"locations" : locationsHtml}  # type: ignore[arg-type]
-                result = showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text, ButtonType.Yes, False, ButtonType.No,  True,  bShowHintAgain=True)  # type: ignore[arg-type]
+                text = self.tr(userHintUpdateIndex) % {"locations" : locationsHtml}
+                result = showUserHint (self, "updateIndexes",  self.tr("Update indexes"), text, ButtonType.Yes, False, ButtonType.No,  True,  bShowHintAgain=True)
                 if result == ButtonType.Yes:
                     self.updateChangedIndexes.emit(updateDisplayNames)
 
@@ -557,8 +559,8 @@ class SettingsDialog (QDialog):
 
     def failedToSaveUserConfigMessage(self) -> None:
         StackTraceMessageBox.show(self,
-                                  self.tr("Failed to save user config"),  # type: ignore[arg-type]
-                                  self.tr("The user config file could not be saved to the user profile"))  # type: ignore[arg-type]
+                                  self.tr("Failed to save user config"),
+                                  self.tr("The user config file could not be saved to the user profile"))
 
 def main() -> None:
     import sys
@@ -573,7 +575,7 @@ def main() -> None:
     conf.showCloseConfirmation=True
     w = SettingsDialog(None, locations, locations, conf)
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

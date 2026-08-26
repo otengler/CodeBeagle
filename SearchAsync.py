@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import re
 from typing import Pattern, Iterator, cast, Optional
-from PySide2.QtCore import QObject
+from PySide6.QtCore import QObject
 from tools import AsynchronousTask
 from tools.FileTools import fopen
 from fulltextindex import FullTextIndex, IndexConfiguration

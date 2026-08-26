@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from fnmatch import fnmatch
 from typing import Dict, List, Optional, Set, Union, Tuple, cast
-from PySide2.QtGui import QFont
+from PySide6.QtGui import QFont
 from AppConfig import appConfig
 from tools.FileTools import freadall
 from tools.ContextExtraction import LineMapping

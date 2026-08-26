@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional, Dict, Any, cast
-from PySide2.QtCore import Qt, QAbstractItemModel, QAbstractListModel, QSettings, QModelIndex
+from PySide6.QtCore import Qt, QAbstractItemModel, QAbstractListModel, QSettings, QModelIndex, QPersistentModelIndex
 import AppConfig
    
 # This is like QStringListModel with the only exception that setData does not raise signals.
@@ -11,36 +11,36 @@ class MyStringListModel(QAbstractListModel):
         super().__init__(parent)
         self._data: list[str] = []  # list of strings
 
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
+    def rowCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:
         if parent.isValid():
             return 0  # No children for any row (flat list)
         return len(self._data)
 
-    def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
         if role in [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole]:
             return self._data[index.row()]
         return None
 
-    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+    def flags(self, index: QModelIndex | QPersistentModelIndex) -> Qt.ItemFlag:
         if not index.isValid():
-            return cast(Qt.ItemFlags, Qt.ItemFlag.NoItemFlags)
+            return Qt.ItemFlag.NoItemFlags
         return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
-    def removeRows(self, row: int, count: int, parent: QModelIndex = QModelIndex()) -> bool:
+    def removeRows(self, row: int, count: int, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> bool:
         if row < 0:
             return False
         self._data = self._data[0:row] + self._data[row+count:]
         return True
 
-    def insertRows(self, row: int, count: int, parent: QModelIndex = QModelIndex()) -> bool:
+    def insertRows(self, row: int, count: int, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> bool:
         if row < 0:
             return False
         self._data = self._data[0:row] + [""] * count + self._data[row:]
         return True
 
-    def setData(self, index: QModelIndex, value: Any, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> bool:
+    def setData(self, index: QModelIndex | QPersistentModelIndex, value: Any, role: int = Qt.ItemDataRole.DisplayRole) -> bool:
         if index.isValid() and role in [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole]:
             self._data[index.row()] = value
             # Normally we should now raise "dataChanged". But we explicitly do not do this because it changes the selected item

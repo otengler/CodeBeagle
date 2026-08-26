@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import os
 from typing import Optional, List
-from PySide2.QtCore import Qt, Slot, Signal
-from PySide2.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent, QIcon, QPixmap
-from PySide2.QtWidgets import QWidget, QListWidgetItem, QDialog, QTextEdit
+from PySide6.QtCore import Qt, Slot, Signal
+from PySide6.QtGui import QTextFormat, QColor, QTextCursor, QFont, QDragEnterEvent, QDropEvent, QIcon, QPixmap, QAction, QKeySequence
+from PySide6.QtWidgets import QWidget, QListWidgetItem, QDialog, QTextEdit
 from tools.FileTools import Encoding, freadallEx
 from AppConfig import appConfig
 from fulltextindex import FullTextIndex, IStringMatcher
@@ -41,10 +41,10 @@ class EditorState:
 
 class SourceViewer (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
-    selectionFinishedWithKeyboardModifier = Signal('QString',  int)
+    selectionFinishedWithKeyboardModifier = Signal(str, int)
     noPreviousMatch = Signal()
     noNextMatch = Signal()
-    directoryDropped = Signal('QString')
+    directoryDropped = Signal(str)
     currentMatchChanged = Signal(int)
 
     currentLineBackgroundColor = QColor(240,240,240)
@@ -80,12 +80,12 @@ class SourceViewer (QWidget):
         self.ui.buttonMatchCurrent.clicked.connect(self.jumpToCurrentMatch)
 
         self.addAction(createQAction(self, shortcut=Qt.Key.Key_F5, triggered= self.reloadFile))
-        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_G, triggered=self.showGotoLineDialog))
-        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_B, triggered=self.ui.textEdit.jumpToMatchingBrace))
-        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_J, triggered=self.jumpToCurrentMatch))
+        self.addAction(createQAction(self, shortcut=QKeySequence(Qt.KeyboardModifier.ControlModifier | Qt.Key.Key_G), triggered=self.showGotoLineDialog))
+        self.addAction(createQAction(self, shortcut=QKeySequence(Qt.KeyboardModifier.ControlModifier | Qt.Key.Key_B), triggered=self.ui.textEdit.jumpToMatchingBrace))
+        self.addAction(createQAction(self, shortcut=QKeySequence(Qt.KeyboardModifier.ControlModifier | Qt.Key.Key_J), triggered=self.jumpToCurrentMatch))
 
         # In document search
-        self.addAction(createQAction(self, shortcut=Qt.KeyboardModifier.ControlModifier+Qt.Key.Key_F, triggered=self.toggleSearchFrame))
+        self.addAction(createQAction(self, shortcut=QKeySequence(Qt.KeyboardModifier.ControlModifier | Qt.Key.Key_F), triggered=self.toggleSearchFrame))
         self.ui.buttonSearch.clicked.connect(self.showSearchFrame)
         self.ui.widgetInDocumentSearch.searchFinished.connect(self.inDocumentSearchFinished)
         self.ui.widgetInDocumentSearch.currentMatchChanged.connect(self.inDocumentSearchMatchChanged)
@@ -134,8 +134,8 @@ class SourceViewer (QWidget):
         self.__enableNextPrevious()
 
         config = appConfig().SourceViewer
-        if self.ui.textEdit.tabStopWidth() != config.TabWidth*10:
-            self.ui.textEdit.setTabStopWidth(config.TabWidth*10)
+        if self.ui.textEdit.tabStopDistance() != config.TabWidth*10:
+            self.ui.textEdit.setTabStopDistance(config.TabWidth*10)
         if self.ui.textEdit.areLineNumbersShown() != config.showLineNumbers:
             self.ui.textEdit.showLineNumbers(config.showLineNumbers, enableBookmarks=True)
             if self.ui.textEdit.lineNumberArea:
@@ -152,7 +152,7 @@ class SourceViewer (QWidget):
         self.matches = [] # touples with position and length
         self.__setMatchIndex(-1)
         self.ui.labelCursor.setText("")
-        self.ui.labelFile.setText(self.tr("No document loaded"))  # type: ignore[arg-type]
+        self.ui.labelFile.setText(self.tr("No document loaded"))
         self.ui.textEdit.clear()
         self.__resetTextCursor()
         self.__setInfoLabel()
@@ -178,7 +178,7 @@ class SourceViewer (QWidget):
         try:
             text, encoding = freadallEx(name)
         except:
-            text = self.tr("Failed to open file")  # type: ignore[arg-type]
+            text = self.tr("Failed to open file")
             self.ui.labelEncoding.hide()
         else:
             self.ui.labelEncoding.show()
@@ -241,7 +241,7 @@ class SourceViewer (QWidget):
     def showGotoLineDialog(self) -> None:
         from dialogs.GotoLineDialog import GotoLineDialog
         gotoDialog = GotoLineDialog(self)
-        if gotoDialog.exec_() == QDialog.Accepted:
+        if gotoDialog.exec() == QDialog.DialogCode.Accepted:
             self.gotoLine(gotoDialog.getLine())
 
     def gotoLine(self, line: int) -> None:
@@ -288,7 +288,7 @@ class SourceViewer (QWidget):
     @Slot()
     def updateCurrentLine (self) -> None:
         line = self.ui.textEdit.currentLineNumber()
-        self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))  # type: ignore[arg-type]
+        self.ui.labelCursor.setText(self.tr("Line") + " %u" % (line, ))
 
         if lineSpan := self.ui.textEdit.getLineByLineNumber(line):
             lineStart, _, lineText = lineSpan
@@ -480,13 +480,13 @@ class SourceViewer (QWidget):
 
 def main() -> None:
     import sys
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     w = SourceViewer(None)
     w.show()
     #w.showFile(r"D:\C++\qt-everywhere-opensource-src-4.7.3\src\svg\qsvghandler.cpp")
     w.showFile(r"D:\test.cpp")
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

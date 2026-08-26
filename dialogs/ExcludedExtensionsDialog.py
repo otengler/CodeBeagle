@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import List, Optional, Tuple, Any
-from PySide2.QtCore import Qt, Slot
-from PySide2.QtWidgets import QDialog, QWidget, QTableWidgetItem, QMessageBox
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import QDialog, QWidget, QTableWidgetItem, QMessageBox
 from fulltextindex.IndexConfiguration import IndexConfiguration
 from fulltextindex.IndexUpdater import IndexUpdater
 from .Ui_ExcludedExtensionsDialog import Ui_ExcludedExtensionsDialog
@@ -150,11 +150,11 @@ class ExcludedExtensionsDialog(QDialog):
     def __showNoDataMessage(self) -> None:
         """Show message when no excluded extensions data is available."""
         QMessageBox.information(self,
-            self.tr("No Data"),  # type: ignore[arg-type]
+            self.tr("No Data"),
             self.tr("No excluded extensions data available. This could mean:\n\n"
                    "1. The index has not been updated yet\n"
                    "2. All files in the directories matched the configured extensions\n"
-                   "3. The index database is from an older version"))  # type: ignore[arg-type]
+                   "3. The index database is from an older version"))
         self.reject()
 
     @Slot(bool)

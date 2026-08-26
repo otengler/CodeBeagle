@@ -1,5 +1,4 @@
-PySide2
-shiboken2
+PySide6
 cx_Freeze
 mypy
 certifi

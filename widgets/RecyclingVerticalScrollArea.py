@@ -23,9 +23,9 @@ from typing import Any, List, Iterator, Tuple, Dict, DefaultDict, Optional, cast
 from abc import ABC,abstractmethod
 import bisect
 import collections
-from PySide2.QtCore import Qt, QSize
-from PySide2.QtGui import QResizeEvent
-from PySide2.QtWidgets import QLabel, QLayout, QLayoutItem, QScrollArea, QWidget
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QResizeEvent
+from PySide6.QtWidgets import QLabel, QLayout, QLayoutItem, QScrollArea, QWidget
 
 def doLinesIntersect (y1: int, length1: int, y2: int, length2: int) -> bool:
     if y1 < y2:
@@ -239,7 +239,7 @@ class RecyclingVerticalScrollArea(QScrollArea):
 
 def main() -> None:
     import sys
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
 
     items = ScrollAreaItemList()
@@ -251,7 +251,7 @@ def main() -> None:
     w.setItems(items)
 
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

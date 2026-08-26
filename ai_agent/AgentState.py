@@ -23,7 +23,7 @@ import logging
 import urllib.error
 import urllib.request
 from typing import Callable, List, Optional
-from PySide2.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal
 from AppConfig import appConfig
 from .AgentHistory import AgentHistory, HistoryEntry
 from .Server import AgentServer

@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import Optional, Tuple, Any
 import json, unittest, os
 from bisect import bisect_left, bisect_right
-from PySide2.QtCore import QSettings
+from PySide6.QtCore import QSettings
 from tools.ExceptionTools import ignoreExcepion
 import AppConfig
 
@@ -235,8 +235,9 @@ class BookmarkStorage:
         try:
             deserialized = json.loads(serialized)
             if deserialized and isinstance(deserialized, dict):
-                all: list[Any]
                 if all := deserialized.get(self.PropAll): 
+                    if not isinstance(all, list):
+                        all = []
                     for item in all:
                         name = item.get(self.PropName)
                         lines = item.get(self.PropLines)
@@ -246,8 +247,9 @@ class BookmarkStorage:
                                     continue
                             lines.sort()
                             bookmarks[name] = lines
-                numbered: list[Any]
                 if numbered := deserialized.get(self.PropNumbered):
+                    if not isinstance(numbered, list):
+                        numbered = []
                     for item in numbered:
                         number = item.get(self.PropNumber)
                         name = item.get(self.PropName)

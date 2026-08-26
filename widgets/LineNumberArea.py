@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #TODO: remove after upgrade to >= python 3.10
 from __future__ import annotations
 
-from PySide2.QtCore import Qt, Slot, Signal, QRect, QSize
-from PySide2.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent, QFont, QFontMetrics
-from PySide2.QtWidgets import QWidget, QPlainTextEdit
+from PySide6.QtCore import Qt, Slot, Signal, QRect, QSize
+from PySide6.QtGui import QPainter, QPaintEvent, QTextBlock, QColor, QResizeEvent, QPixmap, QMouseEvent, QFont, QFontMetrics
+from PySide6.QtWidgets import QWidget, QPlainTextEdit
 from typing import Optional, Iterator, Tuple
 
 class LineNumberArea (QWidget):
@@ -50,7 +50,7 @@ class LineNumberArea (QWidget):
 
         self.setFont(self.textEdit.font())
 
-    def setFont(self, font: QFont) -> None:
+    def setFont(self, font: QFont) -> None:  # type: ignore[override]
         super().setFont(font)
         self.bookmarkPixmap = self.__getScaledPixmap("resources/bookmark.png")
         self.numberedBookmarkPixmap = self.__getScaledPixmap("resources/bookmark-numbered.png")

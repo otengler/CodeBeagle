@@ -13,9 +13,9 @@ import pathlib
 from typing import cast, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from PySide2.QtWidgets import QApplication
-    from PySide2.QtCore import QFile, QTextStream
-    from PySide2.QtGui import QColor, QPalette
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QFile, QTextStream
+    from PySide6.QtGui import QColor, QPalette
 
 # Local imports
 from .palette import DarkPalette as DarkPalette
@@ -58,7 +58,7 @@ def _apply_application_patches(app: 'QApplication') -> None:
     that moment for setting reasons.
     """
     # See issue #139
-    from PySide2.QtGui import QColor, QPalette
+    from PySide6.QtGui import QColor, QPalette
     color = DarkPalette.COLOR_SELECTION_LIGHT
     qcolor = QColor(color)
 
@@ -66,7 +66,7 @@ def _apply_application_patches(app: 'QApplication') -> None:
 
     if app:
         palette = app.palette()
-        palette.setColor(QPalette.Normal, QPalette.Link, qcolor)
+        palette.setColor(QPalette.ColorGroup.Normal, QPalette.ColorRole.Link, qcolor)
         app.setPalette(palette)
     else:
         _logger.warning("No QCoreApplication instance found. "
@@ -77,15 +77,15 @@ def _apply_application_patches(app: 'QApplication') -> None:
 
 def apply_stylesheet(app: 'QApplication', additionalStyles: str = "") -> None:
     """
-    Load the stylesheet for use in a PySide2 application.
+    Load the stylesheet for use in a PySide6 application.
 
     Returns:
         str: the stylesheet string.
     """
 
-    from PySide2.QtWidgets import QApplication  # noqa: needed for type
-    from PySide2.QtCore import QFile, QTextStream
-    from PySide2.QtGui import QColor, QPalette
+    from PySide6.QtWidgets import QApplication  # noqa: needed for type
+    from PySide6.QtCore import QFile, QTextStream
+    from PySide6.QtGui import QColor, QPalette
 
     # Thus, by importing the binary we can access the resources
     scriptDir = pathlib.Path(__file__).parent.resolve()
@@ -100,7 +100,7 @@ def apply_stylesheet(app: 'QApplication', additionalStyles: str = "") -> None:
     stylesheet = ""
 
     if qss_file.exists():
-        qss_file.open(cast(QFile.OpenModeFlag, QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text))
+        qss_file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text)
         text_stream = QTextStream(qss_file)
         stylesheet = text_stream.readAll()
 

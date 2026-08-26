@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import cast, Optional
 from enum import IntEnum
-from PySide2.QtCore import Qt, Slot, QSettings
-from PySide2.QtWidgets import QDialog, QWidget, QPushButton
+from PySide6.QtCore import Qt, Slot, QSettings
+from PySide6.QtWidgets import QDialog, QWidget, QPushButton
 import AppConfig
 from .Ui_UserHintDialog import Ui_UserHintDialog
 
@@ -69,11 +69,11 @@ class UserHintDialog (QDialog):
 
     def __configButton(self, button: QPushButton, buttonID: ButtonType, bIsDefault: bool) -> None:
         if ButtonType.OK == buttonID:
-            button.setText(self.tr("OK"))  # type: ignore[arg-type]
+            button.setText(self.tr("OK"))
         elif ButtonType.Yes == buttonID:
-            button.setText(self.tr("Yes"))  # type: ignore[arg-type]
+            button.setText(self.tr("Yes"))
         elif ButtonType.No == buttonID:
-            button.setText(self.tr("No"))  # type: ignore[arg-type]
+            button.setText(self.tr("No"))
         else:
             raise RuntimeError("Unknown button")
         if bIsDefault:
@@ -117,17 +117,17 @@ def showUserHint (parent: Optional[QWidget], hintID: str, title: str, htmlText: 
         if button2:
             dialog.addButton(button2, default2)
         dialog.activateWindow()
-        if dialog.exec_():
+        if dialog.exec():
             settings.setValue(hintStore, int(dialog.showHintAgain()))
             return dialog.closeButton
     return ButtonType.NoResult
 
 def main() -> None:
     import sys
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     showUserHint (None, "test", "Create location", "Create an initial search location?",  ButtonType.Yes, True, ButtonType.No)
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

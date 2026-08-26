@@ -20,8 +20,8 @@ from __future__ import annotations
 
 import os
 from typing import List, Dict, Optional, Any
-from PySide2.QtCore import Qt, QFileInfo, QAbstractListModel, QModelIndex, QSize
-from PySide2.QtWidgets import QWidget
+from PySide6.QtCore import Qt, QFileInfo, QAbstractListModel, QModelIndex, QPersistentModelIndex, QSize
+from PySide6.QtWidgets import QWidget
 import SourceViewer
 
 # Returns the first difference in two strings
@@ -77,10 +77,10 @@ class StringListModel(QAbstractListModel):
             return firstDiff
         return len(first) # The whole string is equal
 
-    def rowCount(self, _:QModelIndex = QModelIndex()) -> int:
+    def rowCount(self, _: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:
         return len(self.filelist)
 
-    def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
         if role == Qt.ItemDataRole.DisplayRole:

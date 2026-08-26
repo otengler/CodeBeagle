@@ -117,9 +117,9 @@ class IndexUpdater (IndexDatabase):
             self.__cleanup(c, nextIndexID)
         logging.info("Done")
 
-    def __handleSingleFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, strFullPath: str, fileName: str, docIdAndTimestamp: Tuple[int, float], 
+    def __handleSingleFile(self, c: sqlite3.Cursor, q: sqlite3.Cursor, strFullPath: str, fileName: str, docIdAndTimestamp: Tuple[int, float | None], 
                            mTime: float, indexType: IndexType, nextIndexID: Optional[int],  
-                           statistics: Optional[UpdateStatistics], kwCache: dict[str, int]):
+                           statistics: Optional[UpdateStatistics], kwCache: dict[str, int]) -> None:
         docID, timestamp = docIdAndTimestamp
         newFile = timestamp is None
 
@@ -159,7 +159,11 @@ class IndexUpdater (IndexDatabase):
             return (docID, None)
         else:
             q.execute("SELECT id,timestamp FROM documents WHERE fullpath=:fp", {"fp":strFullPath})
-            return q.fetchone()
+            row = q.fetchone()
+            if row:
+                return cast(Tuple[int, float], row)
+            # Should never happen since INSERT OR IGNORE was executed above
+            raise RuntimeError("No document ID for existing document returned")
 
     def __saveExcludedExtensions(self, c: sqlite3.Cursor, indexID: int, extCounts: Dict[str, int]) -> None:
         """Save excluded extension statistics to database."""

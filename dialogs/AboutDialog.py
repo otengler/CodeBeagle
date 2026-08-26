@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from PySide2.QtWidgets import QDialog, QApplication, QWidget
-from PySide2 import QtCore
+from PySide6.QtWidgets import QDialog, QApplication, QWidget
+from PySide6 import QtCore
 import AppConfig
 from typing import Optional
 from .Ui_AboutDialog import Ui_AboutDialog
@@ -32,7 +32,7 @@ class AboutDialog(QDialog):
         self.ui.labelUpdateAvailable.hide()
         version = sys.version_info
         pythonAndQt = " (Python %u.%u.%u, Qt %s)" % (version.major, version.minor, version.micro, QtCore.qVersion())
-        self.ui.labelVersion.setText(self.tr("Version") + " " + AppConfig.appVersion + pythonAndQt)  # type: ignore[arg-type]
+        self.ui.labelVersion.setText(self.tr("Version") + " " + AppConfig.appVersion + pythonAndQt)
         self.ui.labelGitHub.setText(self.ui.labelGitHub.text().replace("{linkColor}", self.__linkColor()))
         self.setProperty("shadeBackground", True) # fill background with gradient as defined in style sheet
         self.__checkForUpdate()
@@ -57,7 +57,7 @@ def main() -> None:
     app = QApplication(sys.argv)
     wnd = AboutDialog(None)
     wnd.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from typing import List, Optional, Callable, cast
-from PySide2.QtCore import Qt, Signal, Slot
-from PySide2.QtGui import QFontMetrics, QFont
-from PySide2.QtWidgets import QWidget
+from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtGui import QFontMetrics, QFont
+from PySide6.QtWidgets import QWidget
 from tools import AsynchronousTask
 from tools.ContextExtraction import extractMatches
 from fulltextindex import FullTextIndex
@@ -41,7 +41,7 @@ class FixedSizeSourcePreview(SourceHighlightingTextEdit):
 
 class MatchesOverview (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
-    selectionFinishedWithKeyboardModifier = Signal('QString',  int)
+    selectionFinishedWithKeyboardModifier = Signal(str, int)
     navigateToFile = Signal(str, int) # fileName and start line
 
     def __init__ (self, parent: Optional[QWidget]) -> None:
@@ -155,7 +155,7 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
         preview = cast(FixedSizeSourcePreview, item)
         rules = HighlightingRulesCache.rules().getRulesByFileName(self.name, self.matchesOverview.sourceFont)
         preview.setFont(self.matchesOverview.sourceFont)
-        preview.setTabStopWidth(self.matchesOverview.tabWidth*10)
+        preview.setTabStopDistance(self.matchesOverview.tabWidth*10)
         preview.highlighter.setHighlightingRules (rules)
         preview.highlighter.setSearchData (self.matchesOverview.searchData)
         preview.setTextDocument(self.text, self.name)
@@ -166,11 +166,11 @@ class FixedSizeSourcePreviewItem (RecyclingVerticalScrollArea.ScrollAreaItem):
 
 def main() -> None:
     import sys
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     w = MatchesOverview(None)
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     unittest.main()

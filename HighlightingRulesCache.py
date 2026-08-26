@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from typing import Optional, Dict
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QFont, QColor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QColor
 from tools.FileTools import freadall
 from widgets.SyntaxHighlighter import HighlightingRules
 import HighlighterConfiguration
@@ -79,11 +79,11 @@ class RulesCache:
     def __rulesFromFile (self, rulesFile: str,  font: QFont) -> HighlightingRules:
         newRules = HighlightingRules(font)
 
-        localsDict = { "Light" : QFont.Light,
-                       "Normal" : QFont.Normal,
-                       "DemiBold" : QFont.DemiBold,
-                       "Bold" : QFont.Bold,
-                       "Black" : QFont.Black,
+        localsDict = { "Light" : QFont.Weight.Light,
+                       "Normal" : QFont.Weight.Normal,
+                       "DemiBold" : QFont.Weight.DemiBold,
+                       "Bold" : QFont.Weight.Bold,
+                       "Black" : QFont.Weight.Black,
 
                        "white" : Qt.GlobalColor.white,
                        "black" : Qt.GlobalColor.black,

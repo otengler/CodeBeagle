@@ -17,9 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import List,Tuple
-from PySide2.QtCore import Qt, Slot
-from PySide2.QtWidgets import QApplication, QDialog, QWidget
-from PySide2.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import QApplication, QDialog, QWidget
+from PySide6.QtGui import QStandardItemModel, QStandardItem
 from typing import cast, Optional
 from .Ui_CheckableItemsDialog import Ui_CheckableItemsDialog
 
@@ -44,7 +44,7 @@ class CheckableItemsDialog(QDialog):
 
     def addItem(self, name: str, bCheck: bool=True) -> None:
         item = QStandardItem(name)
-        item.setFlags(cast(Qt.ItemFlag, Qt.ItemFlag.ItemIsUserCheckable | item.flags()))
+        item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | item.flags())
         if bCheck:
             item.setData(Qt.CheckState.Checked, Qt.ItemDataRole.CheckStateRole)
         else:
@@ -77,7 +77,7 @@ def main() -> None:
     w.addItem("Silver")
     w.addItem("Gold")
     w.show()
-    if w.exec_():
+    if w.exec():
         items = w.checkedItems()
         print(items)
     sys.exit(0)

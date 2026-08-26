@@ -17,9 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import Optional
-from PySide2.QtCore import Qt, Slot
-from PySide2.QtGui import QFont
-from PySide2.QtWidgets import QDialog, QWidget
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QDialog, QWidget
 from tools.ExceptionTools import exceptionAsString
 from widgets.SyntaxHighlighter import HighlightingRules
 from .Ui_StackTraceMessageBox import Ui_StackTraceMessageBox
@@ -33,9 +33,9 @@ class StackTraceMessageBox (QDialog):
 
         rules = HighlightingRules(self.font())
         keywords="import,from,def,class,return,if,else,elif,for,in,while,None"
-        rules.addKeywords (keywords, QFont.Bold, Qt.GlobalColor.darkBlue)
-        rules.addRule ("\".*\"", QFont.Normal, Qt.GlobalColor.darkGreen) # Quotations
-        rules.addRule ("\\b[A-Za-z0-9_]+(?=\\()", QFont.Normal, Qt.GlobalColor.blue) # Functions
+        rules.addKeywords (keywords, QFont.Weight.Bold, Qt.GlobalColor.darkBlue)
+        rules.addRule ("\".*\"", QFont.Weight.Normal, Qt.GlobalColor.darkGreen) # Quotations
+        rules.addRule ("\\b[A-Za-z0-9_]+(?=\\()", QFont.Weight.Normal, Qt.GlobalColor.blue) # Functions
         self.ui.stackTraceTextEdit.highlighter.setHighlightingRules (rules)
         self.ui.stackTraceTextEdit.setTextDocument(stackTrace)
 
@@ -59,17 +59,17 @@ class StackTraceMessageBox (QDialog):
 def show (parent: Optional[QWidget], title: str, text: str) -> None:
     stackTrace = exceptionAsString(None)
     dlg = StackTraceMessageBox(parent, title, text, stackTrace)
-    dlg.exec_()
+    dlg.exec()
 
 def main() -> None:
     import sys
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     try:
         1/0
     except:
         show(None,"Exception","Something went wrong")
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

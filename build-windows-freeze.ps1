@@ -30,28 +30,28 @@ if (Test-Path "$BUILDDIR\vcruntime140.dll")
   del "$BUILDDIR\vcruntime140.dll" -Force 
 }
 
-mkdir $LIB\PySide2.new\plugins\imageformats
-mkdir $LIB\PySide2.new\plugins\platforms
-mkdir $LIB\PySide2.new\plugins\styles
+mkdir $LIB\PySide6.new\plugins\imageformats
+mkdir $LIB\PySide6.new\plugins\platforms
+mkdir $LIB\PySide6.new\plugins\styles
 
-# Copy all root files cx_Freeze placed in PySide2 (init, debug module, pyds, DLLs, etc.)
-Get-ChildItem "$LIB\PySide2" -File | ForEach-Object { copy $_.FullName $LIB\PySide2.new }
+# Copy all root files cx_Freeze placed in PySide6 (init, debug module, pyds, DLLs, etc.)
+Get-ChildItem "$LIB\PySide6" -File | ForEach-Object { copy $_.FullName $LIB\PySide6.new }
 # Copy necessary plugin DLLs
-copy "$LIB\PySide2\plugins\imageformats\qgif.dll" $LIB\PySide2.new\plugins\imageformats\
-copy "$LIB\PySide2\plugins\platforms\qwindows.dll" $LIB\PySide2.new\plugins\platforms\
-copy "$LIB\PySide2\plugins\styles\qwindowsvistastyle.dll" $LIB\PySide2.new\plugins\styles\
+copy "$LIB\PySide6\plugins\imageformats\qgif.dll" $LIB\PySide6.new\plugins\imageformats\
+copy "$LIB\PySide6\plugins\platforms\qwindows.dll" $LIB\PySide6.new\plugins\platforms\
+copy "$LIB\PySide6\plugins\styles\qwindowsvistastyle.dll" $LIB\PySide6.new\plugins\styles\
 
-rmdir "$LIB\PySide2" -Recurse -Force
-move $LIB\PySide2.new $LIB\PySide2
+rmdir "$LIB\PySide6" -Recurse -Force
+move $LIB\PySide6.new $LIB\PySide6
 
 # Remove extra Qt DLLs not needed by CodeBeagle
-del "$LIB\PySide2\Qt5DBus.dll" -Force
-del "$LIB\PySide2\Qt5Pdf.dll" -Force
-del "$LIB\PySide2\Qt5QmlModels.dll" -Force
-del "$LIB\PySide2\Qt5Quick.dll" -Force
-del "$LIB\PySide2\Qt5Svg.dll" -Force
-del "$LIB\PySide2\Qt5VirtualKeyboard.dll" -Force
-del "$LIB\PySide2\Qt5WebSockets.dll" -Force
+del "$LIB\PySide6\Qt6DBus.dll" -Force
+del "$LIB\PySide6\Qt6Pdf.dll" -Force
+del "$LIB\PySide6\Qt6QmlModels.dll" -Force
+del "$LIB\PySide6\Qt6Quick.dll" -Force
+del "$LIB\PySide6\Qt6Svg.dll" -Force
+del "$LIB\PySide6\Qt6VirtualKeyboard.dll" -Force
+del "$LIB\PySide6\Qt6WebSockets.dll" -Force
 
 rmdir "$LIB\themes\dark\qss" -Recurse -Force
 rmdir "$LIB\themes\dark\svg" -Recurse -Force

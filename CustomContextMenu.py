@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os, sys
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from PySide2.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal
 from tools import Config
 from tools.FileTools import fopen
 from tools.ExceptionTools import exceptionAsString

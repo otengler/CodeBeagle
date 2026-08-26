@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import List, Optional
-from PySide2.QtCore import QTimer
-from PySide2.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
                              QHeaderView, QLabel, QPushButton, QTableWidget,
                              QTableWidgetItem, QVBoxLayout, QWidget)
 from ..AgentHistory import AgentHistory, HistoryEntry

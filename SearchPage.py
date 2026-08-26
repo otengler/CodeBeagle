@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os, sys
 from typing import List, Tuple, Optional, cast
 from enum import IntEnum
-from PySide2.QtCore import Qt, Slot, Signal, QPoint, QUrl, QModelIndex, QPropertyAnimation, QEasingCurve
-from PySide2.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent, QPixmap, QIcon, QKeySequence
-from PySide2.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QComboBox, QAction
+from PySide6.QtCore import Qt, Slot, Signal, QPoint, QUrl, QModelIndex, QPropertyAnimation, QEasingCurve
+from PySide6.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent, QPixmap, QIcon, QKeySequence, QAction
+from PySide6.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QComboBox
 from tools.QHelper import createQAction
 from SourceViewer import EditorState
 from tools import AsynchronousTask
@@ -121,16 +121,19 @@ class SearchPage (QWidget):
         self.ui.listView.doubleClicked.connect(self.openFileWithSystem)
         self.ui.listView.customContextMenuRequested.connect(self.contextMenuRequested)
         self.ui.listView.clicked.connect(self.fileSelected)
-        self.ui.comboSearch.lineEdit().returnPressed.connect(self.performSearch)
-        self.ui.comboFolderFilter.lineEdit().returnPressed.connect(self.performSearch)
-        self.ui.comboExtensionFilter.lineEdit().returnPressed.connect(self.performSearch)
+        if searchLineEdit := self.ui.comboSearch.lineEdit():
+            searchLineEdit.returnPressed.connect(self.performSearch)
+        if folderLineEdit := self.ui.comboFolderFilter.lineEdit():
+            folderLineEdit.returnPressed.connect(self.performSearch)
+        if extLineEdit := self.ui.comboExtensionFilter.lineEdit():
+            extLineEdit.returnPressed.connect(self.performSearch)
         self.ui.sourceViewer.selectionFinishedWithKeyboardModifier.connect(self.newSearchBasedOnSelection)
         self.ui.sourceViewer.noPreviousMatch.connect(self.previousFile)
         self.ui.sourceViewer.noNextMatch.connect(self.nextFile)
         self.ui.matchesOverview.selectionFinishedWithKeyboardModifier.connect(self.newSearchBasedOnSelection)
         self.ui.matchesOverview.navigateToFile.connect(self.showFileLine)
         self.ui.buttonRegEx.clicked.connect(self.showRegExTester)
-        self.ui.comboLocation.currentIndexChanged[str].connect(self.currentLocationChanged) # pylint: disable=unsubscriptable-object
+        self.ui.comboLocation.currentTextChanged.connect(self.currentLocationChanged)
         self.ui.buttonSwitchView.clicked.connect(self.switchView)
         self.ui.buttonSearch.clicked.connect(self.performSearch)
         self.ui.buttonLockResultSet.clicked.connect(self.lockResultSet)
@@ -225,7 +228,7 @@ class SearchPage (QWidget):
         from ai_agent.dialogs.HistoryDialog import HistoryDialog
         history = agentHistory()
         dlg = HistoryDialog(history, self)
-        dlg.exec_()
+        dlg.exec()
 
     def showEvent(self, _: Optional[QShowEvent]) -> None:
         self.documentShown.emit(self.ui.sourceViewer.currentFile)
@@ -236,11 +239,11 @@ class SearchPage (QWidget):
         menu = QMenu()
         menu.setMinimumWidth(self.ui.buttonChangeSearchType.x() + self.ui.buttonChangeSearchType.width() - self.ui.buttonSearch.x())
         actions: List[QAction] = []
-        actions.append(menu.addAction("Find content", lambda: self.setSearchType(SearchType.SearchContent)))  # type: ignore[arg-type]
-        actions.append(menu.addAction("Find name", lambda: self.setSearchType(SearchType.SearchName)))  # type: ignore[arg-type]
+        actions.append(menu.addAction("Find content", lambda: self.setSearchType(SearchType.SearchContent)))
+        actions.append(menu.addAction("Find name", lambda: self.setSearchType(SearchType.SearchName)))
         pos = self.mapToGlobal(self.ui.widgetSearch.pos())
         pos += QPoint(0, self.ui.buttonSearch.height())
-        menu.exec_(pos)
+        menu.exec(pos)
         self.ui.buttonChangeSearchType.setChecked(False)
 
     def setSearchType(self, searchType: SearchType) -> None:
@@ -407,8 +410,8 @@ class SearchPage (QWidget):
 
     @Slot(str, int)
     def newSearchBasedOnSelection (self, text: str, modifiers: int) -> None:
-        if modifiers & Qt.KeyboardModifier.ControlModifier:
-            if modifiers & Qt.KeyboardModifier.ShiftModifier:
+        if modifiers & Qt.KeyboardModifier.ControlModifier.value:
+            if modifiers & Qt.KeyboardModifier.ShiftModifier.value:
                 # Search in the same search page
                 self.searchForText(text)
             else:
@@ -463,7 +466,7 @@ class SearchPage (QWidget):
             actions.append(menu.addAction(os.path.splitext(script)[0]))
         pos = self.mapToGlobal(self.ui.buttonCustomScripts.pos())
         pos += QPoint(0, self.ui.buttonCustomScripts.height())
-        result = menu.exec_(pos)
+        result = menu.exec(pos)
         if not result:
             return
 
@@ -509,17 +512,17 @@ class SearchPage (QWidget):
             self.__updateSearchResult(result)
             self.__rememberSearchState(params, result)
             self.__rememberSearchParams(params)
-            text = self.tr(userHintUseWildcards)  # type: ignore[arg-type]
+            text = self.tr(userHintUseWildcards)
             if self.searchType == SearchType.SearchContent:
-                showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  ButtonType.OK)  # type: ignore[arg-type]
+                showUserHint (self, "useWildcards",  self.tr("Try using wildcards"), text,  ButtonType.OK)
             
             if indexConf.indexUpdateMode != IndexMode.NoIndexWanted:
                 if self.searchType == SearchType.SearchContent and not indexConf.isContentIndexed():
-                    text = self.tr(userHintContentNotIndexed)  # type: ignore[arg-type]
-                    showUserHint (self, "contentSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)  # type: ignore[arg-type]
+                    text = self.tr(userHintContentNotIndexed)
+                    showUserHint (self, "contentSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
                 if self.searchType == SearchType.SearchName and not indexConf.isFileNameIndexed():
-                    text = self.tr(userHintFileNameNotIndexed)  # type: ignore[arg-type]
-                    showUserHint (self, "fileNameSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)  # type: ignore[arg-type]
+                    text = self.tr(userHintFileNameNotIndexed)
+                    showUserHint (self, "fileNameSearchNotIndexed_" + indexConf.displayName(), self.tr("This search can be faster"), text, ButtonType.OK)
 
     def __updateSearchResult (self, result: SearchAsync.ResultSet) -> None:
         if result.label:
@@ -533,7 +536,7 @@ class SearchPage (QWidget):
         self.matches = matches
         self.ui.sourceViewer.setSearchData (result.searchData)
         self.ui.matchesOverview.setSearchResult(self.matches, result.searchData) 
-        self.ui.labelMatches.setText("%u " % (len(matches), ) + self.tr("matches"))  # type: ignore[arg-type]
+        self.ui.labelMatches.setText("%u " % (len(matches), ) + self.tr("matches"))
         model = StringListModel(matches)
         listDelegate = cast(PathVisualizerDelegate.PathVisualizerDelegate, self.ui.listView.itemDelegate())
         sizeHint = listDelegate.computeSizeHint(matches,  model.cutLeft) 
@@ -621,8 +624,8 @@ class SearchPage (QWidget):
     def performanceInfo (self) -> None:
         if not self.perfReport:
             return
-        QMessageBox.information(self, self.tr("Performance info"), str(self.perfReport),  # type: ignore[arg-type]
-                                QMessageBox.StandardButtons(QMessageBox.Ok), QMessageBox.Ok)
+        QMessageBox.information(self, self.tr("Performance info"), str(self.perfReport),
+                                QMessageBox.StandardButton(QMessageBox.StandardButton.Ok), QMessageBox.StandardButton.Ok)
 
     @Slot()
     def exportMatches(self) -> None:
@@ -638,9 +641,9 @@ class SearchPage (QWidget):
 
         exportFile = QFileDialog.getSaveFileName(
             self,
-            self.tr("Export matches"),  # type: ignore[arg-type]
-            self.tr("export.txt"),  # type: ignore[arg-type]
-            self.tr("txt"))[0]  # type: ignore[arg-type] # tuple returned, selection and used filter
+            self.tr("Export matches"),
+            self.tr("export.txt"),
+            self.tr("txt"))[0] # tuple returned, selection and used filter
 
         if not exportFile:
             return
@@ -656,13 +659,13 @@ class SearchPage (QWidget):
         fullpath = files[0]
         name = os.path.split(fullpath)[1]
         menu = QMenu()
-        menu.addAction(self.tr("Copy &full path"),  lambda: self.__copyFullPaths(files))  # type: ignore[arg-type]
+        menu.addAction(self.tr("Copy &full path"),  lambda: self.__copyFullPaths(files))
         if len(files)==1:
-            menu.addAction(self.tr("Copy &path of containing folder"),  lambda: self.__copyPathOfContainingFolder(fullpath))  # type: ignore[arg-type]
-        menu.addAction(self.tr("Copy file &name"),  lambda: self.__copyFileNames(files))  # type: ignore[arg-type]
+            menu.addAction(self.tr("Copy &path of containing folder"),  lambda: self.__copyPathOfContainingFolder(fullpath))
+        menu.addAction(self.tr("Copy file &name"),  lambda: self.__copyFileNames(files))
         if len(files)==1:
-            menu.addAction(self.tr("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))  # type: ignore[arg-type]
-            menu.addAction(self.tr("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))  # type: ignore[arg-type]
+            menu.addAction(self.tr("Open containing f&older"),  lambda: self.__browseToFolder(fullpath))
+            menu.addAction(self.tr("Search for") + " '" + name + "'",  lambda: self.__searchForFileName(name))
 
         entries = CustomContextMenu.customMenuEntries (AppConfig.appConfig())
         filePairSelected = len(self.__getSelectedFiles()) == 2
@@ -677,7 +680,7 @@ class SearchPage (QWidget):
                 # See http://stackoverflow.com/questions/2295290/what-do-lambda-function-closures-capture-in-python
                 menu.addAction(entry.title,  lambda entry=entry: AsynchronousTask.execute (self, entry.execute,  self.__getSelectedFiles()))  # type: ignore[misc]
 
-        menu.exec_(self.ui.listView.mapToGlobal(pos))
+        menu.exec(self.ui.listView.mapToGlobal(pos))
 
     @Slot()
     def showRegExTester(self) -> None:
@@ -737,35 +740,35 @@ class SearchPage (QWidget):
     def reportCustomContextMenuFailed (self, contextMenuError: CustomContextMenu.ContextMenuError) -> None:
         if not contextMenuError.exception:
             QMessageBox.warning(self,
-                                self.tr("Custom context menu failed"),  # type: ignore[arg-type]
-                                self.tr("Failed to start '") + contextMenuError.program + self.tr("' for:\n") + "\n".join(contextMenuError.failedFiles),  # type: ignore[arg-type]
-                                QMessageBox.StandardButtons(QMessageBox.Ok))
+                                self.tr("Custom context menu failed"),
+                                self.tr("Failed to start '") + contextMenuError.program + self.tr("' for:\n") + "\n".join(contextMenuError.failedFiles),
+                                QMessageBox.StandardButton(QMessageBox.StandardButton.Ok))
         else:
             QMessageBox.warning(self,
-                                self.tr("Custom context menu failed"),  # type: ignore[arg-type]
-                                self.tr("The custom context menu script '") + contextMenuError.program + self.tr("' failed to execute:\n") + contextMenuError.exception,  # type: ignore[arg-type]
-                                QMessageBox.StandardButtons(QMessageBox.Ok))
+                                self.tr("Custom context menu failed"),
+                                self.tr("The custom context menu script '") + contextMenuError.program + self.tr("' failed to execute:\n") + contextMenuError.exception,
+                                QMessageBox.StandardButton(QMessageBox.StandardButton.Ok))
 
     def reportQueryError(self,  error: Query.QueryError) -> None:
         StackTraceMessageBox.show(self,
-                                  self.tr("Search not possible"),  # type: ignore[arg-type]
+                                  self.tr("Search not possible"),
                                   str(error))
 
     def reportFailedSearch(self, indexConf: IndexConfiguration) -> None:
         """Show the user possible reason why the search threw an exception."""
         if indexConf.generatesIndex():
             StackTraceMessageBox.show(self,
-                                      self.tr("Search failed"),  # type: ignore[arg-type]
-                                      self.tr("""Maybe the index has not been generated yet or is not accessible?"""))  # type: ignore[arg-type]
+                                      self.tr("Search failed"),
+                                      self.tr("""Maybe the index has not been generated yet or is not accessible?"""))
         else:
             StackTraceMessageBox.show(self,
-                                      self.tr("Search failed"),  # type: ignore[arg-type]
-                                      self.tr("""Please check that the search location exists and is accessible."""))  # type: ignore[arg-type]
+                                      self.tr("Search failed"),
+                                      self.tr("""Please check that the search location exists and is accessible."""))
 
     def reportCustomSearchFailed (self) -> None:
         StackTraceMessageBox.show(self,
-                                  self.tr("Custom search failed"),  # type: ignore[arg-type]
-                                  self.tr("Custom search scripts are written in Python. Click on 'Show details' to display the stack trace."))  # type: ignore[arg-type]
+                                  self.tr("Custom search failed"),
+                                  self.tr("Custom search scripts are written in Python. Click on 'Show details' to display the stack trace."))
 
     @Slot()
     def toggleFilterPanel(self) -> None:

@@ -20,9 +20,9 @@ import sys
 import re
 from typing import List, Optional, Pattern, Match, Union
 from enum import IntEnum
-from PySide2.QtCore import Qt, QObject, Slot
-from PySide2.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
-from PySide2.QtWidgets import QDialog, QApplication, QWidget
+from PySide6.QtCore import Qt, QObject, Slot
+from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
+from PySide6.QtWidgets import QDialog, QApplication, QWidget
 from .Ui_RegExTesterDlg import Ui_RegExTesterDlg
 
 class ExprHighlighter(QSyntaxHighlighter):
@@ -30,10 +30,10 @@ class ExprHighlighter(QSyntaxHighlighter):
         super().__init__(parent if parent is not None else QObject())
 
         self.bracketFormat = QTextCharFormat()
-        self.bracketFormat.setFontWeight(QFont.Bold)
+        self.bracketFormat.setFontWeight(QFont.Weight.Bold)
         self.bracketFormat.setForeground(RegExTesterDlg.bracketColor)
         self.repeatFormat = QTextCharFormat()
-        self.repeatFormat.setFontWeight(QFont.Bold)
+        self.repeatFormat.setFontWeight(QFont.Weight.Bold)
         self.repeatFormat.setForeground(RegExTesterDlg.repeatColor)
 
     def highlightBlock(self, text: Optional[str]) -> None:
@@ -155,4 +155,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     wnd = RegExTesterDlg()
     wnd.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

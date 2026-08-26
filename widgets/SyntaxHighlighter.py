@@ -20,8 +20,8 @@ from typing import Tuple, List, Optional, Pattern, Union
 import bisect
 import re
 import unittest
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QTextCharFormat, QFont, QBrush, QColor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QTextCharFormat, QFont, QBrush, QColor
 from fulltextindex.IStringMatcher import IStringMatcher
 from fulltextindex.CommentDetection import TextSpan, analyzeText, isInsideTextSpan
 
@@ -125,7 +125,7 @@ class SyntaxHighlighter:
         for strFormat in self.searchStringFormats:
             if rules:
                 strFormat.setFont(rules.font)
-            strFormat.setFontWeight(QFont.Bold)
+            strFormat.setFontWeight(QFont.Weight.Bold)
 
     # Find all comments in the document and store them as TextSpan objects in self.comments
     def setTextDocument(self, text: str, filename: str = "") -> None:
@@ -216,8 +216,8 @@ class TestCommentDetectionWithStrings(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up a highlighter with C-style comment rules."""
-        from PySide2.QtGui import QFont, QBrush
-        from PySide2.QtCore import Qt
+        from PySide6.QtGui import QFont, QBrush
+        from PySide6.QtCore import Qt
 
         self.rules = HighlightingRules(QFont())
         self.rules.addCommentRule(r'//.*', r'/\*', r'\*/', 400, QBrush(Qt.GlobalColor.darkGreen))

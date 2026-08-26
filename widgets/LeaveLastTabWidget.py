@@ -17,9 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import Callable, Optional
-from PySide2.QtWidgets import QTabWidget, QWidget, QHBoxLayout, QPushButton, QMenu
-from PySide2.QtGui import QIcon, QPixmap, QMouseEvent
-from PySide2.QtCore import Qt, Slot
+from PySide6.QtWidgets import QTabWidget, QWidget, QHBoxLayout, QPushButton, QMenu
+from PySide6.QtGui import QIcon, QPixmap, QMouseEvent
+from PySide6.QtCore import Qt, Slot
 from .Ui_LeaveLastTabWidget import Ui_LeaveLastTabWidget
 
 class LeaveLastTabWidget (QTabWidget):
@@ -49,7 +49,7 @@ class LeaveLastTabWidget (QTabWidget):
 
     def addWidgetsToCornerWidget (self, hbox: QHBoxLayout) -> None:
         """Derived classes can implement this to add additional buttons to the corner widget."""
-        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.tr("New tab"),  "NewTab.png",  self.addNewTab)  # type: ignore[arg-type]   # type: ignore[arg-type]
+        self.buttonNewTab = self.addButtonToCornerWidget (hbox,  self.tr("New tab"),  "NewTab.png",  self.addNewTab)
 
     def addButtonToCornerWidget (self, hbox: QHBoxLayout, name: str, iconFile: str, handler: Callable[[], Optional[QWidget]]) -> QPushButton:
         button = QPushButton(name, self)
@@ -117,13 +117,13 @@ class LeaveLastTabWidget (QTabWidget):
         if tabIndex == -1:
             return
         menu = QMenu()
-        menu.addAction(self.tr("Close &others tabs"), lambda: self.__closeAllTabsExceptThis(tabIndex))  # type: ignore[arg-type]
+        menu.addAction(self.tr("Close &others tabs"), lambda: self.__closeAllTabsExceptThis(tabIndex))
         if tabIndex > 0:
-            menu.addAction(self.tr("Close all to the &left"), lambda: self.__closeAllToTheLeft(tabIndex))  # type: ignore[arg-type]
+            menu.addAction(self.tr("Close all to the &left"), lambda: self.__closeAllToTheLeft(tabIndex))
         if tabIndex < self.count()-1:
-            menu.addAction(self.tr("Close all to the &right"), lambda: self.__closeAllToTheRight(tabIndex))  # type: ignore[arg-type]
+            menu.addAction(self.tr("Close all to the &right"), lambda: self.__closeAllToTheRight(tabIndex))
 
-        menu.exec_(self.ui.tab.mapToGlobal(event.pos()))
+        menu.exec(self.ui.tab.mapToGlobal(event.pos()))
 
     @Slot(int)
     def __closeAllTabsExceptThis(self, tabIndex: int) -> None:

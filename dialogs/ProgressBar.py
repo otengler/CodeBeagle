@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PySide2.QtGui import QKeyEvent
-from PySide2.QtCore import Qt, Signal, Slot
-from PySide2.QtWidgets import QDialog, QWidget
+from PySide6.QtGui import QKeyEvent
+from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtWidgets import QDialog, QWidget
 from typing import Optional
 from .Ui_ProgressBar import Ui_ProgressBar
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CodeBeagle is a PySide2-based desktop application for searching source code using full-text indexing. It creates SQLite-based indexes of code files for fast searching, supports multiple search locations, syntax highlighting, bookmarks, and custom search scripts.
+CodeBeagle is a PySide6-based desktop application for searching source code using full-text indexing. It creates SQLite-based indexes of code files for fast searching, supports multiple search locations, syntax highlighting, bookmarks, and custom search scripts.
 
 ## Build and Development Commands
 
@@ -133,7 +133,7 @@ Search flow:
 
 Custom widgets in `widgets/`:
 - **SourceHighlightingTextEdit**: QPlainTextEdit with syntax highlighting
-- **SyntaxHighlighter**: Implements PySide2 syntax highlighting with configurable rules
+- **SyntaxHighlighter**: Implements PySide6 syntax highlighting with configurable rules
 - **HighlightingTextEdit**: Base text editor with search term highlighting
 - **LineNumberArea**: Line number display for editors
 - **LeaveLastTabWidget**: Tab widget that keeps at least one tab open

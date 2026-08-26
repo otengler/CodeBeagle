@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from typing import Optional
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QDialog, QWidget, QApplication
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QWidget, QApplication
 from .Ui_AgentInstructionsDialog import Ui_AgentInstructionsDialog
 
 class AgentInstructionsDialog(QDialog):

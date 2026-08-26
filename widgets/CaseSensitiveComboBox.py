@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QWidget, QComboBox, QCompleter
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QComboBox, QCompleter
 from typing import Optional
 
 class CaseSensitiveComboBox (QComboBox):

@@ -24,9 +24,9 @@ FileTools.switchToAppDir()
 
 import os, sys, subprocess, shutil, logging
 from typing import Optional
-from PySide2.QtCore import QSettings, QUrl, Slot, Qt
-from PySide2.QtGui import QDesktopServices, QCloseEvent, QColor
-from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PySide6.QtCore import QSettings, QUrl, Slot, Qt
+from PySide6.QtGui import QDesktopServices, QCloseEvent, QColor
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 from dialogs.UserHintDialog import ButtonType, showUserHint
 from dialogs.RegExTesterDlg import RegExTesterDlg
 import AppConfig
@@ -80,7 +80,7 @@ def main() -> None:
 
     wnd = MainWindow()
     wnd.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 def configureTheme(app: QApplication) -> None: 
     if AppConfig.appConfig().theme == AppConfig.darkTheme:
@@ -103,6 +103,8 @@ def configureTheme(app: QApplication) -> None:
         RegExTesterDlg.bracketColor = QColor(200,200,240)
         RegExTesterDlg.repeatColor = QColor(240,200,200)
         dark.apply_stylesheet(app)
+        # Use Qt6 native dark mode for window frame (title bar)
+        app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
     else:
         from themes import light
         light.apply_stylesheet(app)
@@ -135,11 +137,11 @@ class MainWindow(QMainWindow):
             return
         if AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
-                                       self.tr("Really close?"),  # type: ignore[arg-type]
-                                       self.tr("Do you really want to close the application?"),  # type: ignore[arg-type]
-                                       QMessageBox.StandardButtons(QMessageBox.No | QMessageBox.Yes),
-                                       QMessageBox.Yes)
-            if QMessageBox.Yes != res:
+                                       self.tr("Really close?"),
+                                       self.tr("Do you really want to close the application?"),
+                                       QMessageBox.StandardButton(QMessageBox.StandardButton.No | QMessageBox.StandardButton.Yes),
+                                       QMessageBox.StandardButton.Yes)
+            if QMessageBox.StandardButton.Yes != res:
                 event.ignore()
                 return
 
@@ -154,7 +156,7 @@ class MainWindow(QMainWindow):
 
     def newerVersionFound(self, version: str) -> None:
         text = userHintNewVersionAvailable % {"version": version}
-        result = showUserHint(self, "newVersion" + version, self.tr("New version available"), text,  # type: ignore[arg-type]
+        result = showUserHint(self, "newVersion" + version, self.tr("New version available"), text,
                               ButtonType.Yes, True, ButtonType.No, False, bShowHintAgain=True)
         if result == ButtonType.Yes:
             url = QUrl("https://github.com/otengler/CodeBeagle/releases/latest")
