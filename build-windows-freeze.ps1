@@ -39,19 +39,16 @@ Get-ChildItem "$LIB\PySide6" -File | ForEach-Object { copy $_.FullName $LIB\PySi
 # Copy necessary plugin DLLs
 copy "$LIB\PySide6\plugins\imageformats\qgif.dll" $LIB\PySide6.new\plugins\imageformats\
 copy "$LIB\PySide6\plugins\platforms\qwindows.dll" $LIB\PySide6.new\plugins\platforms\
-copy "$LIB\PySide6\plugins\styles\qwindowsvistastyle.dll" $LIB\PySide6.new\plugins\styles\
 
 rmdir "$LIB\PySide6" -Recurse -Force
 move $LIB\PySide6.new $LIB\PySide6
 
 # Remove extra Qt DLLs not needed by CodeBeagle
-del "$LIB\PySide6\Qt6DBus.dll" -Force
 del "$LIB\PySide6\Qt6Pdf.dll" -Force
 del "$LIB\PySide6\Qt6QmlModels.dll" -Force
 del "$LIB\PySide6\Qt6Quick.dll" -Force
 del "$LIB\PySide6\Qt6Svg.dll" -Force
 del "$LIB\PySide6\Qt6VirtualKeyboard.dll" -Force
-del "$LIB\PySide6\Qt6WebSockets.dll" -Force
 
 rmdir "$LIB\themes\dark\qss" -Recurse -Force
 rmdir "$LIB\themes\dark\svg" -Recurse -Force

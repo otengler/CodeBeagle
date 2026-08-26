@@ -10,7 +10,10 @@ UserConfig.txt
 .vscode/.ropeproject/objectdb
 tests/data
 tests/test.dat*
-qdarkstyle/qss/_styles.scss.processed
+themes/dark/style.qss
+themes/dark/qss/_styles.scss.processed
+themes/dark/qss/_variables.scss
+themes/dark/rc/*.png
 node_modules/
 tests/data_or/
 tests/data_excluded/
