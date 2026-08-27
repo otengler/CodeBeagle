@@ -223,9 +223,10 @@ class FullTextIndex (IndexDatabase):
                 badKeywordsTemp.append((quality, keywords))
         badKeywords = [keywords for unusedQuality, keywords in sorted(badKeywordsTemp, reverse=True)]
 
-        # Sort good keywords by length descending, the hope is that longer keywords are more unique
-        # TODO: this is wrong "len" is the length of the list -> but I want the shortest entry as quality
-        return sorted(goodKeywords,reverse=True,key=len), badKeywords
+        # Sort good keywords by length descending, the hope is that longer keywords are more unique.
+        # Each item is not a single keyword but a list. This is because wildcards expand to multiple keywords. The worst keyword
+        # of each inner list is used. 
+        return sorted(goodKeywords,reverse=True,key=lambda keywords: min(len(keyword.name) for keyword in keywords)), badKeywords
 
     # Receives a list of keywords which might contain wildcards. For every passed keyword a list of Keyword objects
     # is returned. If a keyword is not found an empty list is returned.

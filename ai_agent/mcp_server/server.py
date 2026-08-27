@@ -19,11 +19,12 @@ MCP server that exposes the CodeBeagle search engine as MCP tools.
 
 Implemented with the official Python MCP SDK (mcp >= 2.0). The server talks
 to the local CodeBeagle HTTP API (ai_agent/Server.py) through
-CodeBeagleClient and registers three tools:
+CodeBeagleClient and registers five tools:
 
-  - list_locations        -> GET  /api/v1/locations
-  - search_content        -> POST /api/v1/search/content
-  - search_filename       -> POST /api/v1/search/filename
+  - codebeagle_list_indexes    -> GET  /api/v1/locations
+  - codebeagle_content_search  -> POST /api/v1/search/content
+  - codebeagle_file_search     -> POST /api/v1/search/filename
+  - codebeagle_update_file     -> POST /api/v1/index/update
 
 Run via stdio with:  python CodeBeagleMCP.py
 """
@@ -76,9 +77,9 @@ class CodeBeagleMCPServer:
     def __init__(self, baseUrl: str) -> None:
         self.client = CodeBeagleClient(baseUrl)
         self._tools: Dict[str, ToolDef] = {
-            "codebeagle_list_locations": (None, tool_desc("codebeagle_list_locations"), self._listLocations),
-            "codebeagle_search_content": (ContentSearchInput, tool_desc("codebeagle_search_content"), self._searchContent),
-            "codebeagle_search_filename": (FileNameSearchInput, tool_desc("codebeagle_search_filename"), self._searchFileName),
+            "codebeagle_list_indexes": (None, tool_desc("codebeagle_list_indexes"), self._listLocations),
+            "codebeagle_content_search": (ContentSearchInput, tool_desc("codebeagle_content_search"), self._searchContent),
+            "codebeagle_file_search": (FileNameSearchInput, tool_desc("codebeagle_file_search"), self._searchFileName),
             "codebeagle_update_file": (FileUpdateInput, tool_desc("codebeagle_update_file"), self._updateFile),
         }
         self._server = Server(
@@ -164,7 +165,7 @@ def _apiErrorText(error: ApiError) -> str:
     if error.statusCode == 400:
         return f"Invalid parameters: {error.message}"
     if error.statusCode == 404:
-        return (f"Location or folder not indexed. Call codebeagle_list_locations to discover available search locations.")
+        return (f"Location or folder not indexed. Call codebeagle_list_indexes to discover available search locations.")
     return f"CodeBeagle API error {error.statusCode}: {error.message}"
 
 def _formatValidationError(error: ValidationError) -> str:

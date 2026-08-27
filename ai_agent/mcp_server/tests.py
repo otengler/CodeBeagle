@@ -257,11 +257,11 @@ class TestMCPServer(unittest.TestCase):
     def test_toolList(self) -> None:
         result = asyncio.run(self.mcp._handleListTools(None, None))
         names = [t.name for t in result.tools]
-        self.assertEqual(names, ["codebeagle_list_locations", "codebeagle_search_content", "codebeagle_search_filename", "codebeagle_update_file"])
+        self.assertEqual(names, ["codebeagle_list_indexes", "codebeagle_content_search", "codebeagle_file_search", "codebeagle_update_file"])
         schemas = {t.name: t.input_schema for t in result.tools}
-        self.assertIn("query", schemas["codebeagle_search_content"]["required"])
-        self.assertIn("query", schemas["codebeagle_search_filename"]["required"])
-        self.assertEqual(schemas["codebeagle_list_locations"]["properties"], {})
+        self.assertIn("query", schemas["codebeagle_content_search"]["required"])
+        self.assertIn("query", schemas["codebeagle_file_search"]["required"])
+        self.assertEqual(schemas["codebeagle_list_indexes"]["properties"], {})
         for tool in result.tools:
             self.assertTrue(tool.description)
 
@@ -274,7 +274,7 @@ class TestMCPServer(unittest.TestCase):
                 "indexMode": "filenameAndContent",
             }]
         }
-        result = self._call("codebeagle_list_locations", {})
+        result = self._call("codebeagle_list_indexes", {})
         self.assertFalse(result.is_error)
         self.assertIn("loc1", self._text(result))
 
@@ -282,7 +282,7 @@ class TestMCPServer(unittest.TestCase):
         self.client.searchContent.return_value = {"totalFiles": 1, "matches": [
             {"file": "C:/src/proj/a.py", "line": 3, "fullLine": "def target():", "matchText": "target"}
         ]}
-        result = self._call("codebeagle_search_content", {
+        result = self._call("codebeagle_content_search", {
             "query": "target", "folder": "C:/src/proj", "context_lines": 3, "limit": 5,
         })
         self.assertFalse(result.is_error)
@@ -297,19 +297,19 @@ class TestMCPServer(unittest.TestCase):
         self.assertIn("C:/src/proj/a.py", self._text(result))
 
     def test_searchContentValidationError(self) -> None:
-        result = self._call("codebeagle_search_content", {"context_lines": 50})
+        result = self._call("codebeagle_content_search", {"context_lines": 50})
         self.assertTrue(result.is_error)
         self.assertIn("query", self._text(result))
         self.client.searchContent.assert_not_called()
 
     def test_searchContentValidationErrorOnType(self) -> None:
-        result = self._call("codebeagle_search_content", {"query": 42})
+        result = self._call("codebeagle_content_search", {"query": 42})
         self.assertTrue(result.is_error)
         self.client.searchContent.assert_not_called()
 
     def test_searchContentForwardsPageOffset(self) -> None:
         self.client.searchContent.return_value = {"totalFiles": 3, "matches": []}
-        result = self._call("codebeagle_search_content", {
+        result = self._call("codebeagle_content_search", {
             "query": "target",
             "page_offset": {"fileIndex": 1, "matchIndex": 2},
         })
@@ -325,7 +325,7 @@ class TestMCPServer(unittest.TestCase):
 
     def test_searchFileName(self) -> None:
         self.client.searchFileName.return_value = {"totalFiles": 2, "files": ["a.py", "b.py"]}
-        result = self._call("codebeagle_search_filename", {"query": "*.py", "case_sensitive": True})
+        result = self._call("codebeagle_file_search", {"query": "*.py", "case_sensitive": True})
         self.assertFalse(result.is_error)
         self.client.searchFileName.assert_called_once_with({
             "query": "*.py", "caseSensitive": True, "limit": 100,
@@ -334,7 +334,7 @@ class TestMCPServer(unittest.TestCase):
 
     def test_searchFileNameForwardsPageOffset(self) -> None:
         self.client.searchFileName.return_value = {"totalFiles": 3, "files": ["c.py"]}
-        result = self._call("codebeagle_search_filename", {
+        result = self._call("codebeagle_file_search", {
             "query": "*.py",
             "page_offset": {"fileIndex": 2},
         })
@@ -347,7 +347,7 @@ class TestMCPServer(unittest.TestCase):
     def test_searchContentPageOffsetSchema(self) -> None:
         result = asyncio.run(self.mcp._handleListTools(None, None))
         schemas = {t.name: t.input_schema for t in result.tools}
-        properties = schemas["codebeagle_search_content"]["properties"]
+        properties = schemas["codebeagle_content_search"]["properties"]
         self.assertIn("page_offset", properties)
         # Dict[str, int] serialises as JSON Schema object with integer additionalProperties
         schema = properties["page_offset"]
@@ -362,21 +362,21 @@ class TestMCPServer(unittest.TestCase):
 
     def test_http404MapsToGuidance(self) -> None:
         self.client.searchContent.side_effect = ApiError(404, "No index covers C:/src/other")
-        result = self._call("codebeagle_search_content", {"query": "x", "folder": "C:/src/other"})
+        result = self._call("codebeagle_content_search", {"query": "x", "folder": "C:/src/other"})
         self.assertTrue(result.is_error)
         text = self._text(result)
         self.assertIn("not indexed", text)
-        self.assertIn("list_locations", text)
+        self.assertIn("list_indexes", text)
 
     def test_http400MapsToInvalidParams(self) -> None:
         self.client.searchContent.side_effect = ApiError(400, "Field 'query' must not be empty")
-        result = self._call("codebeagle_search_content", {"query": ""})
+        result = self._call("codebeagle_content_search", {"query": ""})
         self.assertTrue(result.is_error)
         self.assertIn("Invalid parameters", self._text(result))
 
     def test_serverUnreachableMapsToGuidance(self) -> None:
         self.client.searchContent.side_effect = ServerUnreachable("http://127.0.0.1:8080", "refused")
-        result = self._call("codebeagle_search_content", {"query": "x"})
+        result = self._call("codebeagle_content_search", {"query": "x"})
         self.assertTrue(result.is_error)
         text = self._text(result)
         self.assertIn("not reachable", text)
@@ -384,7 +384,7 @@ class TestMCPServer(unittest.TestCase):
 
     def test_internalError(self) -> None:
         self.client.searchContent.side_effect = RuntimeError("boom")
-        result = self._call("codebeagle_search_content", {"query": "x"})
+        result = self._call("codebeagle_content_search", {"query": "x"})
         self.assertTrue(result.is_error)
         self.assertIn("Internal error", self._text(result))
 

@@ -46,9 +46,6 @@ if __name__ == "__main__":
     os.chdir(root)
     shutil.copytree(os.path.join("ai_agent", "resources"), "resources", dirs_exist_ok=True)
 
-    testPath = os.path.join(root, "tests")
-    os.chdir(testPath)
-
     suite = unittest.TestSuite()
 
     for t in testmodules:
@@ -56,6 +53,9 @@ if __name__ == "__main__":
 
     for t in agentTestmodules:
         suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
+
+    testPath = os.path.join(root, "tests")
+    os.chdir(testPath)
 
     unittest.TextTestRunner().run(suite)
 
