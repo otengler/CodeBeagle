@@ -46,6 +46,8 @@ move $LIB\PySide6.new $LIB\PySide6
 rmdir "$LIB\themes\dark\qss" -Recurse -Force
 rmdir "$LIB\themes\dark\svg" -Recurse -Force
 
+rm $LIB\scintilla.dll
+
 # These are acutally loadedd:
 # lib\_bz2.pyd
 # lib\_hashlib.pyd

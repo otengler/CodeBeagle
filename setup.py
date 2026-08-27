@@ -4,8 +4,9 @@ import AppConfig
 
 options = {
     "build_exe": {
-        "includes": "unittest",
-        "zip_include_packages": "logging,http,collections,encodings,sqlite3,urllib,asyncio,concurrent,dialogs"
+       "includes": "unittest",
+       "zip_include_packages": "*",
+       "zip_exclude_packages": "PySide6,themes"
     }
 }
 
@@ -17,7 +18,7 @@ if sys.platform == "win32":
     targetBase = "gui"
     targetCodeBeagle = "CodeBeagle.exe"
     targetUpdateIndex = "UpdateIndex.exe"
-    options["build_exe"]["excludes"] = "distutils,lib2to3,xml,test,tkinter,pydoc_data,pyreadline,curses,_pyrepl"
+    options["build_exe"]["excludes"] = "distutils,lib2to3,xml,test,tkinter,pydoc_data,pyreadline,curses,_pyrepl,click"
 else:
     print("Using Linux/MacOS settings")
     codeBeagleScript = "CodeBeagle.py"
