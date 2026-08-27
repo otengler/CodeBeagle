@@ -128,7 +128,10 @@ class FullTextIndex (IndexDatabase):
 
         if query.requiresReadingFile():
             with perfReport.newAction("Filtering results") as action:
-                return self.__filterDocsBySearchPhrase(action, (r[0] for r in result), query, cancelEvent, reportProgress, len(result))
+                try:
+                    return self.__filterDocsBySearchPhrase(action, [r[0] for r in result], query, cancelEvent, reportProgress, len(result))
+                except GeneratorExit: # raised when cancel event is raised an iterator is not finished yet.
+                    return []
         else:
             with perfReport.newAction("Returning results"):
                 if not query.folderFilter and not query.extensionFilter:
