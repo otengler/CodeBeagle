@@ -74,7 +74,7 @@ class SourceViewer (QWidget):
         self.ui.textEdit.cursorPositionChanged.connect(self.updateCurrentLine)
         self.ui.buttonMatchPrevious.clicked.connect(self.previousMatch)
         self.ui.buttonMatchNext.clicked.connect(self.nextMatch)
-        self.ui.buttonMatchList.clicked.connect(self.ui.frameMatchList.setVisible)
+        self.ui.buttonMatchList.toggled.connect(self.ui.frameMatchList.setVisible)
         self.ui.buttonMatchCurrent.clicked.connect(self.jumpToCurrentMatch)
 
         self.addAction(createQAction(self, shortcut=Qt.Key.Key_F5, triggered= self.reloadFile))
