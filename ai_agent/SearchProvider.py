@@ -394,10 +394,11 @@ class SearchProvider:
                 break
 
         if matchingConf is None:
-            raise ValueError(
-                f"No indexed search location covers the file path '{filePath}'. "
-                "Add the file's directory to an index in CodeBeagle settings."
-            )
+            return {
+                "updated": 0,
+                "detail": "Ignored not indexed file path",
+                "file": filePath,
+            }
 
         updater = IndexUpdater(matchingConf.indexdb)
         stats = UpdateStatistics()

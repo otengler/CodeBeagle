@@ -75,7 +75,7 @@ const SERVER_DOWN_HINT =
   `Run the CodeBeagle GUI and enable the 'AI agent' or use the standalone CodeBeagleAgentServer.`;
 
 const NOT_INDEXED_HINT =
-  `The requested path is not indexed. Fallback to searching without codebeagle_content_search or codebeagle_file_search.`
+  `Location or folder not indexed. Call codebeagle_list_locations to discover available search locations.`
 
 // ---- HTTP client -----------------------------------------------------------
 

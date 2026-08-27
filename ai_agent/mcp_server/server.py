@@ -164,10 +164,7 @@ def _apiErrorText(error: ApiError) -> str:
     if error.statusCode == 400:
         return f"Invalid parameters: {error.message}"
     if error.statusCode == 404:
-        return (
-            f"Location or folder not indexed: {error.message}. "
-            "Call list_locations to discover the available search locations."
-        )
+        return (f"Location or folder not indexed. Call codebeagle_list_locations to discover available search locations.")
     return f"CodeBeagle API error {error.statusCode}: {error.message}"
 
 def _formatValidationError(error: ValidationError) -> str:
@@ -206,5 +203,4 @@ async def runStdioServer(baseUrl: str) -> None:
 
 def main(baseUrl: str) -> None:
     """Entry point for the stdio server (blocking)."""
-    loadToolDescription()
     asyncio.run(runStdioServer(baseUrl))
