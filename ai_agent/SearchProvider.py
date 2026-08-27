@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from fnmatch import fnmatch
 from typing import Dict, List, Optional, Set, Union, Tuple, cast
 from PySide6.QtGui import QFont
 from AppConfig import appConfig
@@ -68,9 +67,9 @@ class SearchProvider:
         return CommentRule(rule.lineComment, rule.multiCommentStart, rule.multiCommentStop, rule.hasTripleQuotes)
 
     def getLocations(self) -> List[SearchLocation]:
-        """Return all configured search locations."""
+        """Return all configured search locations with API access enabled."""
         indexConfigs = IndexConfiguration.readConfig(self._config)
-        return [SearchLocation(c) for c in indexConfigs]
+        return [SearchLocation(c) for c in indexConfigs if c.apiAccess]
 
     def searchContent(self, query: Union[str, List[str]], *,
                       location: Optional[str] = None,
@@ -344,8 +343,8 @@ class SearchProvider:
         Update the index for a single file.
 
         This re-indexes the given file in-place without running a full index
-        update. Only the index configuration whose source directories cover
-        the file path and whose extensions match the file is updated.
+        update. Uses the SearchIndexResolver to find the matching configuration.
+        Only index configurations with apiAccess=True are considered.
 
         Args:
             filePath: Full path to the file to update.
@@ -359,39 +358,11 @@ class SearchProvider:
 
         Raises:
             FileNotFoundError: If filePath does not exist.
-            ValueError: If no index configuration covers the file path.
         """
         if not os.path.isfile(filePath):
             raise FileNotFoundError(f"File not found: {filePath}")
 
-        # Find the index configuration that covers this file
-        indexConfigs = IndexConfiguration.readConfig(self._config)
-        extension = os.path.splitext(filePath)[1].lower()
-
-        matchingConf = None
-        for conf in indexConfigs:
-            if not conf.generatesIndex():
-                continue
-            # Check if the file is under one of the source directories
-            fileDir = os.path.normpath(os.path.dirname(filePath)).lower()
-            for srcDir in conf.directories:
-                normSrc = os.path.normpath(srcDir).lower()
-                if fileDir == normSrc or fileDir.startswith(normSrc + os.sep):
-                    # Check extension match
-                    if extension and extension not in conf.extensions:
-                        continue
-                    # Check directory exclude patterns
-                    excluded = False
-                    for exclude in conf.dirExcludes:
-                        if fnmatch(fileDir, exclude.lower()):
-                            excluded = True
-                            break
-                    if excluded:
-                        continue
-                    matchingConf = conf
-                    break
-            if matchingConf:
-                break
+        matchingConf = self._indexResolver.resolveByFilePath(filePath)
 
         if matchingConf is None:
             return {

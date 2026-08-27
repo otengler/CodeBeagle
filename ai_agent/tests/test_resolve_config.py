@@ -49,7 +49,8 @@ class TestResolveIndexConfig(unittest.TestCase):
         return IndexConfiguration.IndexConfiguration(
             indexName=name, extensions=".py", directories=directories,
             dirExcludes=dirExcludes, indexdb=f"C:/idx/{name}.idx",
-            indexUpdateMode=indexUpdateMode, indexType=indexType)
+            indexUpdateMode=indexUpdateMode, indexType=indexType,
+            apiAccess=True)
 
     def test_locationMatch(self) -> None:
         conf = self._conf("loc1", "C:/src/proj")
@@ -193,7 +194,8 @@ class TestResolveIndexConfig(unittest.TestCase):
                  indexType: IndexType = IndexType.FileContentAndName) -> IndexConfiguration.IndexConfiguration:
         return IndexConfiguration.IndexConfiguration(
             indexName=name, extensions=extensions, directories="C:/src/proj",
-            indexdb=f"C:/idx/{name}.idx", indexType=indexType)
+            indexdb=f"C:/idx/{name}.idx", indexType=indexType,
+            apiAccess=True)
 
     def test_preferConfigMatchingExtensionFilter(self) -> None:
         pyConf = self._confExt("py", ".py")
@@ -238,7 +240,8 @@ class TestResolveIndexConfig(unittest.TestCase):
     def _confWithExtensions(self, name: str, extensions: str) -> IndexConfiguration.IndexConfiguration:
         return IndexConfiguration.IndexConfiguration(
             indexName=name, extensions=extensions, directories="C:/src/proj",
-            indexdb=f"C:/idx/{name}.idx")
+            indexdb=f"C:/idx/{name}.idx",
+            apiAccess=True)
 
     def test_extensionCovered(self) -> None:
         conf = self._confWithExtensions("loc1", ".py")

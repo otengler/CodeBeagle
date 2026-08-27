@@ -39,10 +39,41 @@ class SearchIndexResolver:
     def __init__(self, config: Config.Config) -> None:
         self._config = config
 
+    def resolveByFilePath(self, filePath: str) -> Optional[IndexConfiguration.IndexConfiguration]:
+        """
+        Find the index configuration that covers the given file path.
+
+        This is a convenience wrapper around resolve() that checks extension
+        match and index generation. Only configurations with apiAccess=True
+        and that actually generate an index are considered.
+
+        Returns:
+            The matching IndexConfiguration, or None if no configuration covers the file.
+        """
+        if not os.path.isfile(filePath):
+            return None
+
+        extension = os.path.splitext(filePath)[1].lower()
+        fileDir = os.path.dirname(filePath)
+
+        conf = self.resolve(folder=fileDir, createFallbackLocations=False)
+        if not conf:
+            return None
+
+        if not conf.generatesIndex():
+            return None
+
+        # Check extension match
+        if extension and extension not in conf.extensions:
+            return None
+
+        return conf
+
     def resolve(self, location: Optional[str] = None,
                 folder: Optional[str] = None,
                 searchType: str = "content",
-                extensionFilter: str = "") -> IndexConfiguration.IndexConfiguration:
+                extensionFilter: str = "",
+                createFallbackLocations: bool = True) -> Optional[IndexConfiguration.IndexConfiguration]:
         """
         Resolve an IndexConfiguration from either a location name or a folder path.
 
@@ -57,14 +88,19 @@ class SearchIndexResolver:
         over one without a matching index.
 
         If there is no location to run the search or the location does not support 
-        the file extensions fallback to a temporary (ad hoc) configuration.
+        the file extensions fallback to a temporary (ad hoc) configuration, unless
+        createFallbackLocations is False, in which case None is returned instead.
         """
         indexConf = self._resolve(location, folder, searchType, extensionFilter)
         if not indexConf:
+            if not createFallbackLocations:
+                return None
             folder = cast(str, folder)
             indexConf = self._createTempLocation(folder, extensionFilter)
         else:
             if not self.extensionsCovered(indexConf, extensionFilter):
+                if not createFallbackLocations:
+                    return None
                 indexConf = self._createTempLocation(",".join(indexConf.directories), extensionFilter)
         return indexConf
 
@@ -76,7 +112,7 @@ class SearchIndexResolver:
         if location and folder:
             raise ValueError("Only one of 'location' or 'folder' may be specified")
 
-        indexConfigs = IndexConfiguration.readConfig(self._config) or []
+        indexConfigs = [c for c in (IndexConfiguration.readConfig(self._config) or []) if c.apiAccess]
 
         if location:
             for conf in indexConfigs:

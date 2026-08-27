@@ -222,7 +222,8 @@ class TestSearchProviderUpdateFile(unittest.TestCase):
             directories=self.tmpDir,
             indexdb=self.dbPath,
             indexUpdateMode=IndexMode.TriggeredIndexUpdate,
-            indexType=IndexType.FileContentAndName
+            indexType=IndexType.FileContentAndName,
+            apiAccess=True
         )
         self.mockReadConfig.return_value = [self.testConfig]
 
@@ -232,7 +233,9 @@ class TestSearchProviderUpdateFile(unittest.TestCase):
         self.provider._commonKeywordMap = {}
         self.provider._fileListCache = TTLCache(60)
         self.provider._fileMatchesCache = TTLCache(60)
-        self.provider._indexResolver = mock.MagicMock()
+        # Use a real SearchIndexResolver so updateFile() uses the real resolver
+        from ..SearchIndexResolver import SearchIndexResolver
+        self.provider._indexResolver = SearchIndexResolver(configInstance)
 
     def tearDown(self) -> None:
         self.configPatcher.stop()
@@ -262,15 +265,17 @@ class TestSearchProviderUpdateFile(unittest.TestCase):
             self.provider.updateFile(os.path.join(self.tmpDir, "nonexistent.py"))
 
     def test_updateFile_no_matching_index(self) -> None:
-        """A file not covered by any index should raise ValueError."""
+        """A file not covered by any index should return an informational result."""
         # Create a file outside the tmpDir
         otherDir = tempfile.mkdtemp()
         try:
             otherFile = os.path.join(otherDir, "other.py")
             with open(otherFile, "w", encoding="utf-8") as f:
                 f.write("test")
-            with self.assertRaises(ValueError):
-                self.provider.updateFile(otherFile)
+            result = self.provider.updateFile(otherFile)
+            self.assertEqual(result["updated"], 0)
+            self.assertEqual(result["detail"], "Ignored not indexed file path")
+            self.assertEqual(result["file"], otherFile)
         finally:
             try:
                 os.unlink(otherFile)
