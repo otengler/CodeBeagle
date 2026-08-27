@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from typing import Dict, List, Optional, Set, Union, Tuple, cast
 from PySide6.QtGui import QFont
-from AppConfig import appConfig
+from AppConfig import appConfig, refreshConfig
 from tools.FileTools import freadall
 from tools.ContextExtraction import LineMapping
 from fulltextindex import IndexConfiguration
@@ -67,7 +67,11 @@ class SearchProvider:
         return CommentRule(rule.lineComment, rule.multiCommentStart, rule.multiCommentStop, rule.hasTripleQuotes)
 
     def getLocations(self) -> List[SearchLocation]:
-        """Return all configured search locations with API access enabled."""
+        """Return all configured search locations with API access enabled.
+        Re-reads the configuration so that changes are reflected immediately."""
+        refreshConfig()
+        self._config = appConfig()
+        self._indexResolver = SearchIndexResolver(self._config)
         indexConfigs = IndexConfiguration.readConfig(self._config)
         return [SearchLocation(c) for c in indexConfigs if c.apiAccess]
 
