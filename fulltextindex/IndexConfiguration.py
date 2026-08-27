@@ -50,11 +50,13 @@ def indexTypeToString(indexType: IndexType) -> str:
     return "Unknown"
 
 class IndexConfiguration:
-    def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="", 
-                 indexUpdateMode:IndexMode=IndexMode.ManualIndexUpdate, indexType:IndexType=IndexType.FileContentAndName) -> None:
+    def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="",
+                 indexUpdateMode:IndexMode=IndexMode.ManualIndexUpdate, indexType:IndexType=IndexType.FileContentAndName,
+                 apiAccess:bool=False) -> None:
         self.indexName = indexName
         self.indexUpdateMode = IndexMode(indexUpdateMode)
         self.indexType = IndexType(indexType)
+        self.apiAccess = apiAccess
         self.indexdb = correctPath(indexdb)
         # Add the extensions into a set. This makes the lookup if an extension matches faster.
         self.extensions: Set[str] = set()
@@ -102,6 +104,7 @@ class IndexConfiguration:
 
     def __str__(self) -> str:
         result = "Name       : " + self.indexName + "\n"
+        result += "API access : " + str(self.apiAccess) + "\n"
         result += "Index mode : " + self.indexUpdateMode.name + "\n"
         result += "Index type: " + self.indexType.name + "\n"
         result += "IndexDB    : " + self.indexdb + "\n"
@@ -115,6 +118,7 @@ class IndexConfiguration:
             return False
 
         return self.indexName == other.indexName and \
+               self.apiAccess == other.apiAccess and \
                self.indexUpdateMode == other.indexUpdateMode and \
                self.indexType == other.indexType and \
                self.indexdb == other.indexdb and \
@@ -129,6 +133,7 @@ def indexTypeInfo(config: Config.Config) -> None:
     config.setType("indexUpdateMode", Config.typeDefaultInt(IndexMode.TriggeredIndexUpdate))
     config.setType("indexType", Config.typeDefaultInt(IndexType.FileContent))
     config.setType("dirExcludes", Config.typeDefaultString(""))
+    config.setType("apiAccess", Config.typeDefaultBool(False))
 
 # Returns a list of Index objects from the config
 def readConfig(conf: Config.Config) -> List[IndexConfiguration]:
@@ -150,6 +155,7 @@ def readConfig(conf: Config.Config) -> List[IndexConfiguration]:
             indexUpdateMode = IndexMode.NoIndexWanted
         indexType = indexConf.indexType
         indexName = indexConf.indexName
+        apiAccess = indexConf.apiAccess
         indexdb = indexConf.indexdb
         extensions = indexConf.extensions
         try:
@@ -157,5 +163,5 @@ def readConfig(conf: Config.Config) -> List[IndexConfiguration]:
         except AttributeError:
             directories = indexConf.directory
         dirExceptions = indexConf.dirExcludes
-        result.append(IndexConfiguration(indexName, extensions, directories, dirExceptions, indexdb, indexUpdateMode, indexType))
+        result.append(IndexConfiguration(indexName, extensions, directories, dirExceptions, indexdb, indexUpdateMode, indexType, apiAccess))
     return result

@@ -289,15 +289,14 @@ class SearchPage (QWidget):
         self.ui.buttonRegEx.setVisible(AppConfig.appConfig().showRegexDialog)
 
     def __updateSourceFont (self) -> QFont:
-        if not self.sourceFont:
-            self.sourceFont = self.font()
-
         config = AppConfig.appConfig().SourceViewer
 
-        # Apply font and tab changes (if any)
-        if self.sourceFont.family().lower() != config.fontFamily.lower() or self.sourceFont.pointSize() != config.fontSize:
-            self.sourceFont.setFamily(config.fontFamily)
-            self.sourceFont.setPointSize(config.fontSize)
+        if (not self.sourceFont or
+            self.sourceFont.family().lower() != config.fontFamily.lower() or
+            self.sourceFont.pointSize() != config.fontSize):
+            # Create a new QFont with the requested family and size. In Qt6 this
+            # ensures the font is resolved correctly even for application-loaded fonts.
+            self.sourceFont = QFont(config.fontFamily, config.fontSize)
 
         return self.sourceFont
 

@@ -158,7 +158,8 @@ class LocationControl (QObject):
                                       editor.dirExcludes(),
                                       editor.indexDB(),
                                       editor.indexUpdateMode(),
-                                      editor.indexType())
+                                      editor.indexType(),
+                                      editor.apiAccess())
         self.model.setData(index, location, Qt.ItemDataRole.UserRole+1)
 
     def loadDataFromItem(self, index: QModelIndex) -> None:
@@ -173,7 +174,8 @@ class LocationControl (QObject):
                        location.dirExcludesAsString(),
                        location.indexUpdateMode,
                        location.indexdb,
-                       location.indexType)
+                       location.indexType,
+                       location.apiAccess)
         editor.enable(not self.readOnly)
 
     def __updateShowExcludedButtonVisibility(self, location: Optional[IndexConfiguration]) -> None:
@@ -434,7 +436,9 @@ class SettingsDialog (QDialog):
                                              location.directoriesAsString(),
                                              location.dirExcludesAsString(),
                                              "",
-                                             location.indexUpdateMode)
+                                             location.indexUpdateMode,
+                                             location.indexType,
+                                             location.apiAccess)
             self.myLocations.addLocation(duplicated, True)
 
     @Slot()
@@ -482,6 +486,7 @@ class SettingsDialog (QDialog):
             locConf.dirExcludes = location.dirExcludesAsString()
             locConf.indexUpdateMode = location.indexUpdateMode
             locConf.indexType = location.indexType
+            locConf.apiAccess = location.apiAccess
             locConf.indexdb = location.indexdb
             setattr(config,  "Index_" + FileTools.removeInvalidFileChars(location.indexName),  locConf)
         config.fontSize = self.ui.editAppFontSize.text()

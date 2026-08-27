@@ -43,6 +43,7 @@ class SettingsItem (QWidget):
         self.ui.editDirectories.textEdited.connect(self.dataChanged)
         if extLineEdit := self.ui.comboExtensions.lineEdit():
             extLineEdit.textEdited.connect(self.dataChanged)
+        self.ui.checkApiAccess.stateChanged.connect(self.dataChanged)
         self.ui.comboIndexUpdateMode.currentIndexChanged.connect(self.updateIndexModeChanged)
         self.__addEntriesForExtensionsCombo()
         self.__addEntriesForIndexUpdateModeCombo()
@@ -122,7 +123,7 @@ class SettingsItem (QWidget):
     def nameSelectAll (self) -> None:
         self.ui.editName.selectAll()
 
-    def setData (self, name: str, directories: str, extensions: str,  dirExcludes: str, indexUpdateMode: IndexMode, indexDB: str, indexType: IndexType) -> None:
+    def setData (self, name: str, directories: str, extensions: str,  dirExcludes: str, indexUpdateMode: IndexMode, indexDB: str, indexType: IndexType, apiAccess: bool = False) -> None:
         self.ui.editName.setText (name)
         self.ui.editDirectories.setText (directories)
         self.ui.editExcludeDirectories.setText (dirExcludes)
@@ -142,6 +143,10 @@ class SettingsItem (QWidget):
 
         self.ui.comboIndexType.setCurrentIndex(indexType)
         self.ui.comboIndexUpdateMode.setCurrentIndex(indexUpdateMode)
+        self.ui.checkApiAccess.setChecked(apiAccess)
+
+    def apiAccess(self) -> bool:
+        return self.ui.checkApiAccess.isChecked()
 
     def name (self) -> str:
         return self.ui.editName.text()
@@ -175,6 +180,7 @@ class SettingsItem (QWidget):
         self.ui.editDirectories.setText("")
         self.ui.editIndexDB.setText("")
         self.ui.comboIndexType.setCurrentIndex(IndexType.FileContentAndName)
+        self.ui.checkApiAccess.setChecked(False)
         self.enable(False)
 
     def enable(self, bEnable:bool=True) -> None:
