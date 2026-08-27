@@ -38,14 +38,16 @@ This program comes with ABSOLUTELY NO WARRANTY;
 This is free software, and you are welcome to redistribute it under certain conditions; 
 """
 
-updateIndexDescription = """Utility to update indexes for CodeBeagle. By default those indexes defined in config.txt are updated"""
-helpJobMode = """This mode is used by CodeBeagle to update indexes in the background. It reads job files from the given directory"""
+updateIndexDescription = """Utility to update indexes for CodeBeagle. By default those indexes defined in config.txt are updated."""
+helpJobMode = """This mode is used by CodeBeagle to update indexes in the background. It reads job files from the given directory."""
 helpConfig = """Full path to config file. This parameter allows to specify an additional config file beside the default config.txt. Can be specified more than once."""
+helpIndex = """The name of an index to update. Can be specified more than once. If it is omitted all indexes are updated. No compatible with '--jobmode'."""
 
 parser = argparse.ArgumentParser(description=updateIndexDescription, epilog=codebeagleLicense)
 parser.add_argument("-v", "--version", action='version', version="UpdateIndex " + AppConfig.appVersion)
 parser.add_argument("--jobmode", metavar='DIR', type=str, help=helpJobMode)
 parser.add_argument("-c", "--config", action="append", type=str, help=helpConfig)
+parser.add_argument("-i", "--index", action="append", type=str, help=helpIndex)
 
 class PidStatus (Enum):
     Unknown = 0,
@@ -188,6 +190,14 @@ def getPidFile() -> Tuple[FileTools.PidFile, PidStatus]:
 
     return (pidfile, pidstatus)
 
+def isIndexSpecified(indexName: str, indexList: List[str]) -> bool:
+    if not indexList: 
+        return False
+    for index in indexList:
+        if index.lower() == indexName.lower():
+            return True
+    return False
+
 def main() -> None:
     # Parse command line
     args = parser.parse_args()
@@ -206,7 +216,7 @@ def main() -> None:
         setupLogging(conf)
 
         indexes = IndexConfiguration.readConfig(conf)
-
+        
         if args.jobmode:
             runGuardDir = os.path.join(FileTools.getTempPath(), "UpdateIndex_running")
             while True:
@@ -217,6 +227,8 @@ def main() -> None:
                     logging.info("No more jobs found")
                     break
         else:
+            if args.index:
+                indexes = [index for index in indexes if isIndexSpecified(index.indexName, args.index)]
             if conf.profileUpdate:
                 cProfile.run("updateIndexes(indexes)")
             else:
