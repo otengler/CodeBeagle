@@ -103,11 +103,11 @@ def configureTheme(app: QApplication) -> None:
         RegExTesterDlg.bracketColor = QColor(200,200,240)
         RegExTesterDlg.repeatColor = QColor(240,200,200)
         dark.apply_stylesheet(app)
-        # Use Qt6 native dark mode for window frame (title bar)
         app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
     else:
         from themes import light
         light.apply_stylesheet(app)
+        app.styleHints().setColorScheme(Qt.ColorScheme.Light)
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
