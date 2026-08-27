@@ -137,6 +137,8 @@ class TestResolveIndexConfig(unittest.TestCase):
         """No index configs, but a folder is provided — resolve returns a temp fallback."""
         provider = self._provider([])
         temp = provider._indexResolver.resolve(folder="C:/uncovered/proj")
+        self.assertIsNotNone(temp)
+        assert temp is not None
         self.assertEqual(temp.indexName, "__temp_fallback__")
         self.assertEqual(temp.directories, [os.path.normpath("C:/uncovered/proj")])
         self.assertFalse(temp.generatesIndex())
@@ -145,6 +147,8 @@ class TestResolveIndexConfig(unittest.TestCase):
         """No configs, folder + extension filter — temp fallback includes the filter's extensions."""
         provider = self._provider([])
         temp = provider._indexResolver.resolve(folder="C:/uncovered/proj", extensionFilter="*.py")
+        self.assertIsNotNone(temp)
+        assert temp is not None
         self.assertEqual(temp.indexName, "__temp_fallback__")
         self.assertIn("py", temp.extensions)
         self.assertFalse(temp.generatesIndex())
@@ -154,6 +158,8 @@ class TestResolveIndexConfig(unittest.TestCase):
         conf = self._conf("loc1", "C:/src/proj")
         provider = self._provider([conf])
         temp = provider._indexResolver.resolve(folder="C:/other/proj")
+        self.assertIsNotNone(temp)
+        assert temp is not None
         self.assertEqual(temp.indexName, "__temp_fallback__")
         self.assertEqual(temp.directories, [os.path.normpath("C:/other/proj")])
         self.assertFalse(temp.generatesIndex())
@@ -163,6 +169,8 @@ class TestResolveIndexConfig(unittest.TestCase):
         conf = self._conf("loc1", "C:/src/proj,C:/src/other")
         provider = self._provider([conf])
         temp = provider._indexResolver.resolve(location="loc1", extensionFilter="*.java")
+        self.assertIsNotNone(temp)
+        assert temp is not None
         self.assertEqual(temp.indexName, "__temp_fallback__")
         self.assertEqual(temp.directories, [os.path.normpath("C:/src/proj"), os.path.normpath("C:/src/other")])
         self.assertFalse(temp.generatesIndex())
@@ -219,6 +227,8 @@ class TestResolveIndexConfig(unittest.TestCase):
         # Neither py nor cpp covers both .py and .cpp — resolve falls back to
         # a temporary config that can handle the requested extensions.
         result = provider._indexResolver.resolve(folder="C:/src/proj", extensionFilter="*.py,*.cpp")
+        self.assertIsNotNone(result)
+        assert result is not None
         self.assertEqual(result.indexName, "__temp_fallback__")
         self.assertEqual(result.extensions, {"py", "cpp"})
 

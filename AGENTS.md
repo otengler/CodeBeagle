@@ -210,6 +210,10 @@ build/                      # Build output folder
 2. Think carefully if a change is efficient with large documents. Documents can have 500k lines or more.
 3. Code interfacing with SqLite must be in the "fulltextindex" directory. The UI can then use this code.
 
+### After each code change
+1. Run  `powershell -f .\check.ps1` which invokes mypy.
+2. Run the unit tests `python .\UnitTests.py`
+
 ### UI Development
 
 1. Edit `.ui` files instead of creating UI elements in the source directly

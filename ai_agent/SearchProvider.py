@@ -104,6 +104,7 @@ class SearchProvider:
             return ContentSearchResult(totalFiles=0, matches=[], pageOffset=None)
 
         indexConf = self._indexResolver.resolve(location, folder, "content", extensionFilter)
+        assert indexConf is not None
 
         # Use orSearchFor to combine multiple queries into a single index + regex scan
         search, orSearchFor = splitQueries(query)
@@ -174,6 +175,7 @@ class SearchProvider:
         extensionFilter = ",".join(exts)
 
         indexConf = self._indexResolver.resolve(location, folder, "filename", extensionFilter)
+        assert indexConf is not None
 
         allFiles: List[str] = []
 
