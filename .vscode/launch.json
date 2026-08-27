@@ -15,6 +15,13 @@
             "type": "debugpy",
             "request": "launch",
             "program": "CodeBeagle.pyw"
+        },
+        {
+            "name": "Python: UpdateIndex",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "UpdateIndex.py",
+            "args": ["-c", "AIConfig.txt"]
         }
     ]
 }

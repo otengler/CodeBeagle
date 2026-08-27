@@ -45,7 +45,7 @@ helpConfig = """Full path to config file. This parameter allows to specify an ad
 parser = argparse.ArgumentParser(description=updateIndexDescription, epilog=codebeagleLicense)
 parser.add_argument("-v", "--version", action='version', version="UpdateIndex " + AppConfig.appVersion)
 parser.add_argument("--jobmode", metavar='DIR', type=str, help=helpJobMode)
-parser.add_argument("-c", "--config", action="append", default=[AppConfig.configName], type=str, help=helpConfig)
+parser.add_argument("-c", "--config", action="append", type=str, help=helpConfig)
 
 class PidStatus (Enum):
     Unknown = 0,
