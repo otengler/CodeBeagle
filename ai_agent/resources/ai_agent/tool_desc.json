@@ -13,7 +13,7 @@
         "promptSnippet": "Search code for content (keywords, wildcards, regex, context lines) using CodeBeagle.",
         "promptGuidelines": [
             "Use codebeagle_content_search when code exploration is needed instead of 'grep'. E.g. search for 'foo' inside ['*.h','*.cpp'].",
-            "Use codebeagle_content_search also works for not indexed locations.",
+            "codebeagle_content_search also works for not indexed locations.",
             "Do not use codebeagle_content_search for single file grep tasks."
         ],
         "params": {
@@ -40,7 +40,7 @@
         "promptSnippet": "Search files by name/extension with wildcards using CodeBeagle.",
         "promptGuidelines": [
             "Use codebeagle_file_search instead of 'find' to search for files by name or extension. E.g. pass ['*.h', '*.cpp'] in 'query'.",
-            "Use codebeagle_file_search also works for not indexed locations."
+            "codebeagle_file_search also works for not indexed locations."
         ],
         "params": {
             "query": "File name pattern or list of patterns (OR logic). Each pattern supports * and ? wildcards. Example: 'Factory*', '*test*.py', 'Makefile'. If the query contains a dot, the part after the last dot is used as an extension filter. When a list is provided, files matching ANY pattern are returned.",
