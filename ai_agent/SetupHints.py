@@ -13,7 +13,7 @@ The user wants you to install the "CodeBeagle" extension. The setup steps are:
 
 mcpAgentInstructions = """\
 <p><b>Claude Code</b></p>
-Enter this on the command line (not inside the chat windows):
+Enter this on the command line (not inside the chat window):
 <pre style="font-family: 'Courier New', monospace; background-color: #1E1E1E; color: #F0F0F0; padding: 8px; border: 1px solid #383838; border-radius: 4px;">
 claude mcp add CodeBeagle -- "{mcp_executable}"
 </pre>
@@ -21,7 +21,7 @@ claude mcp add CodeBeagle -- "{mcp_executable}"
 <p><b>ChatGPT Codex</b></p>
 CodeBeagle needs to be integrated as a local MCP server using the 
 <a href="https://github.com/openai/tunnel-client/">tunnel-client</a>.
-The setup requires several steps and is not described here in details. At some point you need to start the tunnel-client:
+The setup requires several steps and is not described here in detail. At some point you need to start the tunnel-client:
 <pre style="font-family: 'Courier New', monospace; background-color: #1E1E1E; color: #F0F0F0; padding: 8px; border: 1px solid #383838; border-radius: 4px;">
 tunnel-client.exe run --mcp.command "{mcp_executable}"
 </pre>
@@ -58,5 +58,5 @@ Ask your agent how to setup a stdio based MCP server that is contained in an exe
 
 otherAgentInstructions = """\
 Download the CodeBeagle API documentation from here http://localhost:{port}/api/v1/docs.
-The base URL to access the API is http://localhost:{port}
+The base URL to access the API is http://localhost:{port}.
 """
