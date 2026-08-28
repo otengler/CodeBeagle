@@ -74,8 +74,6 @@ const SERVER_DOWN_HINT =
   `The CodeBeagle agent server is not reachable at ${BASE_URL}. ` +
   `Run the CodeBeagle GUI and enable the 'AI agent' or use the standalone CodeBeagleAgentServer.`;
 
-const NOT_INDEXED_HINT =
-  `Location or folder not indexed. Call codebeagle_list_locations to discover available search locations.`
 
 // ---- HTTP client -----------------------------------------------------------
 
@@ -100,10 +98,21 @@ async function callApi(
     throw wrapped;
   }
   if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error(NOT_INDEXED_HINT)
+    let bodyText: string;
+    try {
+      bodyText = await res.text();
+    } catch {
+      bodyText = "";
     }
-    throw new Error(`HTTP ${res.status} from ${path}`);
+    // Try to extract a server-side error message from JSON or use status text
+    let msg: string;
+    try {
+      const err = JSON.parse(bodyText);
+      msg = err.error || err.message || bodyText;
+    } catch {
+      msg = bodyText || res.statusText;
+    }
+    throw new Error(msg);
   }
   try {
     return await res.json();
@@ -145,7 +154,7 @@ export default function (pi: ExtensionAPI) {
         Type.String({description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",}),
         Type.Array(Type.String(), {description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",})
       ]),
-      parmeters: Type.Union([
+      location: Type.Union([
         Type.Object({
           folder: Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_FOLDER__", }),
           index: Type.Optional(Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_INDEX__", })),
@@ -164,7 +173,11 @@ export default function (pi: ExtensionAPI) {
       pageOffset: Type.Optional(PageOffset, { description: "__PARAM_DESC_CONTENT_SEARCH_PAGEOFFSET__" }),
     }),
     async execute(_toolCallId: any, params: any, signal: any, _onUpdate: any) {
-      const result = await callApi("/api/v1/search/content", "POST", params, signal);
+      const requestBody: any = {...params};
+      requestBody.folder = params.location?.folder;
+      requestBody.index = params.location?.index;
+      delete requestBody.location;
+      const result = await callApi("/api/v1/search/content", "POST", requestBody, signal);
       let body: string;
       if (params.contextLines === 0) {
         // Compact output: path:line: full matching line
@@ -193,7 +206,7 @@ export default function (pi: ExtensionAPI) {
         Type.String({ description: "__PARAM_DESC_FILE_SEARCH_QUERY__" }),
         Type.Array(Type.String(), { description: "__PARAM_DESC_FILE_SEARCH_QUERY__" }),
       ]),
-      parmeters: Type.Union([
+      location: Type.Union([
         Type.Object({
           folder: Type.String({ description: "__PARAM_DESC_FILE_SEARCH_FOLDER__", }),
           index: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_INDEX__", })),
@@ -209,7 +222,11 @@ export default function (pi: ExtensionAPI) {
       pageOffset: Type.Optional(PageOffset, { description: "__PARAM_DESC_FILE_SEARCH_PAGEOFFSET__" }),
     }),
     async execute(_toolCallId: any, params: any, signal: any) {
-      const result = await callApi("/api/v1/search/filename", "POST", params, signal);
+      const requestBody: any = {...params};
+      requestBody.folder = params.location?.folder;
+      requestBody.index = params.location?.index;
+      delete requestBody.location;
+      const result = await callApi("/api/v1/search/filename", "POST", requestBody, signal);
       const body = JSON.stringify(result, null, 2);
       const more = result.pageOffset
         ? `\n\nMore results available. Call codebeagle_file_search again with the same parameters plus pageOffset=${JSON.stringify(result.pageOffset)}.`

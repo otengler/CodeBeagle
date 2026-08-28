@@ -27,19 +27,53 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 from ..ToolDescription import tool_desc
 
+# ---- Location parameter union -----------------------------------------------
+#
+# Matches the PI extension pattern (codebeagle.ts): exactly one of ``folder``
+# or ``index`` must be provided.  The union of two sub-models makes this
+# constraint explicit in the JSON Schema (rendered as ``anyOf``).
+
+class _FolderRequired(BaseModel):
+    """Requires ``folder``; optionally accepts ``index``."""
+
+    folder: str = Field(
+        description="Absolute root folder path where to search. "
+        "The server resolves the best matching index. Preferred over 'index'."
+    )
+    index: Optional[str] = Field(
+        default=None,
+        description="Named search index from ``codebeagle_list_indexes``. "
+        "Mutually exclusive with folder."
+    )
+
+
+class _IndexRequired(BaseModel):
+    """Requires ``index``; optionally accepts ``folder``."""
+
+    folder: Optional[str] = Field(
+        default=None,
+        description="Absolute root folder path where to search. "
+        "The server resolves the best matching index. Preferred over 'index'."
+    )
+    index: str = Field(
+        description="Named search index from ``codebeagle_list_indexes``. "
+        "Mutually exclusive with folder."
+    )
+
+
+SearchLocation = Union[_FolderRequired, _IndexRequired]
+"""Either ``folder`` (required) + ``index`` (optional) or vice versa."""
+
+
 class ContentSearchInput(BaseModel):
     """Parameters for a full-text content search (search_content tool)."""
 
     query: Union[str, List[str]] = Field(
         description=tool_desc("codebeagle_content_search").param("query")
     )
-    folder: Optional[str] = Field(
-        default=None,
-        description=tool_desc("codebeagle_content_search").param("folder"),
-    )
-    index: Optional[str] = Field(
-        default=None,
-        description=tool_desc("codebeagle_content_search").param("index"),
+    location: SearchLocation = Field(
+        description="Search location: either a ``folder`` path or a named ``index``. "
+        "Exactly one of the two must be provided."
     )
     path_filter: Optional[str] = Field(
         default=None,
@@ -78,8 +112,8 @@ class ContentSearchInput(BaseModel):
         """Translate to the field names used by the HTTP API, dropping None values."""
         return _dropNone({
             "query": self.query,
-            "folder": self.folder,
-            "index": self.index,
+            "folder": self.location.folder,
+            "index": self.location.index,
             "pathFilter": self.path_filter,
             "extensionFilter": self.extension_filter,
             "caseSensitive": self.case_sensitive,
@@ -96,13 +130,9 @@ class FileNameSearchInput(BaseModel):
     query: Union[str, List[str]] = Field(
         description=tool_desc("codebeagle_file_search").param("query")
     )
-    folder: Optional[str] = Field(
-        default=None,
-        description=tool_desc("codebeagle_file_search").param("folder"),
-    )
-    index: Optional[str] = Field(
-        default=None,
-        description=tool_desc("codebeagle_file_search").param("index"),
+    location: SearchLocation = Field(
+        description="Search location: either a ``folder`` path or a named ``index``. "
+        "Exactly one of the two must be provided."
     )
     path_filter: Optional[str] = Field(
         default=None,
@@ -127,8 +157,8 @@ class FileNameSearchInput(BaseModel):
         """Translate to the field names used by the HTTP API, dropping None values."""
         return _dropNone({
             "query": self.query,
-            "folder": self.folder,
-            "index": self.index,
+            "folder": self.location.folder,
+            "index": self.location.index,
             "pathFilter": self.path_filter,
             "caseSensitive": self.case_sensitive,
             "limit": self.limit,

@@ -33,7 +33,7 @@ import mcp_types as types
 from .client import ApiError, CodeBeagleClient, ServerUnreachable
 from .config import DEFAULT_BASE_URL, resolveBaseUrl
 from .server import CodeBeagleMCPServer
-from .types import ContentSearchInput, FileNameSearchInput
+from .types import ContentSearchInput, FileNameSearchInput, _FolderRequired, _IndexRequired
 
 class _FakeResponse:
     """Minimal stand-in for urllib response objects."""
@@ -178,7 +178,7 @@ class TestInputTypes(unittest.TestCase):
     def test_contentSearchToHttpParams(self) -> None:
         params = ContentSearchInput(
             query="target",
-            folder="C:/src/proj",
+            parmeters=_FolderRequired(folder="C:/src/proj"),
             context_lines=3,
             case_sensitive=True,
             limit=5,
@@ -192,54 +192,67 @@ class TestInputTypes(unittest.TestCase):
             "limit": 5,
         })
         # None values must not be sent to the HTTP API.
-        self.assertNotIn("location", params)
         self.assertNotIn("pathFilter", params)
         self.assertNotIn("extensionFilter", params)
 
     def test_contentSearchContextLinesPassedThrough(self) -> None:
-        params = ContentSearchInput(query="target", context_lines=5).toHttpParams()
+        params = ContentSearchInput(query="target", parmeters=_FolderRequired(folder="/src"), context_lines=5).toHttpParams()
         self.assertEqual(params["contextLines"], 5)
 
     def test_contentSearchWithQueryList(self) -> None:
-        params = ContentSearchInput(query=["target", "other"]).toHttpParams()
+        params = ContentSearchInput(query=["target", "other"], parmeters=_FolderRequired(folder="/src")).toHttpParams()
         self.assertEqual(params["query"], ["target", "other"])
 
     def test_contentSearchWithPathFilter(self) -> None:
-        params = ContentSearchInput(query="target", path_filter="src/main.cpp").toHttpParams()
+        params = ContentSearchInput(
+            query="target", parmeters=_FolderRequired(folder="/src"), path_filter="src/main.cpp"
+        ).toHttpParams()
         self.assertEqual(params["pathFilter"], "src/main.cpp")
 
     def test_fileNameSearchWithPathFilter(self) -> None:
-        params = FileNameSearchInput(query="*.py", path_filter="src/").toHttpParams()
+        params = FileNameSearchInput(
+            query="*.py", parmeters=_FolderRequired(folder="/src"), path_filter="src/"
+        ).toHttpParams()
         self.assertEqual(params["pathFilter"], "src/")
 
     def test_fileNameSearchToHttpParams(self) -> None:
-        params = FileNameSearchInput(query="*.py").toHttpParams()
-        self.assertEqual(params, {"query": "*.py", "caseSensitive": False, "limit": 100})
+        params = FileNameSearchInput(query="*.py", parmeters=_FolderRequired(folder="/src")).toHttpParams()
+        self.assertEqual(params, {
+            "query": "*.py", "folder": "/src", "caseSensitive": False, "limit": 100
+        })
 
     def test_contentSearchPageOffsetPassedThrough(self) -> None:
         params = ContentSearchInput(
             query="target",
+            parmeters=_FolderRequired(folder="/src"),
             page_offset={"fileIndex": 2, "matchIndex": 3},
         ).toHttpParams()
         self.assertEqual(params["pageOffset"], {"fileIndex": 2, "matchIndex": 3})
         # No page offset -> no pageOffset key on the wire.
-        self.assertNotIn("pageOffset", ContentSearchInput(query="target").toHttpParams())
+        self.assertNotIn(
+            "pageOffset",
+            ContentSearchInput(query="target", parmeters=_FolderRequired(folder="/src")).toHttpParams(),
+        )
 
     def test_fileNameSearchPageOffsetPassedThrough(self) -> None:
         params = FileNameSearchInput(
             query="*.py",
+            parmeters=_FolderRequired(folder="/src"),
             page_offset={"fileIndex": 5},
         ).toHttpParams()
         self.assertEqual(params["pageOffset"], {"fileIndex": 5})
-        self.assertNotIn("pageOffset", FileNameSearchInput(query="*.py").toHttpParams())
+        self.assertNotIn(
+            "pageOffset",
+            FileNameSearchInput(query="*.py", parmeters=_FolderRequired(folder="/src")).toHttpParams(),
+        )
 
     def test_limitBounds(self) -> None:
         with self.assertRaises(Exception):
-            ContentSearchInput(query="x", limit=0)
+            ContentSearchInput(query="x", parmeters=_FolderRequired(folder="/src"), limit=0)
         with self.assertRaises(Exception):
-            ContentSearchInput(query="x", limit=10001)
+            ContentSearchInput(query="x", parmeters=_FolderRequired(folder="/src"), limit=10001)
         with self.assertRaises(Exception):
-            ContentSearchInput(query="x", context_lines=21)
+            ContentSearchInput(query="x", parmeters=_FolderRequired(folder="/src"), context_lines=21)
 
 class TestMCPServer(unittest.TestCase):
     def setUp(self) -> None:
@@ -283,7 +296,10 @@ class TestMCPServer(unittest.TestCase):
             {"file": "C:/src/proj/a.py", "line": 3, "fullLine": "def target():", "matchText": "target"}
         ]}
         result = self._call("codebeagle_content_search", {
-            "query": "target", "folder": "C:/src/proj", "context_lines": 3, "limit": 5,
+            "query": "target",
+            "parmeters": {"folder": "C:/src/proj"},
+            "context_lines": 3,
+            "limit": 5,
         })
         self.assertFalse(result.is_error)
         self.client.searchContent.assert_called_once_with({
@@ -299,11 +315,12 @@ class TestMCPServer(unittest.TestCase):
     def test_searchContentValidationError(self) -> None:
         result = self._call("codebeagle_content_search", {"context_lines": 50})
         self.assertTrue(result.is_error)
-        self.assertIn("query", self._text(result))
+        text = self._text(result)
+        self.assertIn("parmeters", text)
         self.client.searchContent.assert_not_called()
 
     def test_searchContentValidationErrorOnType(self) -> None:
-        result = self._call("codebeagle_content_search", {"query": 42})
+        result = self._call("codebeagle_content_search", {"query": 42, "parmeters": {"folder": "/x"}})
         self.assertTrue(result.is_error)
         self.client.searchContent.assert_not_called()
 
@@ -311,11 +328,13 @@ class TestMCPServer(unittest.TestCase):
         self.client.searchContent.return_value = {"totalFiles": 3, "matches": []}
         result = self._call("codebeagle_content_search", {
             "query": "target",
+            "parmeters": {"folder": "/src"},
             "page_offset": {"fileIndex": 1, "matchIndex": 2},
         })
         self.assertFalse(result.is_error)
         self.client.searchContent.assert_called_once_with({
             "query": "target",
+            "folder": "/src",
             "caseSensitive": False,
             "excludeComments": True,
             "contextLines": 2,
@@ -325,10 +344,14 @@ class TestMCPServer(unittest.TestCase):
 
     def test_searchFileName(self) -> None:
         self.client.searchFileName.return_value = {"totalFiles": 2, "files": ["a.py", "b.py"]}
-        result = self._call("codebeagle_file_search", {"query": "*.py", "case_sensitive": True})
+        result = self._call("codebeagle_file_search", {
+            "query": "*.py",
+            "parmeters": {"folder": "/src"},
+            "case_sensitive": True,
+        })
         self.assertFalse(result.is_error)
         self.client.searchFileName.assert_called_once_with({
-            "query": "*.py", "caseSensitive": True, "limit": 100,
+            "query": "*.py", "folder": "/src", "caseSensitive": True, "limit": 100,
         })
         self.assertIn("a.py", self._text(result))
 
@@ -336,11 +359,12 @@ class TestMCPServer(unittest.TestCase):
         self.client.searchFileName.return_value = {"totalFiles": 3, "files": ["c.py"]}
         result = self._call("codebeagle_file_search", {
             "query": "*.py",
+            "parmeters": {"folder": "/src"},
             "page_offset": {"fileIndex": 2},
         })
         self.assertFalse(result.is_error)
         self.client.searchFileName.assert_called_once_with({
-            "query": "*.py", "caseSensitive": False, "limit": 100,
+            "query": "*.py", "folder": "/src", "caseSensitive": False, "limit": 100,
             "pageOffset": {"fileIndex": 2},
         })
 
@@ -362,7 +386,10 @@ class TestMCPServer(unittest.TestCase):
 
     def test_http404MapsToGuidance(self) -> None:
         self.client.searchContent.side_effect = ApiError(404, "No index covers C:/src/other")
-        result = self._call("codebeagle_content_search", {"query": "x", "folder": "C:/src/other"})
+        result = self._call("codebeagle_content_search", {
+            "query": "x",
+            "parmeters": {"folder": "C:/src/other"},
+        })
         self.assertTrue(result.is_error)
         text = self._text(result)
         self.assertIn("not indexed", text)
@@ -370,13 +397,19 @@ class TestMCPServer(unittest.TestCase):
 
     def test_http400MapsToInvalidParams(self) -> None:
         self.client.searchContent.side_effect = ApiError(400, "Field 'query' must not be empty")
-        result = self._call("codebeagle_content_search", {"query": ""})
+        result = self._call("codebeagle_content_search", {
+            "query": "",
+            "parmeters": {"folder": "/src"},
+        })
         self.assertTrue(result.is_error)
         self.assertIn("Invalid parameters", self._text(result))
 
     def test_serverUnreachableMapsToGuidance(self) -> None:
         self.client.searchContent.side_effect = ServerUnreachable("http://127.0.0.1:8080", "refused")
-        result = self._call("codebeagle_content_search", {"query": "x"})
+        result = self._call("codebeagle_content_search", {
+            "query": "x",
+            "parmeters": {"folder": "/src"},
+        })
         self.assertTrue(result.is_error)
         text = self._text(result)
         self.assertIn("not reachable", text)
@@ -384,7 +417,10 @@ class TestMCPServer(unittest.TestCase):
 
     def test_internalError(self) -> None:
         self.client.searchContent.side_effect = RuntimeError("boom")
-        result = self._call("codebeagle_content_search", {"query": "x"})
+        result = self._call("codebeagle_content_search", {
+            "query": "x",
+            "parmeters": {"folder": "/src"},
+        })
         self.assertTrue(result.is_error)
         self.assertIn("Internal error", self._text(result))
 
