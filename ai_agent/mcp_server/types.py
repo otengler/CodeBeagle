@@ -37,13 +37,11 @@ class _FolderRequired(BaseModel):
     """Requires ``folder``; optionally accepts ``index``."""
 
     folder: str = Field(
-        description="Absolute root folder path where to search. "
-        "The server resolves the best matching index. Preferred over 'index'."
+        description=tool_desc("codebeagle_content_search").param("folder")
     )
     index: Optional[str] = Field(
         default=None,
-        description="Named search index from ``codebeagle_list_indexes``. "
-        "Mutually exclusive with folder."
+        description=tool_desc("codebeagle_content_search").param("index")
     )
 
 
@@ -52,12 +50,10 @@ class _IndexRequired(BaseModel):
 
     folder: Optional[str] = Field(
         default=None,
-        description="Absolute root folder path where to search. "
-        "The server resolves the best matching index. Preferred over 'index'."
+        description=tool_desc("codebeagle_content_search").param("folder")
     )
     index: str = Field(
-        description="Named search index from ``codebeagle_list_indexes``. "
-        "Mutually exclusive with folder."
+        description=tool_desc("codebeagle_content_search").param("index")
     )
 
 
