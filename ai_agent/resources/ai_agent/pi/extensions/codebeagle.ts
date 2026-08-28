@@ -116,8 +116,8 @@ async function callApi(
 
 /** Opaque server-side pagination cursor ({fileIndex} / {fileIndex, matchIndex}). */
 const PageOffset = Type.Object({
-  fileIndex: Type.Optional(Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_PAGEOFFSET_FILEINDEX__" })),
-  matchIndex: Type.Optional(Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_PAGEOFFSET_MATCHINDEX__" })),
+  fileIndex: Type.Optional(Type.Integer()),
+  matchIndex: Type.Optional(Type.Integer()),
 });
 
 function truncate(text: string): string {
@@ -139,37 +139,29 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: Search Content",
     description: "__TOOL_DESC_CONTENT_SEARCH__",
     promptSnippet: "__PROMPT_SNIPPET_CONTENT_SEARCH__",
-    promptGuidelines: ["__PROMPT_GUIDELINES_CONTENT_SEARCH__"],
+    promptGuidelines: "__PROMPT_GUIDELINES_CONTENT_SEARCH__",
     parameters: Type.Object({
       query: Type.Union([
-        Type.String({
-          description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",
-        }),
-        Type.Array(Type.String(), {
-          description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",
-        }),
+        Type.String({description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",}),
+        Type.Array(Type.String(), {description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",})
       ]),
-      index: Type.Optional(
-        Type.String({
-          description: "__PARAM_DESC_CONTENT_SEARCH_LOCATION__",
+      parmeters: Type.Union([
+        Type.Object({
+          folder: Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_FOLDER__", }),
+          index: Type.Optional(Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_INDEX__", })),
         }),
-      ),
-      folder: Type.Optional(
-        Type.String({
-          description: "__PARAM_DESC_CONTENT_SEARCH_FOLDER__",
-        }),
-      ),
+        Type.Object({
+          folder: Type.Optional(Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_FOLDER__", })),
+          index: Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_INDEX__", }),
+        })
+      ]),
       pathFilter: Type.Optional(Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_PATHFILTER__" })),
-      extensionFilter: Type.Optional(
-        Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_EXTENSIONFILTER__" }),
-      ),
+      extensionFilter: Type.Optional(Type.String({ description: "__PARAM_DESC_CONTENT_SEARCH_EXTENSIONFILTER__" })),
       caseSensitive: Type.Optional(Type.Boolean({ description: "__PARAM_DESC_CONTENT_SEARCH_CASESENSITIVE__" })),
       excludeComments: Type.Optional(Type.Boolean({ description: "__PARAM_DESC_CONTENT_SEARCH_EXCLUDECOMMENTS__" })),
-      contextLines: Type.Optional(
-        Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_CONTEXTLINES__" }),
-      ),
+      contextLines: Type.Optional(Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_CONTEXTLINES__" })),
       limit: Type.Optional(Type.Integer({ description: "__PARAM_DESC_CONTENT_SEARCH_LIMIT__" })),
-      pageOffset: Type.Optional(PageOffset),
+      pageOffset: Type.Optional(PageOffset, { description: "__PARAM_DESC_CONTENT_SEARCH_PAGEOFFSET__" }),
     }),
     async execute(_toolCallId: any, params: any, signal: any, _onUpdate: any) {
       const result = await callApi("/api/v1/search/content", "POST", params, signal);
@@ -195,18 +187,26 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: Search File Names",
     description: "__TOOL_DESC_FILE_SEARCH__",
     promptSnippet: "__PROMPT_SNIPPET_FILE_SEARCH__",
-    promptGuidelines: ["__PROMPT_GUIDELINES_FILE_SEARCH__"],
+    promptGuidelines: "__PROMPT_GUIDELINES_FILE_SEARCH__",
     parameters: Type.Object({
       query: Type.Union([
         Type.String({ description: "__PARAM_DESC_FILE_SEARCH_QUERY__" }),
         Type.Array(Type.String(), { description: "__PARAM_DESC_FILE_SEARCH_QUERY__" }),
       ]),
-      index: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_LOCATION__" })),
-      folder: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_FOLDER__" })),
+      parmeters: Type.Union([
+        Type.Object({
+          folder: Type.String({ description: "__PARAM_DESC_FILE_SEARCH_FOLDER__", }),
+          index: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_INDEX__", })),
+        }),
+        Type.Object({
+          folder: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_FOLDER__", })),
+          index: Type.String({ description: "__PARAM_DESC_FILE_SEARCH_INDEX__", }),
+        })
+      ]),
       pathFilter: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_PATHFILTER__" })),
       caseSensitive: Type.Optional(Type.Boolean({ description: "__PARAM_DESC_FILE_SEARCH_CASESENSITIVE__" })),
       limit: Type.Optional(Type.Integer({ description: "__PARAM_DESC_FILE_SEARCH_LIMIT__" })),
-      pageOffset: Type.Optional(PageOffset),
+      pageOffset: Type.Optional(PageOffset, { description: "__PARAM_DESC_FILE_SEARCH_PAGEOFFSET__" }),
     }),
     async execute(_toolCallId: any, params: any, signal: any) {
       const result = await callApi("/api/v1/search/filename", "POST", params, signal);
@@ -226,7 +226,7 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: List Search Locations",
     description: "__TOOL_DESC_LIST_INDEXES__",
     promptSnippet: "__PROMPT_SNIPPET_LIST_INDEXES__",
-    promptGuidelines: ["__PROMPT_GUIDELINES_LIST_INDEXES__"],
+    promptGuidelines: "__PROMPT_GUIDELINES_LIST_INDEXES__",
     parameters: Type.Object({}),
     async execute(_toolCallId: any, _params: any, signal: any) {
       const result = await callApi("/api/v1/locations", "GET", undefined, signal);
@@ -267,7 +267,7 @@ export default function (pi: ExtensionAPI) {
     label: "CodeBeagle: Update Index for Single File",
     description: "__TOOL_DESC_UPDATE_FILE__",
     promptSnippet: "__PROMPT_SNIPPET_UPDATE_FILE__",
-    promptGuidelines: ["__PROMPT_GUIDELINES_UPDATE_FILE__"],
+    promptGuidelines: "__PROMPT_GUIDELINES_UPDATE_FILE__",
     parameters: Type.Object({
       file: Type.String({ description: "Absolute file path to the file to update in the index. Example: 'C:\\src\\project\\main.cpp'" }),
     }),

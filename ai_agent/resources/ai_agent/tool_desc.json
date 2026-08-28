@@ -18,7 +18,7 @@
         ],
         "params": {
             "query": "Search expression or list of expressions (OR logic). Supports keywords ('createNode ( CComVariant'), trailing wildcards ('Fact*'), and regex ('code <!\\d+!>'). When a list is provided, files matching ANY expression are returned.",
-            "folder": "Absolute root folder path where to search. The server resolves the best matching index. Preferred over 'index'.",
+            "folder": "Absolute root path where to search. Preferred over 'index'.",
             "index": "Named search index from 'codebeagle_list_indexes'. Mutually exclusive with folder.",
             "pathFilter": "Path filter pattern. Can be a full file path to select a single file, e.g. 'src/main.cpp'. Prefix with '-' to exclude. Example: 'src/, -test/mock'",
             "extensionFilter": "Comma-separated extensions. Example: '.py,.js'. Prefix with '-' for exclusions: '-.cs'.",
@@ -46,7 +46,7 @@
         ],
         "params": {
             "query": "File name pattern or list of patterns (OR logic). Each pattern supports * and ? wildcards. Example: 'Factory*', '*test*.py', 'Makefile'. If the query contains a dot, the part after the last dot is used as an extension filter. When a list is provided, files matching ANY pattern are returned.",
-            "folder": "Absolute root folder path where to search. The server resolves the best matching index. Preferred over 'index'.",
+            "folder": "Absolute root path where to search. Preferred over 'index'.",
             "index": "Named search index from 'codebeagle_list_indexes'. Mutually exclusive with folder.",
             "pathFilter": "Path filter pattern. Can be a full file path to select a single file, e.g. 'src/main.cpp'. Prefix with '-' to exclude. Example: 'src, -test'.",
             "extensionFilter": "Comma-separated extensions. Example: '.py,.js'. Prefix with '-' for exclusions: '-.cs'.",

@@ -312,7 +312,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                 shortName = tool_name.replace("codebeagle_","").upper()
                 content = content.replace(f"__TOOL_DESC_{shortName}__", tool.desc)
                 content = content.replace(f"__PROMPT_SNIPPET_{shortName}__", tool.desc)
-                content = content.replace(f"__PROMPT_GUIDELINES_{shortName}__", json.dumps(tool.promptGuidelines))
+                content = content.replace(f"\"__PROMPT_GUIDELINES_{shortName}__\"", json.dumps(tool.promptGuidelines))
                 for param_name, param_desc in tool.params.items():
                     content = content.replace(f"__PARAM_DESC_{shortName}_{param_name.upper()}__", param_desc)
                 
