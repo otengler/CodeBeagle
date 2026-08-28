@@ -170,6 +170,14 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                     AppConfig.refreshConfig()
                     searchLocations = IndexConfiguration.readConfig(AppConfig.appConfig())
                     self.configChanged.emit(searchLocations)
+                    # If the API server runs inside CodeBeagle it must pick up
+                    # the new configuration as well. An external server
+                    # (CodeBeagleAgentServer) needs a restart instead.
+                    from ai_agent.AgentState import agentServer, externalServerRunning
+                    if not externalServerRunning():
+                        server = agentServer()
+                        if server:
+                            server.provider.refreshConfig()
             except:
                 StackTraceMessageBox.show(self,
                                       self.tr("Error in settings dialog"),
