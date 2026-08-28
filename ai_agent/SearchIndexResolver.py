@@ -134,7 +134,7 @@ class SearchIndexResolver:
 
             return None
         
-        raise ValueError("Either 'location' or 'folder' must be specified")       
+        raise ValueError("Provide root path in 'folder' or use 'codebeagle_list_indexes' first and provide 'index'.")
 
     def _createTempLocation(self, folder: str, extensionFilter: str) -> IndexConfiguration.IndexConfiguration:
         defaultExcludeDirs = self._config.agent.defaultExcludeDirs
