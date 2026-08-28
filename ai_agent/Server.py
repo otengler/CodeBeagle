@@ -30,6 +30,7 @@ from AppConfig import appConfig
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
 from .SearchProvider import SearchProvider, ContentSearchResult, FileSearchResult
 from .TtlCache import TTLCache
+from .ToolDescription import tool_desc
 
 logger = logging.getLogger(__name__)
 
@@ -300,47 +301,21 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         """Serve the PI extension TypeScript file for download.
         Replaces __TOOL_DESC_*__ markers with actual tool descriptions from tool_desc.json.
         """
-        relPath = os.path.join("resources", "ai_agent", "pi", "extensions", "codebeagle.ts")
-        toolDescPath = os.path.join("resources", "ai_agent", "tool_desc.json")
+        tool_names = ["codebeagle_content_search", "codebeagle_file_search", "codebeagle_list_indexes", "codebeagle_health", "codebeagle_update_file"]
         try:
-            with open(relPath, "r", encoding="utf-8") as f:
+            extensionPath = os.path.join("resources", "ai_agent", "pi", "extensions", "codebeagle.ts")
+            with open(extensionPath, "r", encoding="utf-8") as f:
                 content = f.read()
-            # Replace description markers with content from tool_desc.json
-            if os.path.isfile(toolDescPath):
-                with open(toolDescPath, "r", encoding="utf-8") as f:
-                    toolDesc = json.load(f)
-                for key, marker in [
-                    ("codebeagle_content_search", "\"__TOOL_DESC_CONTENT_SEARCH__\""),
-                    ("codebeagle_file_search", "\"__TOOL_DESC_FILE_SEARCH__\""),
-                    ("codebeagle_list_indexes", "\"__TOOL_DESC_LIST_INDEXES__\""),
-                    ("codebeagle_health", "\"__TOOL_DESC_HEALTH__\""),
-                    ("codebeagle_update_file", "\"__TOOL_DESC_UPDATE_FILE__\""),
-                ]:
-                    entry = toolDesc.get(key, {})
-                    desc = "".join(entry.get("desc", []))
-                    content = content.replace(marker, json.dumps(desc))
-                # Replace prompt snippet markers
-                for key, marker in [
-                    ("codebeagle_content_search", "\"__PROMPT_SNIPPET_CONTENT_SEARCH__\""),
-                    ("codebeagle_file_search", "\"__PROMPT_SNIPPET_FILE_SEARCH__\""),
-                    ("codebeagle_list_indexes", "\"__PROMPT_SNIPPET_LIST_INDEXES__\""),
-                    ("codebeagle_update_file", "\"__PROMPT_SNIPPET_UPDATE_FILE__\""),
-                ]:
-                    entry = toolDesc.get(key, {})
-                    snippet = entry.get("promptSnippet", "")
-                    content = content.replace(marker, json.dumps(snippet))
-                # Replace prompt guidelines markers
-                for key, marker in [
-                    ("codebeagle_content_search", "\"__PROMPT_GUIDELINES_CONTENT_SEARCH__\""),
-                    ("codebeagle_file_search", "\"__PROMPT_GUIDELINES_FILE_SEARCH__\""),
-                    ("codebeagle_list_indexes", "\"__PROMPT_GUIDELINES_LIST_INDEXES__\""),
-                    ("codebeagle_update_file", "\"__PROMPT_GUIDELINES_UPDATE_FILE__\""),
-                ]:
-                    entry = toolDesc.get(key, {})
-                    guidelines = entry.get("promptGuidelines", [])
-                    # Guidelines are an array of strings, the marker is a string literal
-                    # Format as JSON array so it's a valid TypeScript string array
-                    content = content.replace(marker, json.dumps(guidelines))
+
+            for tool_name in tool_names:
+                tool = tool_desc(tool_name)
+                shortName = tool_name.replace("codebeagle_","").upper()
+                content = content.replace(f"__TOOL_DESC_{shortName}__", tool.desc)
+                content = content.replace(f"__PROMPT_SNIPPET_{shortName}__", tool.desc)
+                content = content.replace(f"__PROMPT_GUIDELINES_{shortName}__", json.dumps(tool.promptGuidelines))
+                for param_name, param_desc in tool.params.items():
+                    content = content.replace(f"__PARAM_DESC_{shortName}_{param_name.upper()}__", param_desc)
+                
             body = content.encode("utf-8")
             self._statusCode = 200
             self.send_response(200)
@@ -351,7 +326,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
         except FileNotFoundError:
-            self._sendError(404, f"Resource not found: {relPath}")
+            self._sendError(404, f"Resource not found: {extensionPath}")
         except Exception as e:
             logger.exception("Failed to serve PI extension")
             self._sendError(500, str(e))

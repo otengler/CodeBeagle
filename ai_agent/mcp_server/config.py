@@ -77,37 +77,3 @@ def resolveBaseUrl(appDir: Optional[str] = None) -> str:
         pass
 
     return DEFAULT_BASE_URL
-
-TOOL_DESC_DATA: Any = None
-
-def loadToolDescription() -> None:
-    global TOOL_DESC_DATA   
-    try:
-        toolDescPath = os.path.join("resources", "ai_agent", "tool_desc.json")
-        with open(toolDescPath, "r", encoding="utf-8") as _f:
-            TOOL_DESC_DATA = json.load(_f)
-    except Exception as e:
-        raise RuntimeError("Could not load tool_desc.json from %s: %s", toolDescPath, e)
-
-def tool_desc(tool_key: str) -> str:
-    """Build tool scription"""
-    global TOOL_DESC_DATA   
-    if not TOOL_DESC_DATA:
-        loadToolDescription()
-    return _buildDesc(tool_key)
-
-def tool_param_desc(tool_key: str, param_key: str) -> str:
-    """Look up a parameter description from tool_desc.json."""
-    global TOOL_DESC_DATA   
-    if not TOOL_DESC_DATA:
-        loadToolDescription()
-    return cast(str, TOOL_DESC_DATA.get(tool_key, {}).get("params", {}).get(param_key, ""))
-
-def _buildDesc(tool_key: str) -> str:
-    """Join desc and append promptGuidelines (if any) for MCP tool description."""
-    entry = TOOL_DESC_DATA.get(tool_key, {})
-    parts = list(entry.get("desc", []))
-    guidelines = entry.get("promptGuidelines", [])
-    if guidelines:
-        parts.append(" " + " ".join(guidelines))
-    return "".join(parts)

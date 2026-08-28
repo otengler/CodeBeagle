@@ -25,53 +25,53 @@ camelCase field names expected by the CodeBeagle HTTP API.
 
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
-from .config import tool_param_desc
+from ..ToolDescription import tool_desc
 
 class ContentSearchInput(BaseModel):
     """Parameters for a full-text content search (search_content tool)."""
 
     query: Union[str, List[str]] = Field(
-        description=tool_param_desc("codebeagle_content_search", "query")
+        description=tool_desc("codebeagle_content_search").param("query")
     )
     folder: Optional[str] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_content_search", "folder"),
+        description=tool_desc("codebeagle_content_search").param("folder"),
     )
-    location: Optional[str] = Field(
+    index: Optional[str] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_content_search", "location"),
+        description=tool_desc("codebeagle_content_search").param("index"),
     )
     path_filter: Optional[str] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_content_search", "pathFilter"),
+        description=tool_desc("codebeagle_content_search").param("pathFilter"),
     )
     extension_filter: Optional[str] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_content_search", "extensionFilter"),
+        description=tool_desc("codebeagle_content_search").param("extensionFilter"),
     )
     case_sensitive: bool = Field(
         default=False,
-        description=tool_param_desc("codebeagle_content_search", "caseSensitive"),
+        description=tool_desc("codebeagle_content_search").param("caseSensitive"),
     )
     exclude_comments: bool = Field(
         default=True,
-        description=tool_param_desc("codebeagle_content_search", "excludeComments"),
+        description=tool_desc("codebeagle_content_search").param("excludeComments"),
     )
     context_lines: int = Field(
         default=2,
         ge=0,
         le=20,
-        description=tool_param_desc("codebeagle_content_search", "contextLines"),
+        description=tool_desc("codebeagle_content_search").param("contextLines"),
     )
     limit: int = Field(
         default=100,
         ge=1,
         le=10000,
-        description=tool_param_desc("codebeagle_content_search", "limit"),
+        description=tool_desc("codebeagle_content_search").param("limit"),
     )
     page_offset: Optional[Dict[str, int]] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_content_search", "pageOffset"),
+        description=tool_desc("codebeagle_content_search").param("pageOffset"),
     )
 
     def toHttpParams(self) -> Dict[str, Any]:
@@ -79,7 +79,7 @@ class ContentSearchInput(BaseModel):
         return _dropNone({
             "query": self.query,
             "folder": self.folder,
-            "location": self.location,
+            "index": self.index,
             "pathFilter": self.path_filter,
             "extensionFilter": self.extension_filter,
             "caseSensitive": self.case_sensitive,
@@ -94,33 +94,33 @@ class FileNameSearchInput(BaseModel):
     """Parameters for a file name search (search_filename tool)."""
 
     query: Union[str, List[str]] = Field(
-        description=tool_param_desc("codebeagle_file_search", "query")
+        description=tool_desc("codebeagle_file_search").param("query")
     )
     folder: Optional[str] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_file_search", "folder"),
+        description=tool_desc("codebeagle_file_search").param("folder"),
     )
-    location: Optional[str] = Field(
+    index: Optional[str] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_file_search", "location"),
+        description=tool_desc("codebeagle_file_search").param("index"),
     )
     path_filter: Optional[str] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_file_search", "pathFilter"),
+        description=tool_desc("codebeagle_file_search").param("pathFilter"),
     )
     case_sensitive: bool = Field(
         default=False,
-        description=tool_param_desc("codebeagle_file_search", "caseSensitive"),
+        description=tool_desc("codebeagle_file_search").param("caseSensitive"),
     )
     limit: int = Field(
         default=100,
         ge=1,
         le=10000,
-        description=tool_param_desc("codebeagle_file_search", "limit"),
+        description=tool_desc("codebeagle_file_search").param("limit"),
     )
     page_offset: Optional[Dict[str, int]] = Field(
         default=None,
-        description=tool_param_desc("codebeagle_file_search", "pageOffset"),
+        description=tool_desc("codebeagle_file_search").param("pageOffset"),
     )
 
     def toHttpParams(self) -> Dict[str, Any]:
@@ -128,7 +128,7 @@ class FileNameSearchInput(BaseModel):
         return _dropNone({
             "query": self.query,
             "folder": self.folder,
-            "location": self.location,
+            "index": self.index,
             "pathFilter": self.path_filter,
             "caseSensitive": self.case_sensitive,
             "limit": self.limit,
@@ -140,7 +140,7 @@ class FileUpdateInput(BaseModel):
     """Parameters for the update_file tool (codebeagle_update_file)."""
 
     file: str = Field(
-        description=tool_param_desc("codebeagle_update_file", "file")
+        description=tool_desc("codebeagle_update_file").param("file")
     )
 
 

@@ -43,7 +43,7 @@ from pydantic import BaseModel, ValidationError
 
 from .client import ApiError, CodeBeagleClient, ServerUnreachable
 from .types import ContentSearchInput, FileNameSearchInput, FileUpdateInput
-from .config import tool_desc
+from ..ToolDescription import tool_desc
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +77,10 @@ class CodeBeagleMCPServer:
     def __init__(self, baseUrl: str) -> None:
         self.client = CodeBeagleClient(baseUrl)
         self._tools: Dict[str, ToolDef] = {
-            "codebeagle_list_indexes": (None, tool_desc("codebeagle_list_indexes"), self._listLocations),
-            "codebeagle_content_search": (ContentSearchInput, tool_desc("codebeagle_content_search"), self._searchContent),
-            "codebeagle_file_search": (FileNameSearchInput, tool_desc("codebeagle_file_search"), self._searchFileName),
-            "codebeagle_update_file": (FileUpdateInput, tool_desc("codebeagle_update_file"), self._updateFile),
+            "codebeagle_list_indexes": (None, tool_desc("codebeagle_list_indexes").mcpDesc(), self._listLocations),
+            "codebeagle_content_search": (ContentSearchInput, tool_desc("codebeagle_content_search").mcpDesc(), self._searchContent),
+            "codebeagle_file_search": (FileNameSearchInput, tool_desc("codebeagle_file_search").mcpDesc(), self._searchFileName),
+            "codebeagle_update_file": (FileUpdateInput, tool_desc("codebeagle_update_file").mcpDesc(), self._updateFile),
         }
         self._server = Server(
             SERVER_NAME,
@@ -165,6 +165,7 @@ def _apiErrorText(error: ApiError) -> str:
     if error.statusCode == 400:
         return f"Invalid parameters: {error.message}"
     if error.statusCode == 404:
+        #TODO return server error
         return (f"Location or folder not indexed. Call codebeagle_list_indexes to discover available search locations.")
     return f"CodeBeagle API error {error.statusCode}: {error.message}"
 

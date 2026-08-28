@@ -149,7 +149,7 @@ export default function (pi: ExtensionAPI) {
           description: "__PARAM_DESC_CONTENT_SEARCH_QUERY__",
         }),
       ]),
-      location: Type.Optional(
+      index: Type.Optional(
         Type.String({
           description: "__PARAM_DESC_CONTENT_SEARCH_LOCATION__",
         }),
@@ -201,7 +201,7 @@ export default function (pi: ExtensionAPI) {
         Type.String({ description: "__PARAM_DESC_FILE_SEARCH_QUERY__" }),
         Type.Array(Type.String(), { description: "__PARAM_DESC_FILE_SEARCH_QUERY__" }),
       ]),
-      location: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_LOCATION__" })),
+      index: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_LOCATION__" })),
       folder: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_FOLDER__" })),
       pathFilter: Type.Optional(Type.String({ description: "__PARAM_DESC_FILE_SEARCH_PATHFILTER__" })),
       caseSensitive: Type.Optional(Type.Boolean({ description: "__PARAM_DESC_FILE_SEARCH_CASESENSITIVE__" })),

@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "CodeBeagle AI Agent API",
-    "description": "Postman collection for the CodeBeagle AI Agent web API.\n\nThe server exposes CodeBeagle's full-text search engine over HTTP so AI agents can search source code.\n\n## Setup\n\n1. Start the server: `python CodeBeagleAgentServer.py`\n2. The default base URL is `http://127.0.0.1:8080` (override the `baseUrl` collection variable if needed).\n3. Run **Health Check** first, then **List Locations** to discover search locations.\n\n## Endpoints\n\n- `GET /` – API documentation (markdown)\n- `GET /health` – Server status\n- `GET /api/v1/locations` – List configured search locations\n- `POST /api/v1/search/content` – Full-text content search\n- `POST /api/v1/search/filename` – File name search\n\nFull documentation is available at `ai_agent/API.md` or served by the server at `/`.",
+    "description": "Postman collection for the CodeBeagle AI Agent web API.\n\nThe server exposes CodeBeagle's full-text search engine over HTTP so AI agents can search source code.\n\n## Setup\n\n1. Start the server: `python CodeBeagleAgentServer.py`\n2. The default base URL is `http://127.0.0.1:8080` (override the `baseUrl` collection variable if needed).\n3. Run **Health Check** first, then **List Locations** to discover search locations.\n\n## Endpoints\n\n- `GET /` – API documentation (markdown)\n- `GET /health` – Server status\n- `GET /api/v1/pi-extension` – Download PI extension TypeScript file\n- `GET /api/v1/locations` – List configured search locations\n- `POST /api/v1/search/content` – Full-text content search\n- `POST /api/v1/search/filename` – File name search\n- `POST /api/v1/index/update` – Update a single file in the index\n\nFull documentation is available at `ai_agent/API.md` or served by the server at `/`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -30,6 +30,20 @@
           "path": ["health"]
         },
         "description": "Simple status check to verify the server is running.\n\n**Response:**\n```json\n{\n  \"status\": \"ok\"\n}\n```"
+      },
+      "response": []
+    },
+    {
+      "name": "PI Extension Download",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/pi-extension",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "pi-extension"]
+        },
+        "description": "Downloads the PI extension TypeScript file (`codebeagle.ts`) for registering CodeBeagle tools in a PI coding agent. The server injects tool descriptions into placeholders before serving.\n\n**Response:** TypeScript source file (`Content-Type: text/typescript`)."
       },
       "response": []
     },
@@ -220,6 +234,39 @@
               "path": ["api", "v1", "search", "filename"]
             },
             "description": "Fetch the next page of a filename search. Pass back the `pageOffset` object from a previous response. `fileIndex` is the zero-based index into the list of matching files.\n\nWhen `pageOffset` is absent from a response, there are no more results."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Index Update",
+      "item": [
+        {
+          "name": "Update Single File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"file\": \"C:/src/myproject/src/main.py\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/index/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "index", "update"]
+            },
+            "description": "Update the index for a single file. The server resolves the correct index configuration based on the file's directory and extension.\n\n**Response:**\n```json\n{\n  \"index\": \"myproject\",\n  \"file\": \"C:/src/myproject/src/main.py\",\n  \"updated\": true\n}\n```\n\nReturns 404 if the file does not exist. Returns 400 if the file path does not fall under any configured index location."
           },
           "response": []
         }
