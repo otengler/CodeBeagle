@@ -9,12 +9,17 @@ Humans are welcome too :-)
 # Check if the server is running
 curl http://localhost:8080/api/v1/health
 
-# Search file content
+# Search file content by folder
 curl -X POST http://localhost:8080/api/v1/search/content \
   -H "Content-Type: application/json" \
   -d '{"query": "class Factory", "folder": "c:\\src\\project", "contextLines": 3}'
 
-# Search file names - 404 means the folder is not covered by an index
+# Search file content by index name
+curl -X POST http://localhost:8080/api/v1/search/content \
+  -H "Content-Type: application/json" \
+  -d '{"query": "class Factory", "index": "myproject", "contextLines": 3}'
+
+# Search file names - returns 404 if the folder/index is not covered
 curl -X POST http://localhost:8080/api/v1/search/filename \
   -H "Content-Type: application/json" \
   -d '{"query": "Factory*", "folder": "c:\\src\\project"}'
@@ -73,7 +78,7 @@ in the content or file name search.
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Identifier for the search location. Use in the `location` field of search requests. |
+| `name` | string | Identifier for the search location. Use in the `index` field of search requests. |
 | `folders` | string[] | One or more source directories indexed under this location. |
 | `extensions` | string[] | File extensions included in the index. |
 | `indexMode` | string | `"filenameAndContent"` — both content and filename search available. `"content"` — content search only. `"filename"` — filename search only. |
@@ -84,13 +89,28 @@ in the content or file name search.
 
 Search within file contents. Returns matching lines with surrounding context.
 
-**Request body (single query):**
+**Request body by folder (single query):**
 
 ```json
 {
   "query": "class MyClass*",
-  "location": null,
   "folder": "C:\\src\\project",
+  "pathFilter": "",
+  "extensionFilter": "",
+  "caseSensitive": false,
+  "excludeComments": true,
+  "contextLines": 2,
+  "limit": 100,
+  "pageOffset": null
+}
+```
+
+**Request body by index name (single query):**
+
+```json
+{
+  "query": "class MyClass*",
+  "index": "myproject",
   "pathFilter": "",
   "extensionFilter": "",
   "caseSensitive": false,
@@ -117,17 +137,17 @@ Search within file contents. Returns matching lines with surrounding context.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `query` | string or string[] | **yes** | — | Search expression or list of expressions (OR logic). See [Search Syntax](#search-syntax) below. |
-| `location` | string | no* | — | Name of a search location from `GET /locations`. |
-| `folder` | string | no* | — | Root folder path to search in. The server resolves this to the best matching location. |
-| `pathFilter` | string | no | `""` | Filter results by path. Can be a full file path to select a single file. See [Path Filter](#path-and-extension-filters). |
-| `extensionFilter` | string | no | `""` | Filter results by file extension. See [Extension Filter](#folder-and-extension-filters). |
+| `folder` | string | no* | — | Absolute root path where to search. Preferred over `index`. The server resolves this to the best matching location. |
+| `index` | string | no* | — | Name of a search location from `GET /api/v1/locations`. Mutually exclusive with `folder`. |
+| `pathFilter` | string | no | `""` | Filter results by path. Can be a full file path to select a single file, e.g. `src/main.cpp`. Prefix with `-` to exclude. Example: `src/, -test/mock`. See [Path Filter](#path-and-extension-filters). |
+| `extensionFilter` | string | no | `""` | Filter results by file extension. Comma-separated. Example: `.py,.js`. Prefix with `-` for exclusions: `-test.py`. See [Extension Filter](#folder-and-extension-filters). |
 | `caseSensitive` | bool | no | `false` | If `true`, search is case-sensitive. |
 | `excludeComments` | bool | no | `true` | If `true`, matches inside comments are excluded (e.g. `//` in C/C++, `#` in Python). |
 | `contextLines` | int | no | `2` | Number of lines of context before and after each match. Set to `0` for compact output: the `matches` array contains strings formatted as `"file:line: full matching line"` instead of objects. No `contextBefore`/`contextAfter` fields are included. |
 | `limit` | int | no | `100` | Maximum number of matches per page. |
 | `pageOffset` | object | no | `null` | Pagination cursor from a previous response. See [Pagination](#pagination). |
 
-\* Either `location` or `folder` must be specified. If both are omitted, the configured default location is used.
+\* Either `folder` or `index` must be specified. If both are omitted, the configured default location is used.
 
 **Matching logic:**
 - The query is matched against the full text of each file using regex.
@@ -183,13 +203,26 @@ Search within file contents. Returns matching lines with surrounding context.
 
 Search for file names. Wildcard matching with `*` and `?` is always enabled.
 
-**Request body (single query):**
+**Request body by folder (single query):**
 
 ```json
 {
   "query": "Factory*",
-  "location": null,
   "folder": "C:\\src\\project",
+  "pathFilter": "",
+  "extensionFilter": "",
+  "caseSensitive": false,
+  "limit": 100,
+  "pageOffset": null
+}
+```
+
+**Request body by index name (single query):**
+
+```json
+{
+  "query": "Factory*",
+  "index": "myproject",
   "pathFilter": "",
   "extensionFilter": "",
   "caseSensitive": false,
@@ -213,15 +246,15 @@ Search for file names. Wildcard matching with `*` and `?` is always enabled.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `query` | string or string[] | **yes** | — | File name pattern or list of patterns (OR logic). Each pattern supports `*` and `?` wildcards. When a list is provided, files matching ANY pattern are returned. See [Search Syntax](#search-syntax). |
-| `location` | string | no* | — | Name of a search location from `GET /locations`. |
-| `folder` | string | no* | — | Root folder path to search in. |
-| `pathFilter` | string | no | `""` | Filter results by path. Can be a full file path to select a single file. |
-| `extensionFilter` | string | no | `""` | Filter results by file extension. |
+| `folder` | string | no* | — | Absolute root path where to search. Preferred over `index`. The server resolves this to the best matching location. |
+| `index` | string | no* | — | Name of a search location from `GET /api/v1/locations`. Mutually exclusive with `folder`. |
+| `pathFilter` | string | no | `""` | Filter results by path. Can be a full file path to select a single file, e.g. `src/main.cpp`. Prefix with `-` to exclude. Example: `src, -test/mock`. |
+| `extensionFilter` | string | no | `""` | Filter results by file extension. Comma-separated. Example: `.py,.js`. Prefix with `-` for exclusions: `-test.py`. |
 | `caseSensitive` | bool | no | `false` | If `true`, search is case-sensitive. |
 | `limit` | int | no | `100` | Maximum number of files per page. |
 | `pageOffset` | object | no | `null` | Pagination cursor from a previous response. |
 
-\* Either `location` or `folder` must be specified, or the default location is used.
+\* Either `folder` or `index` must be specified, or the default location is used.
 
 **Matching logic:**
 - The query is matched against the **file name only** (not the full path).
@@ -271,7 +304,7 @@ Update the CodeBeagle full-text index for a single file. Use this after writing 
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `file` | string | **yes** | — | Absolute path to the file to update in the index. |
+| `file` | string | **yes** | — | Absolute path to the file to update in the index. Example: `C:\\src\\project\\main.cpp`. |
 
 **Behaviour:**
 - The server finds the index configuration whose source directories cover the file path and whose extensions match the file.
@@ -294,8 +327,8 @@ Update the CodeBeagle full-text index for a single file. Use this after writing 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `updated` | bool | True if the file was newly added or its content changed. |
-| `detail` | string | Human-readable update statistics. |
+| `updated` | bool | `true` if the file was newly added or its content changed; `false` if unchanged. |
+| `detail` | string | Human-readable update statistics (`"New docs: N, Updated docs: N, Unchanged: N"`). |
 | `file` | string | The file path that was updated. |
 | `index` | string | The name of the index configuration used. |
 
@@ -408,12 +441,12 @@ When there are no more results, `pageOffset` is omitted from the response. No sp
 # Get first page
 curl -X POST http://localhost:8080/api/v1/search/content \
   -H "Content-Type: application/json" \
-  -d '{"query": "class Factory", "location": "myproject", "limit": 10}' | jq .
+  -d '{"query": "class Factory", "index": "myproject", "limit": 10}' | jq .
 
 # Use the pageOffset from the response to get the next page
 curl -X POST http://localhost:8080/api/v1/search/content \
   -H "Content-Type: application/json" \
-  -d '{"query": "class Factory", "location": "myproject", "limit": 10, "pageOffset": {"fileIndex": 4, "matchIndex": 3}}' | jq .
+  -d '{"query": "class Factory", "index": "myproject", "limit": 10, "pageOffset": {"fileIndex": 4, "matchIndex": 3}}' | jq .
 ```
 
 ---
@@ -449,7 +482,7 @@ The API returns standard HTTP status codes and a JSON error body.
 |-------|-------|
 | `"Field 'query' must not be empty"` | Missing or empty `query` field. |
 | `"Field 'query' must be a string"` | `query` is not a string. |
-| `"Search location 'X' not found"` | The `location` name doesn't match any configured location. |
+| `"Search location 'X' not found"` | The `index` name doesn't match any configured location. |
 | `"No search location found for folder 'X'"` | The `folder` path doesn't belong to any configured location. |
 | `"Only one of 'location' or 'folder' may be specified"` | Both `location` and `folder` were provided. |
 | `"Invalid JSON in request body"` | The request body is not valid JSON. |
@@ -485,24 +518,26 @@ agent {
 
 ## Notes for AI Agents
 
-1. **Start with `GET /api/v1/locations`** to discover which indexes are available. The response tells you the `name` to use in the `location` field and what `indexMode` is supported (content vs. filename).
+1. **Start with `GET /api/v1/locations`** to discover which indexes are available. The response tells you the `name` to use in the `index` field and what `indexMode` is supported (content vs. filename).
 
-2. **Use the `folder` parameter** instead of `location` if you don't know the location name. The server will find the best matching index for the folder path you provide.
+2. **Use the `folder` parameter** instead of `index` if you don't know the index name. The server will find the best matching index for the folder path you provide. `folder` is preferred over `index` when both can work.
 
-3. **Pagination is sequential.** Each response includes a `pageOffset` that you pass back as-is. Do not modify the `pageOffset` values — they are opaque cursors.
+3. **Pass `index` by name** when you know which location to search (returned by `GET /api/v1/locations`). Only one of `folder` or `index` should be specified.
 
-4. **Context lines help with understanding.** Request 2-5 context lines to give the AI model enough context around each match. More lines = more tokens consumed.
+4. **Pagination is sequential.** Each response includes a `pageOffset` that you pass back as-is. Do not modify the `pageOffset` values — they are opaque cursors.
 
-5. **Wildcards are powerful for filename search.** Use `*` to match any part of a filename: `*test*` finds all files containing "test" in the name.
+5. **Context lines help with understanding.** Request 2-5 context lines to give the AI model enough context around each match. More lines = more tokens consumed.
 
-6. **Wildcards for content search cost performance.** Especially if not at the end. If you know the exact pattern omit wildcards.
+6. **Wildcards are powerful for filename search.** Use `*` to match any part of a filename: `*test*` finds all files containing "test" in the name.
 
-7. **For regex searches in content**, wrap the regex in `<!...!>`. Example: `code <!\\d+!>` matches `code` followed by a number.
+7. **Wildcards for content search cost performance.** Especially if not at the end. If you know the exact pattern omit wildcards.
 
-8. **The server binds to localhost only** by default (127.0.0.1). This is intentional for security. Do not change the bind address to 0.0.0.0 unless you are in a controlled network environment.
+8. **For regex searches in content**, wrap the regex in `<!...!>`. Example: `code <!\\d+!>` matches `code` followed by a number.
 
-9. **Use `excludeComments` (default `true`) to filter out trivial matches** in comments (e.g. TODO notes, documentation). Set `"excludeComments": false` if you want matches in comments too.
+9. **The server binds to localhost only** by default (127.0.0.1). This is intentional for security. Do not change the bind address to 0.0.0.0 unless you are in a controlled network environment.
 
-10. **For compact output set `"contextLines": 0`** — the `matches` array then contains strings formatted as `"file:line: full matching line"` instead of objects. This reduces response size token consumption. The PI extension automatically uses this compact format when contextLines=0.
+10. **Use `excludeComments` (default `true`) to filter out trivial matches** in comments (e.g. TODO notes, documentation). Set `"excludeComments": false` if you want matches in comments too.
 
-11. **Performance:** Searches are typically fast (milliseconds to seconds). The server uses caching to avoid re-scanning files for paginated requests. The cache has a 5-minute TTL.
+11. **For compact output set `"contextLines": 0`** — the `matches` array then contains strings formatted as `"file:line: full matching line"` instead of objects. This reduces response size token consumption. The PI extension automatically uses this compact format when contextLines=0.
+
+12. **Performance:** Searches are typically fast (milliseconds to seconds). The server uses caching to avoid re-scanning files for paginated requests. The cache has a 5-minute TTL.
