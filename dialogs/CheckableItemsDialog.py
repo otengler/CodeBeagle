@@ -55,7 +55,7 @@ class CheckableItemsDialog(QDialog):
         items = []
         for i in range(self.model.rowCount()):
             index = self.model.index(i, 0)
-            if index.data(Qt.ItemDataRole.CheckStateRole) == Qt.CheckState.Checked:
+            if index.data(Qt.ItemDataRole.CheckStateRole) == Qt.CheckState.Checked.value:
                 items.append((i, index.data()))
         return items
 
