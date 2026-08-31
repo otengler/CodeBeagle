@@ -87,14 +87,14 @@ class SettingsEditorDelegate(QStyledItemDelegate):
                 dirs += " ("
                 dirs += self.tr("Extensions: ") + location.extensionsAsString()
                 dirs += ")"
-            painter.drawText(rect2, Qt.AlignmentFlag.AlignVCenter + Qt.TextFlag.TextWordWrap, dirs)
+            painter.drawText(rect2, Qt.AlignmentFlag.AlignVCenter, painter.fontMetrics().elidedText(dirs, Qt.TextElideMode.ElideRight, rect2.width()))
 
         painter.setFont(self.boldFont)
         locationName = location.displayName()
         if index.row() == self.defaultLocationRow:
             locationName = locationName + self.tr(" (Default)")
             painter.drawPixmap(rect1.right(), rect1.center().y()-self.defaultPixmapSize//2, self.defaultPixmapSize, self.defaultPixmapSize, self.defaultPixmap)
-        painter.drawText(rect1, Qt.AlignmentFlag.AlignVCenter + Qt.TextFlag.TextWordWrap, locationName)
+        painter.drawText(rect1, Qt.AlignmentFlag.AlignVCenter, painter.fontMetrics().elidedText(locationName, Qt.TextElideMode.ElideRight, rect1.width()))
 
         painter.restore()
 
@@ -282,6 +282,9 @@ class SettingsDialog (QDialog):
         self.ui.buttonMcpAgentInstructions.clicked.connect(self.showMcpAgentInstructions)
         self.ui.buttonOtherAgentInstructions.clicked.connect(self.showOtherAgentInstructions)
 
+        # Wire up the agent enable checkbox to show a hint about per-location API access
+        self.ui.checkAgentEnabled.toggled.connect(self.__agentEnabledHint)
+
     @Slot(bool)
     def __agentEnabledToggled(self, checked: bool) -> None:
         """Start or stop the AI agent server immediately - no restart required."""
@@ -291,6 +294,25 @@ class SettingsDialog (QDialog):
             pass  # invalid port in the edit box: keep the configured port
         self.__applyAgentServerChanges(checked, port)
         self.__updateAgentStatus()
+
+    @Slot(bool)
+    def __agentEnabledHint(self, checked: bool) -> None:
+        """Show hint about per-location API access when agentic AI search is enabled."""
+        if not checked:
+            return
+
+        showUserHint(
+            self,
+            "agentApiAccess",
+            self.tr("AI agent API access"),
+            self.tr(
+                "<p align='justify'>To allow the AI agent to access a search location, "
+                "go to the '<b>My search locations</b>' tab "
+                "and check the '<b>Allow AI agent API access</b>' checkbox for each location the AI agent shall use.</p>"
+            ),
+            ButtonType.OK, True,
+            None, False,
+            bShowHintAgain=True)
 
     def __updateAgentStatus(self) -> None:
         """Show a green check mark when the AI agent server is running, otherwise

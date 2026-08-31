@@ -194,6 +194,8 @@ class SettingsItem (QWidget):
         self.ui.editIndexDB.setEnabled(bEnable)
         self.ui.buttonBrowseIndexLocation.setEnabled(bEnable)
         self.ui.comboIndexType.setEnabled(bEnable)
+        self.ui.comboIndexUpdateMode.setEnabled(bEnable)
+        self.ui.checkApiAccess.setEnabled(bEnable)
         # Note: buttonShowExcluded visibility is controlled by LocationControl.__updateShowExcludedButtonVisibility
 
     def __enableBasedOnUpdateModeSetting(self, indexMode: IndexMode) -> None:
