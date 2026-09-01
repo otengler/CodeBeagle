@@ -1,7 +1,7 @@
 {
     "codebeagle_content_search": {
         "desc": [
-            "Leverages the fast CodeBeagle code search for code exploration. Use instead of 'grep'.",
+            "Leverages the fast CodeBeagle search engine for code exploration. Use instead of 'grep'.",
             "Query syntax: keywords ('createNode ( CComVariant'), wildcards ('Fact* *ban*na'),",
             "regex ('code <!\\d+!>').",
             "Specify the absolute root 'folder' where to search.",
@@ -12,7 +12,7 @@
         ],
         "promptSnippet": "Search code for content (keywords, wildcards, regex, context lines) using CodeBeagle.",
         "promptGuidelines": [
-            "Use codebeagle_content_search when code exploration is needed instead of 'grep'. E.g. search for 'foo' inside ['*.h','*.cpp'].",
+            "IMPORTANT: Always use codebeagle_content_search when exploring code is needed instead of other tools. E.g. search for 'foo' inside ['*.h','*.cpp'].",
             "codebeagle_content_search also works for not indexed locations.",
             "Do not use codebeagle_content_search for single file grep tasks."
         ],
@@ -31,15 +31,15 @@
     },
     "codebeagle_file_search": {
         "desc": [
-            "Leverages the fast CodeBeagle code search to search for files. Use instead of 'find'.",
+            "Leverages the fast CodeBeagle search engine to search recusively for files. Use instead of 'find'.",
             "The query supports * and ? wildcards ('Factory*', '*test*.py', 'Makefile').",
             "Pass a list of queries for OR logic: files matching ANY pattern are returned.",
             "Specify the absolute root 'folder' where to search.",
             "Pagination: pass pageOffset from a previous response to fetch the next page."
         ],
-        "promptSnippet": "Search files by name/extension with wildcards using CodeBeagle.",
+        "promptSnippet": "Recursivly search for files using CodeBeagle.",
         "promptGuidelines": [
-            "Use codebeagle_file_search instead of 'find' to search for files by name or extension. E.g. pass ['*.h', '*.cpp'] in 'query'.",
+            "IMPORTANT: Always use codebeagle_file_search when searching for files instead of other tools. E.g. pass ['*.h', '*.cpp'] in 'query'.",
             "codebeagle_file_search also works for not indexed locations."
         ],
         "params": {
