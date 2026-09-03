@@ -210,6 +210,14 @@ build/                      # Build output folder
 2. Think carefully if a change is efficient with large documents. Documents can have 500k lines or more.
 3. Code interfacing with SqLite must be in the "fulltextindex" directory. The UI can then use this code.
 
+### Hard rule: no shell file search
+
+Never use `find`, `grep`, `rg`, `ls -R`, or similar shell commands to search for
+files or content in source code, even for a "quick" one-off check.
+Always use codebeagle_file_search / codebeagle_content_search instead.
+If CodeBeagle is unavailable or unhealthy (see codebeagle_health), say so
+explicitly before falling back to bash.
+
 ### After each code change
 1. Run  `powershell -f .\check.ps1` which invokes mypy.
 2. Run the unit tests `python .\UnitTests.py`

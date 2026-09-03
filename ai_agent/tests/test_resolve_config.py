@@ -323,3 +323,60 @@ class TestResolveIndexConfig(unittest.TestCase):
             provider.searchFileName("*.py", location="loc1")
             # An unmatched extension no longer raises; resolve creates a temp fallback.
             provider.searchFileName("*.java", location="loc1")
+
+    # ── Auto-restrict folder to pathFilter ────────────────────────────────
+
+    def _autoRestrictProvider(self) -> SearchProvider:
+        """Return a provider with one config under C:/src/proj and mocked internals."""
+        conf = self._conf("loc1", "C:/src/proj")
+        provider = self._provider([conf])
+        provider._fileListCache = mock.MagicMock()
+        provider._fileListCache.get.return_value = None
+        provider._commonKeywordMap = {}
+        return provider
+
+    def test_autoRestrictSubfolder_setsPathFilter(self) -> None:
+        """When folder is a subfolder of an index root and no pathFilter given,
+        pathFilter is automatically set to the folder path to restrict results."""
+        provider = self._autoRestrictProvider()
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            provider.searchContent("foo", folder="C:/src/proj/sub/dir", excludeComments=False)
+
+        args, _ = sm.return_value.searchContent.call_args
+        queryArgs = args[0]
+        self.assertEqual(queryArgs.folderFilterString, "C:/src/proj/sub/dir")
+
+    def test_autoRestrictSubfolder_fileName(self) -> None:
+        """Same auto-restrict logic for searchFileName."""
+        provider = self._autoRestrictProvider()
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchFileName.return_value = ResultSet(matches=[])
+            provider.searchFileName("*.py", folder="C:/src/proj/sub/dir")
+
+        args, _ = sm.return_value.searchFileName.call_args
+        queryArgs = args[0]
+        self.assertEqual(queryArgs.folderFilterString, "C:/src/proj/sub/dir")
+
+    def test_autoRestrict_rootFolder_noFilterAdded(self) -> None:
+        """When folder equals the index root, pathFilter is NOT added (redundant)."""
+        provider = self._autoRestrictProvider()
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            provider.searchContent("foo", folder="C:/src/proj", excludeComments=False)
+
+        args, _ = sm.return_value.searchContent.call_args
+        queryArgs = args[0]
+        self.assertEqual(queryArgs.folderFilterString, "")
+
+    def test_autoRestrict_explicitPathFilter_notOverridden(self) -> None:
+        """When the user supplies a pathFilter, the auto-restrict does NOT override it."""
+        provider = self._autoRestrictProvider()
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            provider.searchContent("foo", folder="C:/src/proj/sub/dir",
+                                    pathFilter="C:/src/proj/sub/dir/src", excludeComments=False)
+
+        args, _ = sm.return_value.searchContent.call_args
+        queryArgs = args[0]
+        self.assertEqual(queryArgs.folderFilterString, "C:/src/proj/sub/dir/src")

@@ -45,6 +45,25 @@ def splitQueries(query: Union[str, List[str]]) -> Tuple[str, List[str]]:
         search = query
     return (search, orSearchFor) 
 
+def setPathFilterFromFolder(folder: Optional[str], pathFilter: str,
+                           indexConf: IndexConfiguration.IndexConfiguration) -> str:
+    """
+    Auto-restrict to folder subdirectory if no explicit pathFilter.
+    The folder parameter selects the index but an index may cover a much
+    larger tree; setting pathFilter ensures results are limited to just
+    the requested subfolder.
+    """
+    if pathFilter or not folder:
+        return pathFilter
+    normFolder = os.path.normpath(folder)
+    for srcDir in indexConf.directories:
+        normalizedSrc = os.path.normpath(srcDir)
+        if normFolder == normalizedSrc:
+            return ""
+        if normFolder.startswith(normalizedSrc + os.sep):
+            return folder
+    return ""
+
 class SearchProvider:
     """Interface to CodeBeagle's search engine for the AI agent API."""
 
@@ -119,6 +138,9 @@ class SearchProvider:
         indexConf = self._indexResolver.resolve(location, folder, "content", extensionFilter)
         assert indexConf is not None
 
+        # Auto-restrict to folder subdirectory if no explicit pathFilter.
+        pathFilter = setPathFilterFromFolder(folder, pathFilter, indexConf)
+
         # Use orSearchFor to combine multiple queries into a single index + regex scan
         search, orSearchFor = splitQueries(query)
 
@@ -189,6 +211,9 @@ class SearchProvider:
 
         indexConf = self._indexResolver.resolve(location, folder, "filename", extensionFilter)
         assert indexConf is not None
+
+        # Auto-restrict to folder subdirectory if no explicit pathFilter.
+        pathFilter = setPathFilterFromFolder(folder, pathFilter, indexConf)
 
         allFiles: List[str] = []
 
