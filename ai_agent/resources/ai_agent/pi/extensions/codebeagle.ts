@@ -180,8 +180,8 @@ export default function (pi: ExtensionAPI) {
       const result = await callApi("/api/v1/search/content", "POST", requestBody, signal);
       let body: string;
       if (params.contextLines === 0) {
-        // Compact output: path:line: full matching line
-        body = (result.matches || []).map((m: any) => `${m.file}:${m.line}: ${m.fullLine}`).join("\n");
+        // Compact output: the server already returns pre-formatted strings (path:line: full matching line)
+        body = (result.matches || []).join("\n");
       } else {
         body = JSON.stringify(result, null, 2);
       }
