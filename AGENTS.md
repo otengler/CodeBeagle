@@ -233,8 +233,6 @@ explicitly before falling back to bash.
 ### Signals and slots
 The connection of signals to slots must be done inside the source code not inside the ".ui" files.
 
-### 
-
 ### Adding a New Dialog
 
 1. Create `dialogs/MyDialog.ui` in Qt Designer

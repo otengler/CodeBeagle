@@ -24,6 +24,7 @@ from PySide6.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionVie
 from fulltextindex.IndexConfiguration import IndexConfiguration, indexTypeInfo, IndexMode
 from tools.Config import Config
 import tools.FileTools as FileTools
+from tools.ElidedText import wrap_and_elide
 from dialogs import StackTraceMessageBox
 from dialogs.UserHintDialog import ButtonType,showUserHint
 from ai_agent.dialogs.AgentInstructionsDialog import AgentInstructionsDialog
@@ -75,7 +76,7 @@ class SettingsEditorDelegate(QStyledItemDelegate):
         rect1.setWidth(third-self.defaultPixmapSize)
         rect2 = QRect(rect1)
         rect2.translate(third+self.defaultPixmapSize, 0)
-        rect2.setWidth(third*2)
+        rect2.setWidth(third*2 - self.defaultPixmapSize - 12)
 
         painter.save()
 
@@ -87,7 +88,7 @@ class SettingsEditorDelegate(QStyledItemDelegate):
                 dirs += " ("
                 dirs += self.tr("Extensions: ") + location.extensionsAsString()
                 dirs += ")"
-            painter.drawText(rect2, Qt.AlignmentFlag.AlignVCenter, painter.fontMetrics().elidedText(dirs, Qt.TextElideMode.ElideRight, rect2.width()))
+            wrap_and_elide(dirs, painter, rect2)
 
         painter.setFont(self.boldFont)
         locationName = location.displayName()
