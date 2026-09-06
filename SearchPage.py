@@ -21,7 +21,7 @@ from typing import List, Tuple, Optional, cast
 from enum import IntEnum
 from PySide6.QtCore import Qt, Slot, Signal, QPoint, QUrl, QModelIndex, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QFont, QDesktopServices, QShowEvent, QFocusEvent, QPixmap, QIcon, QKeySequence, QAction
-from PySide6.QtWidgets import QFrame, QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QComboBox
+from PySide6.QtWidgets import QWidget, QApplication, QMenu, QMessageBox, QFileDialog, QComboBox
 from tools.QHelper import createQAction
 from SourceViewer import EditorState
 from tools import AsynchronousTask
@@ -165,6 +165,8 @@ class SearchPage (QWidget):
         self.filterPanelAnimation = QPropertyAnimation(self.ui.frameFilterControls, b"maximumHeight")
         self.filterPanelAnimation.setDuration(250)  # 250ms animation
         self.filterPanelAnimation.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        # Hide the widget and show preview after collapse animation finishes.
+        self.filterPanelAnimation.finished.connect(self.__onFilterPanelCollapseFinished)
 
         # Store the natural height of the filter panel for animation
         self.ui.frameFilterControls.show()  # Temporarily show to measure
@@ -789,13 +791,6 @@ class SearchPage (QWidget):
 
             self.filterPanelAnimation.setStartValue(self.filterPanelNaturalHeight)
             self.filterPanelAnimation.setEndValue(0)
-
-            # Hide the widget and show preview after animation finishes
-            try:
-                self.filterPanelAnimation.finished.disconnect(self.__onFilterPanelCollapseFinished)
-            except:
-                pass
-            self.filterPanelAnimation.finished.connect(self.__onFilterPanelCollapseFinished)
             self.filterPanelAnimation.start()
 
     def __onFilterPanelCollapseFinished(self) -> None:

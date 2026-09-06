@@ -60,3 +60,17 @@ otherAgentInstructions = """\
 Download the CodeBeagle API documentation from here http://localhost:{port}/api/v1/docs.
 The base URL to access the API is http://localhost:{port}.
 """
+
+agentMdHints = """\
+Coding agents are trained to work with tools like 'find' or 'grep'. To help them use CodeBeagle instead it can help to put the following\
+ hints inside AGENTS.md/CLAUDE.md. Make sure to replace the placeholder <root folder> with your project root: 
+
+---------------------------------- copy here ----------------------------------
+### Hard rule: no shell file search
+
+Never use `find`, `grep`, `rg`, `ls -R`, or similar shell commands to search for files or content in source code, even for a "quick" one-off check.
+Always use codebeagle_file_search / codebeagle_content_search instead.
+If CodeBeagle is unavailable or unhealthy (see codebeagle_health) report to user.
+Always use `<root folder>` as the `folder` parameter for codebeagle_file_search / codebeagle_content_search.
+-------------------------------------------------------------------------------
+"""

@@ -55,16 +55,7 @@ UI files (`.ui`) must be compiled to Python after changes:
 
 This generates `Ui_*.py` files from Qt Designer `.ui` files.
 
-### Testing
-
-The tests must be run in the virtual environment `.venv`: 
-```bash
-python UnitTests.py
-```
-
-Test modules include: SyntaxHighlighter, HighlighterConfiguration, MatchesOverview, Config, FileTools, Query, fulltextindex testsuite, and BookmarkStorage.
-
-### Verification
+### Mypy notes
 
 mypy should be run after changes to see that the code has no problems:
 ```
@@ -129,27 +120,6 @@ Search flow:
 4. Results sorted and displayed in SearchPage's results list
 5. User selects file → SourceViewer displays content with highlighted matches
 
-### Widgets
-
-Custom widgets in `widgets/`:
-- **SourceHighlightingTextEdit**: QPlainTextEdit with syntax highlighting
-- **SyntaxHighlighter**: Implements PySide6 syntax highlighting with configurable rules
-- **HighlightingTextEdit**: Base text editor with search term highlighting
-- **LineNumberArea**: Line number display for editors
-- **LeaveLastTabWidget**: Tab widget that keeps at least one tab open
-- **InDocumentSearchWidget**: In-file search UI
-- **AnimatedProgressWidget**: Animated progress indicator
-- **RecyclingVerticalScrollArea**: Performance-optimized scroll area
-
-### Dialogs
-
-Located in `dialogs/`:
-- **SettingsDialog**: Configure search locations, index settings, extensions
-- **RegExTesterDlg**: Test regex patterns
-- **HelpViewerDialog**: Display help.html
-- **ProgressBar**: Index update progress
-- **StackTraceMessageBox**: Enhanced error reporting with stack traces
-
 ### Theming
 
 Two themes in `themes/`:
@@ -165,43 +135,6 @@ Theme generation uses SASS. Source files in `themes/dark/` are compiled to style
 - **UserConfig.txt**: User-specific index definitions and overrides (stored in user profile)
 - Index configurations define: database path, file extensions, source directories, whether to index content/filenames
 
-### Asynchronous Operations
-
-- **tools/AsynchronousTask.py**: Framework for running tasks in background threads
-- **SearchAsync.py**: Asynchronous search execution with progress reporting and cancellation
-- **UpdateCheck.py**: Background update checker using GitHub API
-
-### Custom Features
-
-- **BookmarkStorage.py**: Persist bookmarks (file locations) across sessions
-- **CustomContextMenu.py**: Extensible context menu system with custom actions
-- **SearchPageBookmarks.py**: Search page bookmark integration
-- **scripts/**: Custom search scripts (`.script` files) for automating search sequences
-
-### File Organization
-
-```
-CodeBeagle.pyw              # Main entry point
-AppConfig.py                # Global configuration
-SearchPage.py               # Main search interface
-SourceViewer.py             # File viewer
-MainWindow.ui               # Main window UI definition
-SearchPage.ui               # Search page UI definition
-fulltextindex/              # Search engine core
-  ├── IndexDatabase.py
-  ├── FullTextIndex.py
-  ├── IndexUpdater.py
-  └── Query.py
-dialogs/                    # UI dialogs
-widgets/                    # Custom widgets
-tools/                      # Utilities (Config, FileTools, etc.)
-themes/                     # Light/dark themes
-config.txt                  # Global config
-help.html                   # User documentation
-setup.py                    # cx_Freeze build configuration
-build/                      # Build output folder
-```
-
 ## Development Notes
 
 ### Notes before changing code
@@ -210,17 +143,9 @@ build/                      # Build output folder
 2. Think carefully if a change is efficient with large documents. Documents can have 500k lines or more.
 3. Code interfacing with SqLite must be in the "fulltextindex" directory. The UI can then use this code.
 
-### Hard rule: no shell file search
-
-Never use `find`, `grep`, `rg`, `ls -R`, or similar shell commands to search for
-files or content in source code, even for a "quick" one-off check.
-Always use codebeagle_file_search / codebeagle_content_search instead.
-If CodeBeagle is unavailable or unhealthy (see codebeagle_health), say so
-explicitly before falling back to bash.
-
 ### After each code change
 1. Run  `powershell -f .\check.ps1` which invokes mypy.
-2. Run the unit tests `python .\UnitTests.py`
+2. Run the unit tests in the virtual environment `.venv` using `python .\UnitTests.py`
 
 ### UI Development
 
@@ -246,38 +171,3 @@ Search logic is in `fulltextindex/FullTextIndex.py`. The search uses a keyword-b
 - Each keyword stored in `keywords` table
 - `kw2doc` table maps keywords to documents
 - Multi-term search uses set intersection of document lists
-
-### Theme Modifications
-
-1. Edit SASS files in `themes/dark/` or `themes/light/`
-2. Run build script (which calls `npm ci` and compiles SASS)
-3. Theme applied in `CodeBeagle.pyw` `configureTheme()` function
-
-### Platform-Specific Code
-
-Check `sys.platform`:
-- `"win32"` for Windows
-- `"linux"` for Linux
-- `"darwin"` for Mac OS X
-
-Example: Windows uses `.pyw` extension and `Win32GUI` base for cx_Freeze, Linux/Mac use `.py` and no base.
-
-### Index Update Tool
-
-`UpdateIndex.py` is a separate executable for updating indexes from command line or scheduled tasks. It can be run independently of the main GUI.
-
-### AI Agent Integration: codebeagle_update_file
-
-When the CodeBeagle AI agent server is running, the `codebeagle_update_file` tool (PI/MCP) must be called **after every `write` tool call** that creates or modifies a file. No exception.
-
-- This ensures the file is immediately searchable via `codebeagle_content_search` and `codebeagle_file_search`.
-- The tool calls `POST /api/v1/index/update` with the absolute file path.
-- The server finds the correct index configuration based on the file's directory and extension.
-- If the file is not covered by any indexed location, the tool returns an error and the file's directory must be added to a CodeBeagle index first.
-
-Implementation layers:
-1. `fulltextindex/IndexUpdater.updateFile()` — Core logic: updates a single file in the SQLite index database.
-2. `ai_agent/SearchProvider.updateFile()` — Resolves the index configuration for the file path and delegates to IndexUpdater.
-3. `ai_agent/Server.py` — HTTP endpoint `POST /api/v1/index/update`.
-4. `ai_agent/mcp_server/` — MCP tool `codebeagle_update_file`.
-5. `ai_agent/resources/ai_agent/pi/extensions/codebeagle.ts` — PI tool `codebeagle_update_file`.

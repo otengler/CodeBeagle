@@ -31,7 +31,7 @@ from ai_agent.dialogs.AgentInstructionsDialog import AgentInstructionsDialog
 from .Ui_SettingsDialog import Ui_SettingsDialog
 from .SettingsItem import SettingsItem
 import AppConfig
-from ai_agent.SetupHints import piAgentInstructions, mcpAgentInstructions, otherAgentInstructions
+from ai_agent.SetupHints import piAgentInstructions, mcpAgentInstructions, otherAgentInstructions, agentMdHints
 
 
 userHintUpdateIndex = """
@@ -282,6 +282,9 @@ class SettingsDialog (QDialog):
         self.ui.buttonPiAgentInstructions.clicked.connect(self.showPiAgentInstructions)
         self.ui.buttonMcpAgentInstructions.clicked.connect(self.showMcpAgentInstructions)
         self.ui.buttonOtherAgentInstructions.clicked.connect(self.showOtherAgentInstructions)
+
+        # Show setup hints in a read-only text field
+        self.ui.editAgentMdHints.setPlainText(agentMdHints)
 
         # Wire up the agent enable checkbox to show a hint about per-location API access
         self.ui.checkAgentEnabled.toggled.connect(self.__agentEnabledHint)
