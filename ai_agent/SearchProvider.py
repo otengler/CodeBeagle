@@ -339,7 +339,7 @@ class SearchProvider:
 
                 lineNumber = lineIndex.findLineNumber(startPos)
                 matchText = text[startPos:startPos + length]
-                fullLine = lineIndex.getLine(lineNumber)
+                fullLine = lineIndex.getLine(lineNumber).strip()
 
                 contextBefore = self._extractContextLines(lineIndex, lineNumber, contextLines, before=True)
                 contextAfter = self._extractContextLines(lineIndex, lineNumber, contextLines, before=False)
@@ -369,13 +369,13 @@ class SearchProvider:
             if start < 1:
                 start = 1
             for i in range(start, lineNumber):
-                lines.append(lineIndex.getLine(i))
+                lines.append(lineIndex.getLine(i).strip())
         else:
             end = lineNumber + contextLines
             if end > lineIndex.lineCount():
                 end = lineIndex.lineCount()
             for i in range(lineNumber + 1, end + 1):
-                lines.append(lineIndex.getLine(i))
+                lines.append(lineIndex.getLine(i).strip())
         return lines
 
     def updateFile(self, filePath: str) -> Dict[str, object]:
