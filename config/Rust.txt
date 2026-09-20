@@ -1,0 +1,16 @@
+# addKeywords (keywords,  fontWeight,  foreground)
+# addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)
+# addRule (expr,  fontWeight,  foreground)
+
+keywords="let,mut,const,static,fn,return,if,else,for,while,loop,match,break,continue,\
+struct,enum,trait,impl,pub,crate,mod,use,super,self,Self,as,in,ref,move,async,await,\
+unsafe,extern,where,type,dyn,true,false,Some,None,Ok,Err,\
+i8,i16,i32,i64,i128,u8,u16,u32,u64,u128,isize,usize,f32,f64,bool,char,str,\
+String,Vec,Result,Option,Box,Rc,Arc,Cell,RefCell,Mutex,RwLock,HashMap"
+addKeywords (keywords, Bold, darkBlue)
+
+setStrings(Normal, darkGreen)
+addCommentRule ("//[^\n]*", "/\\*", "\\*/", Normal, darkGreen)
+
+addRule ("\\b[A-Z][A-Za-z0-9]*\\b", Bold, darkMagenta) # Types/Structs/Enums (PascalCase)
+addRule ("\\b[A-Za-z0-9_]+(?=\\s*\\()", Normal, blue) # Functions

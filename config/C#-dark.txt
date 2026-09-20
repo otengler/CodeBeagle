@@ -1,0 +1,19 @@
+# addKeywords (keywords,  fontWeight,  foreground)
+# addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)
+# addRule (expr,  fontWeight,  foreground)
+
+keywords="abstract,as,async,await,base,bool,break,byte,case,catch,char,checked,class,const,continue,\
+decimal,default,delegate,do,double,else,enum,event,explicit,extern,false,finally,fixed,float,for,\
+foreach,get,global,goto,if,implicit,in,int,interface,internal,is,lock,long,nameof,namespace,new,\
+null,object,operator,out,override,params,partial,private,protected,public,readonly,record,ref,\
+required,return,sbyte,sealed,short,sizeof,stackalloc,static,string,struct,switch,this,throw,true,\
+try,typeof,uint,ulong,unchecked,unsafe,ushort,using,value,var,virtual,void,volatile,while,yield,init"
+addKeywords (keywords, Bold, rgb(197,134,192))
+
+setStrings(Normal, rgb(206,145,120))
+addCommentRule ("//[^\n]*", "/\\*", "\\*/", Normal, rgb(82,153,73))
+
+addRule ("\\b[A-Z][A-Za-z0-9]*\\b", Bold, rgb(58,201,162)) # Types/Classes (PascalCase)
+addRule ("\\b[A-Za-z0-9_]+(?=\\s*\\()", Normal, rgb(220,220,170)) # Functions
+
+setColor(rgb(212,212,212)) # Default font color

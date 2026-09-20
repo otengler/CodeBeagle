@@ -1,0 +1,18 @@
+# addKeywords (keywords,  fontWeight,  foreground)
+# addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)
+# addRule (expr,  fontWeight,  foreground)
+
+keywords="let,var,const,function,class,return,if,else,for,while,do,switch,case,break,\
+continue,throw,try,catch,finally,new,this,super,typeof,instanceof,void,delete,import,\
+export,default,from,as,async,await,yield,in,of,true,false,null,undefined,NaN,Infinity,\
+interface,type,enum,extends,implements,abstract,readonly,static,\
+public,private,protected,readonly"
+addKeywords (keywords, Bold, rgb(197,134,192))
+
+setStrings(Normal, rgb(206,145,120))
+addCommentRule ("//[^\n]*", "/\\*", "\\*/", Normal, rgb(82,153,73))
+
+addRule ("\\b[A-Z][A-Za-z0-9]*\\b", Bold, rgb(58,201,162)) # Types/Classes (PascalCase)
+addRule ("\\b[A-Za-z0-9_]+(?=\\s*\\()", Normal, rgb(220,220,170)) # Functions
+
+setColor(rgb(212,212,212)) # Default font color

@@ -9,5 +9,3 @@ setStrings(Normal, darkGreen, supportTripleQuotes = True)
 addCommentRule ("#[^\n]*", None, None, Normal, darkGreen)
 
 addRule ("\\b[A-Za-z0-9_]+(?=\\()", Normal, blue) # Functions
-
-supportTripleQuoteComments() # Treat triple quotes as comments

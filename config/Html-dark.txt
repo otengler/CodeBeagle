@@ -1,0 +1,19 @@
+# addKeywords (keywords,  fontWeight,  foreground)
+# addCommentRule (singleLine,  multiLineStart,  multiLineEnd,  fontWeight,  foreground)
+# addRule (expr,  fontWeight,  foreground)
+
+keywords="a,abbr,address,area,article,aside,audio,b,base,bdi,bdo,blockquote,body,br,button,\
+canvas,caption,cite,code,col,colgroup,data,datalist,dd,del,details,dfn,dialog,div,dl,dt,\
+em,embed,fieldset,figcaption,figure,footer,form,h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,\
+html,i,iframe,img,input,ins,kbd,label,legend,li,link,main,map,mark,menu,meta,meter,nav,\
+noscript,object,ol,optgroup,option,output,p,picture,pre,progress,q,rp,rt,ruby,s,samp,\
+script,section,select,slot,small,source,span,strong,style,sub,summary,sup,table,tbody,\
+td,template,textarea,tfoot,th,thead,time,title,tr,track,u,ul,var,video,wbr"
+addKeywords (keywords, Bold, rgb(197,134,192))
+
+setStrings(Normal, rgb(206,145,120))
+addCommentRule ("<!--[\\s\\S]*?(?:-->|$)", None, None, Normal, rgb(82,153,73))
+
+addRule ("<\\/?[A-Za-z][A-Za-z0-9]*", Bold, rgb(58,201,162)) # Tags
+
+setColor(rgb(212,212,212)) # Default font color

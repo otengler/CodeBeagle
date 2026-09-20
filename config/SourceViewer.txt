@@ -17,3 +17,27 @@ Highlighter_Python {
     extensions = py*
 }
 
+Highlighter_CS {
+    config = C#.txt
+    extensions = cs,csx
+}
+
+Highlighter_Rust {
+    config = Rust.txt
+    extensions = rs
+}
+
+Highlighter_JS {
+    config = JS.txt
+    extensions = js,jsx,ts,tsx,mjs,mts,cjs
+}
+
+Highlighter_Html {
+    config = Html.txt
+    extensions = html,htm,xhtml
+}
+
+Highlighter_CSS {
+    config = CSS.txt
+    extensions = css,scss
+}
