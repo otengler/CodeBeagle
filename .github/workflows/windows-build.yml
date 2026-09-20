@@ -19,7 +19,7 @@ jobs:
     - name: Set up Python 3
       uses: actions/setup-python@v4
       with:
-        python-version: "3.13"
+        python-version: "3.14"
     - name: Install dependencies
       run: |
         python.exe -m pip install --upgrade pip
