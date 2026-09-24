@@ -380,3 +380,66 @@ class TestResolveIndexConfig(unittest.TestCase):
         args, _ = sm.return_value.searchContent.call_args
         queryArgs = args[0]
         self.assertEqual(queryArgs.folderFilterString, "C:/src/proj/sub/dir/src")
+
+    # ── Auto-restrict with multi-directory config ─────────────────────────
+
+    def _autoRestrictMultiDirProvider(self) -> SearchProvider:
+        """Provider with a config covering two source directories."""
+        conf = self._conf("loc1", "C:/src/proj,C:/src/other")
+        provider = self._provider([conf])
+        provider._fileListCache = mock.MagicMock()
+        provider._fileListCache.get.return_value = None
+        provider._commonKeywordMap = {}
+        return provider
+
+    def test_autoRestrict_multiDir_rootFolder_setsPathFilter(self) -> None:
+        """When config has multiple source dirs and folder matches one root,
+        pathFilter IS added to prevent results from the other source dirs."""
+        provider = self._autoRestrictMultiDirProvider()
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            provider.searchContent("foo", folder="C:/src/proj", excludeComments=False)
+
+        args, _ = sm.return_value.searchContent.call_args
+        queryArgs = args[0]
+        self.assertEqual(queryArgs.folderFilterString, "C:/src/proj")
+
+    def test_autoRestrict_multiDir_rootFolder_fileName(self) -> None:
+        """Same multi-directory restrict logic for searchFileName."""
+        provider = self._autoRestrictMultiDirProvider()
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchFileName.return_value = ResultSet(matches=[])
+            provider.searchFileName("*.py", folder="C:/src/other")
+
+        args, _ = sm.return_value.searchFileName.call_args
+        queryArgs = args[0]
+        self.assertEqual(queryArgs.folderFilterString, "C:/src/other")
+
+    def test_autoRestrict_multiDir_subfolder_setsPathFilter(self) -> None:
+        """Subfolder of a multi-dir config root still gets the pathFilter."""
+        provider = self._autoRestrictMultiDirProvider()
+        with mock.patch("ai_agent.SearchProvider.SearchMethods") as sm:
+            sm.return_value.searchContent.return_value = ResultSet(matches=[])
+            provider.searchContent("foo", folder="C:/src/proj/sub/deep", excludeComments=False)
+
+        args, _ = sm.return_value.searchContent.call_args
+        queryArgs = args[0]
+        self.assertEqual(queryArgs.folderFilterString, "C:/src/proj/sub/deep")
+
+    # ── Unrelated folder ──────────────────────────────────────────────────
+
+    def test_autoRestrict_unrelatedFolder_keepsFilter(self) -> None:
+        """A folder not covered by any source directory must still get the
+        folder as pathFilter. Returning no filter would leak unfiltered
+        results from the config's own directories."""
+        from ..SearchProvider import setPathFilterFromFolder
+        conf = self._conf("loc1", "C:/src/proj")
+        result = setPathFilterFromFolder("C:/unrelated/deep", "", conf)
+        self.assertEqual(result, "C:/unrelated/deep")
+
+    def test_autoRestrict_unrelatedFolder_fileName(self) -> None:
+        """Unrelated folder keeps its filter for searchFileName as well."""
+        from ..SearchProvider import setPathFilterFromFolder
+        conf = self._conf("loc1", "C:/src/proj")
+        result = setPathFilterFromFolder("C:/unrelated/deep", "", conf)
+        self.assertEqual(result, "C:/unrelated/deep")

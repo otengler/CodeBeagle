@@ -55,14 +55,12 @@ def setPathFilterFromFolder(folder: Optional[str], pathFilter: str,
     """
     if pathFilter or not folder:
         return pathFilter
-    normFolder = os.path.normpath(folder)
-    for srcDir in indexConf.directories:
-        normalizedSrc = os.path.normpath(srcDir)
-        if normFolder == normalizedSrc:
-            return ""
-        if normFolder.startswith(normalizedSrc + os.sep):
-            return folder
-    return ""
+    if len(indexConf.directories) == 1:
+        normFolder = os.path.normpath(folder)
+        for srcDir in indexConf.directories:
+            if normFolder == os.path.normpath(srcDir):
+                return ""
+    return folder
 
 class SearchProvider:
     """Interface to CodeBeagle's search engine for the AI agent API."""
