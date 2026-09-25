@@ -126,6 +126,7 @@ def fetchExternalHistory() -> List[HistoryEntry]:
                 params=str(entry["params"]),
                 statusCode=int(entry["statusCode"]),
                 durationSecs=float(entry.get("durationSecs", 0.0)),
+                result=str(entry.get("result", "")),
             ))
         return history
     except Exception:

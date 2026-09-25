@@ -26,13 +26,15 @@ class HistoryEntry:
     """A single API call record."""
 
     def __init__(self, timestamp: float, method: str, path: str,
-                 params: str, statusCode: int, durationSecs: float = 0.0) -> None:
+                 params: str, statusCode: int, durationSecs: float = 0.0,
+                 result: str = "") -> None:
         self.timestamp = timestamp
         self.method = method
         self.path = path
         self.params = params
         self.statusCode = statusCode
         self.durationSecs = durationSecs
+        self.result = result
 
     def timeStr(self) -> str:
         """Return the timestamp as a formatted date/time string."""

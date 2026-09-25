@@ -69,6 +69,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
                  server: "AgentHTTPServer") -> None:
         self._statusCode = 200
         self._lastBody: Optional[Dict[str, Any]] = None
+        self._lastResult: str = ""
         super().__init__(request, clientAddress, server)
 
     # Silence per-request log output
@@ -105,7 +106,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             # excludeFromHistory query parameter (e.g. the startup health
             # probe) must not pollute the history.
             if not _hasExcludeFromHistory(self.path) and path not in ("/api/v1/history", "/history"):
-                self._recordHistory(self._formatQueryParams(), self._statusCode, time.time() - startTime)
+                self._recordHistory(self._formatQueryParams(), self._statusCode, time.time() - startTime, result=self._lastResult)
 
     # ---- POST endpoints ----
 
@@ -128,7 +129,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self._sendError(500, str(e))
         finally:
             params = formatBodyParams(self._lastBody) if self._lastBody else self._formatQueryParams()
-            self._recordHistory(params, self._statusCode, time.time() - startTime)
+            self._recordHistory(params, self._statusCode, time.time() - startTime, result=self._lastResult)
 
     # ---- OPTIONS for CORS preflight ----
 
@@ -160,7 +161,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
-    def _recordHistory(self, params: str, statusCode: int, durationSecs: float = 0.0) -> None:
+    def _recordHistory(self, params: str, statusCode: int, durationSecs: float = 0.0, result: str = "") -> None:
         """Add the current call to the shared API history (newest last)."""
         path = self.path.split("?")[0]
         if path != "/":
@@ -171,7 +172,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             path=path,
             params=params,
             statusCode=statusCode,
-            durationSecs=durationSecs
+            durationSecs=durationSecs,
+            result=result
         )
         self.server.history.add(entry)
 
@@ -410,6 +412,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             )
         except ValueError as e:
             raise HttpError(404, str(e))
+        self._lastResult = f"{len(result.matches)} matches, {result.totalFiles} files"
         self._sendJson(200, _contentResultToJson(query, contextLines, result))
 
     def _handleFileNameSearch(self) -> None:
@@ -434,6 +437,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             )
         except ValueError as e:
             raise HttpError(404, str(e))
+        self._lastResult = f"{result.totalFiles} files"
         self._sendJson(200, _fileNameResultToJson(query, result))
 
     def _handleIndexUpdate(self) -> None:
@@ -450,6 +454,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             raise HttpError(404, str(e))
         except ValueError as e:
             raise HttpError(400, str(e))
+        self._lastResult = str(result.get("status", str(result)))
         self._sendJson(200, result)
 
 def _correctPathSeparator(path: str) -> str:
@@ -527,6 +532,7 @@ def _historyToJson(history: AgentHistory) -> Dict[str, object]:
             "params": entry.params,
             "statusCode": entry.statusCode,
             "durationSecs": entry.durationSecs,
+            "result": entry.result,
         })
     return {"history": entries}
 
