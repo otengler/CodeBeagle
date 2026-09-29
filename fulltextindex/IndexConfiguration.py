@@ -29,8 +29,6 @@ class IndexMode(IntEnum):
     ManualIndexUpdate = 1
     # Update index when UpdateIndex.exe is run
     TriggeredIndexUpdate = 2
-    # Keep index permanently up to date by watching the file system for changes
-    AutomaticIndexUpdate = 3
 
 class IndexType(IntEnum):
     # Index file content

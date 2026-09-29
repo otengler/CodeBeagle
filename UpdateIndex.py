@@ -65,10 +65,14 @@ def taketime(name: str, func: Callable[..., Any], *args: Any) -> Any:
 def setupLogging(conf: Config) -> None:
     log = conf.updateIndexLog
     # force=True to configure logger even if someone has used e.g. "logging.info" before
+    logging.basicConfig(force=True, format='%(message)s', level=logging.INFO)
     if log:
-        logging.basicConfig(filename=log, force=True, format='%(asctime)s %(message)s', level=logging.INFO)
-    else:
-        logging.basicConfig(force=True, format='%(asctime)s %(message)s', level=logging.INFO)
+        try:
+            fileHandler = logging.FileHandler(log, mode='a')
+            fileHandler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+            logging.getLogger().addHandler(fileHandler)
+        except OSError:
+            logging.warning("Cannot open log file '%s'", log)
 
 def updateIndex(config: IndexConfiguration.IndexConfiguration) -> None:
     logging.info("-"*80)
@@ -81,15 +85,18 @@ def updateIndex(config: IndexConfiguration.IndexConfiguration) -> None:
     except:
         logging.error("Exception caught while updating index:\n%s", exceptionAsString(None))
 
-def updateIndexes(indexes: List[IndexConfiguration.IndexConfiguration]) -> None:
+def updateIndexes(indexes: List[IndexConfiguration.IndexConfiguration], forceUpdate: bool) -> None:
     for config in indexes:
-        if config.indexUpdateMode == IndexConfiguration.IndexMode.TriggeredIndexUpdate:
+        if forceUpdate or config.indexUpdateMode == IndexConfiguration.IndexMode.TriggeredIndexUpdate:
             updateIndex(config)
 
 def loadConfigFiles(args: Any) -> Config:
     configFiles = args.config
+    readUserConfig = False
     if not configFiles:
         configFiles = [AppConfig.configName]
+        readUserConfig = True
+    print("Load config " + configFiles[0]) # not using logging because it it not initialized yet
     conf = AppConfig.configFromFile(configFiles[0])
     configFiles = configFiles[1:]
     for name in configFiles:
@@ -101,9 +108,11 @@ def loadConfigFiles(args: Any) -> Config:
     # scheduled task we cannot pull in files from the user profile because
     # we don't know the user. But if there is an override it makes
     # sense to include the managed config.
-    if conf.managedConfig:
-        print("Load config " + conf.managedConfig) # not using logging because it it not initialized yet
-        conf.loadFile(conf.managedConfig)
+    if conf.managedConfig or readUserConfig:
+        userConfig = AppConfig.userConfigFileNameFromConfig(conf)
+        if os.path.isfile(userConfig):
+            print("Load config " + userConfig) # not using logging because it it not initialized yet
+            conf.loadFile(userConfig)
     return conf
 
 def handleUpdateJobs(indexes: List[IndexConfiguration.IndexConfiguration], jobDir: str) -> None:
@@ -227,17 +236,29 @@ def main() -> None:
                     logging.info("No more jobs found")
                     break
         else:
+            forceUpdate = False
             if args.index:
-                indexes = [index for index in indexes if isIndexSpecified(index.indexName, args.index)]
+                indexToUpdate = []
+                indexNames = []
+                for index in [index for index in indexes if isIndexSpecified(index.indexName, args.index)]:
+                    indexToUpdate.append(index)
+                    indexNames.append(index.indexName)
+                indexes = indexToUpdate    
+                if not indexes:
+                    logging.warning("No indexes found to update")
+                    return
+                logging.info("Indexes to update: %s", ", ".join(indexNames))
+                forceUpdate = True
+                    
             if conf.profileUpdate:
-                cProfile.run("updateIndexes(indexes)")
+                cProfile.run("updateIndexes(indexes, forceUpdate)")
             else:
-                updateIndexes(indexes)
+                updateIndexes(indexes, forceUpdate)
 
 if __name__ == "__main__":
     try:
         main()
-    except:
+    except Exception:
         logging.error("Exception caught while updating index:\n%s" % exceptionAsString(None))
         sys.exit(1)
     else:
