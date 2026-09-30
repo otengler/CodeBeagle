@@ -71,13 +71,14 @@ def userConfigPath() -> str:
     if appConfig().managedConfig:
         name = cast(str,appConfig().managedConfig)
         return os.path.split(name)[0]
-
     return userDataPath()
 
 def userConfigFileName() -> str:
-    if appConfig().managedConfig:
-        return cast(str,appConfig().managedConfig)
+    return userConfigFileNameFromConfig(appConfig())
 
+def userConfigFileNameFromConfig(config: Config.Config) -> str:
+    if config.managedConfig:
+        return cast(str,appConfig().managedConfig)
     return os.path.join(userDataPath(), configName)
 
 def saveUserConfig (config: Config.Config) -> None:
@@ -124,6 +125,7 @@ def agentConfig() -> Config.Config:
     agent.setType("defaultLimit", Config.typeDefaultInt(100))
     agent.setType("defaultExcludeDirs", Config.typeDefaultString(""))
     agent.setType("allowOrigin", Config.typeDefaultString(""))
+    agent.setType("searchTimeout", Config.typeDefaultInt(30))
     return agent
 
 def agentConfigTypeDefaults() -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
