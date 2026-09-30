@@ -70,6 +70,11 @@ class RulesCache:
 
         if rulesFile in self.highlightingRulesCache:
             highlightingRules = self.highlightingRulesCache[rulesFile]
+            # Update font on cached rules if it differs from the requested font.
+            # This ensures that if the configured font changes at runtime, existing
+            # cached rules are updated to use the new font.
+            if highlightingRules.font != font:
+                highlightingRules.setFont(font)
         else:
             highlightingRules = self.__rulesFromFile(rulesFile, font)
             self.highlightingRulesCache[rulesFile] = highlightingRules

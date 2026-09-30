@@ -75,10 +75,13 @@ class HighlightingRules:
 
     def setFont (self, font: QFont) -> None:
         """Needed to change the font after the HighlightingRules object has been created."""
+        self.font = font
         for rule in self.rules:
             rule[1].setFont(font)
         if self.commentFormat:
             self.commentFormat.setFont(font)
+        if self.stringFormat:
+            self.stringFormat.setFont(font)
         if self.defaultFormat:
             self.defaultFormat.setFont(font)
 

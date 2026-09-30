@@ -66,7 +66,10 @@ class SourceViewer (QWidget):
             self.ui.buttonMatchCurrent.setIcon(icon)
         self.ui.widgetInDocumentSearch.hide()
 
-        self.sourceFont: QFont = self.font()
+        # Initialize font from configuration, not from parent widget font
+        config = AppConfig.appConfig().SourceViewer
+        self.sourceFont: QFont = QFont(config.fontFamily, config.fontSize)
+        self.ui.textEdit.setFont(self.sourceFont)
         self.searchData: Optional[FullTextIndex.Query] = None
         self.reset()
         self.__processConfig(None)
@@ -126,7 +129,12 @@ class SourceViewer (QWidget):
     def __processConfig (self, font: Optional[QFont]) -> None:
         if font:
             self.sourceFont = font
-            self.ui.textEdit.setFont(self.sourceFont)
+        else:
+            # Load from config if no font was explicitly provided
+            config = AppConfig.appConfig().SourceViewer
+            self.sourceFont = QFont(config.fontFamily, config.fontSize)
+        self.ui.textEdit.setFont(self.sourceFont)
+        self.ui.textEdit.highlighter.setFont(self.sourceFont)
 
         self.bMatchOverFiles = appConfig().matchOverFiles
         self.__enableNextPrevious()
