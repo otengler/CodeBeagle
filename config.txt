@@ -72,6 +72,10 @@ import UserConfig.txt
 #    bind = 127.0.0.1
 #    contextLines = 2
 #    defaultLimit = 100
+#    # Maximum time (in seconds) for ad-hoc (non-indexed) searches.
+#    # If a search exceeds this timeout it is aborted and an empty
+#    # result is returned. Set to 0 to disable the timeout.
+#    searchTimeout = 60
 #    # Comma-separated list of directory patterns to exclude when searching
 #    # a non-indexed location. Patterns support * and ?
 #    # wildcards.

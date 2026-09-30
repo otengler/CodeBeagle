@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+import threading
 from typing import Dict, List, Optional, Set, Union, Tuple, cast
 from PySide6.QtGui import QFont
 from AppConfig import appConfig, refreshConfig
@@ -101,6 +102,26 @@ class SearchProvider:
         indexConfigs = IndexConfiguration.readConfig(self._config)
         return [SearchLocation(c) for c in indexConfigs if c.apiAccess]
 
+    def _createCancelEventForSearch(self, indexConf: IndexConfiguration.IndexConfiguration) -> Optional[threading.Event]:
+        """
+        Create a cancelEvent with a timeout for non-indexed (ad-hoc) searches.
+
+        The timeout prevents the search from blocking indefinitely when walking
+        a large directory tree without an index. Returns None for indexed searches
+        or when the timeout is disabled (set to 0).
+        """
+        if indexConf.generatesIndex():
+            return None
+        try:
+            timeout = int(self._config.agent.searchTimeout)
+        except (ValueError, TypeError):
+            timeout = 60
+        if timeout <= 0:
+            return None
+        cancelEvent = threading.Event()
+        threading.Timer(timeout, cancelEvent.set).start()
+        return cancelEvent
+
     def searchContent(self, query: Union[str, List[str]], *,
                       location: Optional[str] = None,
                       folder: Optional[str] = None,
@@ -156,7 +177,8 @@ class SearchProvider:
         matchingFiles = cast(Optional[List[str]], self._fileListCache.get(cacheKey))
         if matchingFiles is None:
             ftiSearch = SearchMethods()
-            resultSet = ftiSearch.searchContent(searchData, indexConf, self._commonKeywordMap or {})
+            cancelEvent = self._createCancelEventForSearch(indexConf)
+            resultSet = ftiSearch.searchContent(searchData, indexConf, self._commonKeywordMap or {}, cancelEvent=cancelEvent)
             matchingFiles = resultSet.matches  # List of file paths
             self._fileListCache.set(cacheKey, matchingFiles)
 
@@ -218,6 +240,7 @@ class SearchProvider:
         if indexConf.generatesIndex():
             # via DB: or is not supported, does not fit into the system
             seen: Set[str] = set()
+            cancelEvent = self._createCancelEventForSearch(indexConf)
 
             for q in queries:
                 params = QueryParams(
@@ -233,7 +256,7 @@ class SearchProvider:
 
                 if files is None:
                     ftiSearch = SearchMethods()
-                    resultSet = ftiSearch.searchFileName(searchData, indexConf)
+                    resultSet = ftiSearch.searchFileName(searchData, indexConf, cancelEvent=cancelEvent)
                     files = resultSet.matches  # List of file paths
                     self._fileListCache.set(cacheKey, files)
 
@@ -257,7 +280,8 @@ class SearchProvider:
 
             if files is None:
                 ftiSearch = SearchMethods()
-                resultSet = ftiSearch.searchFileName(searchData, indexConf)
+                cancelEvent = self._createCancelEventForSearch(indexConf)
+                resultSet = ftiSearch.searchFileName(searchData, indexConf, cancelEvent=cancelEvent)
                 files = resultSet.matches  # List of file paths
                 self._fileListCache.set(cacheKey, files)
 
