@@ -82,3 +82,56 @@ class TestAgentHistory(unittest.TestCase):
 
     def test_formatBodyParams_empty(self) -> None:
         self.assertEqual(formatBodyParams({}), "")
+
+    def test_isRunning_default(self) -> None:
+        entry = HistoryEntry(100.0, "GET", "/health", "", 200)
+        self.assertFalse(entry.isRunning)
+
+    def test_isRunning_flag(self) -> None:
+        entry = HistoryEntry(200.0, "POST", "/search/content", "", isRunning=True)
+        self.assertTrue(entry.isRunning)
+        self.assertEqual(entry.result, "")
+
+    def test_isRunning_durationStr(self) -> None:
+        """A running entry should compute its own duration live."""
+        start = time.time() - 1.5  # 1.5 seconds ago
+        entry = HistoryEntry(start, "GET", "/search", "", isRunning=True)
+        dur = entry.durationStr()
+        # The computed duration should be close to 1.5s (but not exact due to
+        # the time elapsed since we constructed the entry).
+        self.assertTrue(dur.endswith("s"))
+        val = float(dur[:-1])
+        self.assertGreaterEqual(val, 1.4)
+        self.assertLess(val, 5.0)
+
+    def test_finish(self) -> None:
+        """finish() should set result/statusCode and compute duration."""
+        start = time.time()
+        entry = HistoryEntry(start, "POST", "/search/content", "", isRunning=True)
+        entry.finish(200, "10 matches, 3 files")
+        self.assertEqual(entry.statusCode, 200)
+        self.assertEqual(entry.result, "10 matches, 3 files")
+        self.assertFalse(entry.isRunning)
+        # Duration should be very small (near zero since we just created it)
+        self.assertLess(entry.durationSecs, 1.0)
+        self.assertGreaterEqual(entry.durationSecs, 0.0)
+
+    def test_finish_with_params(self) -> None:
+        """finish() accepts optional params to replace the initial placeholder."""
+        entry = HistoryEntry(time.time(), "POST", "/search/content", "", isRunning=True)
+        entry.finish(200, "ok", params="query: 'test'")
+        self.assertEqual(entry.params, "query: 'test'")
+
+    def test_finish_updates_durationStr(self) -> None:
+        """After finish() the durationStr should use the stored durationSecs,
+        and isRunning must be cleared."""
+        start = time.time()
+        entry = HistoryEntry(start, "GET", "/health", "", isRunning=True)
+        entry.finish(200, "ok")
+        self.assertFalse(entry.isRunning)
+        # Duration should be a small positive value (the actual wall-clock
+        # time elapsed between construction and finish()).
+        self.assertLess(entry.durationSecs, 5.0)
+        self.assertGreaterEqual(entry.durationSecs, 0.0)
+        # durationStr() now uses the stored value, not the live clock
+        self.assertTrue(entry.durationStr().endswith("s"))

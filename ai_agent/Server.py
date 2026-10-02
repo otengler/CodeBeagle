@@ -70,6 +70,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         self._statusCode = 200
         self._lastBody: Optional[Dict[str, Any]] = None
         self._lastResult: str = ""
+        self._currentEntry: Optional[HistoryEntry] = None
+        self._bodyReadAttempted: bool = False
+        self._bodyParseError: HttpError
         super().__init__(request, clientAddress, server)
 
     # Silence per-request log output
@@ -80,8 +83,13 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         path = self.path.split("?")[0].rstrip("/")
-        startTime = time.time()
         try:
+            # Create a "Running" history entry immediately when the request
+            # is received (except for the history endpoint itself and requests
+            # flagged with excludeFromHistory, e.g. the startup health probe).
+            if _shouldRecordHistory(self.path, path):
+                self._currentEntry = self._createRunningEntry()
+
             if path == "" or path == "/":
                 self._serveApiDoc()
             elif path in ("/api/v1/docs", "/docs"):
@@ -102,18 +110,24 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             logger.exception("GET %s failed", path)
             self._sendError(500, str(e))
         finally:
-            # The history endpoint itself and requests flagged with the
-            # excludeFromHistory query parameter (e.g. the startup health
-            # probe) must not pollute the history.
-            if not _hasExcludeFromHistory(self.path) and path not in ("/api/v1/history", "/history"):
-                self._recordHistory(self._formatQueryParams(), self._statusCode, time.time() - startTime, result=self._lastResult)
+            if self._currentEntry is not None:
+                self._currentEntry.finish(self._statusCode, self._lastResult)
 
     # ---- POST endpoints ----
 
     def do_POST(self) -> None:
         path = self.path.split("?")[0].rstrip("/")
-        startTime = time.time()
         try:
+            # Pre-read the request body now so that the params are available
+            # in the history entry from the very start.
+            try:
+                self._readJsonBody()
+            except HttpError:
+                pass  # Will surface again from the endpoint handler below
+
+            if _shouldRecordHistory(self.path, path):
+                self._currentEntry = self._createRunningEntry()
+
             if path in ("/api/v1/search/content", "/search/content"):
                 self._handleContentSearch()
             elif path in ("/api/v1/search/filename", "/search/filename"):
@@ -128,8 +142,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             logger.exception("POST %s failed", path)
             self._sendError(500, str(e))
         finally:
-            params = formatBodyParams(self._lastBody) if self._lastBody else self._formatQueryParams()
-            self._recordHistory(params, self._statusCode, time.time() - startTime, result=self._lastResult)
+            if self._currentEntry is not None:
+                self._currentEntry.finish(self._statusCode, self._lastResult)
 
     # ---- OPTIONS for CORS preflight ----
 
@@ -161,21 +175,33 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
-    def _recordHistory(self, params: str, statusCode: int, durationSecs: float = 0.0, result: str = "") -> None:
-        """Add the current call to the shared API history (newest last)."""
+    def _createRunningEntry(self) -> HistoryEntry:
+        """Create a "Running" history entry for the current request and add it
+        to the shared history immediately. The entry will be updated by
+        finish() when the request completes.
+
+        Parameters are populated straight away so they are visible in the
+        history from the moment the request is received.
+        """
         path = self.path.split("?")[0]
         if path != "/":
             path = path.rstrip("/")
+        # Params available immediately for GET (query string) and for POST
+        # (the body was pre-read in do_POST before this method is called).
+        if self.command == "POST" and self._lastBody:
+            params = formatBodyParams(self._lastBody)
+        else:
+            params = self._formatQueryParams()
         entry = HistoryEntry(
             timestamp=time.time(),
             method=str(self.command),
             path=path,
             params=params,
-            statusCode=statusCode,
-            durationSecs=durationSecs,
-            result=result
+            result="Running",
+            isRunning=True
         )
         self.server.history.add(entry)
+        return entry
 
     def _formatQueryParams(self) -> str:
         """Format the query string of the request into a human-readable string."""
@@ -189,22 +215,32 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         return appConfig().agent
 
     def _readJsonBody(self) -> Dict[str, Any]:
+        if self._lastBody is not None:
+            return self._lastBody
+        if self._bodyReadAttempted:
+            raise self._bodyParseError
+        self._bodyReadAttempted = True
         try:
             length = int(self.headers.get("Content-Length", 0))
         except (ValueError, TypeError):
-            raise HttpError(400, "Invalid Content-Length header")
+            self._bodyParseError = HttpError(400, "Invalid Content-Length header")
+            raise self._bodyParseError
         if length <= 0:
-            raise HttpError(400, "Request body must not be empty")
+            self._bodyParseError = HttpError(400, "Request body must not be empty")
+            raise self._bodyParseError
         try:
             raw = self.rfile.read(length)
         except Exception:
-            raise HttpError(400, "Failed to read request body")
+            self._bodyParseError = HttpError(400, "Failed to read request body")
+            raise self._bodyParseError
         try:
             data = json.loads(raw.decode("utf-8"))
         except Exception:
-            raise HttpError(400, "Invalid JSON in request body")
+            self._bodyParseError = HttpError(400, "Invalid JSON in request body")
+            raise self._bodyParseError
         if not isinstance(data, dict):
-            raise HttpError(400, "JSON request body must be an object")
+            self._bodyParseError = HttpError(400, "JSON request body must be an object")
+            raise self._bodyParseError
         self._lastBody = data
         return data
 
@@ -467,6 +503,17 @@ def _correctPathSeparator(path: str) -> str:
         return path.replace("\\", "/")
 
 
+def _shouldRecordHistory(rawPath: str, normalisedPath: str) -> bool:
+    """True if the request should appear in the API call history.
+
+    The history endpoint itself and requests carrying an
+    ``excludeFromHistory`` query parameter (used by internal probes such as
+    the startup health check) must not pollute the history.
+    """
+    return (not _hasExcludeFromHistory(rawPath)
+            and normalisedPath not in ("/api/v1/history", "/history"))
+
+
 def _hasExcludeFromHistory(path: str) -> bool:
     """True if the request path carries the excludeFromHistory query parameter.
 
@@ -533,6 +580,7 @@ def _historyToJson(history: AgentHistory) -> Dict[str, object]:
             "statusCode": entry.statusCode,
             "durationSecs": entry.durationSecs,
             "result": entry.result,
+            "isRunning": entry.isRunning,
         })
     return {"history": entries}
 

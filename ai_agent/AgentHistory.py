@@ -26,8 +26,8 @@ class HistoryEntry:
     """A single API call record."""
 
     def __init__(self, timestamp: float, method: str, path: str,
-                 params: str, statusCode: int, durationSecs: float = 0.0,
-                 result: str = "") -> None:
+                 params: str, statusCode: int = 0, durationSecs: float = 0.0,
+                 result: str = "", isRunning: bool = False) -> None:
         self.timestamp = timestamp
         self.method = method
         self.path = path
@@ -35,14 +35,30 @@ class HistoryEntry:
         self.statusCode = statusCode
         self.durationSecs = durationSecs
         self.result = result
+        self.isRunning = isRunning
 
     def timeStr(self) -> str:
         """Return the timestamp as a formatted date/time string."""
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.timestamp))
 
     def durationStr(self) -> str:
-        """Return the duration in seconds with one fraction, e.g. '2.3s'."""
+        """Return the duration in seconds with one fraction, e.g. '2.3s'.
+
+        When the entry is still running the elapsed time is computed live.
+        """
+        if self.isRunning:
+            elapsed = time.time() - self.timestamp
+            return f"{elapsed:.1f}s"
         return f"{self.durationSecs:.1f}s"
+
+    def finish(self, statusCode: int, result: str, params: str = "") -> None:
+        """Mark the entry as completed, computing the duration from the start time."""
+        self.durationSecs = time.time() - self.timestamp
+        self.statusCode = statusCode
+        self.result = result
+        self.isRunning = False
+        if params:
+            self.params = params
 
     def __str__(self) -> str:
         return f"{self.method} {self.path} -> {self.statusCode} | {self.params}"
