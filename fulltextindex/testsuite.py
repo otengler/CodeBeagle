@@ -782,6 +782,115 @@ class TestGenFindWildcardExcludes(unittest.TestCase):
         result = list(genFind({".c", ".o"}, self.testDir, ["*nonexistent*", "*xyz*"]))
         self.assertEqual(len(result), 4)
 
+    # --- File exclude tests ---
+
+    def test_file_exclude_single_pattern(self) -> None:
+        """Exclude a specific file by full-path pattern."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir,
+                             fileExcludes=[f"*{os.sep}config"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, ".git", "config"), paths)
+        self.assertEqual(len(result), 5)
+
+    def test_file_exclude_pattern_with_wildcard(self) -> None:
+        """Exclude files matching a wildcard pattern like *temp*."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir,
+                             fileExcludes=[f"*{os.sep}output.*"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, "build", "output.o"), paths)
+        self.assertEqual(len(result), 5)
+
+    def test_file_exclude_multiple_patterns(self) -> None:
+        """Multiple file exclude patterns can be combined."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir,
+                             fileExcludes=[f"*{os.sep}config", f"*{os.sep}temp.o"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, ".git", "config"), paths)
+        self.assertNotIn(os.path.join(self.testDir, "out", "debug", "temp.o"), paths)
+        self.assertEqual(len(result), 4)
+
+    def test_file_exclude_no_match(self) -> None:
+        """A non-matching file exclude should not change results."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir,
+                             fileExcludes=[f"*{os.sep}nonexistent.xyz"]))
+        self.assertEqual(len(result), 6)
+
+    def test_file_exclude_empty_list(self) -> None:
+        """An empty file exclude list should not change results."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir, fileExcludes=[]))
+        self.assertEqual(len(result), 6)
+
+    def test_file_exclude_with_dir_exclude_combined(self) -> None:
+        """File and directory excludes work together."""
+        result = list(genFind({".c", ".o", ".js", ""}, self.testDir,
+                             dirExcludes=["*node_modules"],
+                             fileExcludes=[f"*{os.sep}output.o"]))
+        paths = [os.path.join(d, f) for d, f in result]
+        self.assertNotIn(os.path.join(self.testDir, "node_modules", "index.js"), paths)
+        self.assertNotIn(os.path.join(self.testDir, "build", "output.o"), paths)
+        self.assertEqual(len(result), 4)
+
+
+class TestIndexConfigurationExcludes(unittest.TestCase):
+    """Test auto-wrapping of plain strings in IndexConfiguration exclude patterns."""
+
+    def test_dir_exclude_plain_string_gets_wrapped(self) -> None:
+        """A plain directory exclude string gets wrapped with * on both sides."""
+        conf = IndexConfiguration("test", dirExcludes="build")
+        self.assertEqual(conf.dirExcludes, ["*build*"])
+
+    def test_dir_exclude_with_wildcard_not_wrapped(self) -> None:
+        """A dir exclude with * is left as-is."""
+        conf = IndexConfiguration("test", dirExcludes="*build")
+        self.assertEqual(conf.dirExcludes, ["*build"])
+
+    def test_dir_exclude_with_question_not_wrapped(self) -> None:
+        """A dir exclude with ? is left as-is."""
+        conf = IndexConfiguration("test", dirExcludes="build?")
+        self.assertEqual(conf.dirExcludes, ["build?"])
+
+    def test_dir_exclude_multiple(self) -> None:
+        """Multiple dir excludes: plain gets wrapped, wildcard stays."""
+        conf = IndexConfiguration("test", dirExcludes="build,*node_modules")
+        self.assertEqual(conf.dirExcludes, ["*build*", "*node_modules"])
+
+    def test_dir_exclude_empty_string_gives_empty_list(self) -> None:
+        """Empty dirExcludes string gives empty list."""
+        conf = IndexConfiguration("test", dirExcludes="")
+        self.assertEqual(conf.dirExcludes, [])
+
+    def test_file_exclude_plain_string_gets_prepended(self) -> None:
+        """A plain file exclude string gets *{sep} prepended."""
+        conf = IndexConfiguration("test", fileExcludes="foo.txt")
+        expected = [f"*{os.sep}foo.txt"]
+        self.assertEqual(conf.fileExcludes, expected)
+
+    def test_file_exclude_with_wildcard_not_wrapped(self) -> None:
+        """A file exclude with * is left as-is."""
+        conf = IndexConfiguration("test", fileExcludes="*.log")
+        self.assertEqual(conf.fileExcludes, ["*.log"])
+
+    def test_file_exclude_with_question_not_wrapped(self) -> None:
+        """A file exclude with ? is left as-is."""
+        conf = IndexConfiguration("test", fileExcludes="foo.??")
+        self.assertEqual(conf.fileExcludes, ["foo.??"])
+
+    def test_file_exclude_already_starts_with_separator(self) -> None:
+        """A file exclude starting with {sep} does not get double separator."""
+        conf = IndexConfiguration("test", fileExcludes=f"{os.sep}foo.txt")
+        self.assertEqual(conf.fileExcludes, [f"*{os.sep}foo.txt"])
+
+    def test_file_exclude_multiple(self) -> None:
+        """Multiple file excludes: plain gets wrapped, wildcard stays."""
+        conf = IndexConfiguration("test", fileExcludes=f"foo.txt,*.log")
+        expected = [f"*{os.sep}foo.txt", "*.log"]
+        self.assertEqual(conf.fileExcludes, expected)
+
+    def test_file_exclude_empty_string_gives_empty_list(self) -> None:
+        """Empty fileExcludes string gives empty list."""
+        conf = IndexConfiguration("test", fileExcludes="")
+        self.assertEqual(conf.fileExcludes, [])
+
 
 if __name__ == "__main__":
     unittest.main()
