@@ -44,7 +44,7 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]
         filepatFixed.add(pat)
 
     dirExcludes = [dir.lower() for dir in dirExcludes]
-    for path, _, filelist in os.walk(strRootDir):
+    for path, dirnames, filelist in os.walk(strRootDir):
         if dirExcludes:
             pathLower = path.lower()
             found = False
@@ -53,6 +53,8 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]
                     found = True
                     break
             if found:
+                # Prune the walk so os.walk does not descend into subdirectories of an excluded directory
+                dirnames[:] = []
                 continue
         for name in filelist:
             ext = os.path.splitext(name)[1].lower()

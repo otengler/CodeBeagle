@@ -259,7 +259,7 @@ def isProcessAlive(pid: int) -> bool:
 
 def correctPath(name: str) -> str:
     if os.path.sep == "/":
-        return name
+        return name.replace("\\", os.path.sep)
     return name.replace("/", os.path.sep)
 
 class TestConfig(unittest.TestCase):

@@ -149,15 +149,22 @@ class SearchIndexResolver:
         """
         True if a walk from one of the config's source directories would reach folder.
 
-        Mirrors IndexUpdater.genFind: only the final folder itself is checked
-        against dirExcludes (os.walk descends into subdirectories even if a
-        parent is excluded). Matching uses fnmatch, case-insensitively, and
-        supports wildcards (*, ?).
+        Mirrors IndexUpdater.genFind: the folder and each of its ancestor
+        directories are checked against dirExcludes (since a matching ancestor
+        causes the walk to prune the entire subtree). Matching uses fnmatch,
+        case-insensitively, and supports wildcards (*, ?).
         """
         normFolder = os.path.normpath(folder).lower()
         excludes = [e.lower() for e in conf.dirExcludes]
-        if any(fnmatch(normFolder, ex) for ex in excludes):
-            return False
+        # Check if the folder or any ancestor directory matches an exclude pattern
+        checkPath = normFolder
+        while True:
+            if any(fnmatch(checkPath, ex) for ex in excludes):
+                return False
+            parent = os.path.dirname(checkPath)
+            if parent == checkPath:  # reached the root
+                break
+            checkPath = parent
         for srcDir in conf.directories:
             normalizedSrc = os.path.normpath(srcDir)
             if normFolder == normalizedSrc.lower() or normFolder.startswith(normalizedSrc.lower() + os.sep):

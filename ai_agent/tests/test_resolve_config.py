@@ -85,13 +85,13 @@ class TestResolveIndexConfig(unittest.TestCase):
         provider = self._provider([conf])
         self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/src"), conf)
 
-    def test_excludedParentDoesNotDisqualify(self) -> None:
-        # os.walk descends into subdirectories even if a parent matches an
-        # exclude (genFind only skips files directly in the excluded directory),
-        # so a folder below an excluded parent is still covered.
+    def test_excludedParentDisqualifiesSubtree(self) -> None:
+        # genFind now prunes the walk at excluded directories, so a folder below
+        # an excluded parent is not covered either.
         conf = self._conf("loc1", "C:/src/proj", dirExcludes="C:/src/proj/build")
         provider = self._provider([conf])
-        self.assertEqual(provider._indexResolver.resolve(folder="C:/src/proj/build/sub/deep"), conf)
+        resolved = provider._indexResolver.resolve(folder="C:/src/proj/build/sub/deep", createFallbackLocations=False)
+        self.assertIsNone(resolved, "A folder inside an excluded directory should not be covered")
 
     def test_excludedConfigSkippedInFavorOfCoveringConfig(self) -> None:
         excluded = self._conf("excluded", "C:/src/proj", dirExcludes="C:/src/proj/build")
