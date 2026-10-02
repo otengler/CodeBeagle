@@ -27,6 +27,7 @@ from socketserver import ThreadingMixIn
 from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import parse_qsl
 from AppConfig import appConfig
+from tools.FileTools import correctPath
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
 from .SearchProvider import SearchProvider, ContentSearchResult, FileSearchResult
 from .TtlCache import TTLCache
@@ -426,9 +427,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         location = self._getOptionalString(data, "location")
         folder = self._getOptionalString(data, "folder")
         if folder is not None:
-            folder = _correctPathSeparator(folder)
+            folder = correctPath(folder)
         query =self._getStringOrList(data, "query")
-        pathFilter = _correctPathSeparator(self._getString(data, "pathFilter", ""))
+        pathFilter = correctPath(self._getString(data, "pathFilter", ""))
         extensionFilter = self._getString(data, "extensionFilter", "")
         caseSensitive = self._getBool(data, "caseSensitive", False)
         excludeComments = self._getBool(data, "excludeComments", True)
@@ -459,9 +460,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         location = self._getOptionalString(data, "location")
         folder = self._getOptionalString(data, "folder")
         if folder is not None:
-            folder = _correctPathSeparator(folder)
+            folder = correctPath(folder)
         query = self._getStringOrList(data, "query")
-        pathFilter = _correctPathSeparator(self._getString(data, "pathFilter", ""))
+        pathFilter = correctPath(self._getString(data, "pathFilter", ""))
         caseSensitive = self._getBool(data, "caseSensitive", False)
         limit = self._getInt(data, "limit", self.server.defaultLimit)
         pageOffset = self._getPageOffset(data)
@@ -488,7 +489,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         filePath = self._getString(data, "file")
         if not filePath:
             raise HttpError(400, "Field 'file' must not be empty")
-        filePath = _correctPathSeparator(filePath)
+        filePath = correctPath(filePath)
 
         try:
             result = self.server.provider.updateFile(filePath)
@@ -498,15 +499,6 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             raise HttpError(400, str(e))
         self._lastResult = str(result.get("status", str(result)))
         self._sendJson(200, result)
-
-def _correctPathSeparator(path: str) -> str:
-    """Normalise path separators to the local OS convention."""
-    if not path:
-        return path
-    if os.sep == '\\':
-        return path.replace("/", "\\")
-    else:
-        return path.replace("\\", "/")
 
 
 def _shouldRecordHistory(rawPath: str, normalisedPath: str) -> bool:

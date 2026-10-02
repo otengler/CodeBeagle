@@ -258,9 +258,12 @@ def isProcessAlive(pid: int) -> bool:
         return True
 
 def correctPath(name: str) -> str:
-    if os.path.sep == "/":
-        return name.replace("\\", os.path.sep)
-    return name.replace("/", os.path.sep)
+    """Normalise path separators to the local OS convention."""
+    if not name:
+        return name
+    if os.sep == "/":
+        return name.replace("\\", os.sep)
+    return name.replace("/", os.sep)
 
 class TestConfig(unittest.TestCase):
     def test(self) -> None:

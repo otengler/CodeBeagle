@@ -21,9 +21,10 @@ Tests for JSON serialization, HTTP errors, and path separator correction.
 import os
 import unittest
 from typing import Any, Dict, List, cast
-from ..Server import HttpError, _contentResultToJson, _correctPathSeparator, _fileNameResultToJson, _hasExcludeFromHistory, _historyToJson
+from ..Server import HttpError, _contentResultToJson, _fileNameResultToJson, _hasExcludeFromHistory, _historyToJson
 from ..SearchProvider import ContentMatch, ContentSearchResult, FileSearchResult
 from ..AgentHistory import AgentHistory, HistoryEntry
+from tools.FileTools import correctPath
 
 
 class TestJsonConversion(unittest.TestCase):
@@ -143,19 +144,19 @@ class TestHttpError(unittest.TestCase):
 class TestPathSeparatorCorrection(unittest.TestCase):
     def test_windowsSeparator(self) -> None:
         if os.sep == '\\':
-            self.assertEqual(_correctPathSeparator("C:/src/proj"), "C:\\src\\proj")
+            self.assertEqual(correctPath("C:/src/proj"), "C:\\src\\proj")
         else:
-            self.assertEqual(_correctPathSeparator("C:/src/proj"), "C:/src/proj")
+            self.assertEqual(correctPath("C:/src/proj"), "C:/src/proj")
 
     def test_unixSeparator(self) -> None:
         if os.sep == '/':
-            self.assertEqual(_correctPathSeparator("C:\\src\\proj"), "C:/src/proj")
+            self.assertEqual(correctPath("C:\\src\\proj"), "C:/src/proj")
         else:
-            self.assertEqual(_correctPathSeparator("C:\\src\\proj"), "C:\\src\\proj")
+            self.assertEqual(correctPath("C:\\src\\proj"), "C:\\src\\proj")
 
     def test_mixedSeparators(self) -> None:
         expected = os.sep.join(["C:", "src", "proj"])
-        self.assertEqual(_correctPathSeparator("C:/src\\proj"), expected)
+        self.assertEqual(correctPath("C:/src\\proj"), expected)
 
     def test_emptyString(self) -> None:
-        self.assertEqual(_correctPathSeparator(""), "")
+        self.assertEqual(correctPath(""), "")

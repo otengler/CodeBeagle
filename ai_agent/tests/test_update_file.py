@@ -26,11 +26,12 @@ import unittest
 from typing import cast
 from unittest import mock
 
-from ..Server import HttpError, _correctPathSeparator
+from ..Server import HttpError
 from ..SearchProvider import SearchProvider
 from ..TtlCache import TTLCache
 from fulltextindex.IndexUpdater import IndexUpdater, UpdateStatistics
 from fulltextindex.IndexConfiguration import IndexConfiguration, IndexMode, IndexType
+from tools.FileTools import correctPath
 
 
 class TestIndexUpdaterUpdateFile(unittest.TestCase):
@@ -312,10 +313,10 @@ class TestIndexUpdateEndpoint(unittest.TestCase):
     def test_path_separator_correction(self) -> None:
         """Path separator correction should work for the file path."""
         if os.sep == '\\':
-            result = _correctPathSeparator("C:/test/file.py")
+            result = correctPath("C:/test/file.py")
             self.assertEqual(result, "C:\\test\\file.py")
         else:
-            result = _correctPathSeparator("C:\\test\\file.py")
+            result = correctPath("C:\\test\\file.py")
             self.assertEqual(result, "C:/test/file.py")
 
     def test_http_error(self) -> None:
