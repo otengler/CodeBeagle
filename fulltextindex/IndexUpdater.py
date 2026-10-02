@@ -36,14 +36,17 @@ def __fixExtension(ext: str) -> str:
         return ext 
     return ""
 
-def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]=None, ignoredExts: Optional[Dict[str, int]]=None) -> Iterator[Tuple[str,str]]:
+def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]=None, ignoredExts: Optional[Dict[str, int]]=None,
+            fileExcludes: Optional[List[str]]=None) -> Iterator[Tuple[str,str]]:
     dirExcludes = dirExcludes or []
+    fileExcludes = fileExcludes or []
 
     filepatFixed: Set[str] = set()
     for pat in (__fixExtension(pat) for pat in filepat):
         filepatFixed.add(pat)
 
     dirExcludes = [dir.lower() for dir in dirExcludes]
+    fileExcludes = [f.lower() for f in fileExcludes]
     for path, dirnames, filelist in os.walk(strRootDir):
         if dirExcludes:
             pathLower = path.lower()
@@ -59,6 +62,16 @@ def genFind(filepat: Set[str], strRootDir: str, dirExcludes: Optional[List[str]]
         for name in filelist:
             ext = os.path.splitext(name)[1].lower()
             if not filepatFixed or ext in filepatFixed:
+                # Check file exclude patterns against full path
+                if fileExcludes:
+                    fullPath = os.path.join(path, name).lower()
+                    skip = False
+                    for fe in fileExcludes:
+                        if fnmatch(fullPath, fe):
+                            skip = True
+                            break
+                    if skip:
+                        continue
                 yield (path, name)
             elif ignoredExts is not None:
                 ignoredExts[ext] = ignoredExts.get(ext, 0) + 1
@@ -92,6 +105,7 @@ class IndexUpdater (IndexDatabase):
         directories = config.directories
         extensions = config.extensions
         dirExcludes = config.dirExcludes or []
+        fileExcludes = config.fileExcludes or []
         indexType = config.indexType
 
         c = self.conn.cursor()
@@ -104,7 +118,7 @@ class IndexUpdater (IndexDatabase):
             for strRootDir in directories:
                 logging.info("Updating index in %s. Indexing %s", strRootDir, indexTypeToString(indexType))
                 ignoredExtCount: Dict[str, int] = {}
-                for dirName, fileName in genFind(extensions, strRootDir, dirExcludes, ignoredExtCount):
+                for dirName, fileName in genFind(extensions, strRootDir, dirExcludes, ignoredExtCount, fileExcludes):
                     strFullPath = os.path.join(dirName, fileName)
                     mTime = os.stat(strFullPath).st_mtime
                     docIdAndTimestamp = self.__getDocumentId(c, q, strFullPath, mTime)

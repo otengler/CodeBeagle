@@ -70,7 +70,7 @@ class SearchMethods:
                               cancelEvent: Optional[threading.Event]=None) -> ResultSet:
         matches: List[str] = []
         for directory in indexConf.directories:
-            for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
+            for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes, fileExcludes=indexConf.fileExcludes):
                 file = os.path.join(dirName, fileName)
                 if searchData.matchFolderAndExtensionFilter(file):
                     try:
@@ -131,7 +131,7 @@ class SearchMethods:
 
         matches: List[str] = []
         for directory in indexConf.directories:
-            for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes):
+            for dirName, fileName in IndexUpdater.genFind(indexConf.extensions, directory, indexConf.dirExcludes, fileExcludes=indexConf.fileExcludes):
                 fullPath = os.path.join(dirName, fileName)
                 name, ext = os.path.splitext(fileName)
                 if not hasWildcards:

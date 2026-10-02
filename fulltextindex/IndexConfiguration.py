@@ -50,7 +50,7 @@ def indexTypeToString(indexType: IndexType) -> str:
 class IndexConfiguration:
     def __init__(self, indexName:str="", extensions:str="", directories:str="", dirExcludes:str="", indexdb:str="",
                  indexUpdateMode:IndexMode=IndexMode.ManualIndexUpdate, indexType:IndexType=IndexType.FileContentAndName,
-                 apiAccess:bool=False) -> None:
+                 apiAccess:bool=False, fileExcludes:str="") -> None:
         self.indexName = indexName
         self.indexUpdateMode = IndexMode(indexUpdateMode)
         self.indexType = IndexType(indexType)
@@ -62,7 +62,22 @@ class IndexConfiguration:
             self.extensions.add(ext)
         # These list comprehensions split a string into a list making sure that an empty string returns an empty list
         self.directories = [correctPath(d) for d in (d.strip() for d in directories.split(",")) if len(d) > 0]
-        self.dirExcludes = [correctPath(d) for d in (d.strip() for d in dirExcludes.split(",")) if len(d) > 0]
+        # Directory exclude patterns: auto-wrap with * if no wildcard present so
+        # that a plain string like "build" matches any directory path containing "build"
+        self.dirExcludes: List[str] = []
+        for d in (d.strip() for d in dirExcludes.split(",") if len(d) > 0):
+            d = correctPath(d)
+            if "*" not in d and "?" not in d:
+                d = f"*{d}*"
+            self.dirExcludes.append(d)
+        # File exclude patterns: auto-wrap with *<sep> so that a plain string like
+        # "foo.txt" matches the full path *\foo.txt (any directory, specific file).
+        self.fileExcludes: List[str] = []
+        for f in (f.strip() for f in fileExcludes.split(",") if len(f) > 0):
+            f = correctPath(f)
+            if "*" not in f and "?" not in f:
+                f = os.path.join("*", f.lstrip(os.sep))
+            self.fileExcludes.append(f)
 
     def generatesIndex(self) -> bool:
         return self.indexUpdateMode != IndexMode.NoIndexWanted
@@ -83,6 +98,9 @@ class IndexConfiguration:
 
     def dirExcludesAsString(self) -> str:
         return ",".join(self.dirExcludes)
+
+    def fileExcludesAsString(self) -> str:
+        return ",".join(self.fileExcludes)
 
     # Return a display name. Either it is explicitely defined or the file part of the index database is used
     def displayName(self) -> str:
@@ -107,7 +125,8 @@ class IndexConfiguration:
         result += "Index type: " + self.indexType.name + "\n"
         result += "IndexDB    : " + self.indexdb + "\n"
         result += "Directories: " + str(self.directories) + "\n"
-        result += "Excludes   : " + str(self.dirExcludes) + "\n"
+        result += "DirExcludes: " + str(self.dirExcludes) + "\n"
+        result += "FileExcludes: " + str(self.fileExcludes) + "\n"
         result += "Extensions : " + str(self.extensions) + "\n"
         return result
 
@@ -122,6 +141,7 @@ class IndexConfiguration:
                self.indexdb == other.indexdb and \
                self.directories == other.directories and \
                self.dirExcludes == other.dirExcludes and \
+               self.fileExcludes == other.fileExcludes and \
                self.extensions == other.extensions
 
 # Configurates the type information for the index configuration
@@ -131,6 +151,7 @@ def indexTypeInfo(config: Config.Config) -> None:
     config.setType("indexUpdateMode", Config.typeDefaultInt(IndexMode.TriggeredIndexUpdate))
     config.setType("indexType", Config.typeDefaultInt(IndexType.FileContent))
     config.setType("dirExcludes", Config.typeDefaultString(""))
+    config.setType("fileExcludes", Config.typeDefaultString(""))
     config.setType("apiAccess", Config.typeDefaultBool(False))
 
 # Returns a list of Index objects from the config
@@ -161,5 +182,6 @@ def readConfig(conf: Config.Config) -> List[IndexConfiguration]:
         except AttributeError:
             directories = indexConf.directory
         dirExceptions = indexConf.dirExcludes
-        result.append(IndexConfiguration(indexName, extensions, directories, dirExceptions, indexdb, indexUpdateMode, indexType, apiAccess))
+        fileExceptions = indexConf.fileExcludes
+        result.append(IndexConfiguration(indexName, extensions, directories, dirExceptions, indexdb, indexUpdateMode, indexType, apiAccess, fileExceptions))
     return result

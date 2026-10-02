@@ -160,7 +160,8 @@ class LocationControl (QObject):
                                       editor.indexDB(),
                                       editor.indexUpdateMode(),
                                       editor.indexType(),
-                                      editor.apiAccess())
+                                      editor.apiAccess(),
+                                      editor.fileExcludes())
         self.model.setData(index, location, Qt.ItemDataRole.UserRole+1)
 
     def loadDataFromItem(self, index: QModelIndex) -> None:
@@ -176,7 +177,8 @@ class LocationControl (QObject):
                        location.indexUpdateMode,
                        location.indexdb,
                        location.indexType,
-                       location.apiAccess)
+                       location.apiAccess,
+                       location.fileExcludesAsString())
         editor.enable(not self.readOnly)
 
     def __updateShowExcludedButtonVisibility(self, location: Optional[IndexConfiguration]) -> None:
@@ -464,7 +466,8 @@ class SettingsDialog (QDialog):
                                              "",
                                              location.indexUpdateMode,
                                              location.indexType,
-                                             location.apiAccess)
+                                             location.apiAccess,
+                                             location.fileExcludesAsString())
             self.myLocations.addLocation(duplicated, True)
 
     @Slot()
@@ -510,6 +513,7 @@ class SettingsDialog (QDialog):
             locConf.extensions = location.extensionsAsString()
             locConf.directories =  location.directoriesAsString()
             locConf.dirExcludes = location.dirExcludesAsString()
+            locConf.fileExcludes = location.fileExcludesAsString()
             locConf.indexUpdateMode = location.indexUpdateMode
             locConf.indexType = location.indexType
             locConf.apiAccess = location.apiAccess

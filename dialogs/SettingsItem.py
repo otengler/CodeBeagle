@@ -45,6 +45,14 @@ class SettingsItem (QWidget):
             extLineEdit.textEdited.connect(self.dataChanged)
         self.ui.checkApiAccess.stateChanged.connect(self.dataChanged)
         self.ui.comboIndexUpdateMode.currentIndexChanged.connect(self.updateIndexModeChanged)
+
+        # Wire button signals in code (not in .ui file)
+        self.ui.buttonDirectory.clicked.connect(self.browseForDirectory)
+        self.ui.buttonBrowseIndexLocation.clicked.connect(self.browseForIndexDB)
+        self.ui.buttonShowExcluded.clicked.connect(self.showExcludedExtensions)
+        self.ui.buttonExcludeDirectory.clicked.connect(self.browseForExcludeDirectory)
+        self.ui.buttonExcludeFile.clicked.connect(self.browseForExcludeFile)
+
         self.__addEntriesForExtensionsCombo()
         self.__addEntriesForIndexUpdateModeCombo()
         self.__addEntriesForIndexTypeCombo()
@@ -109,6 +117,39 @@ class SettingsItem (QWidget):
             self.dataChanged.emit()
 
     @Slot()
+    def browseForExcludeDirectory(self) -> None:
+        directory = QFileDialog.getExistingDirectory (
+            self,
+            self.tr("Choose directory to exclude"),
+            "",
+            QFileDialog.Option(QFileDialog.Option.ShowDirsOnly))
+
+        if directory:
+            currentText = self.ui.editExcludeDirectories.text()
+            cleaned = FileTools.correctPath(directory)
+            if currentText:
+                self.ui.editExcludeDirectories.setText(currentText + "," + cleaned)
+            else:
+                self.ui.editExcludeDirectories.setText(cleaned)
+            self.dataChanged.emit()
+
+    @Slot()
+    def browseForExcludeFile(self) -> None:
+        file, _ = QFileDialog.getOpenFileName (
+            self,
+            self.tr("Choose file to exclude"),
+            "")
+
+        if file:
+            currentText = self.ui.editExcludeFiles.text()
+            cleaned = FileTools.correctPath(file)
+            if currentText:
+                self.ui.editExcludeFiles.setText(currentText + "," + cleaned)
+            else:
+                self.ui.editExcludeFiles.setText(cleaned)
+            self.dataChanged.emit()
+
+    @Slot()
     def browseForIndexDB(self) -> None:
         indexDB = QFileDialog.getSaveFileName(
             None,
@@ -123,10 +164,11 @@ class SettingsItem (QWidget):
     def nameSelectAll (self) -> None:
         self.ui.editName.selectAll()
 
-    def setData (self, name: str, directories: str, extensions: str,  dirExcludes: str, indexUpdateMode: IndexMode, indexDB: str, indexType: IndexType, apiAccess: bool = False) -> None:
+    def setData (self, name: str, directories: str, extensions: str,  dirExcludes: str, indexUpdateMode: IndexMode, indexDB: str, indexType: IndexType, apiAccess: bool = False, fileExcludes: str = "") -> None:
         self.ui.editName.setText (name)
         self.ui.editDirectories.setText (directories)
         self.ui.editExcludeDirectories.setText (dirExcludes)
+        self.ui.editExcludeFiles.setText (fileExcludes)
         extLineEdit = self.ui.comboExtensions.lineEdit()
         if extLineEdit:
             extLineEdit.setText (extensions)
@@ -157,6 +199,9 @@ class SettingsItem (QWidget):
     def dirExcludes (self) -> str:
         return self.ui.editExcludeDirectories.text()
 
+    def fileExcludes (self) -> str:
+        return self.ui.editExcludeFiles.text()
+
     def extensions (self) -> str:
         return self.ui.comboExtensions.currentText()
 
@@ -175,6 +220,7 @@ class SettingsItem (QWidget):
     def resetAndDisable(self) -> None:
         self.ui.editName.setText("")
         self.ui.editExcludeDirectories.setText("")
+        self.ui.editExcludeFiles.setText("")
         if le := self.ui.comboExtensions.lineEdit():
             le.setText("")
         self.ui.editDirectories.setText("")
@@ -186,6 +232,9 @@ class SettingsItem (QWidget):
     def enable(self, bEnable:bool=True) -> None:
         self.ui.editName.setEnabled(bEnable)
         self.ui.editExcludeDirectories.setEnabled(bEnable)
+        self.ui.buttonExcludeDirectory.setEnabled(bEnable)
+        self.ui.editExcludeFiles.setEnabled(bEnable)
+        self.ui.buttonExcludeFile.setEnabled(bEnable)
         self.ui.comboExtensions.setEnabled(bEnable)
         self.ui.editDirectories.setEnabled(bEnable)
         self.ui.buttonDirectory.setEnabled(bEnable)
