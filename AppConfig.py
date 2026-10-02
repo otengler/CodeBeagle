@@ -125,7 +125,7 @@ def agentConfig() -> Config.Config:
     agent.setType("defaultLimit", Config.typeDefaultInt(100))
     agent.setType("defaultExcludeDirs", Config.typeDefaultString(""))
     agent.setType("allowOrigin", Config.typeDefaultString(""))
-    agent.setType("searchTimeout", Config.typeDefaultInt(30))
+    agent.setType("searchTimeout", Config.typeDefaultInt(60))
     return agent
 
 def agentConfigTypeDefaults() -> Tuple[Callable[[Any], Any], Callable[[], Any], Callable[[Any], str]]:
