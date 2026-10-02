@@ -113,7 +113,12 @@ class SettingsItem (QWidget):
             QFileDialog.Option(QFileDialog.Option.ShowDirsOnly))
 
         if directory:
-            self.ui.editDirectories.setText (FileTools.correctPath(directory))
+            currentText = self.ui.editDirectories.text()
+            cleaned = FileTools.correctPath(directory)
+            if currentText:
+                self.ui.editDirectories.setText(currentText + "," + cleaned)
+            else:
+                self.ui.editDirectories.setText(cleaned)
             self.dataChanged.emit()
 
     @Slot()
