@@ -448,6 +448,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             )
         except ValueError as e:
             raise HttpError(404, str(e))
+        except TimeoutError as e:
+            self._lastResult = str(e)
+            raise HttpError(504, str(e))
         self._lastResult = f"{len(result.matches)} matches, {result.totalFiles} files"
         self._sendJson(200, _contentResultToJson(query, contextLines, result))
 
@@ -473,6 +476,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             )
         except ValueError as e:
             raise HttpError(404, str(e))
+        except TimeoutError as e:
+            self._lastResult = str(e)
+            raise HttpError(504, str(e))
         self._lastResult = f"{result.totalFiles} files"
         self._sendJson(200, _fileNameResultToJson(query, result))
 
