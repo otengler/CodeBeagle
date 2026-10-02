@@ -88,7 +88,7 @@ class IndexDatabase:
             raise RuntimeError("Database location cannot be empty")
 
         self.strDbLocation = strDbLocation
-        self.conn = sqlite3.connect(strDbLocation)
+        self.conn = sqlite3.connect(strDbLocation, check_same_thread=False)
 
         cursor = self.conn.cursor()
         cursor.execute("PRAGMA cache_size = -64000") # 64MB cache
