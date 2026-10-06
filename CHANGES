@@ -1,3 +1,11 @@
+1.4.0
+- Added agent API server which exposes content and file name search to AI agents (PI, Claude Code, Cursor, ChatGPT). It can run inside the UI or standalone as CodeBeagleAgentServer.exe
+- Added MCP server and a PI extension so AI agents can use CodeBeagle as a tool
+- Added "AI search" history page showing executed AI searches with a quick filter
+- Added setting to choose which indexes are offered to the API
+- Added syntax highlighting definitions for C#, CSS, HTML, JavaScript and Rust
+- Index configuration supports file excludes, directory and file excludes now support wild cards
+
 1.3.17
 - Use current filter setting for new tab when performing a CTRL+click search
 
