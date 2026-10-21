@@ -27,7 +27,7 @@ from typing import Optional
 from PySide6.QtCore import QSettings, QUrl, Slot, Qt
 from PySide6.QtGui import QDesktopServices, QCloseEvent, QColor
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
-from dialogs.UserHintDialog import ButtonType, showUserHint
+from dialogs.UserHintDialog import ButtonType, hintWouldBeShown, showUserHint
 from dialogs.RegExTesterDlg import RegExTesterDlg
 import AppConfig
 from widgets.LineNumberArea import LineNumberArea
@@ -135,7 +135,21 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: Optional[QCloseEvent]) -> None:
         if not event:
             return
-        if AppConfig.appConfig().showCloseConfirmation:
+        # If this instance is hosting the AI agent server, closing CodeBeagle
+        # stops it. Show a suppressible hint which also acts as the close
+        # confirmation so that only one dialog is shown.
+        from ai_agent.AgentState import agentServer
+        if agentServer() is not None and hintWouldBeShown("agentServerClose"):
+            text = self.tr("<p align='justify'>This CodeBeagle instance is hosting the "
+                           "AI agent server. The server will no longer be available after "
+                           "CodeBeagle is closed.<br><br>"
+                           "Do you really want to close the application?</p>")
+            if showUserHint(self, "agentServerClose", self.tr("AI agent server"), text,
+                            ButtonType.Yes, True, ButtonType.No, False,
+                            bShowHintAgain=True) != ButtonType.Yes:
+                event.ignore()
+                return
+        elif AppConfig.appConfig().showCloseConfirmation:
             res = QMessageBox.question(self,
                                        self.tr("Really close?"),
                                        self.tr("Do you really want to close the application?"),
