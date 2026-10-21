@@ -41,6 +41,13 @@ class TestResolveIndexConfig(unittest.TestCase):
         patcher = mock.patch.object(IndexConfiguration, "readConfig", return_value=configs)
         patcher.start()
         self.addCleanup(patcher.stop)
+        # The provider is created without __init__, so appConfig() would otherwise
+        # read config.txt relative to the current working directory.
+        config = mock.MagicMock()
+        config.agent.searchTimeout = 0
+        configPatcher = mock.patch("ai_agent.TimeoutEvent.appConfig", return_value=config)
+        configPatcher.start()
+        self.addCleanup(configPatcher.stop)
         return provider
 
     def _conf(self, name: str, directories: str, dirExcludes: str = "",
