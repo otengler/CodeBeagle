@@ -29,7 +29,7 @@ CodeBeagle is written in Python and based on SqLite and Qt.
   <li><a href="#contextmenu">Custom context menu entries</a></li>
   <li><a href="#customscripts">Custom search scripts</a></li>
   <li><a href="#customsyntaxhighlighting">Customizing syntax highlighting</a></li>
-  <li><a href="#aiagentapi">AI agent API server</a></li>
+  <li><a href="#aiagent">Agentic AI search</a></li>
   <li><a href="#license">License</a></li>
 </ul>
 <br/>
@@ -532,44 +532,202 @@ which is internally used to construct a <strong>QTextCharFormat</strong>:
 <br/>
 
 
-<a name="aiagentapi"/>
-<b>AI agent API server</b>
+<a name="aiagent"/>
+<b>Agentic AI search</b>
 <p>
-CodeBeagle can expose its search capabilities to AI agents (PI, Claude Code, Cursor, ChatGPT, and others)
-through a local HTTP API. The API is described in detail at
-<a href="http://localhost:__PORT__/api/v1/docs">http://localhost:__PORT__/api/v1/docs</a> once the server is running.
-The server offers content search, file name search and location discovery and respects the boundaries
-of the configured search locations.
+CodeBeagle can act as the search backend for AI coding agents (PI, Claude Code, Cursor, ChatGPT and
+others). Instead of letting an agent crawl the file system with tools like <strong>find</strong> or
+<strong>grep</strong>, CodeBeagle exposes its fast full text search through a local HTTP API. Agents can
+then run content searches and file name searches and receive the matching files together with surrounding
+context. The API only ever sees search locations for which API access has been granted explicitly, so an
+agent cannot read anything outside the configured boundaries.
 </p>
 <p>
-There are two ways to run the API server:
+Using agentic AI search consists of four steps:
+</p>
+<ol>
+  <li>Enable the AI agent server (see <a href="#aiagentenable">Enabling agentic AI search</a>).</li>
+  <li>Connect your agents (see <a href="#aiagentconnect">Connecting your agents</a>).</li>
+  <li>Allow the agent to access the desired search locations (see <a href="#aiagentaccess">Allowing access to search locations</a>).</li>
+  <li>Keep the indexes up to date so the agent sees your latest changes (see <a href="#aiagentupdate">Updating indexes for agents</a>).</li>
+</ol>
+<br/>
+
+<a name="aiagentenable"/>
+<b>Enabling agentic AI search</b>
+<p>
+Open the settings dialog (<strong>CTRL+S</strong>) and switch to the <strong>Agentic AI search</strong> page.
+Check <strong>Enable agentic AI search</strong>. The server is started immediately - no restart of CodeBeagle
+is required - and the status line below the checkbox turns into a green check mark showing the port the
+server is listening on. Unchecking the box stops the server again.
+</p>
+<p>
+The <strong>Listen port</strong> defaults to 8080. Changing the port restarts the server so that the new port
+takes effect immediately. Further settings can be changed in the <strong>agent</strong> section of "config.txt":
+</p>
+<table border="1" summary="Agent server configuration">
+  <tr>
+    <th>Setting</th>
+    <th>Meaning</th>
+    <th>Default</th>
+  </tr>
+  <tr>
+    <td>enabled</td>
+    <td>Start the server together with the UI. This is the setting behind the checkbox.</td>
+    <td>false</td>
+  </tr>
+  <tr>
+    <td>port</td>
+    <td>The TCP port the server listens on.</td>
+    <td>8080</td>
+  </tr>
+  <tr>
+    <td>bind</td>
+    <td>The address the server binds to. The default only allows connections from this machine.</td>
+    <td>127.0.0.1</td>
+  </tr>
+  <tr>
+    <td>contextLines</td>
+    <td>Default number of lines before and after each match that are returned to the agent.</td>
+    <td>2</td>
+  </tr>
+  <tr>
+    <td>defaultLimit</td>
+    <td>Default maximum number of matches returned per request.</td>
+    <td>100</td>
+  </tr>
+  <tr>
+    <td>searchTimeout</td>
+    <td>Maximum time in seconds for a search in a non-indexed location. Set to 0 to disable the timeout.</td>
+    <td>60</td>
+  </tr>
+  <tr>
+    <td>defaultExcludeDirs</td>
+    <td>Comma separated directory patterns (wildcards allowed) which are skipped when searching a non-indexed location.</td>
+    <td>empty</td>
+  </tr>
+</table>
+<p>
+There are two ways to run the server:
 </p>
 <ul>
   <li>
-    <strong>From inside the UI</strong> - Open the settings dialog and switch to the
-    "Agentic AI search" page. Check the <strong>Enable agentic AI search</strong> box to start the
-    server immediately on the configured port (default 8080). The server is started and stopped
-    together with CodeBeagle. Unchecking the box stops it again.
+    <strong>From inside the UI</strong> - This is the variant described above. The server runs in a background
+    thread and is stopped together with CodeBeagle. When you close CodeBeagle while it hosts the server, a hint
+    reminds you that the server will no longer be available.
   </li>
   <li>
-    <strong>As a standalone service</strong> - Run <strong>CodeBeagleAgentServer.exe</strong>.
-    This starts the same API server without a GUI. It reads its settings (port, bind address) from
-    the same configuration as the UI but ignores the "Enable agentic AI search" setting: the
-    standalone server always starts. This is useful to run the API permanently, for instance as a
-    scheduled task or Windows service, independent of whether CodeBeagle itself is running.
+    <strong>As a standalone service</strong> - Run <strong>CodeBeagleAgentServer.exe</strong>. It starts the
+    same API server without a GUI. It reads its settings (port, bind address) from the same configuration as
+    the UI but ignores the "enabled" setting: the standalone server always starts. This is useful to run the
+    API permanently, for instance as a scheduled task or Windows service, independent of whether CodeBeagle
+    itself is running.
   </li>
 </ul>
 <p>
 Only one server instance can run at a time because both variants use the same port. If
-<strong>CodeBeagleAgentServer.exe</strong> is already running, CodeBeagle detects it at start-up by
-calling the health endpoint of the API and then does not start its own instance. In that case the
-settings dialog shows the enable checkbox disabled and the "AI" history button on the search page
-stays available (the history of the external server is not visible in the UI because it is kept
-inside the separate process).
+<strong>CodeBeagleAgentServer.exe</strong> is already running, CodeBeagle detects it at start-up by calling
+the health endpoint of the API and then does not start its own instance. The settings dialog then shows the
+enable checkbox disabled and displays that the server is running externally. To let the UI manage the server,
+stop the standalone server first and then enable "Agentic AI search" in the settings.
+</p>
+<br/>
+
+<a name="aiagentconnect"/>
+<b>Connecting your agents</b>
+<p>
+The <strong>Agentic AI search</strong> settings page contains a group called <strong>Connect agents</strong>.
+Each button opens a dialog with concrete setup instructions for a different kind of agent:
+</p>
+<ul>
+  <li><strong>PI agent instructions</strong> - Installs the CodeBeagle PI extension and points it at the base
+  URL of the server.</li>
+  <li><strong>MCP compatible agents (Claude code, ChatGPT, Cursor ...)</strong> - Registers the CodeBeagle MCP
+  server (<strong>CodeBeagleMCP</strong>) which bridges MCP tools to the HTTP API. The dialog contains the exact
+  command or "mcp.json" content for the supported agents.</li>
+  <li><strong>Other agents</strong> - For agents which talk to the HTTP API directly. The dialog points to the API
+  documentation and to the base URL.</li>
+</ul>
+<p>
+The MCP server and the PI extension connect to <a href="http://localhost:__PORT__">http://localhost:__PORT__</a>,
+so make sure the port used by your agent matches the port configured on the settings page. Restart the agent
+(or reload its configuration) after the setup.
 </p>
 <p>
-If you want the UI to manage the server itself, stop the standalone server first and then enable
-"Agentic AI search" in the settings.
+Coding agents are trained to reach for tools like "grep" and "find". To make an agent prefer CodeBeagle, add a
+short rule to the project's <strong>AGENTS.md</strong> or <strong>CLAUDE.md</strong> which forbids shell based
+file search and instructs the agent to use the CodeBeagle tools instead. The settings page shows a ready to
+copy example in the <strong>Setup hints</strong> box below the "Connect agents" buttons.
+</p>
+<br/>
+
+<a name="aiagentaccess"/>
+<b>Allowing access to search locations</b>
+<p>
+Enabling the server does not automatically expose every search location. Access is granted per search location:
+</p>
+<ol>
+  <li>Open the settings dialog (<strong>CTRL+S</strong>).</li>
+  <li>Switch to the <strong>My search locations</strong> tab and select the location you want to expose.</li>
+  <li>Check <strong>Allow AI agent API access</strong> in the details of the location.</li>
+</ol>
+<p>
+Only search locations with this checkbox set are offered to the agent and can be searched through the API. All
+other locations stay invisible to the agent, even if it knows their name. This applies to content search and
+file name search alike and is independent of whether the location is indexed or not. The checkbox must be set
+for every location an agent shall be able to use and new locations default to no API access. A hint is shown
+the first time agentic AI search is enabled which points out this per-location setting.
+</p>
+<br/>
+
+<a name="aiagentupdate"/>
+<b>Updating indexes for agents</b>
+<p>
+If the agent shall see the changes you made in your editor or IDE, you must update the index. A search only
+sees files which were processed during the last index update, so until the index is refreshed the agent works
+with the previous state of those files. Update the index from the UI with the <strong>Update index</strong>
+button or by calling <strong>UpdateIndex.exe</strong> (see
+<a href="#updateindex">Updating indexed search locations</a>). The AI agents themselves are instructed to keep
+the index up to date for the files they create or modify by updating single files, so this manual step is only
+needed for changes made by you.
+</p>
+<p>
+<strong>Updating a single index:</strong> Use the <strong>-i</strong> (or <strong>--index</strong>) parameter
+to update only the named index. The parameter may be given more than once to update several indexes and index
+names are matched case insensitively. An index selected with <strong>-i</strong> is always updated, no matter
+which update mode is configured for it. The switch is not compatible with <strong>--jobmode</strong>.
+</p>
+<pre>UpdateIndex.exe -i MyIndex</pre>
+<p>
+This is especially useful when <strong>UpdateIndex.exe</strong> runs inside a sandbox. A sandbox usually only
+sees a subset of the file system - for instance only the project directory it was granted access to. If
+<strong>UpdateIndex.exe</strong> tried to update all configured indexes it would stumble over the directories
+outside the sandbox (they are either not visible or access is denied). By updating only the single index whose
+directories are visible inside the sandbox, the update completes cleanly and only files the sandbox may see are
+indexed. The resulting index reflects exactly what the sandboxed environment is allowed to read, which is what
+the agent running in that sandbox should search.
+</p>
+<br/>
+
+<a name="aiagenthistory"/>
+<b>Watching what the agent did</b>
+<p>
+As long as an agent server is available, the search page shows a small <strong>AI</strong> button. It opens the
+AI agent history which lists the API calls the agent executed (time, endpoint, parameters, number of results,
+status code and duration). The list can be filtered, reloaded and cleared. This is a convenient way to verify
+what an agent actually searched for and to spot queries which need a better hint in AGENTS.md. When an external
+<strong>CodeBeagleAgentServer.exe</strong> is running, the dialog fetches its history over the internal
+<strong>/api/v1/history</strong> endpoint, so the calls handled by the standalone server are shown as well.
+</p>
+<p>
+The API is documented in detail at
+<a href="http://localhost:__PORT__/api/v1/docs">http://localhost:__PORT__/api/v1/docs</a> and offers a health
+endpoint at <a href="http://localhost:__PORT__/api/v1/health">http://localhost:__PORT__/api/v1/health</a>,
+which is handy to check from a script whether the server is reachable.
+</p>
+<p>
+By default the server binds to <strong>127.0.0.1</strong> and there is no authentication, so it can only be
+reached from the local machine. Change the <strong>bind</strong> setting only if you understand the consequences.
 </p>
 <br/>
 
