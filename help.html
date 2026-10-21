@@ -563,50 +563,9 @@ server is listening on. Unchecking the box stops the server again.
 </p>
 <p>
 The <strong>Listen port</strong> defaults to 8080. Changing the port restarts the server so that the new port
-takes effect immediately. Further settings can be changed in the <strong>agent</strong> section of "config.txt":
+takes effect immediately. Further settings can be changed in the <strong>agent</strong> section of "config.txt"
+(see <a href="#aiagentsettings">Agent server settings</a>).
 </p>
-<table border="1" summary="Agent server configuration">
-  <tr>
-    <th>Setting</th>
-    <th>Meaning</th>
-    <th>Default</th>
-  </tr>
-  <tr>
-    <td>enabled</td>
-    <td>Start the server together with the UI. This is the setting behind the checkbox.</td>
-    <td>false</td>
-  </tr>
-  <tr>
-    <td>port</td>
-    <td>The TCP port the server listens on.</td>
-    <td>8080</td>
-  </tr>
-  <tr>
-    <td>bind</td>
-    <td>The address the server binds to. The default only allows connections from this machine.</td>
-    <td>127.0.0.1</td>
-  </tr>
-  <tr>
-    <td>contextLines</td>
-    <td>Default number of lines before and after each match that are returned to the agent.</td>
-    <td>2</td>
-  </tr>
-  <tr>
-    <td>defaultLimit</td>
-    <td>Default maximum number of matches returned per request.</td>
-    <td>100</td>
-  </tr>
-  <tr>
-    <td>searchTimeout</td>
-    <td>Maximum time in seconds for a search in a non-indexed location. Set to 0 to disable the timeout.</td>
-    <td>60</td>
-  </tr>
-  <tr>
-    <td>defaultExcludeDirs</td>
-    <td>Comma separated directory patterns (wildcards allowed) which are skipped when searching a non-indexed location.</td>
-    <td>empty</td>
-  </tr>
-</table>
 <p>
 There are two ways to run the server:
 </p>
@@ -731,6 +690,56 @@ reached from the local machine. Change the <strong>bind</strong> setting only if
 </p>
 <br/>
 
+
+<a name="aiagentsettings"/>
+<b>Agent server settings</b>
+<p>
+The following settings can be changed in the <strong>agent</strong> section of "config.txt". They are only
+needed for special cases - the defaults are suitable for a typical local setup.
+</p>
+<table border="1" summary="Agent server configuration">
+  <tr>
+    <th>Setting</th>
+    <th>Meaning</th>
+    <th>Default</th>
+  </tr>
+  <tr>
+    <td>enabled</td>
+    <td>Start the server together with the UI. This is the setting behind the checkbox on the Agentic AI search page.</td>
+    <td>false</td>
+  </tr>
+  <tr>
+    <td>port</td>
+    <td>The TCP port the server listens on.</td>
+    <td>8080</td>
+  </tr>
+  <tr>
+    <td>bind</td>
+    <td>The address the server binds to. The default only allows connections from this machine.</td>
+    <td>127.0.0.1</td>
+  </tr>
+  <tr>
+    <td>contextLines</td>
+    <td>Default number of lines before and after each match that are returned to the agent.</td>
+    <td>2</td>
+  </tr>
+  <tr>
+    <td>defaultLimit</td>
+    <td>Default maximum number of matches returned per request.</td>
+    <td>100</td>
+  </tr>
+  <tr>
+    <td>searchTimeout</td>
+    <td>Maximum time in seconds for a search in a non-indexed location. Set to 0 to disable the timeout.</td>
+    <td>60</td>
+  </tr>
+  <tr>
+    <td>defaultExcludeDirs</td>
+    <td>Comma separated directory patterns (wildcards allowed) which are skipped when searching a non-indexed location.</td>
+    <td>empty</td>
+  </tr>
+</table>
+<br/>
 
 <b><a name="license">License</a></b>
 <p>
