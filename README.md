@@ -37,4 +37,6 @@ Visual Studio C++ runtime (x64) is a prerequisite on Windows. Fetch it from here
 
 ![main-dark](/../screenshots/screenshots/main-dark.png?raw=true "Main windows (dark theme)")
 
+![options](/../screenshots/screenshots/ai-options.png?raw=true "AI options")
+
 
