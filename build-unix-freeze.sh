@@ -57,7 +57,7 @@ if [ "$1" == "linux" ]; then
   rm $BUILDDIR/lib/termios.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/mmap.cpython-$PYVER-x86_64-linux-gnu.so
   # PySide6
-  # rm -r $BUILDDIR/lib/PySide6/translations
+  # rm -r $BUILDDIR/lib/PySide6/Qt/translations
   # Clean all files in lib from the other directories. They are duplicates
   #SOURCE_LIB_DIR="$BUILDDIR/lib/PySide6"
   #PLUGIN_DIR="$BUILDDIR/lib/PySide6/plugins"

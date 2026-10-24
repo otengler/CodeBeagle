@@ -3,15 +3,21 @@ A tool to search source code based on a full text index.
 
 CodeBeagle allows you to quickly find all occurrences of a search term inside source code files. It can handle large projects with thousands of files with a very good performance. To do so it creates a full text index of the desired source files. Because it is tolerant to whitespace its search syntax works great for searching source code. The search results are displayed in a source viewer with customizable syntax highlighting. It runs without installation and leaves you in full control when to update the index. Advanced features are the support of multiple search locations, extensible context menus and custom search scripts which allow to automate sequences of searches.
 
+AI agents are supported too! You can accelerate the code search performed by your agents by giving them access to specific CodeBeagle indexes.
+Get instant results instead of waiting for your agent to finish a `grep` or `find` call.
+
 Change log can be found here: ![CHANGES](/CHANGES)
 
 Download here: https://github.com/otengler/CodeBeagle/releases/latest
 
-Visual Studio 2015 C++ runtime (x64) is a prerequisite. Fetch it from here if needed: https://www.microsoft.com/en-us/download/details.aspx?id=48145
+Visual Studio C++ runtime (x64) is a prerequisite on Windows. Fetch it from here if needed: https://aka.ms/vc14/vc_redist.x64.exe
 
 # Features
 - Lightning fast code search
 - Indexes multiple directories, lets you choose file extensions to index
+- AI agent support accelerates your agentic tasks. Supports:
+  - MCP server (Claude, ChatGTP, Cursor, ...)
+  - PI Coding agent
 - Search in file content or for file name
 - Search indexed and not indexed locations
 - Source viewer with customizable syntax highlighting
