@@ -40,7 +40,7 @@ jobs:
       id: get_version
       run: echo "version=$(node -p "JSON.parse(fs.readFileSync('./VERSION', 'utf8')).local")" >> $GITHUB_OUTPUT
     - name: MacOS build result
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}
         path: build/CodeBeagle

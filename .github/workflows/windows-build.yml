@@ -15,9 +15,9 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     - name: Set up Python 3
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: "3.14"
     - name: Install dependencies
@@ -25,7 +25,7 @@ jobs:
         python.exe -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Setup Node.js environment
-      uses: actions/setup-node@v3.2.0
+      uses: actions/setup-node@v7
     - name: Run build
       run: .\build-windows-freeze.ps1
     - name: Run mypy
@@ -37,7 +37,7 @@ jobs:
       shell: bash
       run: echo "version=$(node -p "JSON.parse(fs.readFileSync('./VERSION', 'utf8')).local")" >> $GITHUB_OUTPUT
     - name: Windows build result
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: CodeBeagle.Windows.${{ steps.get_version.outputs.version }}
         path: build/CodeBeagle
