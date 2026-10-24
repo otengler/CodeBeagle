@@ -30,16 +30,21 @@ if [ "$1" == "linux" ]; then
   PYVER=`python3 build-GetPyVer.py`
   # Keep the following modules: they are imported by the MCP server
   # (CodeBeagleMCP) via pydantic/mcp: decimal, queue, multiprocessing, bz2, lzma
+  #rm $BUILDDIR/lib/_codecs_kr.cpython-$PYVER-x86_64-linux-gnu.so
+  #rm $BUILDDIR/lib/_codecs_tw.cpython-$PYVER-x86_64-linux-gnu.so
+  #rm $BUILDDIR/lib/_codecs_jp.cpython-$PYVER-x86_64-linux-gnu.so
+  #rm $BUILDDIR/lib/_codecs_hk.cpython-$PYVER-x86_64-linux-gnu.so
+  #rm $BUILDDIR/lib/_codecs_cn.cpython-$PYVER-x86_64-linux-gnu.so
+  #rm $BUILDDIR/lib/_contextvars.cpython-$PYVER-x86_64-linux-gnu.so
+  #rm -r $BUILDDIR/lib/ctypes
+  #rm -r $BUILDDIR/lib/xml
+  #rm -r $BUILDDIR/lib/xmlrpc
   rm $BUILDDIR/lib/libreadline-2c5f7b8d.so.6.2
   rm $BUILDDIR/lib/libffi-af4ed708.so.6.0.1
-  rm $BUILDDIR/lib/_codecs_kr.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_tw.cpython-$PYVER-x86_64-linux-gnu.so
+  rm $BUILDDIR/lib/_codecs_iso2022.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_posixshmem.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_jp.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_hk.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/fcntl.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/pyexpat.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_cn.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/grp.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_heapq.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_ctypes.cpython-$PYVER-x86_64-linux-gnu.so
@@ -48,29 +53,24 @@ if [ "$1" == "linux" ]; then
   rm $BUILDDIR/lib/readline.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_pickle.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_statistics.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_contextvars.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/_bisect.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/termios.cpython-$PYVER-x86_64-linux-gnu.so
   rm $BUILDDIR/lib/mmap.cpython-$PYVER-x86_64-linux-gnu.so
-  rm $BUILDDIR/lib/_codecs_iso2022.cpython-$PYVER-x86_64-linux-gnu.so
-  rm -r $BUILDDIR/lib/ctypes
-  rm -r $BUILDDIR/lib/xml
-  rm -r $BUILDDIR/lib/xmlrpc
   # PySide6
-  rm -r $BUILDDIR/lib/PySide6/translations
+  # rm -r $BUILDDIR/lib/PySide6/translations
   # Clean all files in lib from the other directories. They are duplicates
-  SOURCE_LIB_DIR="$BUILDDIR/lib/PySide6"
-  PLUGIN_DIR="$BUILDDIR/lib/PySide6/plugins"
+  #SOURCE_LIB_DIR="$BUILDDIR/lib/PySide6"
+  #PLUGIN_DIR="$BUILDDIR/lib/PySide6/plugins"
   # Ensure both directories exist
-  if [[ ! -d "$SOURCE_LIB_DIR" || ! -d "$PLUGIN_DIR" ]]; then
-    echo "Error: lib or plugins directory does not exist"
-    exit 1
-  fi
+  #if [[ ! -d "$SOURCE_LIB_DIR" || ! -d "$PLUGIN_DIR" ]]; then
+  #  echo "Error: lib or plugins directory does not exist"
+  #  exit 1
+  #fi
   # Get unique filenames from SOURCE_DIR
-  find "$SOURCE_LIB_DIR" -type f -printf "%f\n" | sort -u | while read -r filename; do
+  #find "$SOURCE_LIB_DIR" -type f -printf "%f\n" | sort -u | while read -r filename; do
     # Find and delete all matching filenames in TARGET_DIR
-    find "$PLUGIN_DIR" -type f -name "$filename" -exec rm -f {} \;
-  done  
+  #  find "$PLUGIN_DIR" -type f -name "$filename" -exec rm -f {} \;
+  #done  
 fi
 if [ "$1" == "mac" ]; then
   echo "Cleanup MAC"
