@@ -168,7 +168,7 @@ def cleanupCrash(jobDir: str, removeTriggerFiles: bool = False) -> None:
         except:
             pass
 
-    if jobDir:
+    if jobDir and os.path.isdir(jobDir):
         files = os.listdir(jobDir)
         for file in files:        
             if file.endswith(".running"):
