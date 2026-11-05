@@ -49,12 +49,14 @@ if [ "$1" == "linux" ]; then
   rm $BUILDDIR/lib/mmap.cpython-$PYVER-x86_64-linux-gnu.so
   # PySide6/Qt parts not needed for the Linux distribution
   rm -r $BUILDDIR/share \
+    $BUILDDIR/lib/PySide6/QtNetwork.abi3.so \
     $BUILDDIR/lib/PySide6/Qt/translations \
     $BUILDDIR/lib/PySide6/Qt/plugins/{iconengines,tls,egldeviceintegrations,networkinformation,platforminputcontexts} \
     $BUILDDIR/lib/PySide6/Qt/lib/libQt6{EglFSDeviceIntegration,QmlWorkerScript,OpenGL,Quick,VirtualKeyboard,EglFsKmsSupport}.so.6 \
     $BUILDDIR/lib/PySide6/Qt/lib/libQt6{QmlMeta,WaylandEglCompositorHwIntegration,VirtualKeyboardQml,Qml,Pdf,QmlModels,Network}.so.6 \
     $BUILDDIR/lib/PySide6/Qt/plugins/platforms/libq{minimal,linuxfb,vkkhrdisplay,minimalegl,eglfs,vnc}.so \
     $BUILDDIR/lib/PySide6/Qt/plugins/imageformats/libq{icns,pdf,wbmp,tiff,jpeg,ico,tga,svg,webp}.so
+    
 fi
 if [ "$1" == "mac" ]; then
   echo "Cleanup MAC"
