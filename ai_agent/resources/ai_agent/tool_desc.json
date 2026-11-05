@@ -3,7 +3,6 @@
         "desc": [
             "Leverages the fast CodeBeagle search engine for code exploration. Use instead of 'grep'.",
             "Query syntax: 'a' searches for 'a'. 'a b' searches for 'a' followed by 'b'. Whitespace does not matter. Use '*' as wildcard: 'a b*'. See parameter 'query' for details.",
-            "regex ('code <!\\d+!>').",
             "User parameter 'folder' to specify the absolute root where to search.",
             "By default returns matching lines with 2 lines surrounding context.",
             "Set contextLines=0 for compact output (path:line: full matching line, no context lines).",

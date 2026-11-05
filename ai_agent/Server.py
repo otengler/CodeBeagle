@@ -29,9 +29,9 @@ from urllib.parse import parse_qsl
 from AppConfig import appConfig
 from tools.FileTools import correctPath
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
+from .PiExtension import resolvePiExtension
 from .SearchProvider import SearchProvider, ContentSearchResult, FileSearchResult
 from .TtlCache import TTLCache
-from .ToolDescription import tool_desc
 
 logger = logging.getLogger(__name__)
 
@@ -338,23 +338,10 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
 
     def _servePiExtension(self) -> None:
         """Serve the PI extension TypeScript file for download.
-        Replaces __TOOL_DESC_*__ markers with actual tool descriptions from tool_desc.json.
+        Replaces the __...__ markers with actual tool descriptions from tool_desc.json.
         """
-        tool_names = ["codebeagle_content_search", "codebeagle_file_search", "codebeagle_list_indexes", "codebeagle_health", "codebeagle_update_file"]
         try:
-            extensionPath = os.path.join("resources", "ai_agent", "pi", "extensions", "codebeagle.ts")
-            with open(extensionPath, "r", encoding="utf-8") as f:
-                content = f.read()
-
-            for tool_name in tool_names:
-                tool = tool_desc(tool_name)
-                shortName = tool_name.replace("codebeagle_","").upper()
-                content = content.replace(f"__TOOL_DESC_{shortName}__", tool.desc)
-                content = content.replace(f"__PROMPT_SNIPPET_{shortName}__", tool.desc)
-                content = content.replace(f"\"__PROMPT_GUIDELINES_{shortName}__\"", json.dumps(tool.promptGuidelines))
-                for param_name, param_desc in tool.params.items():
-                    content = content.replace(f"__PARAM_DESC_{shortName}_{param_name.upper()}__", param_desc)
-                
+            content = resolvePiExtension(os.path.join("resources", "ai_agent"))
             body = content.encode("utf-8")
             self._statusCode = 200
             self.send_response(200)
@@ -364,8 +351,8 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             self._sendCorsHeaders()
             self.end_headers()
             self.wfile.write(body)
-        except FileNotFoundError:
-            self._sendError(404, f"Resource not found: {extensionPath}")
+        except FileNotFoundError as e:
+            self._sendError(404, f"Resource not found: {e.filename}")
         except Exception as e:
             logger.exception("Failed to serve PI extension")
             self._sendError(500, str(e))

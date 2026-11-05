@@ -52,6 +52,12 @@ class ToolDescription:
 
 TOOL_DATA: Dict[str, ToolDescription] = {}
 
+def loadToolDescriptions(path: str) -> Dict[str, ToolDescription]:
+    """Load all tool descriptions from a tool_desc.json file."""
+    with open(path, "r", encoding="utf-8") as _f:
+        data = json.load(_f)
+    return {tool_key: ToolDescription.fromJson(tool_data) for tool_key, tool_data in data.items()}
+
 def tool_desc(tool_key: str) -> ToolDescription:
     """Build tool scription"""
     global TOOL_DATA   
@@ -60,13 +66,10 @@ def tool_desc(tool_key: str) -> ToolDescription:
     return TOOL_DATA[tool_key]
 
 def _loadToolDescription() -> None:
-    global TOOL_DATA   
+    global TOOL_DATA
+    toolDescPath = os.path.join("resources", "ai_agent", "tool_desc.json")
     try:
-        toolDescPath = os.path.join("resources", "ai_agent", "tool_desc.json")
-        with open(toolDescPath, "r", encoding="utf-8") as _f:
-            data = json.load(_f)
-        for tool_key, tool_data in data.items():
-            TOOL_DATA[tool_key] = ToolDescription.fromJson(tool_data)
+        TOOL_DATA = loadToolDescriptions(toolDescPath)
     except Exception as e:
         raise RuntimeError("Could not load tool_desc.json from %s: %s", toolDescPath, e)
 
