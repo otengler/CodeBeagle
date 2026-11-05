@@ -3,12 +3,13 @@ name: MacOS build
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -44,4 +45,21 @@ jobs:
       with:
         name: CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}
         path: build/CodeBeagle
+    - name: Package macOS zip
+      if: startsWith(github.ref, 'refs/tags/')
+      run: zip -r CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}.zip build/CodeBeagle
+    - name: Attach to release
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        asset="CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}.zip"
+
+        # The three platform jobs run in parallel and may race to create the release.
+        for attempt in 1 2 3 4 5; do
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && break
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag && break
+          sleep 5
+        done
+        gh release upload "$GITHUB_REF_NAME" "$asset" --clobber
 
