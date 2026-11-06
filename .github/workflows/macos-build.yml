@@ -55,10 +55,19 @@ jobs:
       run: |
         asset="CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}.zip"
 
+        # Use the matching section from CHANGES as the release body, falling back
+        # to auto-generated notes when there is no entry for this version.
+        notes_args=(--generate-notes)
+        section=$(python tools/ReleaseNotes.py "${GITHUB_REF_NAME#v}" CHANGES)
+        if [ -n "$section" ]; then
+          printf '%s\n' "$section" > release-notes.md
+          notes_args=(--notes-file release-notes.md)
+        fi
+
         # The three platform jobs run in parallel and may race to create the release.
         for attempt in 1 2 3 4 5; do
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && break
-          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag && break
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" "${notes_args[@]}" --verify-tag && break
           sleep 5
         done
         gh release upload "$GITHUB_REF_NAME" "$asset" --clobber

@@ -2,7 +2,7 @@
 
 The three build workflows (`windows-build.yml`, `linux-build.yml`, `macos-build.yml`)
 trigger on tags matching `v*`. Each one builds, packages its asset, and attaches it to
-the GitHub Release automatically (created on first upload, notes auto-generated).
+the GitHub Release automatically (created on first upload, notes taken from `CHANGES`).
 No manual download or upload is required.
 
 ## Prerequisites (once)
@@ -29,9 +29,9 @@ Edit `VERSION` (repo root) and set **both** fields to the new release number:
 
 ### 2. (Optional) Add a `CHANGES` entry
 
-Add an entry at the top of `CHANGES` for the new version. Note: GitHub release notes are
-auto-generated from commits via `--generate-notes`, so `CHANGES` is only the in-repo
-changelog, not the release description.
+Add an entry at the top of `CHANGES` for the new version. The release body for the
+version is extracted from this section by `tools/ReleaseNotes.py`; auto-generated notes
+are only used as a fallback when a version has no `CHANGES` entry.
 
 ### 3. Verify locally
 
@@ -60,7 +60,8 @@ git push origin v1.4.1
 ### 6. Wait
 
 The tag push triggers all three build workflows. Each builds, packages its asset, and
-attaches it to the automatically created release `v1.4.1` with auto-generated notes:
+attaches it to the automatically created release `v1.4.1` using the matching `CHANGES`
+section as the release notes:
 
 | Platform | Asset                                  |
 | -------- | -------------------------------------- |
