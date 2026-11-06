@@ -18,6 +18,10 @@
  *        "baseUrl": "http://127.0.0.1:8080"
  *      }
  *  - http://127.0.0.1:8080 default
+ *
+ * Every request carries an "x-agent: pi" header so the server can tell who
+ * called the API. The health call also sends the extension version as the
+ * "pi-version" query parameter; the server reports an update if it is older.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -70,6 +74,13 @@ function resolveBaseUrl(): string {
 
 const BASE_URL = resolveBaseUrl();
 
+// Identifies this extension to the CodeBeagle agent server.
+const AGENT_NAME = "pi";
+
+// Version of this extension. Kept in sync with PI_EXTENSION_VERSION on the
+// server (replaced when the extension is generated/served).
+const PI_VERSION = "__PI_EXTENSION_VERSION__";
+
 const SERVER_DOWN_HINT =
   `The CodeBeagle agent server is not reachable at ${BASE_URL}. ` +
   `Run the CodeBeagle GUI and enable the 'AI agent' or use the standalone CodeBeagleAgentServer.`;
@@ -87,7 +98,7 @@ async function callApi(
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-agent": AGENT_NAME },
       body: body ? JSON.stringify(body) : undefined,
       signal,
     });
@@ -269,11 +280,16 @@ export default function (pi: ExtensionAPI) {
     description: "__TOOL_DESC_HEALTH__",
     parameters: Type.Object({}),
     async execute() {
-      const result = await callApi("/api/v1/health", "GET");
+      const result = await callApi(
+        `/api/v1/health?pi-version=${encodeURIComponent(PI_VERSION)}`,
+        "GET"
+      );
+      let text = `CodeBeagle agent server at ${BASE_URL}: ${JSON.stringify(result)}`;
+      if (result.updateAvailable && result.updateMessage) {
+        text = `${result.updateMessage}\n\n${text}`;
+      }
       return {
-        content: [
-          { type: "text", text: `CodeBeagle agent server at ${BASE_URL}: ${JSON.stringify(result)}` },
-        ],
+        content: [{ type: "text", text }],
         details: result,
       };
     },

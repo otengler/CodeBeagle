@@ -21,7 +21,8 @@ Tests for JSON serialization, HTTP errors, and path separator correction.
 import os
 import unittest
 from typing import Any, Dict, List, cast
-from ..Server import HttpError, _contentResultToJson, _fileNameResultToJson, _hasExcludeFromHistory, _historyToJson
+from ..Server import HttpError, _contentResultToJson, _fileNameResultToJson, _hasExcludeFromHistory, _healthResponse, _historyToJson
+from ..PiExtension import PI_EXTENSION_VERSION
 from ..SearchProvider import ContentMatch, ContentSearchResult, FileSearchResult
 from ..AgentHistory import AgentHistory, HistoryEntry
 from tools.FileTools import correctPath
@@ -160,3 +161,36 @@ class TestPathSeparatorCorrection(unittest.TestCase):
 
     def test_emptyString(self) -> None:
         self.assertEqual(correctPath(""), "")
+
+
+class TestHealthResponse(unittest.TestCase):
+    def test_externalCaller(self) -> None:
+        """No x-agent header -> plain status response for external callers."""
+        self.assertEqual(_healthResponse("", None, "localhost:8080"), {"status": "ok"})
+
+    def test_piUpToDate(self) -> None:
+        r = _healthResponse("pi", PI_EXTENSION_VERSION, "localhost:8080")
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["agent"], "pi")
+        self.assertEqual(r["piVersion"], PI_EXTENSION_VERSION)
+        self.assertEqual(r["piVersionCurrent"], PI_EXTENSION_VERSION)
+        self.assertNotIn("updateAvailable", r)
+
+    def test_piOutdated(self) -> None:
+        r = _healthResponse("pi", "0", "localhost:8080")
+        self.assertEqual(r["piVersion"], "0")
+        self.assertTrue(r["updateAvailable"])
+        message = str(r["updateMessage"])
+        self.assertIn("pi-extension", message)
+        self.assertIn("localhost:8080", message)
+
+    def test_piMissingVersion(self) -> None:
+        r = _healthResponse("pi", None, "localhost:8080")
+        self.assertEqual(r["piVersion"], "")
+        self.assertTrue(r["updateAvailable"])
+
+    def test_mcpHasNoVersionInfo(self) -> None:
+        r = _healthResponse("mcp", None, "localhost:8080")
+        self.assertEqual(r["agent"], "mcp")
+        self.assertNotIn("piVersion", r)
+        self.assertNotIn("updateAvailable", r)

@@ -54,6 +54,27 @@ Returns a simple status check. Use this to verify the server is running.
 }
 ```
 
+**Agent identification:** Callers may send an `x-agent` header to identify themselves
+(`pi` for the PI extension, `mcp` for the MCP server). Requests without this header are
+treated as external callers. The server uses the header to identify the caller.
+
+The PI extension also sends its extension version as the `pi-version` query parameter
+(e.g. `GET /health?pi-version=1`). If the version is older than the one shipped with the
+server, the response contains an update notice:
+
+```json
+{
+  "status": "ok",
+  "agent": "pi",
+  "piVersion": "1",
+  "piVersionCurrent": "2",
+  "updateAvailable": true,
+  "updateMessage": "The CodeBeagle PI extension is outdated ..."
+}
+```
+
+`GET /health` still requires no parameters and returns the plain status for external callers.
+
 ---
 
 ### `GET /api/v1/locations`

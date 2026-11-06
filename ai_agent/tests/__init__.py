@@ -17,18 +17,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from .test_cache import TestTTLCache
-from .test_json import TestJsonConversion, TestHttpError, TestPathSeparatorCorrection
+from .test_json import TestJsonConversion, TestHttpError, TestHealthResponse, TestPathSeparatorCorrection
 from .test_history import TestAgentHistory
 from .test_content_pagination import TestContentSearchPagination
 from .test_filename_pagination import TestFileNameSearchPagination
 from .test_resolve_config import TestResolveIndexConfig
 from .test_agent_state import TestAgentState
 from .test_update_file import TestIndexUpdaterUpdateFile, TestSearchProviderUpdateFile, TestIndexUpdateEndpoint
+from .test_pi_extension import TestPiExtension
 
 __all__ = [
     "TestTTLCache",
     "TestJsonConversion",
     "TestHttpError",
+    "TestHealthResponse",
     "TestPathSeparatorCorrection",
     "TestAgentHistory",
     "TestContentSearchPagination",
@@ -38,4 +40,5 @@ __all__ = [
     "TestIndexUpdaterUpdateFile",
     "TestSearchProviderUpdateFile",
     "TestIndexUpdateEndpoint",
+    "TestPiExtension",
 ]

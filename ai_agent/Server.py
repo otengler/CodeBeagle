@@ -29,7 +29,7 @@ from urllib.parse import parse_qsl
 from AppConfig import appConfig
 from tools.FileTools import correctPath
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
-from .PiExtension import resolvePiExtension
+from .PiExtension import PI_EXTENSION_VERSION, resolvePiExtension
 from .SearchProvider import SearchProvider, ContentSearchResult, FileSearchResult
 from .TtlCache import TTLCache
 
@@ -98,7 +98,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             elif path in ("/api/v1/pi-extension", "/pi-extension"):
                 self._servePiExtension()
             elif path in ("/api/v1/health", "/health"):
-                self._sendJson(200, {"status": "ok"})
+                self._handleHealth()
             elif path in ("/api/v1/history", "/history"):
                 self._handleHistory()
             elif path in ("/api/v1/locations", "/locations"):
@@ -211,6 +211,14 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             return ""
         parts = [f"{key}: '{value}'" for key, value in parse_qsl(query)]
         return ", ".join(parts)
+
+    def _getQueryParam(self, name: str) -> Optional[str]:
+        """Return the first value of the named query string parameter, or None."""
+        query = self.path.split("?", 1)[1] if "?" in self.path else ""
+        for key, value in parse_qsl(query, keep_blank_values=True):
+            if key == name:
+                return value
+        return None
 
     def _agentConfig(self) -> Any:
         return appConfig().agent
@@ -384,6 +392,14 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             logger.exception("Failed to serve resource %s", relPath)
             self._sendError(500, str(e))
 
+    def _handleHealth(self) -> None:
+        """Serve the health check. The PI extension reports its version via the
+        'pi-version' query parameter so the server can flag an outdated extension."""
+        agent = self.headers.get("x-agent", "")
+        installedVersion = self._getQueryParam("pi-version")
+        host = self.headers.get("Host", "localhost")
+        self._sendJson(200, _healthResponse(agent, installedVersion, host))
+
     def _handleLocations(self) -> None:
         locations = self.server.provider.getLocations()
         data = {
@@ -507,6 +523,39 @@ def _hasExcludeFromHistory(path: str) -> bool:
     """
     query = path.split("?", 1)[1] if "?" in path else ""
     return any(key == "excludeFromHistory" for key, _ in parse_qsl(query, keep_blank_values=True))
+
+
+def _healthResponse(agent: str, installedPiVersion: Optional[str], host: str) -> Dict[str, object]:
+    """Build the response body for the health endpoint.
+
+    Requests without an 'x-agent' header come from external callers and get the
+    plain status response. When the PI extension calls (agent == 'pi') its
+    version is compared against PI_EXTENSION_VERSION and an update notice with
+    instructions is included if they differ.
+    """
+    response: Dict[str, object] = {"status": "ok"}
+    if agent:
+        response["agent"] = agent
+    if agent == "pi":
+        response["piVersion"] = installedPiVersion or ""
+        response["piVersionCurrent"] = PI_EXTENSION_VERSION
+        if installedPiVersion != PI_EXTENSION_VERSION:
+            response["updateAvailable"] = True
+            response["updateMessage"] = _piUpdateMessage(installedPiVersion, host)
+    return response
+
+
+def _piUpdateMessage(installedPiVersion: Optional[str], host: str) -> str:
+    """Instructions for the PI agent when its installed extension is outdated."""
+    extensionUrl = f"http://{host}/api/v1/pi-extension"
+    installed = installedPiVersion or "unknown"
+    return (
+        f"The CodeBeagle PI extension is outdated (installed: {installed}, "
+        f"required: {PI_EXTENSION_VERSION}). Update it now: download the latest "
+        f"extension from {extensionUrl} and overwrite the codebeagle.ts file in "
+        f"the PI user extension folder (e.g. ~/.pi/agent/extensions/). Then "
+        f"reload PI (e.g. /reload) so the new extension is loaded."
+    )
 
 
 def _contentResultToJson(query: Union[str, List[str]], contextLines: int, result: ContentSearchResult) -> Dict[str, object]:

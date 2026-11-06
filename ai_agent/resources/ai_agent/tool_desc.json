@@ -65,6 +65,7 @@
     "codebeagle_health": {
         "desc": [
             "Check whether the CodeBeagle agent server is running and reachable.",
+            "Also reports whether the installed PI extension is up to date and how to update it.",
             "Use this when a codebeagle_* tool reports that the server is down."
         ]
     },

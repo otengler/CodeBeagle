@@ -126,6 +126,7 @@ class TestCodeBeagleClient(unittest.TestCase):
         self.assertEqual(request.get_full_url(), "http://127.0.0.1:8080/api/v1/health")
         self.assertEqual(request.get_method(), "GET")
         self.assertIsNone(request.data)
+        self.assertEqual(request.get_header("X-agent"), "mcp")
 
     def test_post(self) -> None:
         with mock.patch("urllib.request.urlopen", return_value=_FakeResponse(b'{"totalFiles": 0, "matches": []}')) as urlopen:
@@ -135,6 +136,7 @@ class TestCodeBeagleClient(unittest.TestCase):
         self.assertEqual(request.get_full_url(), "http://127.0.0.1:8080/api/v1/search/content")
         self.assertEqual(request.get_method(), "POST")
         self.assertEqual(request.get_header("Content-type"), "application/json")
+        self.assertEqual(request.get_header("X-agent"), "mcp")
         import json
         self.assertEqual(json.loads(cast(bytes, request.data)), {"query": "target", "contextLines": 0})
 

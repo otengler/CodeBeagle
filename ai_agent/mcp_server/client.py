@@ -21,6 +21,10 @@ import urllib.error
 import urllib.request
 from typing import Any, Dict, Optional
 
+# Sent as the "x-agent" header so the CodeBeagle agent server can tell that the
+# call came from the MCP server. Requests without this header are external.
+AGENT_NAME = "mcp"
+
 class ApiError(Exception):
     """An error returned by the CodeBeagle HTTP API."""
 
@@ -88,7 +92,7 @@ class CodeBeagleClient:
                  body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         url = self.baseUrl + path
         data: Optional[bytes] = None
-        headers: Dict[str, str] = {}
+        headers: Dict[str, str] = {"x-agent": AGENT_NAME}
         if body is not None:
             data = json.dumps(body, ensure_ascii=False).encode("utf-8")
             headers["Content-Type"] = "application/json"

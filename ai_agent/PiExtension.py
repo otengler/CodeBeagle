@@ -41,6 +41,15 @@ DEFAULT_PORT = 8080
 # Default base URL baked into the versioned codebeagle.ts template.
 TEMPLATE_BASE_URL = "http://127.0.0.1:8080"
 
+# Version of the PI extension (codebeagle.ts). Bump this whenever the extension
+# changes so that the server can tell a PI agent when its installed extension is
+# outdated. The extension reports its version via the 'pi-version' query
+# parameter when it calls the health endpoint.
+PI_EXTENSION_VERSION = "1"
+
+# Marker in the codebeagle.ts template replaced with the value above.
+PI_EXTENSION_VERSION_MARKER = "__PI_EXTENSION_VERSION__"
+
 def resolvePiExtension(resourceDir: str, port: int = DEFAULT_PORT) -> str:
     """Return codebeagle.ts with all __...__ markers replaced by real text.
 
@@ -52,6 +61,7 @@ def resolvePiExtension(resourceDir: str, port: int = DEFAULT_PORT) -> str:
     with open(templatePath, "r", encoding="utf-8") as f:
         content = f.read()
     content = _replaceToolMarkers(content, descriptions)
+    content = content.replace(PI_EXTENSION_VERSION_MARKER, PI_EXTENSION_VERSION)
     baseUrl = f"http://127.0.0.1:{port}"
     if baseUrl != TEMPLATE_BASE_URL:
         content = content.replace(TEMPLATE_BASE_URL, baseUrl)
