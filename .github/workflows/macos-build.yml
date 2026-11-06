@@ -45,30 +45,33 @@ jobs:
       with:
         name: CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}
         path: build/CodeBeagle
-    - name: Package macOS zip
-      if: startsWith(github.ref, 'refs/tags/')
-      run: zip -r CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}.zip build/CodeBeagle
-    - name: Attach to release
-      if: startsWith(github.ref, 'refs/tags/')
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        asset="CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}.zip"
-
-        # Use the matching section from CHANGES as the release body, falling back
-        # to auto-generated notes when there is no entry for this version.
-        notes_args=(--generate-notes)
-        section=$(python tools/ReleaseNotes.py "${GITHUB_REF_NAME#v}" CHANGES)
-        if [ -n "$section" ]; then
-          printf '%s\n' "$section" > release-notes.md
-          notes_args=(--notes-file release-notes.md)
-        fi
-
-        # The three platform jobs run in parallel and may race to create the release.
-        for attempt in 1 2 3 4 5; do
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && break
-          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" "${notes_args[@]}" --verify-tag && break
-          sleep 5
-        done
-        gh release upload "$GITHUB_REF_NAME" "$asset" --clobber
+    # NOTE: macOS packaging/upload to the GitHub Release is disabled because the
+    # build is not production ready. The workflow still builds and uploads the CI
+    # artifact above. Uncomment the two steps below to publish macOS again.
+    # - name: Package macOS zip
+    #   if: startsWith(github.ref, 'refs/tags/')
+    #   run: zip -r CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}.zip build/CodeBeagle
+    # - name: Attach to release
+    #   if: startsWith(github.ref, 'refs/tags/')
+    #   env:
+    #     GH_TOKEN: ${{ github.token }}
+    #   run: |
+    #     asset="CodeBeagle.MacOS.${{ steps.get_version.outputs.version }}.zip"
+    #
+    #     # Use the matching section from CHANGES as the release body, falling back
+    #     # to auto-generated notes when there is no entry for this version.
+    #     notes_args=(--generate-notes)
+    #     section=$(python tools/ReleaseNotes.py "${GITHUB_REF_NAME#v}" CHANGES)
+    #     if [ -n "$section" ]; then
+    #       printf '%s\n' "$section" > release-notes.md
+    #       notes_args=(--notes-file release-notes.md)
+    #     fi
+    #
+    #     # The platform jobs run in parallel and may race to create the release.
+    #     for attempt in 1 2 3 4 5; do
+    #       gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && break
+    #       gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" "${notes_args[@]}" --verify-tag && break
+    #       sleep 5
+    #     done
+    #     gh release upload "$GITHUB_REF_NAME" "$asset" --clobber
 
