@@ -1,3 +1,6 @@
+1.4.1
+- Add update check for the PI extension
+
 1.4.0
 - Added agent API server which exposes content and file name search to AI agents (PI, Claude Code, Cursor, ChatGPT). It can run inside the UI or standalone as CodeBeagleAgentServer.exe
 - Added MCP server and a PI extension so AI agents can use CodeBeagle as a tool
