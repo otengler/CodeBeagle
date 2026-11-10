@@ -70,6 +70,7 @@ cp help.html $BUILDDIR
 cp LICENSE $BUILDDIR
 cp VERSION $BUILDDIR
 mkdir -p $BUILDDIR/scripts && cp scripts/* $BUILDDIR/scripts/
+cp unblock-mac.sh $BUILDDIR
 mkdir -p $BUILDDIR/config && cp config/* $BUILDDIR/config/
 mkdir -p $BUILDDIR/resources && cp -r resources/* $BUILDDIR/resources/
 # ai_agent start
@@ -79,3 +80,4 @@ mv $BUILDDIR build/CodeBeagle
 
 chmod +x ./build/CodeBeagle/CodeBeagle
 chmod +x ./build/CodeBeagle/UpdateIndex
+chmod +x ./build/CodeBeagle/unblock-mac.sh
