@@ -212,11 +212,25 @@ class PidFile:
         return pid
 
     def remove(self) -> None:
-        if os.path.isfile(self.name):
-            try:
-                os.unlink(self.name)
-            except:
-                pass
+        if not os.path.isfile(self.name):
+            return
+        try:
+            os.unlink(self.name)
+        except FileNotFoundError:
+            pass # Already removed by another process
+        except OSError as e:
+            # Do not raise, the caller decides how to continue. But log the reason with enough
+            # detail to find the culprit. Deleting a PID file usually fails because another
+            # process still has it open (Windows denies the delete then) or because of
+            # missing permissions.
+            reason = e.strerror or str(e)
+            winerror = getattr(e, "winerror", None)
+            if winerror is not None:
+                reason = "%s (WinError %u)" % (reason, winerror)
+            logging.error("Failed to remove PID file '%s' (contains PID %u): %s", self.name, self.read(), reason)
+            if sys.platform == "win32":
+                logging.error("The file is most likely still open in another process. Close all "
+                              "CodeBeagle/UpdateIndex processes and delete the file manually.")
 
     def __enter__(self) -> object:
         pid = os.getpid()
@@ -224,8 +238,11 @@ class PidFile:
             self.pidfile = open(self.name, "x")
             self.pidfile.write("%u" % pid)
             self.pidfile.flush()
+        except OSError as e:
+            logging.error("Failed to create PID file at '%s': %s", self.name, e)
+            raise
         except:
-            logging.error("Failed to create PID file at '%s'" % self.name)
+            logging.error("Failed to create PID file at '%s'", self.name)
             raise
         return self
 
