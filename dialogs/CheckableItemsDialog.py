@@ -55,7 +55,11 @@ class CheckableItemsDialog(QDialog):
         items = []
         for i in range(self.model.rowCount()):
             index = self.model.index(i, 0)
-            if index.data(Qt.ItemDataRole.CheckStateRole) == Qt.CheckState.Checked.value:
+            # Depending on how the check state was set data() returns either an int or
+            # a Qt.CheckState enum. Normalize before comparing, otherwise the comparison
+            # with Qt.CheckState.Checked.value fails and no item is ever reported.
+            state = index.data(Qt.ItemDataRole.CheckStateRole)
+            if state is not None and Qt.CheckState(state) == Qt.CheckState.Checked:
                 items.append((i, index.data()))
         return items
 
