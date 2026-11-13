@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from typing import List, Optional, Callable, cast
 from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtGui import QFontMetrics, QFont
+from PySide6.QtGui import QFontMetrics, QFont, QWheelEvent
 from PySide6.QtWidgets import QWidget
 from tools import AsynchronousTask
 from tools.ContextExtraction import extractMatches
@@ -37,7 +37,11 @@ class FixedSizeSourcePreview(SourceHighlightingTextEdit):
         # Scrolling should not be needed and is not wanted. This is just a way to make it 100% sure that it is switched off:
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.wheelEvent = lambda event: None  # type: ignore[method-assign]
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        # Do not consume the wheel event. Ignoring it lets Qt propagate it to the
+        # surrounding scroll area so the whole matches overview can be scrolled.
+        event.ignore()
 
 class MatchesOverview (QWidget):
     # Triggered if a selection was finished while holding a modifier key down
