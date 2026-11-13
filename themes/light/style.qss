@@ -5,3 +5,8 @@
 QPushButton[flat=true]:hover:!pressed { 
     border: 2px outset #8f8f91;
 }
+
+QListView::item:selected {
+    background-color: #cde8ff;
+    color: #1a1a1a;
+}
