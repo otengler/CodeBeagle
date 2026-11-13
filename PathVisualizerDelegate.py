@@ -21,14 +21,15 @@ from typing import List, Optional, Union
 from PySide6.QtCore import Qt, QRect, QSize, QModelIndex, QPersistentModelIndex
 from PySide6.QtGui import QFont, QPen, QColor, QFontMetrics, QPainter
 from PySide6.QtWidgets import QStyledItemDelegate, QApplication, QStyleOption, QStyle, QWidget, QStyleOptionViewItem
+from themes.light.palette import LightPalette
 
 class PathVisualizerDelegate (QStyledItemDelegate):
-    newPathColor: Union[QColor, QPen] = QColor(50, 50, 50)
-    samePathColor: Union[QColor, QPen] = QColor(150, 150, 150)
-    fileColor: Union[QColor, QPen] = QColor(0, 0, 50)
-    selectedPathColor: Union[QColor, QPen] = QColor(50, 50, 50)
-    selectedFileColor: Union[QColor, QPen] = QColor(0, 0, 50)
-    selectionBackground: QColor = QColor(205, 232, 255)
+    newPathColor: Union[QColor, QPen] = QColor(LightPalette.COLOR_PATH_NEW)
+    samePathColor: Union[QColor, QPen] = QColor(LightPalette.COLOR_PATH_SAME)
+    fileColor: Union[QColor, QPen] = QColor(LightPalette.COLOR_PATH_FILE)
+    selectedPathColor: Union[QColor, QPen] = QColor(LightPalette.COLOR_PATH_SELECTED)
+    selectedFileColor: Union[QColor, QPen] = QColor(LightPalette.COLOR_PATH_SELECTED_FILE)
+    selectionBackground: QColor = QColor(LightPalette.COLOR_SELECTION_BACKGROUND)
 
     """Parent must be the view (otherwise the focus drawing doesn't work)"""
     def __init__ (self, parent: QWidget) -> None:

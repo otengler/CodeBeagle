@@ -18,7 +18,7 @@ QSS_FILE = 'style.qss'
 QRC_FILE = QSS_FILE.replace('.qss', '.qrc')
 
 MAIN_SCSS_FILE = 'main.scss'
-STYLES_SCSS_FILE = '_styles.scss'
+STYLES_SCSS_FILE = 'styles.scss'
 VARIABLES_SCSS_FILE = '_variables.scss'
 
 # File paths
@@ -27,5 +27,5 @@ QRC_FILEPATH = os.path.join(PACKAGE_PATH, QRC_FILE)
 
 MAIN_SCSS_FILEPATH = os.path.join(QSS_PATH, MAIN_SCSS_FILE)
 STYLES_SCSS_FILEPATH = os.path.join(QSS_PATH, STYLES_SCSS_FILE)
-STYLES_SCSS_FILEPATH_PROCESSED = STYLES_SCSS_FILEPATH + ".processed"
+STYLES_SCSS_FILEPATH_PROCESSED = os.path.join(QSS_PATH, '_styles.scss.processed')
 VARIABLES_SCSS_FILEPATH = os.path.join(QSS_PATH, VARIABLES_SCSS_FILE)

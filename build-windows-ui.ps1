@@ -1,10 +1,15 @@
 .\build-windows-vars.ps1
 
 #
-# Compile interface definitions
+# Generate stylesheets
 # 
 
+& $env:PYTHON GenerateStylesheet.py
 if (-not $?) { throw "GenerateStylesheet failed" }
+
+#
+# Compile interface definitions
+# 
 
 function Compile-Ui($output, $uiFile) {
     $outputPath = $output -replace '\\', '/'

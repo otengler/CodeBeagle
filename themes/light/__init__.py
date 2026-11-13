@@ -1,6 +1,8 @@
 from typing import cast, TYPE_CHECKING
 import pathlib, os
 
+from .palette import LightPalette as LightPalette
+
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QFile, QTextStream

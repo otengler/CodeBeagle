@@ -1,0 +1,16 @@
+/* Light theme -------------------------------------------------------------
+
+--------------------------------------------------------------------------- */
+
+*[shadeBackground=true] {
+    background: unquote("QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #{$COLOR_BACKGROUND_GRADIENT_START}, stop: 1 #{$COLOR_BACKGROUND_GRADIENT_END})");
+}
+
+QPushButton[flat=true]:hover:_qnot_pressed {
+    border: 2px outset $COLOR_BUTTON_BORDER;
+}
+
+QListView::item:selected {
+    background-color: $COLOR_SELECTION_BACKGROUND;
+    color: $COLOR_SELECTION_FOREGROUND;
+}
