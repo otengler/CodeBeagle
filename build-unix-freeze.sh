@@ -80,4 +80,11 @@ mv $BUILDDIR build/CodeBeagle
 
 chmod +x ./build/CodeBeagle/CodeBeagle
 chmod +x ./build/CodeBeagle/UpdateIndex
+chmod +x ./build/CodeBeagle/CodeBeagleAgentServer
+chmod +x ./build/CodeBeagle/CodeBeagleMCP
 chmod +x ./build/CodeBeagle/unblock-mac.sh
+
+if [ "$1" == "mac" ]; then
+  echo "Bundle MAC"
+  bash ./build-mac-dmg.sh
+fi

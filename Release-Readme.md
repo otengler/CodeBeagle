@@ -67,7 +67,10 @@ section as the release notes:
 | -------- | -------------------------------------- |
 | Windows  | `CodeBeagle.Windows.1.4.1.zip`         |
 | Linux    | `CodeBeagle.Linux.1.4.1.tar.gz`        |
-| macOS    | `CodeBeagle.MacOS.1.4.1.zip`           |
+| macOS    | `CodeBeagle.MacOS.1.4.1.dmg`           |
+
+The raw macOS folder (`build/CodeBeagle`) is additionally uploaded as an Actions
+artifact named `CodeBeagle.MacOS.1.4.1` for debugging; it is not a release asset.
 
 ### 7. Verify
 
@@ -86,6 +89,10 @@ Confirm the release `v1.4.1` has all three assets. No downloads or manual upload
   and re-push the tag.
 - **`workflow_dispatch` runs do not create a release** (only tag pushes do) — useful for a
   dry-run build test.
+- **macOS build is ad-hoc signed but not notarized.** Users must clear the quarantine flag
+  before the first launch: run `unblock-mac.sh` (shipped inside the DMG, run it from
+  `/Applications` after dragging the app there), use `xattr -dr com.apple.quarantine`, or
+  right-click → Open in Finder. The macOS build is arm64 only.
 
 ## Version number consistency
 
