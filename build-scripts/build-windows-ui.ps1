@@ -1,4 +1,7 @@
-.\build-windows-vars.ps1
+# Resolve repository root and run from there so relative paths keep working.
+Set-Location (Join-Path $PSScriptRoot '..')
+
+& "$PSScriptRoot\build-windows-vars.ps1"
 
 #
 # Generate stylesheets

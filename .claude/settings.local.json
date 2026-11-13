@@ -6,7 +6,7 @@
       "Bash(.venv/Scripts/activate.bat)",
       "Bash(dir:*)",
       "Bash(.\\.venv\\Scripts\\python.exe:*)",
-      "Bash(.build-windows-ui.ps1)",
+      "Bash(.\\build-scripts\\build-windows-ui.ps1)",
       "Bash(findstr:*)"
     ],
     "deny": [

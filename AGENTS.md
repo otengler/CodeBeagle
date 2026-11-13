@@ -23,18 +23,18 @@ python CodeBeagle.pyw
 
 **Windows:**
 ```powershell
-.\build-windows-freeze.ps1
+.\build-scripts\build-windows-freeze.ps1
 ```
 This compiles UI files, generates stylesheets from SASS, and uses cx_Freeze to create a standalone executable.
 
 **Linux:**
 ```bash
-./build-unix-freeze.sh linux
+./build-scripts/build-unix-freeze.sh linux
 ```
 
 **macOS:**
 ```bash
-./build-unix-freeze.sh mac
+./build-scripts/build-unix-freeze.sh mac
 ```
 
 Build outputs go to `build/CodeBeagle/` directory.
@@ -45,12 +45,12 @@ UI files (`.ui`) must be compiled to Python after changes:
 
 **Windows:**
 ```powershell
-.\build-windows-ui.ps1
+.\build-scripts\build-windows-ui.ps1
 ```
 
 **Linux/Mac:**
 ```bash
-./build-unix-ui.sh
+./build-scripts/build-unix-ui.sh
 ```
 
 This generates `Ui_*.py` files from Qt Designer `.ui` files.
@@ -150,7 +150,7 @@ Theme generation uses SASS. Source files in `themes/dark/` are compiled to style
 ### UI Development
 
 1. Edit `.ui` files instead of creating UI elements in the source directly
-2. When `.ui` files are added make sure `build-windows-ui.ps1` and `build-unix-ui.sh` is adapted. Also adapt `mypy.ini` to include the generated source file.
+2. When `.ui` files are added make sure `build-scripts/build-windows-ui.ps1` and `build-scripts/build-unix-ui.sh` is adapted. Also adapt `mypy.ini` to include the generated source file.
 3. Run build UI script to regenerate `Ui_*.py` files
 4. Never manually edit `Ui_*.py` files - they are auto-generated
 5. Keyboard shortcuts must be documented in help.html

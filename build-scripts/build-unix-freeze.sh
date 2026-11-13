@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Resolve repository root and run from there so relative paths keep working.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
 # 
 # Update dependencies (for Sass) 
 #
@@ -8,8 +12,8 @@ npm ci
 #
 # Set vars and Compile interface definitions
 # 
-. ./build-unix-vars.sh
-./build-unix-ui.sh
+. "$SCRIPT_DIR/build-unix-vars.sh"
+"$SCRIPT_DIR/build-unix-ui.sh"
 
 #
 # Run Cx_freeze
@@ -27,7 +31,7 @@ LIB=$BUILDDIR/lib
 
 if [ "$1" == "linux" ]; then
   echo "Cleanup Linux"
-  PYVER=`python3 build-GetPyVer.py`
+  PYVER=`python3 "$SCRIPT_DIR/build-GetPyVer.py"`
   # Keep the following modules: they are imported by the MCP server
   # (CodeBeagleMCP) via pydantic/mcp: decimal, queue, multiprocessing, bz2, lzma
   rm $BUILDDIR/lib/libreadline-2c5f7b8d.so.6.2
@@ -86,5 +90,5 @@ chmod +x ./build/CodeBeagle/unblock-mac.sh
 
 if [ "$1" == "mac" ]; then
   echo "Bundle MAC"
-  bash ./build-mac-dmg.sh
+  bash "$SCRIPT_DIR/build-mac-dmg.sh"
 fi

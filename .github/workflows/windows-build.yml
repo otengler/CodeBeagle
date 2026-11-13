@@ -34,7 +34,7 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v7
     - name: Run build
-      run: .\build-windows-freeze.ps1
+      run: .\build-scripts\build-windows-freeze.ps1
     - name: Run mypy
       run: |
         # stop the build if there are Python syntax errors or undefined names

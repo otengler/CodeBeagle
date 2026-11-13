@@ -2,7 +2,7 @@
 #
 # Build the macOS CodeBeagle.app bundle and an ad-hoc signed DMG.
 #
-# Run from the repository root, after ./build-unix-freeze.sh mac
+# Run from the repository root, after ./build-scripts/build-unix-freeze.sh mac
 # (i.e. when build/CodeBeagle exists).
 #
 # Output:
@@ -11,10 +11,14 @@
 
 set -e
 
+# Resolve repository root and run from there so relative paths keep working.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
 PYTHON=${PYTHON:-python3}
 
 if [ ! -d build/CodeBeagle ]; then
-  echo "Error: build/CodeBeagle not found. Run ./build-unix-freeze.sh mac first."
+  echo "Error: build/CodeBeagle not found. Run ./build-scripts/build-unix-freeze.sh mac first."
   exit 1
 fi
 

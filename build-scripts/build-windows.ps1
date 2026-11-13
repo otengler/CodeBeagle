@@ -1,5 +1,8 @@
+# Resolve repository root and run from there so relative paths keep working.
+Set-Location (Join-Path $PSScriptRoot '..')
+
 & .\.venv\Scripts\Activate.ps1
-& .\build-windows-freeze.ps1
+& "$PSScriptRoot\build-windows-freeze.ps1"
 
 #
 # Compress the build folder

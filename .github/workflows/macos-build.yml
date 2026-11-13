@@ -35,8 +35,8 @@ jobs:
       uses: actions/setup-node@v7
     - name: Run build
       run: |
-        chmod +x build-*.sh
-        ./build-unix-freeze.sh mac
+        chmod +x build-scripts/build-*.sh
+        ./build-scripts/build-unix-freeze.sh mac
         chmod +x ./build/CodeBeagle/CodeBeagle
         chmod +x ./build/CodeBeagle/UpdateIndex
     - name: Run mypy

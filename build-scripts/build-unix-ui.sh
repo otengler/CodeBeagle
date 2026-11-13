@@ -1,6 +1,10 @@
 #!/bin/bash
 
-. ./build-unix-vars.sh
+# Resolve repository root and run from there so relative paths keep working.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
+. "$SCRIPT_DIR/build-unix-vars.sh"
 
 #
 # Compile interface definitions

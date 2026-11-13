@@ -1,3 +1,6 @@
+# Resolve repository root and run from there so relative paths keep working.
+Set-Location (Join-Path $PSScriptRoot '..')
+
 #
 # Update dependencies (for Sass) 
 #
@@ -6,8 +9,8 @@ npm ci
 #
 # Set vars and Compile interface definitions
 # 
-.\build-windows-vars.ps1
-.\build-windows-ui.ps1
+& "$PSScriptRoot\build-windows-vars.ps1"
+& "$PSScriptRoot\build-windows-ui.ps1"
 
 #
 # Run Cx_freeze
