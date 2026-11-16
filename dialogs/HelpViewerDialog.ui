@@ -18,6 +18,49 @@
     <number>11</number>
    </property>
    <item>
+    <layout class="QHBoxLayout" name="layoutSearchButton">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <property name="margin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="buttonSearch">
+       <property name="toolTip">
+        <string>Search in help (Ctrl+F)</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>resources/Search.png</normaloff>resources/Search.png</iconset>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="InDocumentSearchWidget" name="widgetInDocumentSearch" native="true"/>
+   </item>
+   <item>
     <widget class="QTextBrowser" name="textBrowserHelp">
      <property name="textInteractionFlags">
       <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -59,5 +102,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>InDocumentSearchWidget</class>
+   <extends>QWidget</extends>
+   <header>widgets.InDocumentSearchWidget</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
 </ui>

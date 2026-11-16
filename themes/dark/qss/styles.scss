@@ -1067,8 +1067,9 @@ QPushButton {
 
 }
 
-/* Issue #194 - Special case of QPushButton inside dialogs, for better UI */
-QDialog QPushButton {
+/* Issue #194 - Special case of QPushButton inside dialogs, for better UI.
+   Flat (icon only) buttons keep their compact size. */
+QDialog QPushButton[flat="false"] {
     min-width: 80px;
 }
 
