@@ -44,29 +44,32 @@ iconutil -c icns "$ICONSET" -o build/CodeBeagle.icns
 rm -rf "$ICONSET"
 
 #
-# Assemble the bundle. Contents/MacOS is a code location and may only contain
-# the executables and their shared libraries; codesign treats any other file
-# there as unsigned nested code. All data files/directories therefore go to
-# Contents/Resources. FileTools.getAppDir() points the app's working directory
-# there when it detects this bundle layout, so the relative paths keep working.
+# Assemble the bundle following cx_Freeze's bdist_mac convention:
+#   Contents/Resources  the complete build tree (code and data)
+#   Contents/MacOS      only the executables plus symlinks to the directories
+#                       in Contents/Resources
+# Contents/MacOS is a code location: codesign treats every file below it as
+# code and requires it to be signed. The Python modules and data under lib/
+# must therefore live in Contents/Resources.
+# FileTools.getAppDir() points the app's working directory at Contents/Resources
+# when it detects this bundle layout, so the relative paths keep working.
 #
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-# Code: the frozen executables plus cx_Freeze's lib directory.
-for exe in CodeBeagle UpdateIndex CodeBeagleAgentServer CodeBeagleMCP; do
-  cp "build/CodeBeagle/$exe" "$APP/Contents/MacOS/"
-done
-cp -R build/CodeBeagle/lib "$APP/Contents/MacOS/"
+cp -R build/CodeBeagle/. "$APP/Contents/Resources/"
 
-# Data: everything else stays together so relative paths resolve unchanged.
-# This includes cx_Freeze's share/ directory (zoneinfo): its zoneinfo hook
-# looks for share/zoneinfo under Contents/Resources on macOS.
-for item in build/CodeBeagle/*; do
-  case "$(basename "$item")" in
-    CodeBeagle|UpdateIndex|CodeBeagleAgentServer|CodeBeagleMCP|lib) ;;
-    *) cp -R "$item" "$APP/Contents/Resources/" ;;
-  esac
+# Only the executables move to Contents/MacOS (CFBundleExecutable location).
+for exe in CodeBeagle UpdateIndex CodeBeagleAgentServer CodeBeagleMCP; do
+  mv "$APP/Contents/Resources/$exe" "$APP/Contents/MacOS/"
+done
+
+# Symlink the runtime directories into Contents/MacOS so the executables'
+# @loader_path/lib references resolve to Contents/Resources (same approach as
+# cx_Freeze bdist_mac).
+for dir in "$APP/Contents/Resources"/*/; do
+  name=$(basename "$dir")
+  ln -s "../Resources/$name" "$APP/Contents/MacOS/$name"
 done
 
 cp build/CodeBeagle.icns "$APP/Contents/Resources/"
@@ -113,7 +116,8 @@ codesign --verify --deep --strict --verbose=2 "$APP"
 #
 STAGE=build/dmg
 rm -rf "$STAGE"; mkdir -p "$STAGE"
-cp -R "$APP" "$STAGE/"
+# ditto preserves symlinks, extended attributes and the code signature.
+ditto "$APP" "$STAGE/CodeBeagle.app"
 ln -s /Applications "$STAGE/Applications"
 cp unblock-mac.sh "$STAGE/"
 README="! READ ME BEFORE FIRST LAUNCH.txt"
