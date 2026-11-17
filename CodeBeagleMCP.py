@@ -54,7 +54,9 @@ def main() -> None:
     setupLogging("codebeagle-mcp.log")
     
     from ai_agent.mcp_server.config import resolveBaseUrl
-    baseUrl = resolveBaseUrl()
+    # Pass the application directory so a codebeagle.json placed next to
+    # config.txt is honoured (see resolveBaseUrl).
+    baseUrl = resolveBaseUrl(FileTools.getAppDir())
 
     if not _serverReachable(baseUrl):
         print(

@@ -15,7 +15,7 @@ mcpAgentInstructions = """\
 <p><b>Claude Code</b></p>
 Enter this on the command line (not inside the chat window):
 <pre style="font-family: 'Courier New', monospace; background-color: #1E1E1E; color: #F0F0F0; padding: 8px; border: 1px solid #383838; border-radius: 4px;">
-claude mcp add CodeBeagle -- "{mcp_executable}"
+claude mcp add CodeBeagle -- {mcp_command}
 </pre>
 <p/>
 <p><b>ChatGPT Codex</b></p>
@@ -23,7 +23,7 @@ CodeBeagle needs to be integrated as a local MCP server using the
 <a href="https://github.com/openai/tunnel-client/">tunnel-client</a>.
 The setup requires several steps and is not described here in detail. At some point you need to start the tunnel-client:
 <pre style="font-family: 'Courier New', monospace; background-color: #1E1E1E; color: #F0F0F0; padding: 8px; border: 1px solid #383838; border-radius: 4px;">
-tunnel-client.exe run --mcp.command "{mcp_executable}"
+tunnel-client.exe run --mcp.command {mcp_command}
 </pre>
 <p><b>Cursor</b></p>
 <p>
@@ -38,13 +38,7 @@ MyProject/
 Place the following content in it:
 </p>
 <pre>
-{{
-  "mcpServers": {{
-    "CodeBeagle": {{
-      "command": "{mcp_executable}"
-    }}
-  }}
-}}
+{mcp_json}
 </pre>
 <p>
 Restart cursor.
@@ -52,7 +46,7 @@ Restart cursor.
 <p><b>Other MCP capable agent</b></p>
 Ask your agent how to setup a stdio based MCP server that is contained in an executable. When asked provide the path to the server as:
 <pre style="font-family: 'Courier New', monospace; background-color: #1E1E1E; color: #F0F0F0; padding: 8px; border: 1px solid #383838; border-radius: 4px;">
-"{mcp_executable}"
+{mcp_command}
 </pre>
 """
 

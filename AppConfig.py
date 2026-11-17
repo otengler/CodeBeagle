@@ -21,8 +21,14 @@ from typing import Optional, Tuple, Callable, cast, Any
 from tools import Config, FileTools
 
 def readVersion() -> str:
-    if os.path.isfile("VERSION"):
-        return str(json.load(open("VERSION", "r"))["local"])
+    # Resolve VERSION through the application directory instead of the current
+    # working directory. AppConfig is imported before switchToAppDir() in some
+    # entry points (e.g. the helper executables import tools.SetupLogger, which
+    # imports AppConfig), so a relative read would miss the bundled file when
+    # the process is started from a different directory.
+    versionFile = os.path.join(FileTools.getAppDir(), "VERSION")
+    if os.path.isfile(versionFile):
+        return str(json.load(open(versionFile, "r"))["local"])
     return "1.0.0"
 
 appName = "CodeBeagle"

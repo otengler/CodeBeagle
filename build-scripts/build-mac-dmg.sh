@@ -44,12 +44,31 @@ iconutil -c icns "$ICONSET" -o build/CodeBeagle.icns
 rm -rf "$ICONSET"
 
 #
-# Assemble the bundle. All data stays in Contents/MacOS because the app
-# chdirs to dirname(sys.argv[0]) and loads config/themes by relative path.
+# Assemble the bundle. Contents/MacOS is a code location and may only contain
+# the executables and their shared libraries; codesign treats any other file
+# there as unsigned nested code. All data files/directories therefore go to
+# Contents/Resources. FileTools.getAppDir() points the app's working directory
+# there when it detects this bundle layout, so the relative paths keep working.
 #
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp -R build/CodeBeagle/. "$APP/Contents/MacOS/"
+
+# Code: the frozen executables plus cx_Freeze's lib directory.
+for exe in CodeBeagle UpdateIndex CodeBeagleAgentServer CodeBeagleMCP; do
+  cp "build/CodeBeagle/$exe" "$APP/Contents/MacOS/"
+done
+cp -R build/CodeBeagle/lib "$APP/Contents/MacOS/"
+
+# Data: everything else stays together so relative paths resolve unchanged.
+# This includes cx_Freeze's share/ directory (zoneinfo): its zoneinfo hook
+# looks for share/zoneinfo under Contents/Resources on macOS.
+for item in build/CodeBeagle/*; do
+  case "$(basename "$item")" in
+    CodeBeagle|UpdateIndex|CodeBeagleAgentServer|CodeBeagleMCP|lib) ;;
+    *) cp -R "$item" "$APP/Contents/Resources/" ;;
+  esac
+done
+
 cp build/CodeBeagle.icns "$APP/Contents/Resources/"
 
 $PYTHON - "$PLIST" "$VERSION" <<'PYEOF'
@@ -114,7 +133,7 @@ Installation
    (Alternative: right-click CodeBeagle.app in Finder, choose "Open" and confirm
    once.) You can also run the shipped script from the installed location:
 
-     /Applications/CodeBeagle.app/Contents/MacOS/unblock-mac.sh /Applications/CodeBeagle.app
+     /Applications/CodeBeagle.app/Contents/Resources/unblock-mac.sh /Applications/CodeBeagle.app
 
    Do NOT run unblock-mac.sh from this disk image: the image is read-only, so
    removing the quarantine flag would fail.

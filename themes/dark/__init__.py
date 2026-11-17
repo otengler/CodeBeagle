@@ -105,9 +105,10 @@ def apply_stylesheet(app: 'QApplication', additionalStyles: str = "") -> None:
         stylesheet = text_stream.readAll()
 
         # Replace the marker <RC_DIR> with the relative path to the 'rc' directory. This is needed because the path differs when
-        # packaged with cx_freeze or run directly.
-        scriptDirPath = pathlib.Path(scriptDir)
-        scriptDirPathRelToCwd = str(scriptDirPath.relative_to(os.getcwd())).replace("\\", "/")
+        # packaged with cx_freeze or run directly. os.path.relpath is used instead of
+        # Path.relative_to because the theme package may live outside the working directory
+        # (e.g. Contents/MacOS/lib while the app runs from Contents/Resources).
+        scriptDirPathRelToCwd = os.path.relpath(scriptDir, os.getcwd()).replace("\\", "/")
         stylesheet = stylesheet.replace("<RC_DIR>", scriptDirPathRelToCwd)
 
         _logger.debug("QSS file sucessfuly loaded.")

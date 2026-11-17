@@ -253,9 +253,10 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 si = subprocess.STARTUPINFO()
                 si.dwFlags = subprocess.STARTF_USESHOWWINDOW
                 si.wShowWindow = subprocess.SW_HIDE
-                subprocess.Popen (["UpdateIndex.exe"] + args,  startupinfo=si)
+                updateIndex = os.path.join(os.path.dirname(sys.executable), "UpdateIndex.exe")
+                subprocess.Popen ([updateIndex] + args,  startupinfo=si)
             else:
-                updateIndex = os.path.join(os.getcwd(), "UpdateIndex")
+                updateIndex = os.path.join(os.path.dirname(sys.executable), "UpdateIndex")
                 subprocess.Popen ([updateIndex] + args)
 
         self.__watchForIndexUpdate()
@@ -402,9 +403,11 @@ class SearchPageTabWidget (LeaveLastTabWidget):
                 si = subprocess.STARTUPINFO()
                 si.dwFlags = subprocess.STARTF_USESHOWWINDOW
                 si.wShowWindow = subprocess.SW_HIDE
-                subprocess.Popen (["CodeBeagle.exe"], startupinfo=si)
+                codeBeagle = os.path.join(os.path.dirname(sys.executable), "CodeBeagle.exe")
+                subprocess.Popen ([codeBeagle], startupinfo=si)
             else:
-                subprocess.Popen (["CodeBeagle"])
+                codeBeagle = os.path.join(os.path.dirname(sys.executable), "CodeBeagle")
+                subprocess.Popen ([codeBeagle])
 
     def userConfigFailedToLoadMessage(self) -> None:
         StackTraceMessageBox.show(self,

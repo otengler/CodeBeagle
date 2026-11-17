@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import List, Set, Optional, cast
-import os, sys
+from typing import Any, Dict, List, Set, Optional, cast
+import json, os, sys
 from PySide6.QtCore import Qt, QRect, QSize, Signal, Slot, QModelIndex, QPersistentModelIndex, QObject
 from PySide6.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QPainter
 from PySide6.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionViewItem, QStyle, QDialog, QMessageBox, QWidget, QCheckBox, QListView
@@ -354,10 +354,20 @@ class SettingsDialog (QDialog):
 
     @Slot()
     def showMcpAgentInstructions(self) -> None:
-        mcp_executable = os.path.join(os.getcwd(), "CodeBeagleMCP")
-        if sys.platform == "win32":
-            mcp_executable += ".exe"                    
-        dialog = AgentInstructionsDialog(self, self.tr("MCP compatible agents"), mcpAgentInstructions.format(mcp_executable=mcp_executable), 
+        runningInInterpreter = os.path.basename(sys.executable).lower().startswith("python")
+        if runningInInterpreter:
+            script = os.path.join(FileTools.getAppDir(), "CodeBeagleMCP.py")
+            mcp_command = f'"{sys.executable}" "{script}"'
+            mcp_server: Dict[str, Any] = {"command": sys.executable, "args": [script]}
+        else:
+            executable = os.path.join(os.path.dirname(sys.executable), "CodeBeagleMCP")
+            if sys.platform == "win32":
+                executable += ".exe"
+            mcp_command = f'"{executable}"'
+            mcp_server = {"command": executable}
+        mcp_json = json.dumps({"mcpServers": {"CodeBeagle": mcp_server}}, indent=2)
+        dialog = AgentInstructionsDialog(self, self.tr("MCP compatible agents"),
+                                         mcpAgentInstructions.format(mcp_command=mcp_command, mcp_json=mcp_json),
                                          "Find the instructions for your Coding agent below:")
         dialog.exec()
 

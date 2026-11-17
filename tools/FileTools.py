@@ -130,7 +130,20 @@ def getTempPath () -> str:
 def getAppDir() -> str:
     """Determine the application directory."""
     try:
-        return os.path.dirname(sys.argv[0])
+        dirName = os.path.dirname(sys.argv[0])
+        # In a macOS bundle the executable lives in Contents/MacOS, which is a
+        # code location and must not contain data files. The data lives in the
+        # sibling Contents/Resources directory, so use that as the application
+        # directory. On other platforms this is a no-op.
+        if sys.platform == "darwin":
+            for candidate in (dirName, os.path.dirname(sys.executable)):
+                parent = os.path.dirname(candidate)
+                resources = os.path.join(parent, "Resources")
+                if (os.path.basename(candidate) == "MacOS"
+                        and os.path.basename(parent) == "Contents"
+                        and os.path.isdir(resources)):
+                    return resources
+        return dirName
     except Exception as  e:
         logging.error ("Failed to determine the application directory: " + str(e))
     return ""
