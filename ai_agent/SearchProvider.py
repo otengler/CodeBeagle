@@ -31,7 +31,8 @@ from fulltextindex.SearchMethods import SearchMethods
 from fulltextindex.CommentRule import CommentRule
 from HighlightingRulesCache import rules as highlightingRules
 from .DataModel import ContentMatch, ContentSearchResult, FileSearchResult, SearchLocation
-from .SearchIndexResolver import SearchIndexResolver
+from .SearchIndexResolver import (SearchIndexResolver, FallbackReasonExtensions, FallbackReasonNotIndexed,
+                                  AttrFallbackReason, AttrMissingExtensions)
 from .TtlCache import TTLCache
 from .TimeoutEvent import TimeoutEvent
 
@@ -163,7 +164,7 @@ class SearchProvider:
             timeout = TimeoutEvent(indexConf)
             resultSet = ftiSearch.searchContent(searchData, indexConf, self._commonKeywordMap or {}, cancelEvent=timeout.cancelEvent)
             if timeout.happened():
-                raise TimeoutError(TIMEOUT_CONTENT)
+                raise TimeoutError(self._timeoutMessage(TIMEOUT_CONTENT, indexConf, folder))
             matchingFiles = resultSet.matches  # List of file paths
             self._fileListCache.set(cacheKey, matchingFiles)
 
@@ -243,7 +244,7 @@ class SearchProvider:
                     ftiSearch = SearchMethods()
                     resultSet = ftiSearch.searchFileName(searchData, indexConf, cancelEvent=timeout.cancelEvent)
                     if timeout.happened():
-                        raise TimeoutError(TIMEOUT_FILES)
+                        raise TimeoutError(self._timeoutMessage(TIMEOUT_FILES, indexConf, folder))
                     files = resultSet.matches  # List of file paths
                     self._fileListCache.set(cacheKey, files)
 
@@ -270,7 +271,7 @@ class SearchProvider:
                 timeout = TimeoutEvent(indexConf)
                 resultSet = ftiSearch.searchFileName(searchData, indexConf, cancelEvent=timeout.cancelEvent)
                 if timeout.happened():
-                    raise TimeoutError(TIMEOUT_FILES)
+                    raise TimeoutError(self._timeoutMessage(TIMEOUT_FILES, indexConf, folder))
                 files = resultSet.matches  # List of file paths
                 self._fileListCache.set(cacheKey, files)
 
@@ -435,6 +436,33 @@ class SearchProvider:
             "file": filePath,
             "index": matchingConf.displayName(),
         }
+
+    def _timeoutMessage(self, baseMessage: str, indexConf: IndexConfiguration.IndexConfiguration, folder: Optional[str]) -> str:
+        """
+        Build an informative timeout message.
+
+        A timeout can only happen for non-indexed (ad-hoc) searches. Explain
+        why the index was not used and what the user can do to improve
+        performance: either create an index for the folder or add the missing
+        extensions to an existing index.
+        """
+        if indexConf.generatesIndex():
+            return baseMessage
+
+        reason = getattr(indexConf, AttrFallbackReason, FallbackReasonNotIndexed)
+
+        if reason == FallbackReasonNotIndexed:
+            indexFolder = folder if folder else (indexConf.directories[0] if indexConf.directories else "")
+            if indexFolder:
+                return (baseMessage + " The search was performed on a not indexed location. "
+                    "Suggest user to create an index which includes the folder '" + indexFolder + "' to improve performance.")
+        elif reason == FallbackReasonExtensions:
+            missing = cast(List[str], getattr(indexConf, AttrMissingExtensions, []))
+            if missing:
+                return (baseMessage + " The index could not be used because some extensions are not included. "
+                    "Suggest user to add the extensions '" + ",".join(missing) + "' to improve performance.")
+        
+        return baseMessage
 
     def _loadCommonKeywords(self) -> None:
             """Load the common keyword map from config if configured."""

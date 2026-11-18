@@ -26,6 +26,16 @@ from fulltextindex.IndexConfiguration import IndexMode
 
 TempFallbackName = "__temp_fallback__"
 
+# Reasons why a temporary fallback configuration was created. Stored on the
+# fallback object so that timeouts can explain why no index was used.
+FallbackReasonExtensions = "extensions"
+FallbackReasonNotIndexed = "notIndexed"
+
+# Attribute names of the fallback diagnostics dynamically attached to a
+# temporary IndexConfiguration (see SearchProvider._timeoutMessage).
+AttrFallbackReason = "fallbackReason"
+AttrMissingExtensions = "missingExtensions"
+
 class SearchIndexResolver:
     """
     Resolves an IndexConfiguration for a search request.
@@ -96,12 +106,13 @@ class SearchIndexResolver:
             if not createFallbackLocations:
                 return None
             folder = cast(str, folder)
-            indexConf = self._createTempLocation(folder, extensionFilter)
+            indexConf = self._createTempLocation(folder, extensionFilter, searchType)
         else:
             if not self.extensionsCovered(indexConf, extensionFilter):
                 if not createFallbackLocations:
                     return None
-                indexConf = self._createTempLocation(",".join(indexConf.directories), extensionFilter)
+                indexConf = self._createTempLocation(",".join(indexConf.directories), extensionFilter,
+                                                     searchType, coveringConf=indexConf)
         return indexConf
 
     def _resolve(self, location: Optional[str] = None,
@@ -136,14 +147,37 @@ class SearchIndexResolver:
         
         raise ValueError("Provide root path in 'folder' or use 'codebeagle_list_indexes' first and provide 'index'.")
 
-    def _createTempLocation(self, folder: str, extensionFilter: str) -> IndexConfiguration.IndexConfiguration:
+    def missingExtensions(self, indexConf: IndexConfiguration.IndexConfiguration,
+                          extensionFilter: str) -> List[str]:
+        """Return the positive extension patterns of the filter not indexed by the config."""
+        missing: List[str] = []
+        for ext, isPositive in createExtensionFilter(extensionFilter):
+            if not isPositive:
+                continue
+            if not any(fnmatch(confExt, ext) for confExt in indexConf.extensions):
+                missing.append(ext)
+        return missing
+
+    def _createTempLocation(self, folder: str, extensionFilter: str,
+                            searchType: str = "content",
+                            coveringConf: Optional[IndexConfiguration.IndexConfiguration] = None) -> IndexConfiguration.IndexConfiguration:
         defaultExcludeDirs = self._config.agent.defaultExcludeDirs
-        return IndexConfiguration.IndexConfiguration(
+        temp = IndexConfiguration.IndexConfiguration(
                 indexName=TempFallbackName,
                 extensions=extensionFilter,
                 directories=folder,
                 dirExcludes=defaultExcludeDirs,
                 indexUpdateMode=IndexMode.NoIndexWanted)
+        # Record why the fallback was created so that a timeout can report the
+        # reason to the AI agent (see SearchProvider._timeoutMessage).
+        missing: List[str] = []
+        if coveringConf is not None:
+            isIndexed = coveringConf.isFileNameIndexed() if searchType == "filename" else coveringConf.isContentIndexed()
+            if isIndexed:
+                missing = self.missingExtensions(coveringConf, extensionFilter)
+        setattr(temp, AttrFallbackReason, FallbackReasonExtensions if missing else FallbackReasonNotIndexed)
+        setattr(temp, AttrMissingExtensions, missing)
+        return temp
 
     def _folderCovered(self, conf: IndexConfiguration.IndexConfiguration, folder: str) -> bool:
         """

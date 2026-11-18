@@ -22,6 +22,7 @@ from .test_history import TestAgentHistory
 from .test_content_pagination import TestContentSearchPagination
 from .test_filename_pagination import TestFileNameSearchPagination
 from .test_resolve_config import TestResolveIndexConfig
+from .test_timeout_message import TestTimeoutMessage
 from .test_agent_state import TestAgentState
 from .test_update_file import TestIndexUpdaterUpdateFile, TestSearchProviderUpdateFile, TestIndexUpdateEndpoint
 from .test_pi_extension import TestPiExtension
@@ -36,6 +37,7 @@ __all__ = [
     "TestContentSearchPagination",
     "TestFileNameSearchPagination",
     "TestResolveIndexConfig",
+    "TestTimeoutMessage",
     "TestAgentState",
     "TestIndexUpdaterUpdateFile",
     "TestSearchProviderUpdateFile",
