@@ -302,7 +302,7 @@ export default function (pi: ExtensionAPI) {
     promptSnippet: "__PROMPT_SNIPPET_UPDATE_FILE__",
     promptGuidelines: "__PROMPT_GUIDELINES_UPDATE_FILE__",
     parameters: Type.Object({
-      file: Type.String({ description: "Absolute file path to the file to update in the index. Example: 'C:\\src\\project\\main.cpp'" }),
+      file: Type.String({ description: "__PARAM_DESC_UPDATE_FILE_FILE__" }),
     }),
     async execute(_toolCallId: any, params: any, signal: any) {
       const result = await callApi("/api/v1/index/update", "POST", { file: params.file }, signal);

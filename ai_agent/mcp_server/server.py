@@ -165,8 +165,7 @@ def _apiErrorText(error: ApiError) -> str:
     if error.statusCode == 400:
         return f"Invalid parameters: {error.message}"
     if error.statusCode == 404:
-        #TODO return server error
-        return (f"Location or folder not indexed. Call codebeagle_list_indexes to discover available search locations.")
+        return (f"Location or folder not indexed. Call codebeagle_list_indexes to discover available search locations: {error.message}")
     return f"CodeBeagle API error {error.statusCode}: {error.message}"
 
 def _formatValidationError(error: ValidationError) -> str:
