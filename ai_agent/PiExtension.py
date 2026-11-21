@@ -22,7 +22,7 @@ __...__ markers with the descriptions from tool_desc.json.
 import json
 import os
 from typing import Dict
-from .ToolDescription import ToolDescription, loadToolDescriptions
+from .ToolDescription import ToolDescription, loadAgenticTools
 
 # Tools registered by the PI extension. The marker names inside codebeagle.ts
 # are derived from these names, e.g. codebeagle_content_search becomes
@@ -41,13 +41,8 @@ DEFAULT_PORT = 8080
 # Default base URL baked into the versioned codebeagle.ts template.
 TEMPLATE_BASE_URL = "http://127.0.0.1:8080"
 
-# Version of the PI extension (codebeagle.ts). Bump this whenever the extension
-# changes so that the server can tell a PI agent when its installed extension is
-# outdated. The extension reports its version via the 'pi-version' query
-# parameter when it calls the health endpoint.
-PI_EXTENSION_VERSION = "1"
-
-# Marker in the codebeagle.ts template replaced with the value above.
+# Marker in the codebeagle.ts template replaced with the extension version read
+# from tool_desc.json.
 PI_EXTENSION_VERSION_MARKER = "__PI_EXTENSION_VERSION__"
 
 def resolvePiExtension(resourceDir: str, port: int = DEFAULT_PORT) -> str:
@@ -56,12 +51,12 @@ def resolvePiExtension(resourceDir: str, port: int = DEFAULT_PORT) -> str:
     resourceDir must contain tool_desc.json and pi/extensions/codebeagle.ts.
     The standard port is used as the default base URL baked into the extension.
     """
-    descriptions = loadToolDescriptions(os.path.join(resourceDir, "tool_desc.json"))
+    agenticTools = loadAgenticTools(os.path.join(resourceDir, "tool_desc.json"))
     templatePath = os.path.join(resourceDir, "pi", "extensions", "codebeagle.ts")
     with open(templatePath, "r", encoding="utf-8") as f:
         content = f.read()
-    content = _replaceToolMarkers(content, descriptions)
-    content = content.replace(PI_EXTENSION_VERSION_MARKER, PI_EXTENSION_VERSION)
+    content = _replaceToolMarkers(content, agenticTools.tools)
+    content = content.replace(PI_EXTENSION_VERSION_MARKER, str(agenticTools.version))
     baseUrl = f"http://127.0.0.1:{port}"
     if baseUrl != TEMPLATE_BASE_URL:
         content = content.replace(TEMPLATE_BASE_URL, baseUrl)

@@ -22,7 +22,7 @@ import os
 import unittest
 from typing import Any, Dict, List, cast
 from ..Server import HttpError, _contentResultToJson, _fileNameResultToJson, _hasExcludeFromHistory, _healthResponse, _historyToJson
-from ..PiExtension import PI_EXTENSION_VERSION
+from ..ToolDescription import toolVersion
 from ..SearchProvider import ContentMatch, ContentSearchResult, FileSearchResult
 from ..AgentHistory import AgentHistory, HistoryEntry
 from tools.FileTools import correctPath
@@ -169,11 +169,12 @@ class TestHealthResponse(unittest.TestCase):
         self.assertEqual(_healthResponse("", None, "localhost:8080"), {"status": "ok"})
 
     def test_piUpToDate(self) -> None:
-        r = _healthResponse("pi", PI_EXTENSION_VERSION, "localhost:8080")
+        version = str(toolVersion())
+        r = _healthResponse("pi", version, "localhost:8080")
         self.assertEqual(r["status"], "ok")
         self.assertEqual(r["agent"], "pi")
-        self.assertEqual(r["piVersion"], PI_EXTENSION_VERSION)
-        self.assertEqual(r["piVersionCurrent"], PI_EXTENSION_VERSION)
+        self.assertEqual(r["piVersion"], version)
+        self.assertEqual(r["piVersionCurrent"], version)
         self.assertNotIn("updateAvailable", r)
 
     def test_piOutdated(self) -> None:

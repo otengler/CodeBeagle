@@ -18,10 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Tests for the generated PI extension (codebeagle.ts).
 """
 
+import json
 import os
+import tempfile
 import unittest
-from ..PiExtension import (PI_EXTENSION_VERSION, PI_EXTENSION_VERSION_MARKER,
-                          resolvePiExtension)
+from ..PiExtension import PI_EXTENSION_VERSION_MARKER, resolvePiExtension
+from ..ToolDescription import loadAgenticTools, toolVersion
 
 _RESOURCE_DIR = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "resources", "ai_agent"))
@@ -31,7 +33,7 @@ class TestPiExtension(unittest.TestCase):
     def test_versionMarkerReplaced(self) -> None:
         content = resolvePiExtension(_RESOURCE_DIR)
         self.assertNotIn(PI_EXTENSION_VERSION_MARKER, content)
-        self.assertIn(f'const PI_VERSION = "{PI_EXTENSION_VERSION}";', content)
+        self.assertIn(f'const PI_VERSION = "{toolVersion()}";', content)
 
     def test_sendsAgentHeader(self) -> None:
         content = resolvePiExtension(_RESOURCE_DIR)
@@ -41,3 +43,11 @@ class TestPiExtension(unittest.TestCase):
     def test_healthSendsVersion(self) -> None:
         content = resolvePiExtension(_RESOURCE_DIR)
         self.assertIn("pi-version=${encodeURIComponent(PI_VERSION)}", content)
+
+    def test_missingVersionDefaultsToOne(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "tool_desc.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({"tools": {}}, f)
+            tools = loadAgenticTools(path)
+            self.assertEqual(tools.version, 1)

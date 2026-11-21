@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Optional
 import os, json
 
 class ToolDescription:
@@ -50,26 +50,49 @@ class ToolDescription:
             td.params = json["params"]
         return td
 
-TOOL_DATA: Dict[str, ToolDescription] = {}
+class AgenticTools:
+    """Tool descriptions and the PI extension version read from tool_desc.json."""
 
-def loadToolDescriptions(path: str) -> Dict[str, ToolDescription]:
-    """Load all tool descriptions from a tool_desc.json file."""
-    with open(path, "r", encoding="utf-8") as _f:
-        data = json.load(_f)
-    return {tool_key: ToolDescription.fromJson(tool_data) for tool_key, tool_data in data.items()}
+    def __init__(self, version: int, tools: Dict[str, ToolDescription]) -> None:
+        self.version = version
+        self.tools = tools
 
-def tool_desc(tool_key: str) -> ToolDescription:
-    """Build tool scription"""
-    global TOOL_DATA   
-    if not TOOL_DATA:
-        _loadToolDescription()
-    return TOOL_DATA[tool_key]
+_CACHED_TOOLS: Optional[AgenticTools] = None
 
-def _loadToolDescription() -> None:
-    global TOOL_DATA
-    toolDescPath = os.path.join("resources", "ai_agent", "tool_desc.json")
+def toolDesc(tool_key: str) -> ToolDescription:
+    """Return the description of a single tool from the default resource file."""
+    return _cachedTools().tools[tool_key]
+
+def loadAgenticTools(path: str = "") -> AgenticTools:
+    """Load all tool descriptions and the extension version from tool_desc.json.
+
+    If path is empty the default resource location is used. The data is always
+    read from disk; no cached or global state is used or modified. A missing
+    'version' entry defaults to 1.
+    """
+    toolDescPath = path or os.path.join("resources", "ai_agent", "tool_desc.json")
     try:
-        TOOL_DATA = loadToolDescriptions(toolDescPath)
+        with open(toolDescPath, "r", encoding="utf-8") as _f:
+            data = json.load(_f)
     except Exception as e:
-        raise RuntimeError("Could not load tool_desc.json from %s: %s", toolDescPath, e)
+        raise RuntimeError(f"Could not load tool_desc.json from {toolDescPath}: {e}")
+    tools = {tool_key: ToolDescription.fromJson(tool_data) for tool_key, tool_data in data["tools"].items()}
+    return AgenticTools(int(data.get("version", 1)), tools)
+
+def toolVersion() -> int:
+    """Version of the PI extension (codebeagle.ts) read from tool_desc.json.
+
+    Bump the 'version' entry in tool_desc.json whenever the extension changes so
+    that the server can tell a PI agent when its installed extension is
+    outdated. The extension reports its version via the 'pi-version' query
+    parameter when it calls the health endpoint.
+    """
+    return _cachedTools().version
+
+def _cachedTools() -> AgenticTools:
+    """Load and cache the default tool descriptions on first use."""
+    global _CACHED_TOOLS
+    if _CACHED_TOOLS is None:
+        _CACHED_TOOLS = loadAgenticTools()
+    return _CACHED_TOOLS
 

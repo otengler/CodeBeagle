@@ -1,85 +1,88 @@
 {
-   "codebeagle_content_search": {
-       "desc": [
-           "Leverages the fast CodeBeagle search engine for code exploration across multiple files. Prefer this over 'grep' when searching across multiple files.",
-           "By default returns matching lines with 2 lines surrounding context.",
-           "Set contextLines=0 for compact output (path:line: full matching line, no context lines).",
-           "Keep contextLines low (2-3) to bound token usage.",
-           "Pagination: pass pageOffset from a previous response to fetch the next page."
-       ],
-       "promptSnippet": "Search code for content (keywords, wildcards, regex, context lines) using CodeBeagle.",
-       "promptGuidelines": [
-           "IMPORTANT: Always use codebeagle_content_search for grep-like searches across multiple files. Do not use alternative search tools for these tasks.",
-           "For a single-file grep task there is little benefit; read the file directly instead."
-       ],
-       "params": {
-           "query": "Search expression or list of expressions. Use a list if logical 'or' is wanted. Matches whole words, not substrings: 'a' matches the word 'a'; 'a b' matches 'a' adjacent to 'b' allowing whitespace between them. '*' matches part of a word: 'Fact*' (prefix), '*Object' (suffix, slower), '*Middle*' (infix, slower). Content between '<!' and '>!' is interpreted entirely as a regular expression. Example: 'code <!\\d+!>' matches 'code' followed by one or more digits.",
-           "folder": "Absolute root path where to search. Preferred over 'index'. Exactly one of 'folder' or 'index' is required. Providing both or neither is invalid.",
-           "index": "Name of index from 'codebeagle_list_indexes'.",
-           "pathFilter": "Comma-separated path patterns; Treats the whole file path as a string and matches substrings. May include a file name (not just a directory) to restrict the search to that file. Supports wildcards * and ?. Prefix a pattern with '-' to exclude it. Examples: 'src/main.cpp', 'src, -test/mock'.",
-           "extensionFilter": "Comma-separated extensions. Example: '.py,.js'. Prefix with '-' for exclusions: '-.cs'. Supports wildcards * and ?.",
-           "caseSensitive": "Enable case-sensitive matching (default: false).",
-           "excludeComments": "Exclude matches inside comments (default: true).",
-           "contextLines": "Number of context lines before and after each match (default: 2). Set to 0 for compact output (path:line: full matching line, no context lines).",
-           "limit": "Maximum number of matches to return per page (default: 100).",
-           "pageOffset": "Pagination cursor from a previous response. Pass the 'pageOffset' object exactly as returned by the server."
-       }
-   },
-    "codebeagle_file_search": {
-        "desc": [
-            "Leverages the fast CodeBeagle search engine to search recursively for files. Prefer this over 'find' when searching for files.",
-            "Pagination: pass pageOffset from a previous response to fetch the next page."
-        ],
-        "promptSnippet": "Recursively search for files using CodeBeagle.",
-        "promptGuidelines": [
-            "IMPORTANT: Always use codebeagle_file_search when searching for files. Do not use alternative file-search tools for these tasks."
-        ],
-        "params": {
-            "query": "File name pattern or list of patterns. Use a list if logical 'or' is wanted. Each pattern supports * and ? wildcards. Examples: 'Factory*', '*test*.py', ['Makefile','*.vcxproj'].",
-            "folder": "Absolute root path where to search. Preferred over 'index'. Exactly one of 'folder' or 'index' is required. Providing both or neither is invalid.",
-            "index": "Name of index from 'codebeagle_list_indexes'.",
-            "pathFilter": "Comma-separated path patterns; Treats the whole file path as a string and matches substrings. May include a file name (not just a directory) to restrict the search to that file. Supports wildcards * and ?. Prefix a pattern with '-' to exclude it. Examples: 'src/main.cpp', 'src, -test/mock'.",
-            "caseSensitive": "Enable case-sensitive matching (default: false).",
-            "limit": "Maximum number of files to return per page (default: 100).",
-            "pageOffset": "Pagination cursor from a previous response. Pass the 'pageOffset' object exactly as returned by the server."
-        }
-    },
-    "codebeagle_list_indexes": {
-        "desc": [
-            "List all configured CodeBeagle indexes: name, folders, extensions and index mode.",
-            "Call this to discover what is searchable, then pass the index name to codebeagle_content_search or codebeagle_file_search."
-        ],
-        "promptSnippet": "List CodeBeagle search indexes.",
-        "promptGuidelines": [
-            "Call codebeagle_list_indexes to discover indexed locations and their settings."
-        ]
-    },
-    "codebeagle_health": {
-        "desc": [
-            "Check whether the CodeBeagle agent server is running and reachable.",
-            "Also reports whether the installed PI extension is up to date and how to update it.",
-            "Use this when a codebeagle_* tool reports that the server is down."
-        ]
-    },
-    "codebeagle_update_file": {
-        "desc": [
-            "Updates the CodeBeagle full-text index for a single file.",
-            "IMPORTANT: Call this tool AFTER EVERY write operation that creates or modifies a file.",
-            "No exception. This ensures the file is immediately searchable through codebeagle_content_search and codebeagle_file_search.",
-            "The tool re-indexes the file in-place: it updates the full-text index with the file's new content and file name.",
-            "Pass the absolute file path in the 'file' parameter.",
-            "The server finds the correct index configuration based on the file's directory and extension.",
-            "Check for success by inspecting the 'updated' value in the result. 'updated' contains the number of updated or added files."
-        ],
-        "promptSnippet": "Update CodeBeagle index for a single file after writing or editing it",
-        "promptGuidelines": [
-            "Call codebeagle_update_file AFTER EVERY write or edit tool call that creates or modifies a file. No exception.",
-            "Pass the absolute file path of the written file. The server will find the correct index.",
-            "After codebeagle_update_file succeeds, the file is immediately searchable via codebeagle_content_search and codebeagle_file_search.",
-            "Do not silently ignore indexing failures. If retries fail, inform the user that the file was modified but its search index could not be updated."
-        ],
-        "params": {
-            "file": "Absolute file path to the file to update in the index. Example: 'C:\\src\\project\\main.cpp'"
+    "version": 1,
+    "tools": {
+        "codebeagle_content_search": {
+            "desc": [
+                "Leverages the fast CodeBeagle search engine for code exploration across multiple files. Prefer this over 'grep' when searching across multiple files.",
+                "By default returns matching lines with 2 lines surrounding context.",
+                "Set contextLines=0 for compact output (path:line: full matching line, no context lines).",
+                "Keep contextLines low (2-3) to bound token usage.",
+                "Pagination: pass pageOffset from a previous response to fetch the next page."
+            ],
+            "promptSnippet": "Search code for content (keywords, wildcards, regex, context lines) using CodeBeagle.",
+            "promptGuidelines": [
+                "IMPORTANT: Always use codebeagle_content_search for grep-like searches across multiple files. Do not use alternative search tools for these tasks.",
+                "For a single-file grep task there is little benefit; read the file directly instead."
+            ],
+            "params": {
+                "query": "Search expression or list of expressions. Use a list if logical 'or' is wanted. Matches whole words, not substrings: 'a' matches the word 'a'; 'a b' matches 'a' adjacent to 'b' allowing whitespace between them. '*' matches part of a word: 'Fact*' (prefix), '*Object' (suffix, slower), '*Middle*' (infix, slower). Content between '<!' and '>!' is interpreted entirely as a regular expression. Example: 'code <!\\d+!>' matches 'code' followed by one or more digits.",
+                "folder": "Absolute root path where to search. Preferred over 'index'. Exactly one of 'folder' or 'index' is required. Providing both or neither is invalid.",
+                "index": "Name of index from 'codebeagle_list_indexes'.",
+                "pathFilter": "Comma-separated path patterns; Treats the whole file path as a string and matches substrings. May include a file name (not just a directory) to restrict the search to that file. Supports wildcards * and ?. Prefix a pattern with '-' to exclude it. Examples: 'src/main.cpp', 'src, -test/mock'.",
+                "extensionFilter": "Comma-separated extensions. Example: '.py,.js'. Prefix with '-' for exclusions: '-.cs'. Supports wildcards * and ?.",
+                "caseSensitive": "Enable case-sensitive matching (default: false).",
+                "excludeComments": "Exclude matches inside comments (default: true).",
+                "contextLines": "Number of context lines before and after each match (default: 2). Set to 0 for compact output (path:line: full matching line, no context lines).",
+                "limit": "Maximum number of matches to return per page (default: 100).",
+                "pageOffset": "Pagination cursor from a previous response. Pass the 'pageOffset' object exactly as returned by the server."
+            }
+        },
+        "codebeagle_file_search": {
+            "desc": [
+                "Leverages the fast CodeBeagle search engine to search recursively for files. Prefer this over 'find' when searching for files.",
+                "Pagination: pass pageOffset from a previous response to fetch the next page."
+            ],
+            "promptSnippet": "Recursively search for files using CodeBeagle.",
+            "promptGuidelines": [
+                "IMPORTANT: Always use codebeagle_file_search when searching for files. Do not use alternative file-search tools for these tasks."
+            ],
+            "params": {
+                "query": "File name pattern or list of patterns. Use a list if logical 'or' is wanted. Each pattern supports * and ? wildcards. Examples: 'Factory*', '*test*.py', ['Makefile','*.vcxproj'].",
+                "folder": "Absolute root path where to search. Preferred over 'index'. Exactly one of 'folder' or 'index' is required. Providing both or neither is invalid.",
+                "index": "Name of index from 'codebeagle_list_indexes'.",
+                "pathFilter": "Comma-separated path patterns; Treats the whole file path as a string and matches substrings. May include a file name (not just a directory) to restrict the search to that file. Supports wildcards * and ?. Prefix a pattern with '-' to exclude it. Examples: 'src/main.cpp', 'src, -test/mock'.",
+                "caseSensitive": "Enable case-sensitive matching (default: false).",
+                "limit": "Maximum number of files to return per page (default: 100).",
+                "pageOffset": "Pagination cursor from a previous response. Pass the 'pageOffset' object exactly as returned by the server."
+            }
+        },
+        "codebeagle_list_indexes": {
+            "desc": [
+                "List all configured CodeBeagle indexes: name, folders, extensions and index mode.",
+                "Call this to discover what is searchable, then pass the index name to codebeagle_content_search or codebeagle_file_search."
+            ],
+            "promptSnippet": "List CodeBeagle search indexes.",
+            "promptGuidelines": [
+                "Call codebeagle_list_indexes to discover indexed locations and their settings."
+            ]
+        },
+        "codebeagle_health": {
+            "desc": [
+                "Check whether the CodeBeagle agent server is running and reachable.",
+                "Also reports whether the installed PI extension is up to date and how to update it.",
+                "Use this when a codebeagle_* tool reports that the server is down."
+            ]
+        },
+        "codebeagle_update_file": {
+            "desc": [
+                "Updates the CodeBeagle full-text index for a single file.",
+                "IMPORTANT: Call this tool AFTER EVERY write operation that creates or modifies a file.",
+                "No exception. This ensures the file is immediately searchable through codebeagle_content_search and codebeagle_file_search.",
+                "The tool re-indexes the file in-place: it updates the full-text index with the file's new content and file name.",
+                "Pass the absolute file path in the 'file' parameter.",
+                "The server finds the correct index configuration based on the file's directory and extension.",
+                "Check for success by inspecting the 'updated' value in the result. 'updated' contains the number of updated or added files."
+            ],
+            "promptSnippet": "Update CodeBeagle index for a single file after writing or editing it",
+            "promptGuidelines": [
+                "Call codebeagle_update_file AFTER EVERY write or edit tool call that creates or modifies a file. No exception.",
+                "Pass the absolute file path of the written file. The server will find the correct index.",
+                "After codebeagle_update_file succeeds, the file is immediately searchable via codebeagle_content_search and codebeagle_file_search.",
+                "Do not silently ignore indexing failures. If retries fail, inform the user that the file was modified but its search index could not be updated."
+            ],
+            "params": {
+                "file": "Absolute file path to the file to update in the index. Example: 'C:\\src\\project\\main.cpp'"
+            }
         }
     }
 }

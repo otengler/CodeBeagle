@@ -77,8 +77,8 @@ const BASE_URL = resolveBaseUrl();
 // Identifies this extension to the CodeBeagle agent server.
 const AGENT_NAME = "pi";
 
-// Version of this extension. Kept in sync with PI_EXTENSION_VERSION on the
-// server (replaced when the extension is generated/served).
+// Version of this extension. Kept in sync with the 'version' entry in
+// tool_desc.json (replaced when the extension is generated/served).
 const PI_VERSION = "__PI_EXTENSION_VERSION__";
 
 const SERVER_DOWN_HINT =

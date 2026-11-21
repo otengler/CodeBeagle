@@ -25,7 +25,7 @@ camelCase field names expected by the CodeBeagle HTTP API.
 
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
-from ..ToolDescription import tool_desc
+from ..ToolDescription import toolDesc
 
 # ---- Location parameter union -----------------------------------------------
 #
@@ -37,11 +37,11 @@ class _FolderRequired(BaseModel):
     """Requires ``folder``; optionally accepts ``index``."""
 
     folder: str = Field(
-        description=tool_desc("codebeagle_content_search").param("folder")
+        description=toolDesc("codebeagle_content_search").param("folder")
     )
     index: Optional[str] = Field(
         default=None,
-        description=tool_desc("codebeagle_content_search").param("index")
+        description=toolDesc("codebeagle_content_search").param("index")
     )
 
 
@@ -50,10 +50,10 @@ class _IndexRequired(BaseModel):
 
     folder: Optional[str] = Field(
         default=None,
-        description=tool_desc("codebeagle_content_search").param("folder")
+        description=toolDesc("codebeagle_content_search").param("folder")
     )
     index: str = Field(
-        description=tool_desc("codebeagle_content_search").param("index")
+        description=toolDesc("codebeagle_content_search").param("index")
     )
 
 
@@ -65,7 +65,7 @@ class ContentSearchInput(BaseModel):
     """Parameters for a full-text content search (search_content tool)."""
 
     query: Union[str, List[str]] = Field(
-        description=tool_desc("codebeagle_content_search").param("query")
+        description=toolDesc("codebeagle_content_search").param("query")
     )
     location: SearchLocation = Field(
         description="Search location: either a ``folder`` path or a named ``index``. "
@@ -73,35 +73,35 @@ class ContentSearchInput(BaseModel):
     )
     path_filter: Optional[str] = Field(
         default=None,
-        description=tool_desc("codebeagle_content_search").param("pathFilter"),
+        description=toolDesc("codebeagle_content_search").param("pathFilter"),
     )
     extension_filter: Optional[str] = Field(
         default=None,
-        description=tool_desc("codebeagle_content_search").param("extensionFilter"),
+        description=toolDesc("codebeagle_content_search").param("extensionFilter"),
     )
     case_sensitive: bool = Field(
         default=False,
-        description=tool_desc("codebeagle_content_search").param("caseSensitive"),
+        description=toolDesc("codebeagle_content_search").param("caseSensitive"),
     )
     exclude_comments: bool = Field(
         default=True,
-        description=tool_desc("codebeagle_content_search").param("excludeComments"),
+        description=toolDesc("codebeagle_content_search").param("excludeComments"),
     )
     context_lines: int = Field(
         default=2,
         ge=0,
         le=20,
-        description=tool_desc("codebeagle_content_search").param("contextLines"),
+        description=toolDesc("codebeagle_content_search").param("contextLines"),
     )
     limit: int = Field(
         default=100,
         ge=1,
         le=10000,
-        description=tool_desc("codebeagle_content_search").param("limit"),
+        description=toolDesc("codebeagle_content_search").param("limit"),
     )
     page_offset: Optional[Dict[str, int]] = Field(
         default=None,
-        description=tool_desc("codebeagle_content_search").param("pageOffset"),
+        description=toolDesc("codebeagle_content_search").param("pageOffset"),
     )
 
     def toHttpParams(self) -> Dict[str, Any]:
@@ -124,7 +124,7 @@ class FileNameSearchInput(BaseModel):
     """Parameters for a file name search (search_filename tool)."""
 
     query: Union[str, List[str]] = Field(
-        description=tool_desc("codebeagle_file_search").param("query")
+        description=toolDesc("codebeagle_file_search").param("query")
     )
     location: SearchLocation = Field(
         description="Search location: either a ``folder`` path or a named ``index``. "
@@ -132,21 +132,21 @@ class FileNameSearchInput(BaseModel):
     )
     path_filter: Optional[str] = Field(
         default=None,
-        description=tool_desc("codebeagle_file_search").param("pathFilter"),
+        description=toolDesc("codebeagle_file_search").param("pathFilter"),
     )
     case_sensitive: bool = Field(
         default=False,
-        description=tool_desc("codebeagle_file_search").param("caseSensitive"),
+        description=toolDesc("codebeagle_file_search").param("caseSensitive"),
     )
     limit: int = Field(
         default=100,
         ge=1,
         le=10000,
-        description=tool_desc("codebeagle_file_search").param("limit"),
+        description=toolDesc("codebeagle_file_search").param("limit"),
     )
     page_offset: Optional[Dict[str, int]] = Field(
         default=None,
-        description=tool_desc("codebeagle_file_search").param("pageOffset"),
+        description=toolDesc("codebeagle_file_search").param("pageOffset"),
     )
 
     def toHttpParams(self) -> Dict[str, Any]:
@@ -166,7 +166,7 @@ class FileUpdateInput(BaseModel):
     """Parameters for the update_file tool (codebeagle_update_file)."""
 
     file: str = Field(
-        description=tool_desc("codebeagle_update_file").param("file")
+        description=toolDesc("codebeagle_update_file").param("file")
     )
 
 

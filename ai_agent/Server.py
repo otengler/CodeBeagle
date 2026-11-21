@@ -29,8 +29,9 @@ from urllib.parse import parse_qsl
 from AppConfig import appConfig
 from tools.FileTools import correctPath
 from .AgentHistory import AgentHistory, HistoryEntry, formatBodyParams
-from .PiExtension import PI_EXTENSION_VERSION, resolvePiExtension
+from .PiExtension import resolvePiExtension
 from .SearchProvider import SearchProvider, ContentSearchResult, FileSearchResult
+from .ToolDescription import toolVersion
 from .TtlCache import TTLCache
 
 logger = logging.getLogger(__name__)
@@ -530,16 +531,17 @@ def _healthResponse(agent: str, installedPiVersion: Optional[str], host: str) ->
 
     Requests without an 'x-agent' header come from external callers and get the
     plain status response. When the PI extension calls (agent == 'pi') its
-    version is compared against PI_EXTENSION_VERSION and an update notice with
-    instructions is included if they differ.
+    version is compared against the version in tool_desc.json and an update
+    notice with instructions is included if they differ.
     """
     response: Dict[str, object] = {"status": "ok"}
     if agent:
         response["agent"] = agent
     if agent == "pi":
+        currentVersion = str(toolVersion())
         response["piVersion"] = installedPiVersion or ""
-        response["piVersionCurrent"] = PI_EXTENSION_VERSION
-        if installedPiVersion != PI_EXTENSION_VERSION:
+        response["piVersionCurrent"] = currentVersion
+        if installedPiVersion != currentVersion:
             response["updateAvailable"] = True
             response["updateMessage"] = _piUpdateMessage(installedPiVersion, host)
     return response
@@ -551,7 +553,7 @@ def _piUpdateMessage(installedPiVersion: Optional[str], host: str) -> str:
     installed = installedPiVersion or "unknown"
     return (
         f"The CodeBeagle PI extension is outdated (installed: {installed}, "
-        f"required: {PI_EXTENSION_VERSION}). Update it now: download the latest "
+        f"required: {toolVersion()}). Update it now: download the latest "
         f"extension from {extensionUrl} and overwrite the codebeagle.ts file in "
         f"the PI user extension folder (e.g. ~/.pi/agent/extensions/). Then "
         f"reload PI (e.g. /reload) so the new extension is loaded."
